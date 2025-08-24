@@ -1,0 +1,56 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext {
+        kotlin_version = '1.9.22'
+        room_version = '2.5.2'
+        nav_version = '2.7.7'
+        hilt_version = '2.50'
+    }
+}
+
+plugins {
+    id 'com.android.application' version '8.2.2' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
+    id 'com.google.dagger.hilt.android' version '2.50' apply false
+    id 'com.google.devtools.ksp' version '1.9.22-1.0.17' apply false
+    id 'androidx.navigation.safeargs.kotlin' version '2.7.7' apply false
+}
+
+// Make the versions available to all modules
+ext {
+    room_version = '2.5.2'
+    nav_version = '2.7.7'
+    hilt_version = '2.50'
+}
+
+// Configure Java toolchain for all projects
+subprojects {
+    plugins.withType(org.jetbrains.kotlin.gradle.plugin.KotlinBasePlugin).configureEach {
+        // Use Gradle's toolchain-managed JDK 17 for Kotlin and Kapt
+        kotlin {
+            jvmToolchain(17)
+        }
+    }
+    
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = '17'
+            freeCompilerArgs += [
+                '-Xjvm-default=all',
+            ]
+        }
+    }
+    
+    plugins.withType(com.android.build.gradle.BasePlugin).configureEach {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
