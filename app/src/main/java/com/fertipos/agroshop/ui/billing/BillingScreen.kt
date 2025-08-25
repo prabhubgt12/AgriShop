@@ -38,6 +38,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fertipos.agroshop.ui.history.InvoiceHistoryScreen
 import com.fertipos.agroshop.ui.screens.AppNavViewModel
@@ -57,13 +59,16 @@ import com.fertipos.agroshop.data.local.entities.Product
 import com.fertipos.agroshop.data.local.entities.Invoice
 import com.fertipos.agroshop.data.local.entities.InvoiceItem
 import com.fertipos.agroshop.util.InvoicePdfGenerator
+import com.fertipos.agroshop.util.CurrencyFormatter
+import java.io.FileOutputStream
 import java.text.NumberFormat
 import java.util.Locale
-import java.io.FileOutputStream
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import com.fertipos.agroshop.ui.common.CustomerPicker
+import com.fertipos.agroshop.ui.common.ProductPicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,7 +85,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     val vm: BillingViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
     val context = LocalContext.current
-    val currency = remember { NumberFormat.getCurrencyInstance(Locale.getDefault()) }
+    val currency = remember { CurrencyFormatter.inr }
     // Hoisted pending print data to avoid being lost on recompositions
     data class PendingPrintItem(val product: Product, val quantity: Double, val unitPrice: Double, val gstPercent: Double)
     data class PendingPrintData(
@@ -88,12 +93,12 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         val subtotal: Double,
         val gstAmount: Double,
         val total: Double,
-        val items: List<PendingPrintItem>
+        val items: List<PendingPrintItem>,
+        val paid: Double,
+        val balance: Double
     )
     var pendingPrint by remember { mutableStateOf<PendingPrintData?>(null) }
     // Form state
-    var custExpanded by remember { mutableStateOf(false) }
-    var productExpanded by remember { mutableStateOf(false) }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var qtyText by remember { mutableStateOf("") }
     var priceText by remember { mutableStateOf("") }
@@ -128,68 +133,28 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             Spacer(Modifier.height(6.dp))
         }
 
-        // Customer selector
+        // Customer selector (typeahead)
         item {
-            val customers = state.value.customers
-            val selectedCustomer = customers.firstOrNull { it.id == state.value.selectedCustomerId }
-            ExposedDropdownMenuBox(
-                expanded = custExpanded,
-                onExpandedChange = { custExpanded = !custExpanded }
-            ) {
-                TextField(
-                    value = selectedCustomer?.name ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    singleLine = true,
-                    label = { Text("Customer*") },
-                    placeholder = { Text("Select customer") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = custExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                DropdownMenu(
-                    expanded = custExpanded,
-                    onDismissRequest = { custExpanded = false }
-                ) {
-                    customers.forEach { c ->
-                        DropdownMenuItem(text = { Text(c.name) }, onClick = { vm.setCustomer(c.id); custExpanded = false })
-                    }
-                }
-            }
+            CustomerPicker(
+                customers = state.value.customers,
+                label = "Customer*",
+                modifier = Modifier.fillMaxWidth(),
+                onPicked = { vm.setCustomer(it.id) }
+            )
             Spacer(Modifier.height(6.dp))
         }
 
-        // Product selector
+        // Product selector (typeahead)
         item {
-            ExposedDropdownMenuBox(
-                expanded = productExpanded,
-                onExpandedChange = { productExpanded = !productExpanded }
-            ) {
-                TextField(
-                    value = selectedProduct?.let { "${it.name} (${it.unit})" } ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    singleLine = true,
-                    label = { Text("Product*") },
-                    placeholder = { Text("Select product") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = productExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
-                )
-                DropdownMenu(
-                    expanded = productExpanded,
-                    onDismissRequest = { productExpanded = false }
-                ) {
-                    state.value.products.forEach { p ->
-                        DropdownMenuItem(
-                            text = { Text("${p.name} • ${p.unit} • Stock: ${p.stockQuantity}") },
-                            onClick = {
-                                selectedProduct = p
-                                priceText = p.pricePerUnit.toString()
-                                productExpanded = false
-                            }
-                        )
-                    }
+            ProductPicker(
+                products = state.value.products,
+                label = "Product*",
+                modifier = Modifier.fillMaxWidth(),
+                onPicked = { p ->
+                    selectedProduct = p
+                    priceText = p.sellingPrice.toString()
                 }
-            }
+            )
             Spacer(Modifier.height(6.dp))
         }
 
@@ -198,18 +163,28 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = qtyText,
-                    onValueChange = { qtyText = it },
+                    onValueChange = { raw ->
+                        val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                        val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "").let { it } else filtered
+                        qtyText = final
+                    },
                     label = { Text("Qty") },
                     singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = priceText,
-                    onValueChange = { priceText = it },
+                    onValueChange = { raw ->
+                        val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                        val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "").let { it } else filtered
+                        priceText = final
+                    },
                     label = { Text("Price") },
                     singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     enabled = selectedProduct != null,
-                    placeholder = { Text(selectedProduct?.pricePerUnit?.toString() ?: "") },
+                    placeholder = { Text(selectedProduct?.sellingPrice?.toString() ?: "") },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -220,6 +195,11 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                     val qty = qtyText.toDoubleOrNull()
                     if (prod != null && qty != null && qty > 0) {
                         vm.addItem(prod, qty)
+                        // If user entered a custom price, override unit price for this line
+                        val enteredPrice = priceText.toDoubleOrNull()
+                        if (enteredPrice != null) {
+                            vm.updateItem(prod.id, quantity = qty, unitPrice = enteredPrice, gstPercent = null)
+                        }
                     }
                     qtyText = ""
                 }, enabled = selectedProduct != null) { Text("Add Item") }
@@ -241,6 +221,51 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             Text("Subtotal: ${currency.format(state.value.subtotal)}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
             Text("GST: ${currency.format(state.value.gstAmount)}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
             Text("Total: ${currency.format(state.value.total)}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+            Spacer(Modifier.height(6.dp))
+            var paidInFull by remember { mutableStateOf(false) }
+            // Keep paid synced to total when checked
+            LaunchedEffect(paidInFull, state.value.total) {
+                if (paidInFull) vm.setPaid(state.value.total.toString())
+            }
+            // Row aligned to end: checkbox (no label) + Paid field
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                androidx.compose.material3.Checkbox(
+                    checked = paidInFull,
+                    onCheckedChange = { checked ->
+                        paidInFull = checked
+                        if (checked) vm.setPaid(state.value.total.toString())
+                    }
+                )
+                Text("Paid", modifier = Modifier.padding(start = 4.dp))
+                TextField(
+                    value = if (state.value.paid == 0.0) "" else String.format(Locale.getDefault(), "%.2f", state.value.paid),
+                    onValueChange = { vm.setPaid(it); if (paidInFull && it.toDoubleOrNull() != state.value.total) paidInFull = false },
+                    singleLine = true,
+                    // no label/placeholder to avoid extra height and inline text
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                    textStyle = androidx.compose.ui.text.TextStyle(textAlign = TextAlign.End),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        errorContainerColor = Color.Transparent
+                    ),
+                    modifier = Modifier.fillMaxWidth(0.5f)
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            // Balance line aligned to end
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = "Balance: ${currency.format(state.value.balance)}",
+                    textAlign = TextAlign.End
+                )
+            }
             Spacer(Modifier.height(8.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -250,11 +275,17 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                         subtotal = state.value.subtotal,
                         gstAmount = state.value.gstAmount,
                         total = state.value.total,
-                        items = state.value.items.map { PendingPrintItem(it.product, it.quantity, it.unitPrice, it.gstPercent) }
+                        items = state.value.items.map { PendingPrintItem(it.product, it.quantity, it.unitPrice, it.gstPercent) },
+                        paid = state.value.paid,
+                        balance = state.value.balance
                     )
                     pendingPrint = snapshot
                     vm.submit()
-                }, enabled = !state.value.loading) { Text("Submit & Print") }
+                }, enabled = !state.value.loading && state.value.selectedCustomerId != null && state.value.items.isNotEmpty()) { Text("Submit & Print") }
+            }
+            if (state.value.error != null) {
+                Spacer(Modifier.height(4.dp))
+                Text(text = state.value.error ?: "", color = androidx.compose.ui.graphics.Color.Red)
             }
         }
     }
@@ -294,7 +325,9 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                 invoice = invoice,
                 customerName = customerName,
                 company = profile,
-                items = items
+                items = items,
+                paid = pendingPrint!!.paid,
+                balance = pendingPrint!!.balance
             )
             val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
             val jobName = "Invoice #$successId"
@@ -354,7 +387,9 @@ private fun DraftItemRow(
     currency: NumberFormat,
     onRemove: () -> Unit
 ) {
-    val lineTotal = item.quantity * item.unitPrice
+    val lineBase = item.quantity * item.unitPrice
+    val gstAmt = lineBase * (item.gstPercent / 100.0)
+    val lineTotal = lineBase + gstAmt
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -372,6 +407,12 @@ private fun DraftItemRow(
                 Text(text = "Qty: ${item.quantity}")
                 Spacer(Modifier.weight(1f))
                 Text(text = "Price: ${currency.format(item.unitPrice)}")
+            }
+            Spacer(Modifier.height(2.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(text = "GST ${String.format(java.util.Locale.getDefault(), "%.1f", item.gstPercent)}%")
+                Spacer(Modifier.weight(1f))
+                Text(text = "GST Amt: ${currency.format(gstAmt)}")
             }
             Spacer(Modifier.height(2.dp))
             Row(modifier = Modifier.fillMaxWidth()) {

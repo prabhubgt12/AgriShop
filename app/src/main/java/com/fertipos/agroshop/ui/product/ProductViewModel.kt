@@ -30,7 +30,8 @@ class ProductViewModel @Inject constructor(
         name: String,
         type: String,
         unit: String,
-        pricePerUnit: Double,
+        sellingPrice: Double,
+        purchasePrice: Double,
         stockQuantity: Double,
         gstPercent: Double
     ) {
@@ -41,7 +42,8 @@ class ProductViewModel @Inject constructor(
                     name = name.trim(),
                     type = type.trim(),
                     unit = unit.trim(),
-                    pricePerUnit = pricePerUnit,
+                    sellingPrice = sellingPrice,
+                    purchasePrice = purchasePrice,
                     stockQuantity = stockQuantity,
                     gstPercent = gstPercent
                 )
@@ -54,7 +56,8 @@ class ProductViewModel @Inject constructor(
         name: String,
         type: String,
         unit: String,
-        pricePerUnit: Double,
+        sellingPrice: Double,
+        purchasePrice: Double,
         stockQuantity: Double,
         gstPercent: Double
     ) {
@@ -65,7 +68,8 @@ class ProductViewModel @Inject constructor(
                     name = name.trim(),
                     type = type.trim(),
                     unit = unit.trim(),
-                    pricePerUnit = pricePerUnit,
+                    sellingPrice = sellingPrice,
+                    purchasePrice = purchasePrice,
                     stockQuantity = stockQuantity,
                     gstPercent = gstPercent,
                     updatedAt = System.currentTimeMillis()
@@ -82,3 +86,4 @@ class ProductViewModel @Inject constructor(
         viewModelScope.launch { dao.adjustStock(productId, delta) }
     }
 }
+

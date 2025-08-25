@@ -9,7 +9,8 @@ data class Product(
     val name: String,
     val type: String = "Fertilizer", // e.g., Fertilizer, Pesticide
     val unit: String, // e.g., Kg, Litre, Packet
-    val pricePerUnit: Double,
+    val sellingPrice: Double,
+    val purchasePrice: Double,
     val stockQuantity: Double = 0.0,
     val gstPercent: Double = 0.0,
     val createdAt: Long = System.currentTimeMillis(),

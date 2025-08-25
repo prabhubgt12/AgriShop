@@ -29,7 +29,9 @@ object InvoicePdfGenerator {
         invoice: Invoice,
         customerName: String,
         company: CompanyProfile,
-        items: List<ItemWithProduct>
+        items: List<ItemWithProduct>,
+        paid: Double = 0.0,
+        balance: Double = invoice.total
     ): Uri {
         val doc = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 in points (approx)
@@ -80,10 +82,11 @@ object InvoicePdfGenerator {
         // Table header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         canvas.drawText("Item", 40f, y, paint)
-        canvas.drawText("Qty", 260f, y, paint)
-        canvas.drawText("Price", 320f, y, paint)
-        canvas.drawText("GST%", 400f, y, paint)
-        canvas.drawText("Line Total", 470f, y, paint)
+        canvas.drawText("Qty", 230f, y, paint)
+        canvas.drawText("Price", 290f, y, paint)
+        canvas.drawText("GST%", 360f, y, paint)
+        canvas.drawText("GST Amt", 420f, y, paint)
+        canvas.drawText("Line Total", 500f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 14f
         canvas.drawLine(40f, y, 555f, y, paint); y += 14f
@@ -92,11 +95,14 @@ object InvoicePdfGenerator {
         items.forEach { row ->
             if (y > 760f) { /* pagination skipped for brevity */ }
             val name = row.product?.name ?: "Item ${row.item.productId}"
+            val base = row.item.quantity * row.item.unitPrice
+            val gstAmt = base * (row.item.gstPercent / 100.0)
             canvas.drawText(name.take(30), 40f, y, paint)
-            canvas.drawText(String.format(Locale.getDefault(), "%.2f", row.item.quantity), 260f, y, paint)
-            canvas.drawText(String.format(Locale.getDefault(), "%.2f", row.item.unitPrice), 320f, y, paint)
-            canvas.drawText(String.format(Locale.getDefault(), "%.1f", row.item.gstPercent), 400f, y, paint)
-            canvas.drawText(String.format(Locale.getDefault(), "%.2f", row.item.lineTotal), 470f, y, paint)
+            canvas.drawText(String.format(Locale.getDefault(), "%.2f", row.item.quantity), 230f, y, paint)
+            canvas.drawText(String.format(Locale.getDefault(), "%.2f", row.item.unitPrice), 290f, y, paint)
+            canvas.drawText(String.format(Locale.getDefault(), "%.1f", row.item.gstPercent), 360f, y, paint)
+            canvas.drawText(String.format(Locale.getDefault(), "%.2f", gstAmt), 420f, y, paint)
+            canvas.drawText(String.format(Locale.getDefault(), "%.2f", row.item.lineTotal), 500f, y, paint)
             y += 16f
         }
 
@@ -107,6 +113,8 @@ object InvoicePdfGenerator {
         canvas.drawText(String.format(Locale.getDefault(), "Subtotal: %.2f", invoice.subtotal), 400f, y, paint); y += 16f
         canvas.drawText(String.format(Locale.getDefault(), "GST: %.2f", invoice.gstAmount), 400f, y, paint); y += 16f
         canvas.drawText(String.format(Locale.getDefault(), "Total: %.2f", invoice.total), 400f, y, paint); y += 16f
+        canvas.drawText(String.format(Locale.getDefault(), "Paid: %.2f", paid), 400f, y, paint); y += 16f
+        canvas.drawText(String.format(Locale.getDefault(), "Balance: %.2f", balance), 400f, y, paint); y += 16f
         paint.typeface = Typeface.DEFAULT
 
         doc.finishPage(page)

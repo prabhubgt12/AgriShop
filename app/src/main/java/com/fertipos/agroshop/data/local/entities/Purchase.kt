@@ -6,21 +6,21 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "invoices",
+    tableName = "purchases",
     foreignKeys = [
         ForeignKey(
             entity = Customer::class,
             parentColumns = ["id"],
-            childColumns = ["customerId"],
+            childColumns = ["supplierId"],
             onDelete = ForeignKey.RESTRICT,
             onUpdate = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("customerId")]
+    indices = [Index("supplierId")]
 )
-data class Invoice(
+data class Purchase(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val customerId: Int,
+    val supplierId: Int,
     val date: Long = System.currentTimeMillis(),
     val subtotal: Double = 0.0,
     val gstAmount: Double = 0.0,

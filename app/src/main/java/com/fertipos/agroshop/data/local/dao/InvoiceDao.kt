@@ -40,6 +40,16 @@ interface InvoiceDao {
     @Query("SELECT * FROM invoice_items WHERE invoiceId = :invoiceId")
     suspend fun getItemsForInvoiceOnce(invoiceId: Int): List<InvoiceItem>
 
+    // Invoices between dates (inclusive) for exporting Sales
+    @Query(
+        """
+        SELECT * FROM invoices
+        WHERE date BETWEEN :from AND :to
+        ORDER BY date ASC, id ASC
+        """
+    )
+    suspend fun getInvoicesBetweenOnce(from: Long, to: Long): List<Invoice>
+
     @Transaction
     @Query("DELETE FROM invoice_items WHERE invoiceId = :invoiceId")
     suspend fun clearItemsForInvoice(invoiceId: Int)
@@ -129,4 +139,79 @@ interface InvoiceDao {
         """
     )
     suspend fun getExportRowsAllOnce(): List<ExportRowAll>
+}
+
+// Simple date-range totals for P&L
+data class InvoiceRangeSummary(
+    val subtotal: Double,
+    val gst: Double,
+    val total: Double
+)
+
+@Dao
+interface InvoiceSummaryDao {
+    @Query(
+        """
+        SELECT IFNULL(SUM(subtotal),0) AS subtotal,
+               IFNULL(SUM(gstAmount),0) AS gst,
+               IFNULL(SUM(total),0) AS total
+        FROM invoices
+        WHERE date BETWEEN :from AND :to
+        """
+    )
+    suspend fun getInvoiceSummaryBetween(from: Long, to: Long): InvoiceRangeSummary
+}
+
+// Lines between dates for P&L (per sale line with product purchase price)
+data class PLItemRow(
+    val date: Long,
+    val productId: Int,
+    val quantity: Double,
+    val unitPrice: Double,
+    val purchasePrice: Double
+)
+
+@Dao
+interface InvoicePlLinesDao {
+    @Query(
+        """
+        SELECT i.date AS date,
+               ii.productId AS productId,
+               ii.quantity AS quantity,
+               ii.unitPrice AS unitPrice,
+               IFNULL(p.purchasePrice, 0) AS purchasePrice
+        FROM invoice_items ii
+        JOIN invoices i ON i.id = ii.invoiceId
+        LEFT JOIN products p ON p.id = ii.productId
+        WHERE i.date BETWEEN :from AND :to
+        ORDER BY i.date ASC, ii.invoiceId ASC
+        """
+    )
+    suspend fun getPlItemRowsBetween(from: Long, to: Long): List<PLItemRow>
+
+    // Aggregated product-wise sales and cost (cost based on current product.purchasePrice)
+    data class ProductPlAggRow(
+        val productId: Int,
+        val productName: String?,
+        val qty: Double,
+        val salesAmount: Double,
+        val costAmount: Double
+    )
+
+    @Query(
+        """
+        SELECT ii.productId AS productId,
+               p.name AS productName,
+               IFNULL(SUM(ii.quantity), 0) AS qty,
+               IFNULL(SUM(ii.quantity * ii.unitPrice), 0) AS salesAmount,
+               IFNULL(SUM(ii.quantity * IFNULL(p.purchasePrice, 0)), 0) AS costAmount
+        FROM invoice_items ii
+        JOIN invoices i ON i.id = ii.invoiceId
+        LEFT JOIN products p ON p.id = ii.productId
+        WHERE i.date BETWEEN :from AND :to
+        GROUP BY ii.productId, p.name
+        ORDER BY salesAmount DESC
+        """
+    )
+    suspend fun getProductPlAggBetween(from: Long, to: Long): List<ProductPlAggRow>
 }

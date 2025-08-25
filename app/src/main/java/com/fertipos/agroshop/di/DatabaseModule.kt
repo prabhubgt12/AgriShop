@@ -2,9 +2,15 @@ package com.fertipos.agroshop.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.fertipos.agroshop.data.local.AppDatabase
 import com.fertipos.agroshop.data.local.dao.CustomerDao
 import com.fertipos.agroshop.data.local.dao.InvoiceDao
+import com.fertipos.agroshop.data.local.dao.InvoiceSummaryDao
+import com.fertipos.agroshop.data.local.dao.InvoicePlLinesDao
+import com.fertipos.agroshop.data.local.dao.PurchaseDao
+import com.fertipos.agroshop.data.local.dao.PurchaseSummaryDao
 import com.fertipos.agroshop.data.local.dao.ProductDao
 import com.fertipos.agroshop.data.local.dao.UserDao
 import com.fertipos.agroshop.data.local.dao.CompanyProfileDao
@@ -19,6 +25,13 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE invoices ADD COLUMN paid REAL NOT NULL DEFAULT 0.0")
+            database.execSQL("ALTER TABLE purchases ADD COLUMN paid REAL NOT NULL DEFAULT 0.0")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
@@ -27,7 +40,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "agroshop.db"
         )
-            .fallbackToDestructiveMigration()
+            .addMigrations(MIGRATION_4_5)
             .build()
 
     @Provides
@@ -41,6 +54,18 @@ object DatabaseModule {
 
     @Provides
     fun provideInvoiceDao(db: AppDatabase): InvoiceDao = db.invoiceDao()
+
+    @Provides
+    fun provideInvoiceSummaryDao(db: AppDatabase): InvoiceSummaryDao = db.invoiceSummaryDao()
+
+    @Provides
+    fun provideInvoicePlLinesDao(db: AppDatabase): InvoicePlLinesDao = db.invoicePlLinesDao()
+
+    @Provides
+    fun providePurchaseDao(db: AppDatabase): PurchaseDao = db.purchaseDao()
+
+    @Provides
+    fun providePurchaseSummaryDao(db: AppDatabase): PurchaseSummaryDao = db.purchaseSummaryDao()
 
     @Provides
     fun provideCompanyProfileDao(db: AppDatabase): CompanyProfileDao = db.companyProfileDao()

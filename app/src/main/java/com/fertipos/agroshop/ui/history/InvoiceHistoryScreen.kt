@@ -3,6 +3,8 @@ package com.fertipos.agroshop.ui.history
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.fertipos.agroshop.ui.common.DateField
 import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
 import com.fertipos.agroshop.util.InvoicePdfGenerator
 import com.fertipos.agroshop.ui.screens.AppNavViewModel
@@ -54,6 +58,18 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Text("Invoices", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
+            var fromMillis by remember { mutableStateOf<Long?>(null) }
+            var toMillis by remember { mutableStateOf<Long?>(null) }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DateField(label = "From", value = fromMillis, onChange = { v -> fromMillis = v }, modifier = Modifier.weight(1f))
+                DateField(label = "To", value = toMillis, onChange = { v -> toMillis = v }, modifier = Modifier.weight(1f))
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(Modifier.weight(1f))
+                Button(onClick = { vm.setDateRange(fromMillis, toMillis) }) { Text("Apply") }
+                TextButton(onClick = { fromMillis = null; toMillis = null; vm.setDateRange(null, null) }) { Text("Clear") }
+            }
+            Spacer(Modifier.height(8.dp))
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(list) { row ->
                     var confirmDelete by remember { mutableStateOf(false) }
@@ -64,13 +80,16 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                             Text(df.format(Date(row.invoice.date)))
                             Text("Total: ${row.invoice.total}")
                             Spacer(Modifier.height(8.dp))
-                            Row(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 Button(onClick = {
                                     navVm.requestEditInvoice(row.invoice.id)
                                     navVm.navigateTo(3)
                                 }) { Text("Edit") }
-                                Spacer(Modifier.height(0.dp))
-                                Spacer(Modifier.weight(1f))
                                 Button(onClick = {
                                     scope.launch {
                                         val items = vm.getItemRowsOnce(row.invoice.id)
@@ -87,11 +106,10 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                                             putExtra(Intent.EXTRA_STREAM, uri)
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
-                                        context.startActivity(Intent.createChooser(intent, "Share Invoice"))
+                                        context.startActivity(Intent.createChooser(intent, "Print"))
                                     }
-                                }) { Text("Print / Share") }
-                                Spacer(Modifier.height(0.dp))
-                                Spacer(Modifier.width(8.dp))
+                                }) { Text("Print") }
+                                
                                 Button(onClick = { confirmDelete = true }) { Text("Delete") }
                             }
                             if (confirmDelete) {

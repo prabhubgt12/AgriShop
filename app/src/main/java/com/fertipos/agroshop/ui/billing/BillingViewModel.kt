@@ -40,6 +40,8 @@ class BillingViewModel @Inject constructor(
         val subtotal: Double = 0.0,
         val gstAmount: Double = 0.0,
         val total: Double = 0.0,
+        val paid: Double = 0.0,
+        val balance: Double = 0.0,
         val loading: Boolean = false,
         val error: String? = null,
         val successInvoiceId: Int? = null,
@@ -49,6 +51,7 @@ class BillingViewModel @Inject constructor(
     private val selectedCustomer = MutableStateFlow<Int?>(null)
     private val draftItems = MutableStateFlow<List<DraftItem>>(emptyList())
     private val notes = MutableStateFlow("")
+    private val paidText = MutableStateFlow("")
     private val status = MutableStateFlow(Pair(false, null as String?))
     private val successId = MutableStateFlow<Int?>(null)
     private val editingInvoiceId = MutableStateFlow<Int?>(null)
@@ -78,11 +81,14 @@ class BillingViewModel @Inject constructor(
         interim,
         status,
         successId,
-        editingInvoiceId
-    ) { base, st, sid, editId ->
+        editingInvoiceId,
+        paidText
+    ) { base, st, sid, editId, paidStr ->
         val subtotal = base.items.sumOf { it.quantity * it.unitPrice }
         val gstAmount = base.items.sumOf { it.quantity * it.unitPrice * (it.gstPercent / 100.0) }
         val total = subtotal + gstAmount
+        val paid = paidStr.toDoubleOrNull() ?: 0.0
+        val balance = (total - paid).coerceAtLeast(0.0)
         UiState(
             customers = base.customers,
             products = base.products,
@@ -92,6 +98,8 @@ class BillingViewModel @Inject constructor(
             subtotal = subtotal,
             gstAmount = gstAmount,
             total = total,
+            paid = paid,
+            balance = balance,
             loading = st.first,
             error = st.second,
             successInvoiceId = sid,
@@ -101,6 +109,7 @@ class BillingViewModel @Inject constructor(
 
     fun setCustomer(id: Int?) { selectedCustomer.value = id }
     fun setNotes(n: String) { notes.value = n }
+    fun setPaid(text: String) { paidText.value = text }
 
     fun addItem(product: Product, quantity: Double) {
         if (quantity <= 0) return
@@ -110,7 +119,7 @@ class BillingViewModel @Inject constructor(
             val cur = existing[idx]
             existing[idx] = cur.copy(quantity = cur.quantity + quantity)
         } else {
-            existing.add(DraftItem(product, quantity, product.pricePerUnit, product.gstPercent))
+            existing.add(DraftItem(product, quantity, product.sellingPrice, product.gstPercent))
         }
         draftItems.value = existing
     }
@@ -153,13 +162,15 @@ class BillingViewModel @Inject constructor(
                     invoiceId = editId,
                     customerId = cust,
                     notes = notes.value.ifBlank { null },
-                    items = drafts
+                    items = drafts,
+                    paid = (paidText.value.toDoubleOrNull() ?: 0.0)
                 ).map { editId }
             } else {
                 billingRepo.createInvoice(
                     customerId = cust,
                     notes = notes.value.ifBlank { null },
-                    items = drafts
+                    items = drafts,
+                    paid = (paidText.value.toDoubleOrNull() ?: 0.0)
                 )
             }
             status.value = false to result.exceptionOrNull()?.message
@@ -168,6 +179,7 @@ class BillingViewModel @Inject constructor(
                 // reset draft
                 draftItems.value = emptyList()
                 notes.value = ""
+                paidText.value = ""
                 editingInvoiceId.value = null
             }
         }
@@ -182,6 +194,7 @@ class BillingViewModel @Inject constructor(
                     val (inv, items) = pair
                     selectedCustomer.value = inv.customerId
                     notes.value = inv.notes ?: ""
+                    paidText.value = if (inv.paid == 0.0) "" else inv.paid.toString()
                     // Ensure products are loaded before mapping items
                     val products = productsFlow.first()
                     val pmap = products.associateBy { it.id }
@@ -205,6 +218,7 @@ class BillingViewModel @Inject constructor(
         draftItems.value = emptyList()
         notes.value = ""
         editingInvoiceId.value = null
+        paidText.value = ""
         // Do not touch successId/status here; UI manages them
     }
 }

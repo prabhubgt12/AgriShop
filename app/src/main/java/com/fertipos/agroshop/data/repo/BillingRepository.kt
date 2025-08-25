@@ -23,7 +23,8 @@ class BillingRepository @Inject constructor(
     suspend fun createInvoice(
         customerId: Int,
         notes: String?,
-        items: List<DraftItem>
+        items: List<DraftItem>,
+        paid: Double
     ): Result<Int> {
         if (items.isEmpty()) return Result.failure(IllegalArgumentException("No items"))
         val subtotal = items.sumOf { it.quantity * it.unitPrice }
@@ -49,7 +50,8 @@ class BillingRepository @Inject constructor(
                         subtotal = subtotal,
                         gstAmount = gstAmount,
                         total = total,
-                        notes = notes
+                        notes = notes,
+                        paid = paid
                     )
                 ).toInt()
 
@@ -86,7 +88,8 @@ class BillingRepository @Inject constructor(
         invoiceId: Int,
         customerId: Int,
         notes: String?,
-        items: List<DraftItem>
+        items: List<DraftItem>,
+        paid: Double
     ): Result<Unit> {
         if (items.isEmpty()) return Result.failure(IllegalArgumentException("No items"))
         val subtotal = items.sumOf { it.quantity * it.unitPrice }
@@ -124,7 +127,8 @@ class BillingRepository @Inject constructor(
                         subtotal = subtotal,
                         gstAmount = gstAmount,
                         total = total,
-                        notes = notes
+                        notes = notes,
+                        paid = paid
                     )
                 )
 

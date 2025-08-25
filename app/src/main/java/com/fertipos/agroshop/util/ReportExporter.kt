@@ -25,6 +25,42 @@ object ReportExporter {
         return FileProvider.getUriForFile(context, authority, outFile)
     }
 
+    fun exportPLCsv(
+        context: Context,
+        authority: String,
+        from: Long,
+        to: Long,
+        salesSubtotal: Double,
+        salesGst: Double,
+        salesTotal: Double,
+        purchasesSubtotal: Double,
+        purchasesGst: Double,
+        purchasesTotal: Double,
+        grossProfit: Double,
+        netAmount: Double
+    ): Uri {
+        val outFile = File(context.cacheDir, "pl_${System.currentTimeMillis()}.csv")
+        FileOutputStream(outFile).use { fos ->
+            val lines = mutableListOf<String>()
+            lines += listOf("From", "To").joinToString(",") + "\n"
+            lines += listOf(
+                escape(dateFmt.format(Date(from))),
+                escape(dateFmt.format(Date(to)))
+            ).joinToString(",") + "\n\n"
+
+            lines += listOf("Section", "Subtotal", "GST", "Total").joinToString(",") + "\n"
+            lines += listOf("Sales", salesSubtotal.toString(), salesGst.toString(), salesTotal.toString()).joinToString(",") + "\n"
+            lines += listOf("Purchases", purchasesSubtotal.toString(), purchasesGst.toString(), purchasesTotal.toString()).joinToString(",") + "\n\n"
+
+            lines += listOf("Metric", "Amount").joinToString(",") + "\n"
+            lines += listOf("Gross Profit (Sales Subtotal - Purchases Subtotal)", grossProfit.toString()).joinToString(",") + "\n"
+            lines += listOf("Net Amount (Sales Total - Purchases Total)", netAmount.toString()).joinToString(",") + "\n"
+
+            lines.forEach { fos.write(it.toByteArray(StandardCharsets.UTF_8)) }
+        }
+        return FileProvider.getUriForFile(context, authority, outFile)
+    }
+
     fun exportAllCsv(
         context: Context,
         authority: String,
