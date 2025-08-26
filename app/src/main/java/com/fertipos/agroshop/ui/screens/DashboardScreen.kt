@@ -58,10 +58,6 @@ fun DashboardScreen(onLogout: () -> Unit) {
         BackHandler(enabled = selected.value != 0) {
             navVm.navigateTo(0)
         }
-        // On Home tab, back should logout (navigate to Login)
-        BackHandler(enabled = selected.value == 0) {
-            onLogout()
-        }
         when (selected.value) {
             0 -> HomeScreen(onNavigateToTab = {
                 if (it == 3) navVm.requestNewBill()
@@ -72,7 +68,7 @@ fun DashboardScreen(onLogout: () -> Unit) {
             3 -> BillingScreen(navVm)
             4 -> ReportsScreen()
             7 -> PurchaseScreen(navVm)
-            5 -> SettingsScreen()
+            5 -> SettingsScreen(onLogout = onLogout)
             6 -> InvoiceHistoryScreen(navVm)
             8 -> PurchaseHistoryScreen(navVm)
         }

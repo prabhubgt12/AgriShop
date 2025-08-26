@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +22,7 @@ class UserPreferences @Inject constructor(
 ) {
     object Keys {
         val THEME_MODE: Preferences.Key<Int> = intPreferencesKey("theme_mode")
+        val LOGGED_IN: Preferences.Key<Boolean> = booleanPreferencesKey("logged_in")
     }
 
     fun themeModeFlow(defaultMode: Int = 0): Flow<Int> =
@@ -28,5 +30,12 @@ class UserPreferences @Inject constructor(
 
     suspend fun setThemeMode(mode: Int) {
         context.dataStore.edit { it[Keys.THEME_MODE] = mode }
+    }
+
+    fun loggedInFlow(): Flow<Boolean> =
+        context.dataStore.data.map { prefs -> prefs[Keys.LOGGED_IN] ?: false }
+
+    suspend fun setLoggedIn(value: Boolean) {
+        context.dataStore.edit { it[Keys.LOGGED_IN] = value }
     }
 }

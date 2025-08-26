@@ -99,7 +99,9 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                                             invoice = row.invoice,
                                             customerName = row.customerName,
                                             company = profile,
-                                            items = items.map { InvoicePdfGenerator.ItemWithProduct(it.item, it.product) }
+                                            items = items.map { InvoicePdfGenerator.ItemWithProduct(it.item, it.product) },
+                                            paid = row.invoice.paid,
+                                            balance = (row.invoice.total - row.invoice.paid).coerceAtLeast(0.0)
                                         )
                                         val intent = Intent(Intent.ACTION_SEND).apply {
                                             type = "application/pdf"

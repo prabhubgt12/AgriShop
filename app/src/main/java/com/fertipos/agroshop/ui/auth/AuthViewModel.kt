@@ -3,6 +3,7 @@ package com.fertipos.agroshop.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fertipos.agroshop.data.repo.AuthRepository
+import com.fertipos.agroshop.data.local.UserPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +12,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val repo: AuthRepository
+    private val repo: AuthRepository,
+    private val prefs: UserPreferences
 ) : ViewModel() {
 
     data class UiState(
@@ -31,7 +33,11 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             val result = repo.login(username, password)
             _loginState.value = result.fold(
-                onSuccess = { UiState(success = true) },
+                onSuccess = {
+                    // persist login state
+                    prefs.setLoggedIn(true)
+                    UiState(success = true)
+                },
                 onFailure = { UiState(error = it.message ?: "Login failed") }
             )
         }

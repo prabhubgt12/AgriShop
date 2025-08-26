@@ -81,7 +81,8 @@ fun UnitPicker(
 ) {
     val options = listOf("Kg", "Pcs", "L")
     var expanded by remember { mutableStateOf(false) }
-    var selection by remember { mutableStateOf(initial) }
+    // Re-initialize internal selection whenever the external initial changes
+    var selection by remember(initial) { mutableStateOf(initial) }
 
     Box(modifier = modifier.fillMaxWidth()) {
         TextField(
@@ -126,7 +127,8 @@ fun TypePicker(
 ) {
     val options = listOf("Fertilizer", "Pecticide", "Fungi", "GP", "Other")
     var expanded by remember { mutableStateOf(false) }
-    var selection by remember { mutableStateOf(initial) }
+    // Re-initialize internal selection whenever the external initial changes
+    var selection by remember(initial) { mutableStateOf(initial) }
 
     Box(modifier = modifier.fillMaxWidth()) {
         TextField(

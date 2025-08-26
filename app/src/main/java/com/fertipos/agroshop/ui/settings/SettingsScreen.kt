@@ -39,16 +39,22 @@ import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
 import com.fertipos.agroshop.ui.theme.ThemeViewModel
 import com.fertipos.agroshop.ui.theme.ThemeMode
+import com.fertipos.agroshop.ui.auth.SessionViewModel
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(onLogout: () -> Unit) {
     val vm: CompanyProfileViewModel = hiltViewModel()
     val current by vm.profile.collectAsState()
     val themeVm: ThemeViewModel = hiltViewModel()
     val themeMode by themeVm.themeMode.collectAsState()
+    val sessionVm: SessionViewModel = hiltViewModel()
 
     varStatefulForm(current, themeMode,
-        onThemeChange = { themeVm.setTheme(it) }
+        onThemeChange = { themeVm.setTheme(it) },
+        onLogout = {
+            sessionVm.logout()
+            onLogout()
+        }
     ) { updated ->
         vm.save(updated)
     }
@@ -59,6 +65,7 @@ private fun varStatefulForm(
     current: CompanyProfile,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
+    onLogout: () -> Unit,
     onSave: (CompanyProfile) -> Unit
 ) {
     var name by remember(current) { mutableStateOf(current.name) }
@@ -169,6 +176,13 @@ private fun varStatefulForm(
                     )
                 }) { Text("Save") }
             }
+
+            Spacer(Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+            Text("Account")
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = { onLogout() }) { Text("Logout") }
         }
     }
 }

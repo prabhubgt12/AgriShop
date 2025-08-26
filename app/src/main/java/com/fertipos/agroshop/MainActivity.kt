@@ -22,6 +22,7 @@ import com.fertipos.agroshop.ui.theme.ThemeViewModel
 import com.fertipos.agroshop.ui.theme.ThemeMode
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.fertipos.agroshop.ui.auth.SessionViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -37,6 +38,8 @@ class MainActivity : ComponentActivity() {
 fun AgroShopRoot() {
     val themeVm: ThemeViewModel = hiltViewModel()
     val mode by themeVm.themeMode.collectAsState()
+    val sessionVm: SessionViewModel = hiltViewModel()
+    val loggedIn by sessionVm.loggedIn.collectAsState()
     val dark = when (mode) {
         ThemeMode.DARK -> true
         ThemeMode.LIGHT -> false
@@ -45,7 +48,7 @@ fun AgroShopRoot() {
     AgroShopTheme(useDarkTheme = dark) {
         Surface(color = MaterialTheme.colorScheme.background) {
             val navController = rememberNavController()
-            AppNavHost(navController)
+            AppNavHost(navController, startDestination = if (loggedIn) Routes.Dashboard else Routes.Login)
         }
     }
 }
@@ -57,8 +60,8 @@ object Routes {
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
-    NavHost(navController = navController, startDestination = Routes.Login, modifier = modifier) {
+fun AppNavHost(navController: NavHostController, startDestination: String = Routes.Login, modifier: Modifier = Modifier) {
+    NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
         composable(Routes.Login) {
             LoginScreen(
                 onLoginSuccess = { navController.navigate(Routes.Dashboard) { popUpTo(Routes.Login) { inclusive = true } } },
