@@ -40,6 +40,11 @@ import android.content.Intent
 import com.fertipos.agroshop.ui.theme.ThemeViewModel
 import com.fertipos.agroshop.ui.theme.ThemeMode
 import com.fertipos.agroshop.ui.auth.SessionViewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import com.fertipos.agroshop.data.backup.BackupManager
+import com.fertipos.agroshop.data.backup.DriveClient
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(onLogout: () -> Unit) {
@@ -92,6 +97,13 @@ private fun varStatefulForm(
             } catch (_: Exception) { /* ignore if not grantable */ }
             logo = uri.toString()
         }
+    }
+
+    val scope = rememberCoroutineScope()
+
+    // Google Sign-In launcher
+    val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        val ok = DriveClient.handleSignInResult(context, res.data)
     }
 
     Surface(Modifier.fillMaxSize()) {
@@ -183,6 +195,52 @@ private fun varStatefulForm(
             Text("Account")
             Spacer(Modifier.height(8.dp))
             Button(onClick = { onLogout() }) { Text("Logout") }
+
+            Spacer(Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+            Text("Backup & Sync")
+            Spacer(Modifier.height(8.dp))
+
+            // Sign in/out row
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                val signedIn = remember { mutableStateOf(DriveClient.isSignedIn(context)) }
+                Button(onClick = {
+                    if (!signedIn.value) {
+                        signInLauncher.launch(DriveClient.getSignInIntent(context))
+                        // update state on next composition; user returns here
+                        scope.launch { kotlinx.coroutines.delay(300); signedIn.value = DriveClient.isSignedIn(context) }
+                    } else {
+                        DriveClient.signOut(context)
+                        signedIn.value = false
+                    }
+                }) { Text(if (signedIn.value) "Sign out Google" else "Sign in Google") }
+            }
+
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    scope.launch {
+                        val zip = BackupManager.createBackupZip(context)
+                        val ok = DriveClient.uploadAppData("agroshop_backup.zip", zip)
+                        // In a production app, show a Snackbar/Toast based on ok
+                    }
+                }) { Text("Backup now") }
+
+                Button(onClick = {
+                    scope.launch {
+                        val files = DriveClient.listBackups()
+                        val latest = files.firstOrNull()
+                        if (latest != null) {
+                            val bytes = DriveClient.download(latest.id)
+                            if (bytes != null) {
+                                BackupManager.restoreBackupZip(context, bytes)
+                                // Recommend app restart after restore
+                            }
+                        }
+                    }
+                }) { Text("Restore") }
+            }
         }
     }
 }
