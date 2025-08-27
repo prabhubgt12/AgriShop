@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -22,6 +24,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,12 +45,20 @@ import com.fertipos.agroshop.ui.common.ProductPicker
 import com.fertipos.agroshop.ui.common.DateField
 import com.fertipos.agroshop.ui.screens.AppNavViewModel
 import java.util.Locale
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 
 @Composable
 fun PurchaseScreen(navVm: AppNavViewModel) {
     val vm: PurchaseViewModel = hiltViewModel()
     val state by vm.state.collectAsState()
     val snackbar = remember { SnackbarHostState() }
+
+    // Hoisted form state like Billing
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
+    var qtyText by remember { mutableStateOf("") }
+    var priceText by remember { mutableStateOf("") }
+    // Date handled by VM (newDateMillis for new, editingDateMillis for edit)
 
     // Observe pending edit request from navigation and load once
     val pendingEditId = navVm.pendingEditPurchaseId.collectAsState()
@@ -75,115 +89,117 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // Snackbar host
-        SnackbarHost(hostState = snackbar)
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .imePadding()
+            .navigationBarsPadding()
+    ) {
+        item {
+            // Snackbar host
+            SnackbarHost(hostState = snackbar)
 
-        // Header
-        val header = if (state.editingPurchaseId != null) "Edit Purchase #${state.editingPurchaseId}" else "Create Purchase"
-        Text(text = header, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
+            // Header
+            val header = if (state.editingPurchaseId != null) "Edit Purchase #${state.editingPurchaseId}" else "Create Purchase"
+            Text(text = header, style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+        }
 
-        // Supplier selection
-        CustomerPicker(
-            customers = state.suppliers,
-            label = "Supplier",
-            modifier = Modifier.fillMaxWidth(),
-            onPicked = { vm.setSupplier(it.id) }
-        )
-        Spacer(Modifier.height(8.dp))
-
-        // Date field (shown only in edit mode)
-        if (state.editingPurchaseId != null) {
+        // Date (always visible at top). Bound to VM for both new and edit.
+        item {
             DateField(
                 label = "Date",
-                value = state.editingDateMillis,
-                onChange = { millis -> vm.setEditingDate(millis) },
+                value = if (state.editingPurchaseId != null) (state.editingDateMillis ?: state.newDateMillis) else state.newDateMillis,
+                onChange = { millis -> if (state.editingPurchaseId != null) vm.setEditingDate(millis) else vm.setNewDate(millis) },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
         }
 
+        // Supplier selection
+        item {
+            val selectedName = state.suppliers.firstOrNull { it.id == state.selectedSupplierId }?.name ?: ""
+            CustomerPicker(
+                customers = state.suppliers,
+                label = "Supplier",
+                initialQuery = selectedName,
+                modifier = Modifier.fillMaxWidth(),
+                onPicked = { vm.setSupplier(it.id) }
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+
         // Product picker (own row) + qty & price (grouped row)
-        var selectedProduct by remember { mutableStateOf<Product?>(null) }
-        var qtyText by remember { mutableStateOf("") }
-        var priceText by remember { mutableStateOf("") }
-        // Product on its own full-width row
-        ProductPicker(
-            products = state.products,
-            label = "Product",
-            modifier = Modifier.fillMaxWidth(),
-            onPicked = { p ->
-                selectedProduct = p
-                priceText = p.purchasePrice.toStringAsFixed(2)
-            }
-        )
-        Spacer(Modifier.height(6.dp))
-        // Grouped numeric fields
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = qtyText,
-                onValueChange = { raw ->
-                    val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
-                    val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
-                    qtyText = final
-                },
-                label = { Text("Qty") },
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = priceText,
-                onValueChange = { raw ->
-                    val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
-                    val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
-                    priceText = final
-                },
-                label = { Text("Unit Price") },
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                modifier = Modifier.weight(1f)
-            )
-        }
-        Spacer(Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                val p = selectedProduct ?: return@Button
-                val q = qtyText.toDoubleOrNull() ?: return@Button
-                // Add with default purchasePrice
-                vm.addItem(p, q)
-                // If user entered a price, override unit price
-                val up = priceText.toDoubleOrNull()
-                if (up != null) {
-                    vm.updateItem(p.id, quantity = q, unitPrice = up, gstPercent = null)
+        item {
+            // Product on its own full-width row
+            ProductPicker(
+                products = state.products,
+                label = "Product",
+                modifier = Modifier.fillMaxWidth(),
+                onPicked = { p ->
+                    selectedProduct = p
+                    priceText = p.purchasePrice.toStringAsFixed(2)
                 }
-                selectedProduct = null
-                qtyText = ""
-                priceText = ""
-            }) { Text("Add Item") }
-            TextButton(onClick = { vm.setNotes(""); vm.clearSuccess() }) { Text("Clear") }
-        }
-
-        Spacer(Modifier.height(12.dp))
-        HorizontalDivider()
-        Spacer(Modifier.height(8.dp))
-
-        // Items list
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(state.items) { it ->
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(it.product.name, style = MaterialTheme.typography.titleSmall)
-                        Text("Qty ${it.quantity.toStringAsFixed(2)} ${it.product.unit} × ${it.unitPrice.toStringAsFixed(2)}")
+            )
+            Spacer(Modifier.height(6.dp))
+            // Grouped numeric fields
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = qtyText,
+                    onValueChange = { raw ->
+                        val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                        val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                        qtyText = final
+                    },
+                    label = { Text("Qty") },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = priceText,
+                    onValueChange = { raw ->
+                        val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                        val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                        priceText = final
+                    },
+                    label = { Text("Unit Price") },
+                    singleLine = true,
+                    enabled = selectedProduct != null,
+                    placeholder = { Text(selectedProduct?.purchasePrice?.toStringAsFixed(2) ?: "") },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    val p = selectedProduct ?: return@Button
+                    val q = qtyText.toDoubleOrNull() ?: return@Button
+                    // Add with default purchasePrice
+                    vm.addItem(p, q)
+                    // If user entered a price, override unit price
+                    val up = priceText.toDoubleOrNull()
+                    if (up != null) {
+                        vm.updateItem(p.id, quantity = q, unitPrice = up, gstPercent = null)
                     }
-                    Text("= ${(it.quantity * it.unitPrice * (1 + it.gstPercent / 100.0)).toStringAsFixed(2)}")
-                    TextButton(onClick = { vm.removeItem(it.product.id) }) { Text("Remove") }
-                }
-                HorizontalDivider()
+                    // Keep product selected like Billing; just clear qty for fast repeated adds
+                    qtyText = ""
+                }) { Text("Add Item") }
+                TextButton(onClick = { vm.setNotes(""); vm.clearSuccess() }) { Text("Clear") }
             }
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
         }
 
-        // Totals + submit
-        Column(modifier = Modifier.fillMaxWidth()) {
+        // Items list as Cards (use stable key like Billing to avoid state reuse issues)
+        items(state.items, key = { it.product.id }) { it ->
+            PurchaseItemCard(item = it, onRemove = { vm.removeItem(it.product.id) })
+        }
+
+        // Totals + submit at end of scroll
+        item {
             Text(
                 "Subtotal: ${state.subtotal.toStringAsFixed(2)}",
                 modifier = Modifier.fillMaxWidth(),
@@ -221,7 +237,6 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                     value = if (state.paid == 0.0) "" else state.paid.toStringAsFixed(2),
                     onValueChange = { vm.setPaid(it); if (paidInFull && it.toDoubleOrNull() != state.total) paidInFull = false },
                     singleLine = true,
-                    // no label/placeholder to avoid extra height and inline text
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     textStyle = androidx.compose.ui.text.TextStyle(textAlign = androidx.compose.ui.text.style.TextAlign.End),
                     colors = TextFieldDefaults.colors(
@@ -249,6 +264,48 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
     }
+
 }
 
-private fun Double.toStringAsFixed(digits: Int): String = String.format(Locale.getDefault(), "%.${digits}f", this)
+    @Composable
+    private fun PurchaseItemCard(
+        item: PurchaseViewModel.DraftItem,
+        onRemove: () -> Unit
+    ) {
+        val lineBase = item.quantity * item.unitPrice
+        val gstAmt = lineBase * (item.gstPercent / 100.0)
+        val lineTotal = lineBase + gstAmt
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+            colors = CardDefaults.cardColors()
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = item.product.name, style = MaterialTheme.typography.titleSmall)
+                    Spacer(Modifier.weight(1f))
+                    IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = "Delete") }
+                }
+                Spacer(Modifier.height(4.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Qty: ${item.quantity.toStringAsFixed(2)} ${item.product.unit}")
+                    Spacer(Modifier.weight(1f))
+                    Text(text = "Price: ${item.unitPrice.toStringAsFixed(2)}")
+                }
+                Spacer(Modifier.height(2.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "GST ${String.format(Locale.getDefault(), "%.1f", item.gstPercent)}%")
+                    Spacer(Modifier.weight(1f))
+                    Text(text = "GST Amt: ${gstAmt.toStringAsFixed(2)}")
+                }
+                Spacer(Modifier.height(2.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.weight(1f))
+                    Text(text = "Total: ${lineTotal.toStringAsFixed(2)}")
+                }
+            }
+        }
+    }
+
+    private fun Double.toStringAsFixed(digits: Int): String = String.format(Locale.getDefault(), "%.${digits}f", this)

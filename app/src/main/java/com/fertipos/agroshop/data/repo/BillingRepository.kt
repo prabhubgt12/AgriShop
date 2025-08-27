@@ -22,6 +22,7 @@ class BillingRepository @Inject constructor(
 
     suspend fun createInvoice(
         customerId: Int,
+        date: Long,
         notes: String?,
         items: List<DraftItem>,
         paid: Double
@@ -47,6 +48,7 @@ class BillingRepository @Inject constructor(
                 invoiceId = invoiceDao.insertInvoice(
                     Invoice(
                         customerId = customerId,
+                        date = date,
                         subtotal = subtotal,
                         gstAmount = gstAmount,
                         total = total,
@@ -87,6 +89,7 @@ class BillingRepository @Inject constructor(
     suspend fun updateInvoice(
         invoiceId: Int,
         customerId: Int,
+        date: Long,
         notes: String?,
         items: List<DraftItem>,
         paid: Double
@@ -123,7 +126,7 @@ class BillingRepository @Inject constructor(
                     Invoice(
                         id = invoiceId,
                         customerId = customerId,
-                        date = oldInvoice.date,
+                        date = date,
                         subtotal = subtotal,
                         gstAmount = gstAmount,
                         total = total,

@@ -47,7 +47,8 @@ class PurchaseViewModel @Inject constructor(
         val successPurchaseId: Int? = null,
         val successEditedId: Int? = null,
         val editingPurchaseId: Int? = null,
-        val editingDateMillis: Long? = null
+        val editingDateMillis: Long? = null,
+        val newDateMillis: Long = System.currentTimeMillis()
     )
 
     private val selectedSupplier = MutableStateFlow<Int?>(null)
@@ -71,6 +72,7 @@ class PurchaseViewModel @Inject constructor(
     private val editingId = MutableStateFlow<Int?>(null)
     private val editingDate = MutableStateFlow<Long?>(null)
     private val editedId = MutableStateFlow<Int?>(null)
+    private val newDate = MutableStateFlow(System.currentTimeMillis())
 
     private val interim = combine(
         suppliersFlow,
@@ -90,6 +92,7 @@ class PurchaseViewModel @Inject constructor(
         editingId,
         editingDate,
         paidText,
+        newDate,
     ) { all: Array<Any?> ->
         val base = all[0] as Interim
         val st = all[1] as Pair<Boolean, String?>
@@ -98,6 +101,7 @@ class PurchaseViewModel @Inject constructor(
         val editing = all[4] as Int?
         val editDate = all[5] as Long?
         val paidStr = all[6] as String
+        val newDateMs = all[7] as Long
         val subtotal = base.items.sumOf { it.quantity * it.unitPrice }
         val gstAmount = base.items.sumOf { it.quantity * it.unitPrice * (it.gstPercent / 100.0) }
         val total = subtotal + gstAmount
@@ -119,7 +123,8 @@ class PurchaseViewModel @Inject constructor(
             successPurchaseId = sid,
             successEditedId = eid,
             editingPurchaseId = editing,
-            editingDateMillis = editDate
+            editingDateMillis = editDate,
+            newDateMillis = newDateMs
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
@@ -182,6 +187,7 @@ class PurchaseViewModel @Inject constructor(
     fun resetForNewPurchase() {
         editingId.value = null
         editingDate.value = null
+        newDate.value = System.currentTimeMillis()
         draftItems.value = emptyList()
         notes.value = ""
         selectedSupplier.value = null
@@ -196,6 +202,7 @@ class PurchaseViewModel @Inject constructor(
     fun setPaid(text: String) { paidText.value = text }
 
     fun setEditingDate(millis: Long?) { editingDate.value = millis }
+    fun setNewDate(millis: Long?) { newDate.value = millis ?: System.currentTimeMillis() }
 
     fun submit() {
         val supp = selectedSupplier.value ?: run {
@@ -214,6 +221,7 @@ class PurchaseViewModel @Inject constructor(
             if (editId == null) {
                 val result = purchaseRepo.createPurchase(
                     supplierId = supp,
+                    date = newDate.value,
                     notes = notes.value.ifBlank { null },
                     items = drafts,
                     paid = (paidText.value.toDoubleOrNull() ?: 0.0)

@@ -22,6 +22,7 @@ class PurchaseRepository @Inject constructor(
 
     suspend fun createPurchase(
         supplierId: Int,
+        date: Long,
         notes: String?,
         items: List<DraftItem>,
         paid: Double
@@ -37,6 +38,7 @@ class PurchaseRepository @Inject constructor(
                 purchaseId = purchaseDao.insertPurchase(
                     Purchase(
                         supplierId = supplierId,
+                        date = date,
                         subtotal = subtotal,
                         gstAmount = gstAmount,
                         total = total,

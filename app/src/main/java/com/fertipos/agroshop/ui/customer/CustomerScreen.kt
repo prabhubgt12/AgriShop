@@ -37,30 +37,17 @@ fun CustomerScreen() {
 
     Surface(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Add form
-            var name by remember { mutableStateOf("") }
-            var phone by remember { mutableStateOf("") }
-            var address by remember { mutableStateOf("") }
-            Text(text = "Add Customer")
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name*") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(6.dp))
-            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(6.dp))
-            OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
-                    vm.add(name, phone.ifBlank { null }, address.ifBlank { null })
-                    name = ""; phone = ""; address = ""
-                }) { Text("Save") }
+            // Header with Add button
+            var showAdd by remember { mutableStateOf(false) }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = "Customers", style = MaterialTheme.typography.titleMedium)
+                Button(onClick = { showAdd = true }) { Text("Add") }
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
 
-            Text(text = "Customers")
-            Spacer(Modifier.height(8.dp))
+            // List only
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(state.value.customers, key = { it.id }) { c ->
                     CustomerRow(
@@ -70,6 +57,16 @@ fun CustomerScreen() {
                     )
                     HorizontalDivider()
                 }
+            }
+
+            if (showAdd) {
+                AddCustomerDialog(
+                    onConfirm = { n, p, a ->
+                        vm.add(n, p, a)
+                        showAdd = false
+                    },
+                    onDismiss = { showAdd = false }
+                )
             }
         }
     }
@@ -142,6 +139,37 @@ private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, S
             TextButton(onClick = {
                 onConfirm(name, phone.ifBlank { null }, address.ifBlank { null })
                 onDismiss()
+            }) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+private fun AddCustomerDialog(onConfirm: (String, String?, String?) -> Unit, onDismiss: () -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Customer") },
+        text = {
+            Column {
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name*") })
+                Spacer(Modifier.height(6.dp))
+                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") })
+                Spacer(Modifier.height(6.dp))
+                OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") })
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (name.isNotBlank()) {
+                    onConfirm(name.trim(), phone.ifBlank { null }, address.ifBlank { null })
+                }
             }) { Text("Save") }
         },
         dismissButton = {

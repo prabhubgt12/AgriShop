@@ -69,6 +69,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import com.fertipos.agroshop.ui.common.CustomerPicker
 import com.fertipos.agroshop.ui.common.ProductPicker
+import com.fertipos.agroshop.ui.common.DateField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,6 +113,13 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         }
     }
 
+    // On first open (fresh new bill), reset the date to today if not editing
+    LaunchedEffect(Unit) {
+        if (pendingEditId.value == null && state.value.editingInvoiceId == null) {
+            vm.setBillDate(System.currentTimeMillis())
+        }
+    }
+
     // If user explicitly chose New Bill from Home, reset draft (only when not editing)
     val newBillTick = navVm.newBillTick.collectAsState()
     LaunchedEffect(newBillTick.value) {
@@ -133,11 +141,24 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             Spacer(Modifier.height(6.dp))
         }
 
+        // Date at top (bound to VM so create/update and PDF use same date)
+        item {
+            DateField(
+                label = "Date",
+                value = state.value.dateMillis,
+                onChange = { millis -> vm.setBillDate(millis) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(6.dp))
+        }
+
         // Customer selector (typeahead)
         item {
+            val selectedName = state.value.customers.firstOrNull { it.id == state.value.selectedCustomerId }?.name ?: ""
             CustomerPicker(
                 customers = state.value.customers,
                 label = "Customer*",
+                initialQuery = selectedName,
                 modifier = Modifier.fillMaxWidth(),
                 onPicked = { vm.setCustomer(it.id) }
             )
@@ -299,10 +320,12 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             val invoice = Invoice(
                 id = successId,
                 customerId = pendingPrint!!.selectedCustomerId ?: 0,
+                date = state.value.dateMillis,
                 subtotal = pendingPrint!!.subtotal,
                 gstAmount = pendingPrint!!.gstAmount,
                 total = pendingPrint!!.total,
-                notes = null
+                notes = null,
+                paid = pendingPrint!!.paid
             )
             val items = pendingPrint!!.items.map {
                 InvoicePdfGenerator.ItemWithProduct(

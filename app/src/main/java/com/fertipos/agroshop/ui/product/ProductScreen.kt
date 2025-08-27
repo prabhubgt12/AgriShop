@@ -50,108 +50,13 @@ fun ProductScreen() {
     val state = vm.state.collectAsState()
 
     Surface(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        // Split layout: top form (scrollable) and bottom list (scrollable), each half screen via weight(1f)
-        var name by remember { mutableStateOf("") }
-        var type by remember { mutableStateOf("Fertilizer") }
-        var unit by remember { mutableStateOf("") }
-        var sellingPrice by remember { mutableStateOf("") }
-        var purchasePrice by remember { mutableStateOf("") }
-        var stock by remember { mutableStateOf("") }
-        var gst by remember { mutableStateOf("") }
-
-        Column(modifier = Modifier.fillMaxSize().imePadding().navigationBarsPadding()) {
-            // Form area
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Text(text = "Add Product")
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Name*") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    TypePicker(
-                        initial = type,
-                        label = "Type*",
-                        modifier = Modifier.weight(1f),
-                        onPicked = { picked -> type = picked }
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    UnitPicker(
-                        initial = unit,
-                        label = "Unit*",
-                        modifier = Modifier.weight(1.6f),
-                        onPicked = { picked -> unit = picked }
-                    )
-                    OutlinedTextField(
-                        value = stock,
-                        onValueChange = { raw ->
-                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
-                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
-                            stock = final
-                        },
-                        label = { Text("Stock*") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(0.9f)
-                    )
-                    OutlinedTextField(
-                        value = gst,
-                        onValueChange = { raw ->
-                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
-                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
-                            gst = final
-                        },
-                        label = { Text("GST%") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(0.9f)
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = purchasePrice,
-                        onValueChange = { raw ->
-                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
-                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
-                            purchasePrice = final
-                        },
-                        label = { Text("Buy Price*") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f)
-                    )
-                    OutlinedTextField(
-                        value = sellingPrice,
-                        onValueChange = { raw ->
-                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
-                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
-                            sellingPrice = final
-                        },
-                        label = { Text("Selling Price*") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = {
-                        val sp = sellingPrice.toDoubleOrNull() ?: return@Button
-                        val pp = purchasePrice.toDoubleOrNull() ?: return@Button
-                        val s = stock.toDoubleOrNull() ?: return@Button
-                        val g = gst.toDoubleOrNull() ?: 0.0
-                        vm.add(name, type, unit, sp, pp, s, g)
-                        name = ""; type = "Fertilizer"; unit = ""; sellingPrice = ""; purchasePrice = ""; stock = ""; gst = ""
-                    }) { Text("Save") }
-                }
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Header with Add button
+            var showAdd by remember { mutableStateOf(false) }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = "Products", style = MaterialTheme.typography.titleMedium)
+                Button(onClick = { showAdd = true }) { Text("Add") }
             }
-
             Spacer(Modifier.height(8.dp))
             HorizontalDivider()
             Spacer(Modifier.height(6.dp))
@@ -159,8 +64,8 @@ fun ProductScreen() {
             // List area
             LazyColumn(
                 modifier = Modifier
-                    .weight(1f)
                     .fillMaxWidth()
+                    .weight(1f)
             ) {
                 items(state.value.products, key = { it.id }) { p ->
                     ProductRow(
@@ -175,6 +80,16 @@ fun ProductScreen() {
                     )
                     HorizontalDivider()
                 }
+            }
+
+            if (showAdd) {
+                AddProductDialog(
+                    onConfirm = { n, t, u, sp, pp, st, g ->
+                        vm.add(n, t, u, sp, pp, st, g)
+                        showAdd = false
+                    },
+                    onDismiss = { showAdd = false }
+                )
             }
         }
     }
@@ -250,28 +165,34 @@ private fun EditProductDialog(
         title = { Text("Edit Product") },
         text = {
             Column {
+                // 1) Name (full width)
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name*") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(6.dp))
+
+                // 2) Type and Unit
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Name*") },
-                        modifier = Modifier.weight(1f)
-                    )
                     TypePicker(
                         initial = type,
                         label = "Type*",
                         modifier = Modifier.weight(1f),
                         onPicked = { picked -> type = picked }
                     )
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     UnitPicker(
                         initial = unit,
                         label = "Unit*",
-                        modifier = Modifier.weight(1.6f),
+                        modifier = Modifier.weight(1f),
                         onPicked = { picked -> unit = picked }
                     )
+                }
+                Spacer(Modifier.height(6.dp))
+
+                // 3) Stock and GST
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = stock,
                         onValueChange = { raw ->
@@ -279,9 +200,9 @@ private fun EditProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             stock = final
                         },
-                        label = { Text("Stock*") },
+                        label = { Text("Stock") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(0.9f)
+                        modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
                         value = gst,
@@ -292,10 +213,12 @@ private fun EditProductDialog(
                         },
                         label = { Text("GST%") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(0.9f)
+                        modifier = Modifier.weight(1f)
                     )
                 }
                 Spacer(Modifier.height(6.dp))
+
+                // 4) Buy Price and Sell Price
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = purchasePrice,
@@ -304,7 +227,7 @@ private fun EditProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             purchasePrice = final
                         },
-                        label = { Text("Buy Price*") },
+                        label = { Text("Buy Price") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -315,7 +238,7 @@ private fun EditProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             sellingPrice = final
                         },
-                        label = { Text("Selling Price*") },
+                        label = { Text("Sell Price") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -324,9 +247,9 @@ private fun EditProductDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                val sp = sellingPrice.toDoubleOrNull() ?: return@TextButton
-                val pp = purchasePrice.toDoubleOrNull() ?: return@TextButton
-                val st = stock.toDoubleOrNull() ?: return@TextButton
+                val sp = sellingPrice.toDoubleOrNull() ?: 0.0
+                val pp = purchasePrice.toDoubleOrNull() ?: 0.0
+                val st = stock.toDoubleOrNull() ?: 0.0
                 val g = gst.toDoubleOrNull() ?: 0.0
                 onConfirm(name, type, unit, sp, pp, st, g)
             }) { Text("Save") }
@@ -334,5 +257,116 @@ private fun EditProductDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
         }
+    )
+}
+
+@Composable
+private fun AddProductDialog(
+    onConfirm: (String, String, String, Double, Double, Double, Double) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf("Fertilizer") }
+    var unit by remember { mutableStateOf("Pcs") }
+    var stock by remember { mutableStateOf("0") }
+    var gst by remember { mutableStateOf("") }
+    var purchasePrice by remember { mutableStateOf("0") }
+    var sellingPrice by remember { mutableStateOf("0") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Product") },
+        text = {
+            Column {
+                // 1) Name (full width)
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name*") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(6.dp))
+
+                // 2) Type and Unit
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    TypePicker(
+                        initial = type,
+                        label = "Type*",
+                        modifier = Modifier.weight(1f),
+                        onPicked = { picked -> type = picked }
+                    )
+                    UnitPicker(
+                        initial = unit,
+                        label = "Unit*",
+                        modifier = Modifier.weight(1f),
+                        onPicked = { picked -> unit = picked }
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+
+                // 3) Stock and GST
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = stock,
+                        onValueChange = { raw ->
+                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                            stock = final
+                        },
+                        label = { Text("Stock") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = gst,
+                        onValueChange = { raw ->
+                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                            gst = final
+                        },
+                        label = { Text("GST%") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+
+                // 4) Buy Price and Sell Price
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = purchasePrice,
+                        onValueChange = { raw ->
+                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                            purchasePrice = final
+                        },
+                        label = { Text("Buy Price") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = sellingPrice,
+                        onValueChange = { raw ->
+                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                            sellingPrice = final
+                        },
+                        label = { Text("Sell Price") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val sp = sellingPrice.toDoubleOrNull() ?: 0.0
+                val pp = purchasePrice.toDoubleOrNull() ?: 0.0
+                val st = stock.toDoubleOrNull() ?: 0.0
+                val g = gst.toDoubleOrNull() ?: 0.0
+                onConfirm(name, type, unit, sp, pp, st, g)
+            }) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

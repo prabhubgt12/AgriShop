@@ -45,7 +45,8 @@ class BillingViewModel @Inject constructor(
         val loading: Boolean = false,
         val error: String? = null,
         val successInvoiceId: Int? = null,
-        val editingInvoiceId: Int? = null
+        val editingInvoiceId: Int? = null,
+        val dateMillis: Long = System.currentTimeMillis()
     )
 
     private val selectedCustomer = MutableStateFlow<Int?>(null)
@@ -55,6 +56,7 @@ class BillingViewModel @Inject constructor(
     private val status = MutableStateFlow(Pair(false, null as String?))
     private val successId = MutableStateFlow<Int?>(null)
     private val editingInvoiceId = MutableStateFlow<Int?>(null)
+    private val billDate = MutableStateFlow(System.currentTimeMillis())
 
     private val customersFlow = customerDao.getAll()
     private val productsFlow = productDao.getAll()
@@ -82,8 +84,15 @@ class BillingViewModel @Inject constructor(
         status,
         successId,
         editingInvoiceId,
-        paidText
-    ) { base, st, sid, editId, paidStr ->
+        paidText,
+        billDate,
+    ) { all: Array<Any?> ->
+        val base = all[0] as Interim
+        val st = all[1] as Pair<Boolean, String?>
+        val sid = all[2] as Int?
+        val editId = all[3] as Int?
+        val paidStr = all[4] as String
+        val dateMs = all[5] as Long
         val subtotal = base.items.sumOf { it.quantity * it.unitPrice }
         val gstAmount = base.items.sumOf { it.quantity * it.unitPrice * (it.gstPercent / 100.0) }
         val total = subtotal + gstAmount
@@ -103,13 +112,15 @@ class BillingViewModel @Inject constructor(
             loading = st.first,
             error = st.second,
             successInvoiceId = sid,
-            editingInvoiceId = editId
+            editingInvoiceId = editId,
+            dateMillis = dateMs
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     fun setCustomer(id: Int?) { selectedCustomer.value = id }
     fun setNotes(n: String) { notes.value = n }
     fun setPaid(text: String) { paidText.value = text }
+    fun setBillDate(millis: Long?) { billDate.value = millis ?: System.currentTimeMillis() }
 
     fun addItem(product: Product, quantity: Double) {
         if (quantity <= 0) return
@@ -161,6 +172,7 @@ class BillingViewModel @Inject constructor(
                 billingRepo.updateInvoice(
                     invoiceId = editId,
                     customerId = cust,
+                    date = billDate.value,
                     notes = notes.value.ifBlank { null },
                     items = drafts,
                     paid = (paidText.value.toDoubleOrNull() ?: 0.0)
@@ -168,6 +180,7 @@ class BillingViewModel @Inject constructor(
             } else {
                 billingRepo.createInvoice(
                     customerId = cust,
+                    date = billDate.value,
                     notes = notes.value.ifBlank { null },
                     items = drafts,
                     paid = (paidText.value.toDoubleOrNull() ?: 0.0)
@@ -195,6 +208,7 @@ class BillingViewModel @Inject constructor(
                     selectedCustomer.value = inv.customerId
                     notes.value = inv.notes ?: ""
                     paidText.value = if (inv.paid == 0.0) "" else inv.paid.toString()
+                    billDate.value = inv.date
                     // Ensure products are loaded before mapping items
                     val products = productsFlow.first()
                     val pmap = products.associateBy { it.id }
@@ -219,6 +233,7 @@ class BillingViewModel @Inject constructor(
         notes.value = ""
         editingInvoiceId.value = null
         paidText.value = ""
+        billDate.value = System.currentTimeMillis()
         // Do not touch successId/status here; UI manages them
     }
 }

@@ -29,7 +29,8 @@ fun CustomerPicker(
     onPicked: (Customer) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var query by remember { mutableStateOf(initialQuery) }
+    // Re-initialize internal query whenever the external initialQuery changes (e.g., when editing loads)
+    var query by remember(initialQuery) { mutableStateOf(initialQuery) }
 
     Box(modifier = modifier.fillMaxWidth()) {
         TextField(
@@ -173,7 +174,8 @@ fun ProductPicker(
     onPicked: (Product) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var query by remember { mutableStateOf(initialQuery) }
+    // Re-initialize internal query whenever the external initialQuery changes
+    var query by remember(initialQuery) { mutableStateOf(initialQuery) }
 
     Box(modifier = modifier.fillMaxWidth()) {
         TextField(
