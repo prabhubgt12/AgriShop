@@ -28,9 +28,12 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var onUnlock: (() -> Unit)? = null
     private val confirmDeviceCredential =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            // No direct result content; success if user authenticated or no credential set
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+            if (res.resultCode == RESULT_OK) {
+                onUnlock?.invoke()
+            }
         }
 
     private val themeVm: ThemeViewModel by viewModels()
@@ -44,12 +47,8 @@ class MainActivity : ComponentActivity() {
                     var unlocked by remember { mutableStateOf(false) }
 
                     LaunchedEffect(Unit) {
-                        if (!ensureDeviceUnlocked()) {
-                            // If no credential set, consider unlocked
-                            unlocked = true
-                        } else {
-                            unlocked = true
-                        }
+                        onUnlock = { unlocked = true }
+                        requestUnlockOrGrant()
                     }
 
                     if (unlocked) {
@@ -64,9 +63,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun ensureDeviceUnlocked(): Boolean {
+    private fun requestUnlockOrGrant() {
         val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        return if (km.isKeyguardSecure) {
+        if (km.isKeyguardSecure) {
             val intent: Intent? = km.createConfirmDeviceCredentialIntent(
                 getString(R.string.app_name),
                 getString(R.string.unlock_to_continue)
@@ -74,10 +73,9 @@ class MainActivity : ComponentActivity() {
             if (intent != null) {
                 confirmDeviceCredential.launch(intent)
             }
-            true
         } else {
-            // No device credential set; allow access
-            false
+            // No device credential set; allow access immediately
+            onUnlock?.invoke()
         }
     }
 }

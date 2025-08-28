@@ -133,11 +133,13 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
 
             status?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
 
-            Spacer(Modifier.height(8.dp))
-            // Developer and version info
-            Text("Developer: Prabhakar Reddy", style = MaterialTheme.typography.labelSmall)
-            Text("Email: prabhurb@gmail.com", style = MaterialTheme.typography.labelSmall)
-            Text("App version: ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall)
+            Spacer(Modifier.height(4.dp))
+            // Developer and version info (compact spacing)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.fillMaxWidth()) {
+                Text("Developer: Prabhakar Reddy", style = MaterialTheme.typography.labelSmall)
+                Text("Email: prabhurb@gmail.com", style = MaterialTheme.typography.labelSmall)
+                Text("App version: ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall)
+            }
         }
     }
 }

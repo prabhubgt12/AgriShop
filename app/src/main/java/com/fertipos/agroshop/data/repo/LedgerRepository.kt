@@ -20,7 +20,8 @@ class LedgerRepository(
             flow {
                 val computed = withContext(Dispatchers.IO) {
                     list.map { e ->
-                        val payments = dao.getPaymentsFor(e.id)
+                        // Consider only payments strictly after the current baseline (fromDate)
+                        val payments = dao.getPaymentsFor(e.id).filter { it.date > e.fromDate }
                         val now = System.currentTimeMillis()
                         val accrued = LedgerInterest.accruedInterest(e, payments, now)
                         val paid = payments.sumOf { it.amount }
@@ -50,7 +51,7 @@ class LedgerRepository(
 
     suspend fun computeAt(entryId: Int, atMillis: Long): Triple<Double, Double, Double> {
         val entry = dao.getEntryOnce(entryId) ?: return Triple(0.0, 0.0, 0.0)
-        val payments = dao.getPaymentsFor(entryId).filter { it.date <= atMillis }
+        val payments = dao.getPaymentsFor(entryId).filter { it.date > entry.fromDate && it.date <= atMillis }
         val accrued = LedgerInterest.accruedInterest(entry, payments, atMillis)
         val paid = payments.sumOf { it.amount }
         val outstanding = entry.principal + accrued - paid
@@ -62,28 +63,24 @@ class LedgerRepository(
     suspend fun getPaymentsFor(entryId: Int): List<LedgerPayment> = dao.getPaymentsFor(entryId)
 
     /**
-     * Partial payment rule (per user):
-     * newPrincipal = totalAmount(now) + interest(now) - partialPayment
-     * and reset fromDate to now, clearing existing payments.
+     * Partial payment rule:
+     * newPrincipal = principal + interest(accrued till paymentDate) - partialPayment
+     * Roll baseline by setting fromDate = paymentDateMillis. Do NOT clear payments; keep history. Also record the payment.
      */
     suspend fun applyPartialPayment(entryId: Int, partialAmount: Double) {
-        // Backward-compatible: default to now
         applyPartialPayment(entryId, partialAmount, System.currentTimeMillis())
     }
 
-    /**
-     * Partial payment rule:
-     * newPrincipal = principal + interest(accrued till paymentDate) - partialPayment
-     * and reset fromDate to paymentDate, clearing existing payments to avoid double counting.
-     */
     suspend fun applyPartialPayment(entryId: Int, partialAmount: Double, paymentDateMillis: Long) {
         val entry = dao.getEntryOnce(entryId) ?: return
-        val payments = dao.getPaymentsFor(entryId)
-        val accrued = LedgerInterest.accruedInterest(entry, payments, paymentDateMillis)
-        val newPrincipal = (entry.principal + accrued - partialAmount).coerceAtLeast(0.0)
+        val paymentsTillNow = dao.getPaymentsFor(entryId).filter { it.date >= entry.fromDate && it.date <= paymentDateMillis }
+        val accruedTillPayment = LedgerInterest.accruedInterest(entry, paymentsTillNow, paymentDateMillis)
+        val newPrincipal = (entry.principal + accruedTillPayment - partialAmount).coerceAtLeast(0.0)
 
-        // reset ledger: clear payments and set fromDate to the payment date with new principal
-        dao.clearPaymentsFor(entryId)
+        // 1) Record payment for history
+        dao.insertPayment(LedgerPayment(entryId = entryId, amount = partialAmount, date = paymentDateMillis))
+
+        // 2) Roll the baseline so future accrual starts from payment date on the remaining amount
         dao.updateEntry(
             entry.copy(
                 principal = newPrincipal,

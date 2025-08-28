@@ -1,5 +1,6 @@
 package com.ledge.ledgerbook.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -14,10 +15,18 @@ import com.ledge.ledgerbook.ui.settings.SettingsScreen
 @Composable
 fun LedgerApp(onRequestLogout: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        var screen by remember { mutableStateOf("list") }
+        var screen by remember { mutableStateOf("home") }
         when (screen) {
-            "list" -> LedgerListScreen(onOpenSettings = { screen = "settings" }, onRequestLogout = onRequestLogout)
-            "settings" -> SettingsScreen(onBack = { screen = "list" })
+            "home" -> HomeScreen(
+                onOpenLedger = { screen = "list" },
+                onOpenSettings = { screen = "settings" },
+                onRequestLogout = onRequestLogout
+            )
+            "list" -> {
+                BackHandler(enabled = true) { screen = "home" }
+                LedgerListScreen()
+            }
+            "settings" -> SettingsScreen(onBack = { screen = "home" })
         }
     }
 }

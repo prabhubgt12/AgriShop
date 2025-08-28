@@ -1,6 +1,4 @@
 package com.ledge.ledgerbook.ui
-
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,7 +25,7 @@ typealias LedgerItemVM = LedgerViewModel.LedgerItemVM
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun LedgerListScreen(onOpenSettings: () -> Unit, onRequestLogout: () -> Unit, vm: LedgerViewModel = hiltViewModel()) {
+fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
     val state by vm.state.collectAsState()
 
     // Dialog-local states
@@ -40,9 +37,6 @@ fun LedgerListScreen(onOpenSettings: () -> Unit, onRequestLogout: () -> Unit, vm
     val previewInterest = remember { mutableStateOf(0.0) }
     val previewOutstanding = remember { mutableStateOf(0.0) }
     val detailsForId = remember { mutableStateOf<Int?>(null) }
-
-    // Intercept system back at home screen to "logout" (finish activity and require unlock next open)
-    BackHandler(enabled = true) { onRequestLogout() }
 
     Scaffold(
         floatingActionButton = {
@@ -57,7 +51,7 @@ fun LedgerListScreen(onOpenSettings: () -> Unit, onRequestLogout: () -> Unit, vm
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
-                // In-content header row with title and Settings icon
+                // In-content header row with title only
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -68,9 +62,6 @@ fun LedgerListScreen(onOpenSettings: () -> Unit, onRequestLogout: () -> Unit, vm
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f)
                     )
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
                 }
                 Spacer(Modifier.height(10.dp))
                 // Overview cards row 1
