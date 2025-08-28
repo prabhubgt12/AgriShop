@@ -3,6 +3,7 @@ package com.fertipos.agroshop.ui.customer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
@@ -29,8 +35,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.MoreVert
 import com.fertipos.agroshop.data.local.entities.Customer
 
 @Composable
@@ -52,15 +61,29 @@ fun CustomerScreen() {
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
 
-            // List only
+            // Search bar
+            var searchQuery by remember { mutableStateOf("") }
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text("Search by customer name") }
+            )
+            Spacer(Modifier.height(8.dp))
+
+            // Filtered list
+            val filtered = remember(state.value.customers, searchQuery) {
+                if (searchQuery.isBlank()) state.value.customers else state.value.customers.filter { it.name.contains(searchQuery, ignoreCase = true) }
+            }
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(state.value.customers, key = { it.id }) { c ->
+                items(filtered, key = { it.id }) { c ->
                     CustomerRow(
                         c = c,
                         onUpdate = { updated, n, p, a -> vm.update(updated, n, p, a) },
                         onDelete = { vm.delete(c) }
                     )
-                    HorizontalDivider()
+                    Spacer(Modifier.height(8.dp))
                 }
             }
 
@@ -93,20 +116,30 @@ private fun CustomerRow(
 ) {
     var showEdit by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { showEdit = true }) {
-        Text(text = c.name, style = MaterialTheme.typography.titleMedium)
-        if (!c.phone.isNullOrBlank() || !c.address.isNullOrBlank()) {
-            val parts = buildList {
-                if (!c.phone.isNullOrBlank()) add("Phone: ${c.phone}")
-                if (!c.address.isNullOrBlank()) add("Address: ${c.address}")
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { showEdit = true }
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            var menuExpanded by remember { mutableStateOf(false) }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = c.name, fontWeight = FontWeight.SemiBold)
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Delete") }, onClick = { menuExpanded = false; confirmDelete = true })
+                    }
+                }
             }
-            Text(text = parts.joinToString(separator = "  |  "), style = MaterialTheme.typography.bodySmall)
-        }
-        Spacer(Modifier.height(6.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = { showEdit = true }) { Text("Edit") }
-            TextButton(onClick = { confirmDelete = true }) { Text("Delete") }
+            if (!c.phone.isNullOrBlank() || !c.address.isNullOrBlank()) {
+                Spacer(Modifier.height(2.dp))
+                val parts = buildList {
+                    if (!c.phone.isNullOrBlank()) add("Phone: ${c.phone}")
+                    if (!c.address.isNullOrBlank()) add("Address: ${c.address}")
+                }
+                Text(text = parts.joinToString(separator = "  |  "), style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
     if (showEdit) {

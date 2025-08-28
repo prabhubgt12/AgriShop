@@ -36,6 +36,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -87,6 +88,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     val state = vm.state.collectAsState()
     val context = LocalContext.current
     val currency = remember { CurrencyFormatter.inr }
+    val prevTab = navVm.previousSelected.collectAsState()
     // Hoisted pending print data to avoid being lost on recompositions
     data class PendingPrintItem(val product: Product, val quantity: Double, val unitPrice: Double, val gstPercent: Double)
     data class PendingPrintData(
@@ -111,6 +113,11 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             vm.loadInvoiceForEdit(id)
             navVm.clearPendingEdit()
         }
+    }
+
+    // When editing an invoice, intercept back to return to the previous tab
+    BackHandler(enabled = state.value.editingInvoiceId != null) {
+        navVm.navigateTo(prevTab.value)
     }
 
     // On first open (fresh new bill), reset the date to today if not editing and clear any stale error

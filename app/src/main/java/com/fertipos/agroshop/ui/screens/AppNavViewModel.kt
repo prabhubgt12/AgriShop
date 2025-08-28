@@ -11,6 +11,10 @@ class AppNavViewModel @Inject constructor() : ViewModel() {
     private val _selected = MutableStateFlow(0)
     val selected: StateFlow<Int> = _selected
 
+    // Keep track of the previous tab to support returning after edit flows
+    private val _previousSelected = MutableStateFlow(0)
+    val previousSelected: StateFlow<Int> = _previousSelected
+
     private val _pendingEditInvoiceId = MutableStateFlow<Int?>(null)
     val pendingEditInvoiceId: StateFlow<Int?> = _pendingEditInvoiceId
 
@@ -27,6 +31,10 @@ class AppNavViewModel @Inject constructor() : ViewModel() {
     val pendingPurchaseHistoryProductId: StateFlow<Int?> = _pendingPurchaseHistoryProductId
 
     fun navigateTo(index: Int) {
+        // Record previous tab before switching
+        if (index != _selected.value) {
+            _previousSelected.value = _selected.value
+        }
         if (index == 3 && _pendingEditInvoiceId.value == null) {
             // Navigating to Billing without an edit request means start a new bill
             _newBillTick.value = _newBillTick.value + 1

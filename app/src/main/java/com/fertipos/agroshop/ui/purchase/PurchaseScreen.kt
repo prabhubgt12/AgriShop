@@ -47,12 +47,14 @@ import com.fertipos.agroshop.ui.screens.AppNavViewModel
 import java.util.Locale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.activity.compose.BackHandler
 
 @Composable
 fun PurchaseScreen(navVm: AppNavViewModel) {
     val vm: PurchaseViewModel = hiltViewModel()
     val state by vm.state.collectAsState()
     val snackbar = remember { SnackbarHostState() }
+    val prevTab = navVm.previousSelected.collectAsState()
 
     // Hoisted form state like Billing
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
@@ -71,6 +73,11 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             // No edit requested; ensure a clean slate for new purchase
             vm.resetForNewPurchase()
         }
+    }
+
+    // When editing a purchase, intercept system back to return to previous tab
+    BackHandler(enabled = state.editingPurchaseId != null) {
+        navVm.navigateTo(prevTab.value)
     }
 
     LaunchedEffect(state.successPurchaseId) {
