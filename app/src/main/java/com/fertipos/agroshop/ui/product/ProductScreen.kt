@@ -166,7 +166,25 @@ private fun ProductRow(
             // Row 1: Name left, menu right (prevent shift by hosting menu outside Row)
             var menuExpanded by remember { mutableStateOf(false) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = p.name, fontWeight = FontWeight.SemiBold)
+                Text(text = p.name, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                // Stock chip (top-right), green if >= 10 else red
+                val lowStock = p.stockQuantity < 10.0
+                val chipBg = if (lowStock) androidx.compose.ui.graphics.Color(0xFFFFE2E0) else androidx.compose.ui.graphics.Color(0xFFDFF6DD)
+                val chipFg = if (lowStock) androidx.compose.ui.graphics.Color(0xFF9A0007) else androidx.compose.ui.graphics.Color(0xFF0B6A0B)
+                Column {
+                    Text("Stock", style = MaterialTheme.typography.labelSmall)
+                    Spacer(Modifier.height(2.dp))
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .then(Modifier)
+                            .padding(end = 4.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                            .background(chipBg)
+                            .padding(vertical = 6.dp, horizontal = 8.dp)
+                    ) {
+                        Text("${priceFmt.format(p.stockQuantity)} ${p.unit}", color = chipFg, fontWeight = FontWeight.Bold)
+                    }
+                }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -183,7 +201,7 @@ private fun ProductRow(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = "Sell: ${priceFmt.format(p.sellingPrice)}  |  Buy: ${priceFmt.format(p.purchasePrice)}  |  Stock: ${p.stockQuantity}  |  GST: ${p.gstPercent}%",
+                text = "Sell: ${priceFmt.format(p.sellingPrice)}  |  Buy: ${priceFmt.format(p.purchasePrice)}  |  GST: ${p.gstPercent}%",
                 style = MaterialTheme.typography.bodySmall
             )
         }
