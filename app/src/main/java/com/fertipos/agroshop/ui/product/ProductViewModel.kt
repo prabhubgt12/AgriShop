@@ -6,9 +6,10 @@ import com.fertipos.agroshop.data.local.dao.ProductDao
 import com.fertipos.agroshop.data.local.entities.Product
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -22,9 +23,11 @@ class ProductViewModel @Inject constructor(
         val error: String? = null
     )
 
-    val state: StateFlow<UiState> = dao.getAll()
-        .map { UiState(products = it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
+    private val _error = MutableStateFlow<String?>(null)
+
+    val state: StateFlow<UiState> = combine(dao.getAll(), _error) { list, err ->
+        UiState(products = list, error = err)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     fun add(
         name: String,
@@ -79,11 +82,19 @@ class ProductViewModel @Inject constructor(
     }
 
     fun delete(product: Product) {
-        viewModelScope.launch { dao.delete(product) }
+        viewModelScope.launch {
+            try {
+                dao.delete(product)
+            } catch (e: Exception) {
+                _error.value = "Cannot delete product. It is referenced by existing bills or purchases."
+            }
+        }
     }
 
     fun adjustStock(productId: Int, delta: Double) {
         viewModelScope.launch { dao.adjustStock(productId, delta) }
     }
+
+    fun clearError() { _error.value = null }
 }
 

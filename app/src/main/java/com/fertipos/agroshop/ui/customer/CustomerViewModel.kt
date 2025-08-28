@@ -6,9 +6,10 @@ import com.fertipos.agroshop.data.local.dao.CustomerDao
 import com.fertipos.agroshop.data.local.entities.Customer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -23,9 +24,11 @@ class CustomerViewModel @Inject constructor(
         val error: String? = null
     )
 
-    val state: StateFlow<UiState> = dao.getAll()
-        .map { UiState(customers = it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
+    private val _error = MutableStateFlow<String?>(null)
+
+    val state: StateFlow<UiState> = combine(dao.getAll(), _error) { list, err ->
+        UiState(customers = list, error = err)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
     fun add(name: String, phone: String?, address: String?) {
         if (name.isBlank()) return
@@ -42,6 +45,14 @@ class CustomerViewModel @Inject constructor(
     }
 
     fun delete(customer: Customer) {
-        viewModelScope.launch { dao.delete(customer) }
+        viewModelScope.launch {
+            try {
+                dao.delete(customer)
+            } catch (e: Exception) {
+                _error.value = "Cannot delete customer. It is referenced by existing bills or purchases."
+            }
+        }
     }
+
+    fun clearError() { _error.value = null }
 }

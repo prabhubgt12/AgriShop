@@ -23,10 +23,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,9 +51,11 @@ fun ProductScreen() {
     val vm: ProductViewModel = hiltViewModel()
     val navVm: AppNavViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Surface(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Column(modifier = Modifier.fillMaxSize()) {
+            SnackbarHost(hostState = snackbarHostState)
             // Header with Add button
             var showAdd by remember { mutableStateOf(false) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -90,6 +95,14 @@ fun ProductScreen() {
                     },
                     onDismiss = { showAdd = false }
                 )
+            }
+            // Error handling
+            val err = state.value.error
+            LaunchedEffect(err) {
+                if (err != null) {
+                    snackbarHostState.showSnackbar(err)
+                    vm.clearError()
+                }
             }
         }
     }
