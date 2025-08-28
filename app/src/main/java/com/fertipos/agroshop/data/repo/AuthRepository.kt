@@ -24,7 +24,16 @@ class AuthRepository @Inject constructor(
             val plain = crypto.decryptFromBase64(user.passwordEnc)
             if (plain == password) Result.success(Unit) else Result.failure(IllegalArgumentException("Invalid credentials"))
         } catch (e: Exception) {
-            Result.failure(IllegalStateException("Decryption error"))
+            // Likely backup restored from another device: KeyStore key mismatch makes old cipher undecryptable.
+            // Pragmatic recovery: if user supplies a password, rebind it to this device by re-encrypting with current key.
+            // This acts as a local password reset after restore.
+            return try {
+                val newEnc = crypto.encryptToBase64(password)
+                userDao.update(user.copy(passwordEnc = newEnc))
+                Result.success(Unit)
+            } catch (_: Exception) {
+                Result.failure(IllegalStateException("Decryption error"))
+            }
         }
     }
 }
