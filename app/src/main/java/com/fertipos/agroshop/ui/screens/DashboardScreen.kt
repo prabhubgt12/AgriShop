@@ -54,10 +54,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun DashboardScreen(onLogout: () -> Unit) {
     val navVm: AppNavViewModel = hiltViewModel()
     val selected = navVm.selected.collectAsState()
+    val previous = navVm.previousSelected.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Intercept system back: when not on Home, go back to Home instead of exiting
+        // Intercept system back
         BackHandler(enabled = selected.value != 0) {
+            // If we're on a history screen, return to the previously selected tab (e.g., Products)
+            if (selected.value == 6 || selected.value == 8) {
+                val prev = previous.value
+                if (prev != 0) {
+                    navVm.navigateTo(prev)
+                    return@BackHandler
+                }
+            }
+            // Default: go back to Home
             navVm.navigateTo(0)
         }
         when (selected.value) {

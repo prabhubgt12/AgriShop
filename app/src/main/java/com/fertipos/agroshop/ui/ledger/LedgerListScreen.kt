@@ -45,9 +45,15 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
             FloatingActionButton(onClick = { showAdd.value = true }) { Icon(Icons.Default.Add, contentDescription = "Add") }
         }
     ) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(12.dp)) {
+        LazyColumn(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             item {
-                Text("Interest Book", style = MaterialTheme.typography.titleLarge)
+                Text("Interest Book", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
 
                 // Overview row
@@ -93,8 +99,6 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                     container = if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0),
                     content = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007)
                 )
-
-                Spacer(Modifier.height(8.dp))
             }
             items(state.items) { item ->
                 LedgerRow(
@@ -113,7 +117,6 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                     },
                     onDelete = { vm.delete(item.id) }
                 )
-                Spacer(Modifier.height(8.dp))
             }
         }
     }
@@ -312,7 +315,7 @@ private fun LabelValue(label: String, value: String, modifier: Modifier = Modifi
 
 @Composable
 private fun LedgerRow(vm: LedgerItemVM, onClick: () -> Unit, onHistory: () -> Unit, onEdit: () -> Unit, onPartial: () -> Unit, onDelete: () -> Unit) {
-    Card(modifier = Modifier.clickable { onClick() }) {
+    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
         Column(Modifier.padding(12.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(vm.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))

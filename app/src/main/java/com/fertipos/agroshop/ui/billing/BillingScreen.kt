@@ -36,6 +36,8 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.font.FontWeight
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -145,8 +147,8 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     ) {
         item {
             val header = if (state.value.editingInvoiceId != null) "Edit Invoice #${state.value.editingInvoiceId}" else "Create Invoice"
-            Text(text = header)
-            Spacer(Modifier.height(6.dp))
+            Text(text = header, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+            Spacer(Modifier.height(8.dp))
         }
 
         // Date at top (bound to VM so create/update and PDF use same date)

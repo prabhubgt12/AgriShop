@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -109,7 +110,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
 
             // Header
             val header = if (state.editingPurchaseId != null) "Edit Purchase #${state.editingPurchaseId}" else "Create Purchase"
-            Text(text = header, style = MaterialTheme.typography.titleMedium)
+            Text(text = header, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
         }
 

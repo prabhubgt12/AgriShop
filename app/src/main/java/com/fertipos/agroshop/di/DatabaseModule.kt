@@ -82,6 +82,15 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Add lowStockThreshold to company_profile with default 10
+            database.execSQL(
+                "ALTER TABLE company_profile ADD COLUMN lowStockThreshold INTEGER NOT NULL DEFAULT 10"
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
@@ -90,7 +99,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "agroshop.db"
         )
-            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
             .build()
 
     @Provides

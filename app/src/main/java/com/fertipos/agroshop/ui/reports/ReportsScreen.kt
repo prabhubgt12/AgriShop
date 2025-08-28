@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.People
@@ -61,10 +62,10 @@ fun ReportsScreen() {
     val currency = CurrencyFormatter.inr
     val dateFmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
-    Surface(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Text(text = "Reports", fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(12.dp))
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
+            Text(text = "Reports", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+            Spacer(Modifier.height(16.dp))
             var section by remember { mutableStateOf("home") } // home | pl | customer
             if (section == "home") {
                 // Home tiles

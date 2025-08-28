@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -36,11 +37,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreVert
 import com.fertipos.agroshop.data.local.entities.Customer
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun CustomerScreen() {
@@ -48,13 +52,13 @@ fun CustomerScreen() {
     val state = vm.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    Surface(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp)) {
             SnackbarHost(hostState = snackbarHostState)
             // Header with Add button
             var showAdd by remember { mutableStateOf(false) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = "Customers", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Customers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Button(onClick = { showAdd = true }) { Text("Add") }
             }
             Spacer(Modifier.height(8.dp))
@@ -76,14 +80,17 @@ fun CustomerScreen() {
             val filtered = remember(state.value.customers, searchQuery) {
                 if (searchQuery.isBlank()) state.value.customers else state.value.customers.filter { it.name.contains(searchQuery, ignoreCase = true) }
             }
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 8.dp)
+            ) {
                 items(filtered, key = { it.id }) { c ->
                     CustomerRow(
                         c = c,
                         onUpdate = { updated, n, p, a -> vm.update(updated, n, p, a) },
                         onDelete = { vm.delete(c) }
                     )
-                    Spacer(Modifier.height(8.dp))
                 }
             }
 
@@ -123,22 +130,27 @@ private fun CustomerRow(
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
             var menuExpanded by remember { mutableStateOf(false) }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = c.name, fontWeight = FontWeight.SemiBold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = c.name, fontWeight = FontWeight.SemiBold)
+                    if (!c.phone.isNullOrBlank()) {
+                        Text(text = "Phone: ${c.phone}", style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (!c.address.isNullOrBlank()) {
+                        Spacer(Modifier.height(2.dp))
+                        Text(text = "Address: ${c.address}", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         DropdownMenuItem(text = { Text("Delete") }, onClick = { menuExpanded = false; confirmDelete = true })
                     }
                 }
-            }
-            if (!c.phone.isNullOrBlank() || !c.address.isNullOrBlank()) {
-                Spacer(Modifier.height(2.dp))
-                val parts = buildList {
-                    if (!c.phone.isNullOrBlank()) add("Phone: ${c.phone}")
-                    if (!c.address.isNullOrBlank()) add("Address: ${c.address}")
-                }
-                Text(text = parts.joinToString(separator = "  |  "), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -176,7 +188,13 @@ private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, S
             Column {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name*") })
                 Spacer(Modifier.height(6.dp))
-                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") })
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { raw -> phone = raw.filter { it.isDigit() } },
+                    label = { Text("Phone") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") })
             }
@@ -206,7 +224,13 @@ private fun AddCustomerDialog(onConfirm: (String, String?, String?) -> Unit, onD
             Column {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name*") })
                 Spacer(Modifier.height(6.dp))
-                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") })
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { raw -> phone = raw.filter { it.isDigit() } },
+                    label = { Text("Phone") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") })
             }

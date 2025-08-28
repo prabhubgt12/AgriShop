@@ -27,6 +27,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fertipos.agroshop.data.local.entities.CompanyProfile
 import coil.compose.AsyncImage
@@ -49,6 +51,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.fertipos.agroshop.data.backup.BackupManager
 import com.fertipos.agroshop.data.backup.DriveClient
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun SettingsScreen(onLogout: () -> Unit) {
@@ -88,6 +92,7 @@ private fun varStatefulForm(
     var email by remember(current) { mutableStateOf(current.email) }
     var logo by remember(current) { mutableStateOf(current.logoUri) }
     var productTypesCsv by remember(current) { mutableStateOf(current.productTypesCsv) }
+    var lowStockThreshold by remember(current) { mutableStateOf(current.lowStockThreshold.toString()) }
 
     // System document picker with persistable permission for logo
     val context = LocalContext.current
@@ -135,12 +140,12 @@ private fun varStatefulForm(
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(padding).padding(16.dp)
+                .padding(padding).padding(horizontal = 8.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .navigationBarsPadding()
         ) {
-            Text("Company Profile")
+            Text("Company Profile", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
             Spacer(Modifier.height(6.dp))
 
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -167,6 +172,23 @@ private fun varStatefulForm(
                 Spacer(Modifier.width(8.dp))
                 OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, singleLine = true, modifier = Modifier.weight(1f))
             }
+
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+            Text("Inventory")
+            Spacer(Modifier.height(6.dp))
+            OutlinedTextField(
+                value = lowStockThreshold,
+                onValueChange = { raw ->
+                    val digits = raw.filter { it.isDigit() }
+                    lowStockThreshold = digits
+                },
+                label = { Text("Low stock threshold") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(Modifier.height(12.dp))
             HorizontalDivider()
@@ -209,7 +231,8 @@ private fun varStatefulForm(
                             phone = phone,
                             email = email,
                             logoUri = logo,
-                            productTypesCsv = productTypesCsv
+                            productTypesCsv = productTypesCsv,
+                            lowStockThreshold = lowStockThreshold.toIntOrNull() ?: 10
                         )
                     )
                 }) { Text("Save") }

@@ -20,5 +20,7 @@ data class CompanyProfile(
     val logoUri: String = "android.resource://com.fertipos.agroshop/drawable/ic_shivam_logo",
     // Comma-separated product type list used to populate the Type dropdown
     // Default keeps the existing hardcoded options
-    val productTypesCsv: String = "Fertilizer,Pecticide,Fungi,GP,Other"
+    val productTypesCsv: String = "Fertilizer,Pecticide,Fungi,GP,Other",
+    // Configurable low stock threshold used by Product screen to color stock chip
+    val lowStockThreshold: Int = 10
 )

@@ -36,7 +36,7 @@ import com.fertipos.agroshop.data.local.dao.LedgerDao
         LedgerEntry::class,
         LedgerPayment::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
