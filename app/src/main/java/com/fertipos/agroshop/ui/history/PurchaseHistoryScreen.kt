@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fertipos.agroshop.ui.common.DateField
 import com.fertipos.agroshop.ui.history.PurchaseHistoryViewModel.Row
@@ -74,7 +75,8 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
                     text = if (pendingFilter != null) "Purchase History (Product #$pendingFilter)" else "Purchases",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
                 TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) "Hide filters" else "Filters") }
             }
@@ -282,20 +284,6 @@ private fun PurchaseReadonlyDialog(
             Column {
                 Text(dateText, style = MaterialTheme.typography.labelSmall)
                 Spacer(Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("Subtotal", style = MaterialTheme.typography.labelSmall)
-                        Text(CurrencyFormatter.formatInr(subtotal), fontWeight = FontWeight.SemiBold)
-                    }
-                    Column {
-                        Text("GST", style = MaterialTheme.typography.labelSmall)
-                        Text(CurrencyFormatter.formatInr(gst), fontWeight = FontWeight.SemiBold)
-                    }
-                    Column {
-                        Text("Total", style = MaterialTheme.typography.labelSmall)
-                        Text(CurrencyFormatter.formatInr(total), fontWeight = FontWeight.SemiBold)
-                    }
-                }
                 if (!notes.isNullOrBlank()) {
                     Spacer(Modifier.height(6.dp))
                     Text("Notes", style = MaterialTheme.typography.labelSmall)
@@ -318,6 +306,24 @@ private fun PurchaseReadonlyDialog(
                         Spacer(Modifier.height(6.dp))
                     }
                 }
+                // Totals at the end, right aligned
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Subtotal: ${CurrencyFormatter.formatInr(subtotal)}",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = "GST: ${CurrencyFormatter.formatInr(gst)}",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = "Total: ${CurrencyFormatter.formatInr(total)}",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.End
+                )
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }

@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fertipos.agroshop.ui.common.DateField
 import com.fertipos.agroshop.ui.screens.AppNavViewModel
@@ -66,7 +67,7 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
             var showFilters by remember { mutableStateOf(false) }
             // Header row: Title + Filters toggle
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Invoices", style = MaterialTheme.typography.titleMedium)
+                Text("Invoices", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) "Hide filters" else "Filters") }
             }
 
@@ -206,6 +207,8 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                             onDismiss = { showReadonly = false },
                             header = "#${row.invoice.id} • ${row.customerName}",
                             dateText = dfCard.format(Date(row.invoice.date)).uppercase(Locale.getDefault()),
+                            subtotal = row.invoice.subtotal,
+                            gst = row.invoice.gstAmount,
                             total = row.invoice.total,
                             paid = row.invoice.paid,
                             items = readonlyItems
@@ -248,6 +251,8 @@ private fun ReadonlyInvoiceDialog(
     onDismiss: () -> Unit,
     header: String,
     dateText: String,
+    subtotal: Double,
+    gst: Double,
     total: Double,
     paid: Double,
     items: List<InvoicePdfGenerator.ItemWithProduct>
@@ -261,24 +266,6 @@ private fun ReadonlyInvoiceDialog(
                 // Date small
                 Text(dateText, style = MaterialTheme.typography.labelSmall)
                 Spacer(Modifier.height(8.dp))
-
-                // Totals block
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
-                        Text("Total", style = MaterialTheme.typography.labelSmall)
-                        Text(CurrencyFormatter.formatInr(total), fontWeight = FontWeight.SemiBold)
-                    }
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                        Text("Paid", style = MaterialTheme.typography.labelSmall)
-                        Text(CurrencyFormatter.formatInr(paid), fontWeight = FontWeight.SemiBold)
-                    }
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Balance", style = MaterialTheme.typography.labelSmall)
-                    Text(CurrencyFormatter.formatInr(balance), fontWeight = FontWeight.SemiBold)
-                }
-
                 Spacer(Modifier.height(10.dp))
                 // Items list with constrained height
                 Column(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
@@ -297,6 +284,35 @@ private fun ReadonlyInvoiceDialog(
                         Spacer(Modifier.height(6.dp))
                     }
                 }
+                // Totals at the end, right aligned
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Subtotal: ${CurrencyFormatter.formatInr(subtotal)}",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = "GST: ${CurrencyFormatter.formatInr(gst)}",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = "Total: ${CurrencyFormatter.formatInr(total)}",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = "Paid: ${CurrencyFormatter.formatInr(paid)}",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+                Text(
+                    text = "Balance: ${CurrencyFormatter.formatInr(balance)}",
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.End
+                )
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }

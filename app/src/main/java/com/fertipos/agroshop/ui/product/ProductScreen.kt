@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -41,10 +43,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fertipos.agroshop.ui.screens.AppNavViewModel
 import com.fertipos.agroshop.data.local.entities.Product
@@ -70,14 +75,15 @@ fun ProductScreen() {
             .filter { it.isNotEmpty() }
             .ifEmpty { listOf("Fertilizer", "Pecticide", "Fungi", "GP", "Other") }
     }
+    val lowThreshold = profileState.value.lowStockThreshold
 
-    Surface(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp)) {
             SnackbarHost(hostState = snackbarHostState)
             // Header with Add button
             var showAdd by remember { mutableStateOf(false) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = "Products", style = MaterialTheme.typography.titleMedium)
+                Text(text = "Products", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Button(onClick = { showAdd = true }) { Text("Add") }
             }
             Spacer(Modifier.height(8.dp))
@@ -104,7 +110,9 @@ fun ProductScreen() {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 8.dp)
             ) {
                 items(filtered, key = { it.id }) { p ->
                     ProductRow(
@@ -116,9 +124,9 @@ fun ProductScreen() {
                         onHistory = {
                             navVm.requestPurchaseHistoryForProduct(p.id)
                             navVm.navigateTo(8)
-                        }
+                        },
+                        lowStockThreshold = lowThreshold
                     )
-                    Spacer(Modifier.height(8.dp))
                 }
             }
 
@@ -151,7 +159,8 @@ private fun ProductRow(
     onUpdate: (Product, String, String, String, Double, Double, Double, Double) -> Unit,
     onDelete: () -> Unit,
     onAdjustStock: (Double) -> Unit,
-    onHistory: () -> Unit
+    onHistory: () -> Unit,
+    lowStockThreshold: Int
 ) {
     var showEdit by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -161,30 +170,40 @@ private fun ProductRow(
             maximumFractionDigits = 2
         }
     }
+    val qtyFmt = remember {
+        NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+            minimumFractionDigits = 0
+            maximumFractionDigits = 0
+        }
+    }
     Card(modifier = Modifier.fillMaxWidth().clickable { showEdit = true }) {
         Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-            // Row 1: Name left, menu right (prevent shift by hosting menu outside Row)
+            // Row 1: Name (start), menu (end)
             var menuExpanded by remember { mutableStateOf(false) }
+            val lowStock = p.stockQuantity < lowStockThreshold.toDouble()
+            val chipBg = if (lowStock) androidx.compose.ui.graphics.Color(0xFFFFE2E0) else androidx.compose.ui.graphics.Color(0xFFDFF6DD)
+            val chipFg = if (lowStock) androidx.compose.ui.graphics.Color(0xFF9A0007) else androidx.compose.ui.graphics.Color(0xFF0B6A0B)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(text = p.name, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                // Stock chip (top-right), green if >= 10 else red
-                val lowStock = p.stockQuantity < 10.0
-                val chipBg = if (lowStock) androidx.compose.ui.graphics.Color(0xFFFFE2E0) else androidx.compose.ui.graphics.Color(0xFFDFF6DD)
-                val chipFg = if (lowStock) androidx.compose.ui.graphics.Color(0xFF9A0007) else androidx.compose.ui.graphics.Color(0xFF0B6A0B)
-                Column {
-                    Text("Stock", style = MaterialTheme.typography.labelSmall)
+
+                // Centered label + chip in the first row
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Stock", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
                     Spacer(Modifier.height(2.dp))
                     androidx.compose.foundation.layout.Box(
                         modifier = Modifier
-                            .then(Modifier)
-                            .padding(end = 4.dp)
                             .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
                             .background(chipBg)
-                            .padding(vertical = 6.dp, horizontal = 8.dp)
+                            .padding(vertical = 4.dp, horizontal = 8.dp)
                     ) {
-                        Text("${priceFmt.format(p.stockQuantity)} ${p.unit}", color = chipFg, fontWeight = FontWeight.Bold)
+                        Text(
+                            "${qtyFmt.format(p.stockQuantity)} ${p.unit}",
+                            color = chipFg,
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                 }
+
                 Box {
                     IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -193,15 +212,22 @@ private fun ProductRow(
                     }
                 }
             }
+            Spacer(Modifier.height(6.dp))
+            // Row 2: Type (start) and GST (end)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    text = "Type: ${p.type}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = "GST: ${p.gstPercent}%",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
             Spacer(Modifier.height(2.dp))
-            // Row 2: Quick details
+            // Row 3: Prices in one line
             Text(
-                text = "Type: ${p.type}  |  Unit: ${p.unit}",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = "Sell: ${priceFmt.format(p.sellingPrice)}  |  Buy: ${priceFmt.format(p.purchasePrice)}  |  GST: ${p.gstPercent}%",
+                text = "Sell: ${priceFmt.format(p.sellingPrice)}  |  Buy: ${priceFmt.format(p.purchasePrice)}",
                 style = MaterialTheme.typography.bodySmall
             )
         }
