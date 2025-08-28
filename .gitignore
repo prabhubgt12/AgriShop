@@ -19,6 +19,13 @@ keystore.properties
 *.jks
 *.keystore
 
+# Whitelist keystore-related files for tracking (requested)
+!release.keystore
+!app/release.keystore
+!keystore.properties
+!*.jks
+!*.keystore
+
 # Logs
 *.log
 

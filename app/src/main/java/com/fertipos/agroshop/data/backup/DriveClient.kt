@@ -23,7 +23,40 @@ object DriveClient {
     @Volatile
     private var driveService: Drive? = null
 
+    @Volatile
+    private var lastErrorMessage: String? = null
+
     fun isSignedIn(context: Context): Boolean = GoogleSignIn.getLastSignedInAccount(context) != null && driveService != null
+
+    fun lastError(): String? = lastErrorMessage
+
+    fun tryInitFromLastAccount(context: Context): Boolean {
+        return try {
+            val account = GoogleSignIn.getLastSignedInAccount(context) ?: return false
+            val credential = GoogleAccountCredential.usingOAuth2(context, listOf(SCOPE_APPDATA)).apply {
+                selectedAccount = account.account
+            }
+            driveService = Drive.Builder(
+                AndroidHttp.newCompatibleTransport(),
+                GsonFactory.getDefaultInstance(),
+                credential
+            ).setApplicationName("AgroShop").build()
+            true
+        } catch (e: Exception) {
+            lastErrorMessage = e.localizedMessage ?: e.toString()
+            false
+        }
+    }
+
+    fun hasDriveScope(context: Context): Boolean {
+        return try {
+            val acct = GoogleSignIn.getLastSignedInAccount(context) ?: return false
+            GoogleSignIn.hasPermissions(acct, Scope(SCOPE_APPDATA))
+        } catch (e: Exception) {
+            lastErrorMessage = e.localizedMessage ?: e.toString()
+            false
+        }
+    }
 
     fun getSignInIntent(context: Context): Intent {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -47,6 +80,7 @@ object DriveClient {
             ).setApplicationName("AgroShop").build()
             true
         } catch (e: Exception) {
+            lastErrorMessage = e.localizedMessage ?: e.toString()
             false
         }
     }
@@ -69,24 +103,29 @@ object DriveClient {
             // Try find existing file with same name in App Folder
             val list = service.files().list()
                 .setSpaces("appDataFolder")
-                .setQ("name = '${"'".replace("'","'" )}'") // placeholder; we will filter client-side
                 .setFields("files(id,name)")
                 .execute()
             val existing = list.files?.firstOrNull { it.name == filename }
 
-            val metadata = File().apply {
+            // Separate metadata for create vs update. Do NOT set parents on update.
+            val createMetadata = File().apply {
                 name = filename
                 parents = listOf("appDataFolder")
+            }
+            val updateMetadata = File().apply {
+                name = filename
             }
             val media = InputStreamContent("application/zip", ByteArrayInputStream(bytes))
 
             if (existing != null) {
-                service.files().update(existing.id, metadata, media).execute()
+                // Do not change parents when updating; only content/name.
+                service.files().update(existing.id, updateMetadata, media).execute()
             } else {
-                service.files().create(metadata, media).setFields("id").execute()
+                service.files().create(createMetadata, media).setFields("id").execute()
             }
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            lastErrorMessage = e.localizedMessage ?: e.toString()
             false
         }
     }
@@ -100,7 +139,8 @@ object DriveClient {
                 .setOrderBy("modifiedTime desc")
                 .execute()
             result.files ?: emptyList()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            lastErrorMessage = e.localizedMessage ?: e.toString()
             emptyList()
         }
     }
@@ -111,7 +151,8 @@ object DriveClient {
             val out = java.io.ByteArrayOutputStream()
             service.files().get(fileId).executeMediaAndDownloadTo(out)
             out.toByteArray()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            lastErrorMessage = e.localizedMessage ?: e.toString()
             null
         }
     }

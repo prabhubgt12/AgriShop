@@ -18,6 +18,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
@@ -101,16 +105,36 @@ private fun varStatefulForm(
 
     val scope = rememberCoroutineScope()
 
+    // UI state for backup/restore feedback
+    val snackbarHostState = remember { SnackbarHostState() }
+    var isWorking by remember { mutableStateOf(false) }
+    val signedIn = remember { mutableStateOf(DriveClient.isSignedIn(context)) }
+
     // Google Sign-In launcher
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         val ok = DriveClient.handleSignInResult(context, res.data)
+        signedIn.value = ok && DriveClient.isSignedIn(context)
+        scope.launch {
+            snackbarHostState.showSnackbar(
+                if (signedIn.value) "Signed in to Google" else "Sign-in failed: ${DriveClient.lastError() ?: "Unknown error"}"
+            )
+        }
+    }
+
+    // Try silently initializing Drive from last account (if user already granted scope)
+    LaunchedEffect(Unit) {
+        if (!signedIn.value) {
+            val ok = DriveClient.tryInitFromLastAccount(context)
+            if (ok) signedIn.value = true
+        }
     }
 
     Surface(Modifier.fillMaxSize()) {
+        Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { padding ->
         Column(
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(padding).padding(16.dp)
                 .verticalScroll(rememberScrollState())
                 .imePadding()
                 .navigationBarsPadding()
@@ -204,43 +228,53 @@ private fun varStatefulForm(
 
             // Sign in/out row
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                val signedIn = remember { mutableStateOf(DriveClient.isSignedIn(context)) }
-                Button(onClick = {
+                Button(enabled = !isWorking, onClick = {
                     if (!signedIn.value) {
                         signInLauncher.launch(DriveClient.getSignInIntent(context))
-                        // update state on next composition; user returns here
-                        scope.launch { kotlinx.coroutines.delay(300); signedIn.value = DriveClient.isSignedIn(context) }
                     } else {
                         DriveClient.signOut(context)
                         signedIn.value = false
+                        scope.launch { snackbarHostState.showSnackbar("Signed out") }
                     }
                 }) { Text(if (signedIn.value) "Sign out Google" else "Sign in Google") }
+                Text(if (signedIn.value) "Signed in" else "Not signed in")
             }
 
             Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Button(enabled = signedIn.value && !isWorking, onClick = {
                     scope.launch {
+                        isWorking = true
                         val zip = BackupManager.createBackupZip(context)
                         val ok = DriveClient.uploadAppData("agroshop_backup.zip", zip)
-                        // In a production app, show a Snackbar/Toast based on ok
+                        isWorking = false
+                        snackbarHostState.showSnackbar(
+                            if (ok) "Backup uploaded" else "Backup failed: ${DriveClient.lastError() ?: "Unknown error"}"
+                        )
                     }
                 }) { Text("Backup now") }
 
-                Button(onClick = {
+                Button(enabled = signedIn.value && !isWorking, onClick = {
                     scope.launch {
+                        isWorking = true
                         val files = DriveClient.listBackups()
                         val latest = files.firstOrNull()
-                        if (latest != null) {
+                        val msg = if (latest != null) {
                             val bytes = DriveClient.download(latest.id)
-                            if (bytes != null) {
-                                BackupManager.restoreBackupZip(context, bytes)
-                                // Recommend app restart after restore
-                            }
+                            if (bytes != null && BackupManager.restoreBackupZip(context, bytes)) "Restore complete (restart app)" else "Restore failed: ${DriveClient.lastError() ?: "Unknown error"}"
+                        } else {
+                            "No backups found"
                         }
+                        isWorking = false
+                        snackbarHostState.showSnackbar(msg)
                     }
                 }) { Text("Restore") }
+
+                if (isWorking) {
+                    CircularProgressIndicator(modifier = Modifier.height(24.dp))
+                }
             }
+        }
         }
     }
 }
