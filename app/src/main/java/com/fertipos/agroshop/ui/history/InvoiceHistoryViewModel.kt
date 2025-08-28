@@ -8,6 +8,7 @@ import com.fertipos.agroshop.data.local.dao.ProductDao
 import com.fertipos.agroshop.data.local.entities.Invoice
 import com.fertipos.agroshop.data.local.entities.InvoiceItem
 import com.fertipos.agroshop.data.local.entities.Product
+import com.fertipos.agroshop.data.repo.BillingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,8 @@ import kotlinx.coroutines.flow.first
 class InvoiceHistoryViewModel @Inject constructor(
     private val invoiceDao: InvoiceDao,
     private val customerDao: CustomerDao,
-    private val productDao: ProductDao
+    private val productDao: ProductDao,
+    private val billingRepo: BillingRepository
 ) : ViewModel() {
 
     data class InvoiceRow(
@@ -83,8 +85,7 @@ class InvoiceHistoryViewModel @Inject constructor(
 
     fun deleteInvoice(invoiceId: Int) {
         viewModelScope.launch {
-            invoiceDao.clearItemsForInvoice(invoiceId)
-            invoiceDao.deleteInvoiceById(invoiceId)
+            billingRepo.deleteInvoice(invoiceId)
             if (selectedInvoiceId.value == invoiceId) {
                 selectedInvoiceId.value = null
             }

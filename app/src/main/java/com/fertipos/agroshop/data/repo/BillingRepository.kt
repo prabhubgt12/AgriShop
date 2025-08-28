@@ -86,6 +86,25 @@ class BillingRepository @Inject constructor(
         return inv to items
     }
 
+    suspend fun deleteInvoice(invoiceId: Int): Result<Unit> {
+        return try {
+            db.withTransaction {
+                // Get items and add stock back
+                val items = invoiceDao.getItemsForInvoiceOnce(invoiceId)
+                items.forEach { it ->
+                    // Sales reduced stock earlier; add it back on delete
+                    productDao.adjustStock(it.productId, it.quantity)
+                }
+                // Delete child items then header
+                invoiceDao.clearItemsForInvoice(invoiceId)
+                invoiceDao.deleteInvoiceById(invoiceId)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun updateInvoice(
         invoiceId: Int,
         customerId: Int,

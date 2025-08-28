@@ -153,4 +153,24 @@ class PurchaseRepository @Inject constructor(
         val items = purchaseDao.getItemsForPurchaseOnce(purchaseId)
         return p to items
     }
+
+    suspend fun deletePurchase(purchaseId: Int): Result<Unit> {
+        return try {
+            db.withTransaction {
+                // Get items and remove stock (purchases had added stock earlier)
+                val items = purchaseDao.getItemsForPurchaseOnce(purchaseId)
+                items.forEach { it ->
+                    productDao.adjustStock(it.productId, -it.quantity)
+                }
+                // Delete child items then header
+                purchaseDao.clearItemsForPurchase(purchaseId)
+                val purchase = purchaseDao.getPurchaseByIdOnce(purchaseId)
+                    ?: return@withTransaction
+                purchaseDao.deletePurchase(purchase)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -119,9 +119,7 @@ class PurchaseHistoryViewModel @Inject constructor(
 
     suspend fun deletePurchase(purchaseId: Int) {
         withContext(Dispatchers.IO) {
-            purchaseDao.clearItemsForPurchase(purchaseId)
-            val purchase = purchaseDao.getPurchaseByIdOnce(purchaseId) ?: return@withContext
-            purchaseDao.deletePurchase(purchase)
+            purchaseRepo.deletePurchase(purchaseId)
         }
     }
 
