@@ -1,0 +1,396 @@
+package com.fertipos.agroshop.ui.ledger
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.fertipos.agroshop.util.CurrencyFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
+    val state by vm.state.collectAsState()
+    val showAdd = remember { mutableStateOf(false) }
+    val partialForId = remember { mutableStateOf<Int?>(null) }
+    val partialAmount = remember { mutableStateOf("") }
+    val partialDateMillis = remember { mutableStateOf(System.currentTimeMillis()) }
+    val partialNote = remember { mutableStateOf("") }
+    val previewInterest = remember { mutableStateOf(0.0) }
+    val previewOutstanding = remember { mutableStateOf(0.0) }
+    val detailsForId = remember { mutableStateOf<Int?>(null) }
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAdd.value = true }) { Icon(Icons.Default.Add, contentDescription = "Add") }
+        }
+    ) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding).padding(12.dp)) {
+            item {
+                Text("Interest Book", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(8.dp))
+
+                // Overview row
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OverviewCard(
+                        title = "Total Lend",
+                        value = CurrencyFormatter.formatInr(state.totalLend),
+                        modifier = Modifier.weight(1f),
+                        container = Color(0xFFDFF6DD), // light green
+                        content = Color(0xFF0B6A0B)
+                    )
+                    OverviewCard(
+                        title = "Lend Interest",
+                        value = CurrencyFormatter.formatInr(state.totalLendInterest),
+                        modifier = Modifier.weight(1f),
+                        container = Color(0xFFDFF6DD),
+                        content = Color(0xFF0B6A0B)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OverviewCard(
+                        title = "Total Borrow",
+                        value = CurrencyFormatter.formatInr(state.totalBorrow),
+                        modifier = Modifier.weight(1f),
+                        container = Color(0xFFFFE2E0), // light red
+                        content = Color(0xFF9A0007)
+                    )
+                    OverviewCard(
+                        title = "Borrow Interest",
+                        value = CurrencyFormatter.formatInr(state.totalBorrowInterest),
+                        modifier = Modifier.weight(1f),
+                        container = Color(0xFFFFE2E0),
+                        content = Color(0xFF9A0007)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                val isPositive = state.finalAmount >= 0
+                OverviewCard(
+                    title = "Final Amount",
+                    value = CurrencyFormatter.formatInr(state.finalAmount),
+                    modifier = Modifier.fillMaxWidth(),
+                    container = if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0),
+                    content = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                )
+
+                Spacer(Modifier.height(8.dp))
+            }
+            items(state.items) { item ->
+                LedgerRow(
+                    item,
+                    onClick = {
+                        detailsForId.value = item.id
+                        vm.beginEdit(item.id)
+                    },
+                    onHistory = { vm.openPayments(item.id) },
+                    onEdit = { vm.beginEdit(item.id) },
+                    onPartial = {
+                        partialForId.value = item.id
+                        partialAmount.value = ""
+                        partialNote.value = ""
+                        partialDateMillis.value = System.currentTimeMillis()
+                    },
+                    onDelete = { vm.delete(item.id) }
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+
+    if (showAdd.value) {
+        LedgerAddEditScreen(
+            onDismiss = { showAdd.value = false },
+            onSave = { entry -> vm.saveNew(entry); showAdd.value = false }
+        )
+    }
+
+    // Details dialog (read-only)
+    val detailsId = detailsForId.value
+    if (detailsId != null) {
+        val editing by vm.editingEntry.collectAsState()
+        if (editing != null && editing!!.id == detailsId) {
+            AlertDialog(
+                onDismissRequest = { detailsForId.value = null; vm.clearEdit() },
+                title = { Text("Entry Details") },
+                text = {
+                    val e = editing!!
+                    Column(Modifier.fillMaxWidth()) {
+                        // Type chip
+                        val isLend = e.type == "LEND"
+                        val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
+                        val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                        AssistChip(onClick = {}, label = { Text(e.type) }, colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg))
+                        Spacer(Modifier.height(8.dp))
+
+                        LabelValue(label = "Name", value = e.name)
+                        Spacer(Modifier.height(8.dp))
+                        LabelValue(label = "Interest Type", value = e.interestType)
+                        Spacer(Modifier.height(8.dp))
+                        LabelValue(label = "Rate Basis", value = (e.period ?: "MONTHLY").uppercase())
+                        if (e.interestType.equals("COMPOUND", true)) {
+                            Spacer(Modifier.height(8.dp))
+                            LabelValue(label = "Duration Type", value = e.compoundPeriod.uppercase())
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        LabelValue(label = "Principal", value = CurrencyFormatter.formatInr(e.principal))
+                        Spacer(Modifier.height(8.dp))
+                        LabelValue(label = "Interest Rate", value = "${e.rateRupees}%")
+                        Spacer(Modifier.height(8.dp))
+                        LabelValue(label = "From Date", value = java.text.SimpleDateFormat("dd/MM/yyyy").format(java.util.Date(e.fromDate)))
+                        if (!e.notes.isNullOrBlank()) {
+                            Spacer(Modifier.height(8.dp))
+                            LabelValue(label = "Notes", value = e.notes!!)
+                        }
+                    }
+                },
+                confirmButton = { TextButton(onClick = { detailsForId.value = null; vm.clearEdit() }) { Text("Close") } }
+            )
+        }
+    }
+
+    // Edit dialog when editingEntry is populated and details dialog is not showing
+    val editing by vm.editingEntry.collectAsState()
+    if (editing != null && detailsForId.value == null) {
+        LedgerAddEditScreen(
+            existing = editing,
+            onDismiss = { vm.clearEdit() },
+            onSave = { entry -> vm.saveUpdate(entry); vm.clearEdit() }
+        )
+    }
+
+    // Partial payment dialog
+    val showPartial = partialForId.value != null
+    if (showPartial) {
+        val entryId = partialForId.value!!
+        LaunchedEffect(entryId, partialDateMillis.value, partialAmount.value) {
+            val (accrued, paid, outstanding) = vm.computeAt(entryId, partialDateMillis.value)
+            previewInterest.value = accrued
+            val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
+            previewOutstanding.value = (outstanding - amt).coerceAtLeast(0.0)
+        }
+        AlertDialog(
+            onDismissRequest = { partialForId.value = null },
+            title = { Text("Partial Payment") },
+            text = {
+                Column(Modifier.fillMaxWidth()) {
+                    // Date field with picker
+                    val showPicker = remember { mutableStateOf(false) }
+                    OutlinedTextField(
+                        value = SimpleDateFormat("dd/MM/yyyy").format(Date(partialDateMillis.value)),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Payment Date") },
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = { TextButton(onClick = { showPicker.value = true }) { Text("Pick") } }
+                    )
+                    if (showPicker.value) {
+                        val state = rememberDatePickerState(initialSelectedDateMillis = partialDateMillis.value)
+                        DatePickerDialog(
+                            onDismissRequest = { showPicker.value = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    partialDateMillis.value = state.selectedDateMillis ?: partialDateMillis.value
+                                    showPicker.value = false
+                                }) { Text("OK") }
+                            },
+                            dismissButton = { TextButton(onClick = { showPicker.value = false }) { Text("Cancel") } }
+                        ) { DatePicker(state = state) }
+                    }
+
+                    OutlinedTextField(
+                        value = partialAmount.value,
+                        onValueChange = { partialAmount.value = it },
+                        label = { Text("Amount") },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Interest till date: ${CurrencyFormatter.formatInr(previewInterest.value)}")
+                    Text("Remaining after payment: ${CurrencyFormatter.formatInr(previewOutstanding.value)}")
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = partialNote.value,
+                        onValueChange = { partialNote.value = it },
+                        label = { Text("Note (optional)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
+                    partialForId.value?.let { vm.applyPartial(it, amt, partialDateMillis.value) }
+                    partialForId.value = null
+                }) { Text("Apply") }
+            },
+            dismissButton = { TextButton(onClick = { partialForId.value = null }) { Text("Cancel") } }
+        )
+    }
+
+    // Payment History dialog
+    val paymentsEntryId by vm.paymentsEntryId.collectAsState()
+    if (paymentsEntryId != null) {
+        val payments by vm.paymentsForViewing.collectAsState()
+        AlertDialog(
+            onDismissRequest = { vm.closePayments() },
+            title = { Text("Payment History") },
+            text = {
+                if (payments.isEmpty()) {
+                    Text("No payments yet.")
+                } else {
+                    LazyColumn(Modifier.fillMaxWidth()) {
+                        items(payments) { p ->
+                            Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                                Text(CurrencyFormatter.formatInr(p.amount), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                                Text(SimpleDateFormat("dd/MM/yyyy").format(Date(p.date)), style = MaterialTheme.typography.labelSmall)
+                                if (!p.note.isNullOrBlank()) {
+                                    Text(p.note!!, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { vm.closePayments() }) { Text("Close") } }
+        )
+    }
+}
+
+@Composable
+private fun OverviewCard(
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    container: Color = MaterialTheme.colorScheme.surface,
+    content: Color = MaterialTheme.colorScheme.onSurface
+) {
+    Card(modifier = modifier) {
+        Column(Modifier.padding(12.dp)) {
+            Text(title, style = MaterialTheme.typography.labelMedium)
+            Spacer(Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(container)
+                    .padding(vertical = 6.dp, horizontal = 8.dp)
+            ) {
+                Text(value, style = MaterialTheme.typography.titleMedium, color = content)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LabelValue(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(label, style = MaterialTheme.typography.labelSmall)
+        Spacer(Modifier.height(2.dp))
+        Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun LedgerRow(vm: LedgerItemVM, onClick: () -> Unit, onHistory: () -> Unit, onEdit: () -> Unit, onPartial: () -> Unit, onDelete: () -> Unit) {
+    Card(modifier = Modifier.clickable { onClick() }) {
+        Column(Modifier.padding(12.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(vm.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                val isLend = vm.type == "LEND"
+                val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
+                val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                AssistChip(
+                    onClick = {},
+                    label = { Text(vm.type) },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = chipBg,
+                        labelColor = chipFg
+                    )
+                )
+                val openMenu = remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { openMenu.value = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+                    }
+                    DropdownMenu(expanded = openMenu.value, onDismissRequest = { openMenu.value = false }) {
+                        DropdownMenuItem(text = { Text("Payment History") }, onClick = { openMenu.value = false; onHistory() })
+                        DropdownMenuItem(text = { Text("Partial Payment") }, onClick = { openMenu.value = false; onPartial() })
+                        DropdownMenuItem(text = { Text("Edit") }, onClick = { openMenu.value = false; onEdit() })
+                        DropdownMenuItem(text = { Text("Delete") }, onClick = { openMenu.value = false; onDelete() })
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+
+            // Compute total time as Y/M/D roughly by 365/30 splits
+            val msPerDay = 86_400_000L
+            val daysTotal = (((System.currentTimeMillis() - vm.fromDateMillis) / msPerDay).toInt()).coerceAtLeast(0)
+            val years = daysTotal / 365
+            val remAfterYears = daysTotal % 365
+            val months = remAfterYears / 30
+            val days = remAfterYears % 30
+            val totalTime = buildString {
+                if (years > 0) append("${years} Years ")
+                if (months > 0) append("${months} Months ")
+                append("${days} Days")
+            }
+
+            Column(Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LabelValue(label = "Principal", value = CurrencyFormatter.formatInr(vm.principal), modifier = Modifier.weight(1f))
+                    LabelValue(label = "Interest Rate", value = "${vm.rate}% ${vm.rateBasis}", modifier = Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LabelValue(label = "From Date", value = vm.dateStr, modifier = Modifier.weight(1f))
+                    LabelValue(label = "Total Time", value = totalTime, modifier = Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    LabelValue(label = "Interest", value = CurrencyFormatter.formatInr(vm.accrued), modifier = Modifier.weight(1f))
+                    // Total Amount with chip-style background similar to summary cards, placed beside Interest
+                    val isLendChip = vm.type == "LEND"
+                    val chipBg2 = if (isLendChip) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
+                    val chipFg2 = if (isLendChip) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                    Column(Modifier.weight(1f)) {
+                        Text("Total Amount", style = MaterialTheme.typography.labelSmall)
+                        Spacer(Modifier.height(2.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(chipBg2)
+                                .padding(vertical = 6.dp, horizontal = 8.dp)
+                        ) {
+                            Text(
+                                CurrencyFormatter.formatInr(vm.total),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = chipFg2
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

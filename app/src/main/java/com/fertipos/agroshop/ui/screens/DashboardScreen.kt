@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.MenuBook
 import com.fertipos.agroshop.ui.customer.CustomerScreen
 import com.fertipos.agroshop.ui.product.ProductScreen
 import com.fertipos.agroshop.ui.billing.BillingScreen
@@ -46,6 +47,7 @@ import com.fertipos.agroshop.ui.purchase.PurchaseScreen
 import com.fertipos.agroshop.ui.settings.SettingsScreen
 import com.fertipos.agroshop.ui.history.InvoiceHistoryScreen
 import com.fertipos.agroshop.ui.history.PurchaseHistoryScreen
+import com.fertipos.agroshop.ui.ledger.LedgerListScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
@@ -71,6 +73,7 @@ fun DashboardScreen(onLogout: () -> Unit) {
             5 -> SettingsScreen(onLogout = onLogout)
             6 -> InvoiceHistoryScreen(navVm)
             8 -> PurchaseHistoryScreen(navVm)
+            9 -> LedgerListScreen()
         }
     }
 }
@@ -132,6 +135,7 @@ private fun HomeScreen(onNavigateToTab: (Int) -> Unit) {
             TileData("Purchases", Icons.Filled.ReceiptLong) { onNavigateToTab(7) },
             TileData("View Bills", Icons.Filled.History) { onNavigateToTab(6) },
             TileData("View Purchases", Icons.Filled.History) { onNavigateToTab(8) },
+            TileData("Interest Book", Icons.Filled.MenuBook) { onNavigateToTab(9) },
             TileData("Reports", Icons.Filled.BarChart) { onNavigateToTab(4) },
             TileData("Settings", Icons.Filled.Settings) { onNavigateToTab(5) },
         )

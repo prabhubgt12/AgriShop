@@ -19,10 +19,24 @@ import com.fertipos.agroshop.data.local.entities.User
 import com.fertipos.agroshop.data.local.entities.CompanyProfile
 import com.fertipos.agroshop.data.local.entities.Purchase
 import com.fertipos.agroshop.data.local.entities.PurchaseItem
+import com.fertipos.agroshop.data.local.entities.LedgerEntry
+import com.fertipos.agroshop.data.local.entities.LedgerPayment
+import com.fertipos.agroshop.data.local.dao.LedgerDao
 
 @Database(
-    entities = [User::class, Customer::class, Product::class, Invoice::class, InvoiceItem::class, CompanyProfile::class, Purchase::class, PurchaseItem::class],
-    version = 6,
+    entities = [
+        User::class,
+        Customer::class,
+        Product::class,
+        Invoice::class,
+        InvoiceItem::class,
+        CompanyProfile::class,
+        Purchase::class,
+        PurchaseItem::class,
+        LedgerEntry::class,
+        LedgerPayment::class
+    ],
+    version = 8,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -35,4 +49,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun companyProfileDao(): CompanyProfileDao
     abstract fun purchaseDao(): PurchaseDao
     abstract fun purchaseSummaryDao(): PurchaseSummaryDao
+    abstract fun ledgerDao(): LedgerDao
 }

@@ -11,6 +11,7 @@ import com.fertipos.agroshop.data.local.dao.InvoiceSummaryDao
 import com.fertipos.agroshop.data.local.dao.InvoicePlLinesDao
 import com.fertipos.agroshop.data.local.dao.PurchaseDao
 import com.fertipos.agroshop.data.local.dao.PurchaseSummaryDao
+import com.fertipos.agroshop.data.local.dao.LedgerDao
 import com.fertipos.agroshop.data.local.dao.ProductDao
 import com.fertipos.agroshop.data.local.dao.UserDao
 import com.fertipos.agroshop.data.local.dao.CompanyProfileDao
@@ -32,11 +33,51 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Add compoundPeriod to ledger_entries with default 'MONTHLY'
+            database.execSQL(
+                "ALTER TABLE ledger_entries ADD COLUMN compoundPeriod TEXT NOT NULL DEFAULT 'MONTHLY'"
+            )
+        }
+    }
+
     private val MIGRATION_5_6 = object : Migration(5, 6) {
         override fun migrate(database: SupportSQLiteDatabase) {
             // Add productTypesCsv to company_profile with default preserving existing behavior
             database.execSQL(
                 "ALTER TABLE company_profile ADD COLUMN productTypesCsv TEXT NOT NULL DEFAULT 'Fertilizer,Pecticide,Fungi,GP,Other'"
+            )
+        }
+    }
+
+    private val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS ledger_entries (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "type TEXT NOT NULL, " +
+                        "name TEXT NOT NULL, " +
+                        "principal REAL NOT NULL, " +
+                        "interestType TEXT NOT NULL, " +
+                        "period TEXT, " +
+                        "rateRupees REAL NOT NULL, " +
+                        "fromDate INTEGER NOT NULL, " +
+                        "notes TEXT, " +
+                        "isClosed INTEGER NOT NULL DEFAULT 0, " +
+                        "createdAt INTEGER NOT NULL, " +
+                        "updatedAt INTEGER NOT NULL" +
+                ")"
+            )
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS ledger_payments (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "entryId INTEGER NOT NULL, " +
+                        "amount REAL NOT NULL, " +
+                        "date INTEGER NOT NULL, " +
+                        "note TEXT, " +
+                        "FOREIGN KEY(entryId) REFERENCES ledger_entries(id) ON DELETE CASCADE" +
+                ")"
             )
         }
     }
@@ -49,7 +90,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "agroshop.db"
         )
-            .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
             .build()
 
     @Provides
@@ -78,4 +119,7 @@ object DatabaseModule {
 
     @Provides
     fun provideCompanyProfileDao(db: AppDatabase): CompanyProfileDao = db.companyProfileDao()
+
+    @Provides
+    fun provideLedgerDao(db: AppDatabase): LedgerDao = db.ledgerDao()
 }
