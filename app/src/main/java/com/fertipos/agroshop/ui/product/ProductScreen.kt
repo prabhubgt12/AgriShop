@@ -43,6 +43,7 @@ import com.fertipos.agroshop.ui.screens.AppNavViewModel
 import com.fertipos.agroshop.data.local.entities.Product
 import com.fertipos.agroshop.ui.common.UnitPicker
 import com.fertipos.agroshop.ui.common.TypePicker
+import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -50,8 +51,16 @@ import java.util.Locale
 fun ProductScreen() {
     val vm: ProductViewModel = hiltViewModel()
     val navVm: AppNavViewModel = hiltViewModel()
+    val companyVm: CompanyProfileViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val profileState = companyVm.profile.collectAsState()
+    val typeOptions = remember(profileState.value.productTypesCsv) {
+        profileState.value.productTypesCsv.split(',')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .ifEmpty { listOf("Fertilizer", "Pecticide", "Fungi", "GP", "Other") }
+    }
 
     Surface(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -75,6 +84,7 @@ fun ProductScreen() {
                 items(state.value.products, key = { it.id }) { p ->
                     ProductRow(
                         p = p,
+                        typeOptions = typeOptions,
                         onUpdate = { prod, n, t, u, sp, pp, st, g -> vm.update(prod, n, t, u, sp, pp, st, g) },
                         onDelete = { vm.delete(p) },
                         onAdjustStock = { delta -> vm.adjustStock(p.id, delta) },
@@ -89,6 +99,7 @@ fun ProductScreen() {
 
             if (showAdd) {
                 AddProductDialog(
+                    typeOptions = typeOptions,
                     onConfirm = { n, t, u, sp, pp, st, g ->
                         vm.add(n, t, u, sp, pp, st, g)
                         showAdd = false
@@ -111,6 +122,7 @@ fun ProductScreen() {
 @Composable
 private fun ProductRow(
     p: Product,
+    typeOptions: List<String>,
     onUpdate: (Product, String, String, String, Double, Double, Double, Double) -> Unit,
     onDelete: () -> Unit,
     onAdjustStock: (Double) -> Unit,
@@ -139,7 +151,7 @@ private fun ProductRow(
         }
     }
     if (showEdit) {
-        EditProductDialog(initial = p, onConfirm = { n, t, u, sp, pp, st, g ->
+        EditProductDialog(initial = p, typeOptions = typeOptions, onConfirm = { n, t, u, sp, pp, st, g ->
             onUpdate(p, n, t, u, sp, pp, st, g)
             showEdit = false
         }, onDismiss = { showEdit = false })
@@ -162,6 +174,7 @@ private fun ProductRow(
 @Composable
 private fun EditProductDialog(
     initial: Product,
+    typeOptions: List<String>,
     onConfirm: (String, String, String, Double, Double, Double, Double) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -193,7 +206,8 @@ private fun EditProductDialog(
                         initial = type,
                         label = "Type*",
                         modifier = Modifier.weight(1f),
-                        onPicked = { picked -> type = picked }
+                        onPicked = { picked -> type = picked },
+                        options = typeOptions
                     )
                     UnitPicker(
                         initial = unit,
@@ -275,11 +289,12 @@ private fun EditProductDialog(
 
 @Composable
 private fun AddProductDialog(
+    typeOptions: List<String>,
     onConfirm: (String, String, String, Double, Double, Double, Double) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("Fertilizer") }
+    var type by remember(typeOptions) { mutableStateOf(typeOptions.firstOrNull() ?: "Fertilizer") }
     var unit by remember { mutableStateOf("Pcs") }
     var stock by remember { mutableStateOf("0") }
     var gst by remember { mutableStateOf("") }
@@ -306,7 +321,8 @@ private fun AddProductDialog(
                         initial = type,
                         label = "Type*",
                         modifier = Modifier.weight(1f),
-                        onPicked = { picked -> type = picked }
+                        onPicked = { picked -> type = picked },
+                        options = typeOptions
                     )
                     UnitPicker(
                         initial = unit,

@@ -17,5 +17,8 @@ data class CompanyProfile(
     val email: String = "",
     // Persist image URI as string; UI will resolve and load image
     // Default points to a bundled drawable: res/drawable/ic_shivam_logo.png
-    val logoUri: String = "android.resource://com.fertipos.agroshop/drawable/ic_shivam_logo"
+    val logoUri: String = "android.resource://com.fertipos.agroshop/drawable/ic_shivam_logo",
+    // Comma-separated product type list used to populate the Type dropdown
+    // Default keeps the existing hardcoded options
+    val productTypesCsv: String = "Fertilizer,Pecticide,Fungi,GP,Other"
 )

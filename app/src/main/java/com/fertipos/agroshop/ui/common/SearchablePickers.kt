@@ -124,9 +124,9 @@ fun TypePicker(
     label: String = "Type",
     initial: String = "",
     modifier: Modifier = Modifier,
-    onPicked: (String) -> Unit
+    onPicked: (String) -> Unit,
+    options: List<String> = listOf("Fertilizer", "Pecticide", "Fungi", "GP", "Other")
 ) {
-    val options = listOf("Fertilizer", "Pecticide", "Fungi", "GP", "Other")
     var expanded by remember { mutableStateOf(false) }
     // Re-initialize internal selection whenever the external initial changes
     var selection by remember(initial) { mutableStateOf(initial) }

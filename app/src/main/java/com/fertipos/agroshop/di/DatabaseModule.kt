@@ -32,6 +32,15 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Add productTypesCsv to company_profile with default preserving existing behavior
+            database.execSQL(
+                "ALTER TABLE company_profile ADD COLUMN productTypesCsv TEXT NOT NULL DEFAULT 'Fertilizer,Pecticide,Fungi,GP,Other'"
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
@@ -40,7 +49,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "agroshop.db"
         )
-            .addMigrations(MIGRATION_4_5)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
             .build()
 
     @Provides

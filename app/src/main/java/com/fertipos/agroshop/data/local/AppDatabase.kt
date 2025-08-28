@@ -22,7 +22,7 @@ import com.fertipos.agroshop.data.local.entities.PurchaseItem
 
 @Database(
     entities = [User::class, Customer::class, Product::class, Invoice::class, InvoiceItem::class, CompanyProfile::class, Purchase::class, PurchaseItem::class],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

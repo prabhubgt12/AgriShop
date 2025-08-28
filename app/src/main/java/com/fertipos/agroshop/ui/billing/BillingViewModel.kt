@@ -154,6 +154,8 @@ class BillingViewModel @Inject constructor(
 
     fun clearSuccess() { successId.value = null }
 
+    fun clearError() { status.value = false to null }
+
     fun submit() {
         val cust = selectedCustomer.value ?: run {
             status.value = false to "Select a customer"
@@ -234,6 +236,7 @@ class BillingViewModel @Inject constructor(
         editingInvoiceId.value = null
         paidText.value = ""
         billDate.value = System.currentTimeMillis()
-        // Do not touch successId/status here; UI manages them
+        // Clear any previous error so a fresh bill doesn't show stale errors
+        status.value = false to null
     }
 }

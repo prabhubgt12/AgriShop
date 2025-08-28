@@ -87,6 +87,7 @@ private fun varStatefulForm(
     var phone by remember(current) { mutableStateOf(current.phone) }
     var email by remember(current) { mutableStateOf(current.email) }
     var logo by remember(current) { mutableStateOf(current.logoUri) }
+    var productTypesCsv by remember(current) { mutableStateOf(current.productTypesCsv) }
 
     // System document picker with persistable permission for logo
     val context = LocalContext.current
@@ -207,11 +208,25 @@ private fun varStatefulForm(
                             gstin = gst,
                             phone = phone,
                             email = email,
-                            logoUri = logo
+                            logoUri = logo,
+                            productTypesCsv = productTypesCsv
                         )
                     )
                 }) { Text("Save") }
             }
+
+            Spacer(Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+            Text("Product Types (CSV)")
+            Spacer(Modifier.height(6.dp))
+            OutlinedTextField(
+                value = productTypesCsv,
+                onValueChange = { productTypesCsv = it },
+                label = { Text("Types (comma-separated)") },
+                singleLine = false,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()

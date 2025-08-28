@@ -113,11 +113,12 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         }
     }
 
-    // On first open (fresh new bill), reset the date to today if not editing
+    // On first open (fresh new bill), reset the date to today if not editing and clear any stale error
     LaunchedEffect(Unit) {
         if (pendingEditId.value == null && state.value.editingInvoiceId == null) {
             vm.setBillDate(System.currentTimeMillis())
         }
+        vm.clearError()
     }
 
     // If user explicitly chose New Bill from Home, reset draft (only when not editing)
