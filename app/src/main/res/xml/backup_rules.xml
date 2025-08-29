@@ -5,7 +5,6 @@
     <!-- Include App Databases -->
     <include domain="database" path="." />
     <!-- Include files (app-specific storage), but exclude cache-like dirs if any appear here -->
-    <include domain="files" path="." />
-    <!-- Exclude noBackup dir by default (system already excludes) and cache -->
-    <exclude domain="cache" path="." />
+    <include domain="file" path="." />
+    <!-- Note: 'cache' domain is not a valid rule target; caches are excluded by transport -->
 </full-backup-content>
