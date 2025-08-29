@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Include SharedPreferences -->
+    <include domain="sharedpref" path="." />
+    <!-- Include App Databases -->
+    <include domain="database" path="." />
+    <!-- Include files (app-specific storage), but exclude cache-like dirs if any appear here -->
+    <include domain="files" path="." />
+    <!-- Exclude noBackup dir by default (system already excludes) and cache -->
+    <exclude domain="cache" path="." />
+</full-backup-content>
