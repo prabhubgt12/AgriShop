@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.ledgerbook.util.CurrencyFormatter
 import java.text.SimpleDateFormat
@@ -37,6 +39,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
     val previewInterest = remember { mutableStateOf(0.0) }
     val previewOutstanding = remember { mutableStateOf(0.0) }
     val detailsForId = remember { mutableStateOf<Int?>(null) }
+    val confirmDeleteId = remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         floatingActionButton = {
@@ -126,7 +129,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                         partialNote.value = ""
                         partialDateMillis.value = System.currentTimeMillis()
                     },
-                    onDelete = { vm.delete(item.id) }
+                    onDelete = { confirmDeleteId.value = item.id }
                 )
             }
         }
@@ -154,7 +157,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
     if (detailsId != null) {
         val e = editing
         if (e != null && e.id == detailsId) {
-            AlertDialog(
+            CenteredAlertDialog(
                 onDismissRequest = { detailsForId.value = null; vm.clearEdit() },
                 title = { Text("Entry Details") },
                 text = {
@@ -201,7 +204,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
             val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
             previewOutstanding.value = (outstanding - amt).coerceAtLeast(0.0)
         }
-        AlertDialog(
+        CenteredAlertDialog(
             onDismissRequest = { partialForId.value = null },
             title = { Text("Partial Payment") },
             text = {
@@ -217,15 +220,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                     )
                     if (showPicker.value) {
                         val dpState = rememberDatePickerState(initialSelectedDateMillis = partialDateMillis.value)
-                        DatePickerDialog(
+                        CenteredDatePickerDialog(
                             onDismissRequest = { showPicker.value = false },
-                            confirmButton = {
-                                TextButton(onClick = {
-                                    partialDateMillis.value = dpState.selectedDateMillis ?: partialDateMillis.value
-                                    showPicker.value = false
-                                }) { Text("OK") }
-                            },
-                            dismissButton = { TextButton(onClick = { showPicker.value = false }) { Text("Cancel") } }
+                            onConfirm = {
+                                partialDateMillis.value = dpState.selectedDateMillis ?: partialDateMillis.value
+                                showPicker.value = false
+                            }
                         ) { DatePicker(state = dpState) }
                     }
 
@@ -263,7 +263,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
     val paymentsEntryId by vm.paymentsEntryId.collectAsState()
     if (paymentsEntryId != null) {
         val payments by vm.paymentsForViewing.collectAsState()
-        AlertDialog(
+        CenteredAlertDialog(
             onDismissRequest = { vm.closePayments() },
             title = { Text("Payment History") },
             text = {
@@ -284,6 +284,20 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                 }
             },
             confirmButton = { TextButton(onClick = { vm.closePayments() }) { Text("Close") } }
+        )
+    }
+
+    // Confirm delete dialog
+    val deleteId = confirmDeleteId.value
+    if (deleteId != null) {
+        CenteredAlertDialog(
+            onDismissRequest = { confirmDeleteId.value = null },
+            title = { Text("Delete Entry") },
+            text = { Text("Are you sure you want to delete this entry? This will also remove its payments. This action cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = { vm.delete(deleteId); confirmDeleteId.value = null }) { Text("Delete") }
+            },
+            dismissButton = { TextButton(onClick = { confirmDeleteId.value = null }) { Text("Cancel") } }
         )
     }
 }
@@ -321,6 +335,57 @@ private fun LabelValue(label: String, value: String, modifier: Modifier = Modifi
     }
 }
 
+@Composable
+private fun CenteredAlertDialog(
+    onDismissRequest: () -> Unit,
+    title: @Composable (() -> Unit)? = null,
+    text: @Composable (() -> Unit)? = null,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: (@Composable () -> Unit)? = null
+) {
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = true)) {
+        Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
+            Column(Modifier.padding(24.dp)) {
+                title?.let {
+                    it()
+                    Spacer(Modifier.height(16.dp))
+                }
+                text?.let {
+                    it()
+                    Spacer(Modifier.height(24.dp))
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    dismissButton?.let {
+                        it()
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    confirmButton()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CenteredDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = true)) {
+        Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
+            Column(Modifier.padding(16.dp)) {
+                content()
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismissRequest) { Text("Cancel") }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = onConfirm) { Text("OK") }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun LedgerRow(

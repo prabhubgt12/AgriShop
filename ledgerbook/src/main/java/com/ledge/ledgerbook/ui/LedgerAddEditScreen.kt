@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.ledge.ledgerbook.data.local.entities.LedgerEntry
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,7 +36,7 @@ fun LedgerAddEditScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
 
-    AlertDialog(
+    CenteredAlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
@@ -147,16 +149,11 @@ fun LedgerAddEditScreen(
 
                 if (showDatePicker) {
                     val dateState = rememberDatePickerState(initialSelectedDateMillis = fromDate)
-                    DatePickerDialog(
+                    CenteredDatePickerDialog(
                         onDismissRequest = { showDatePicker = false },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                fromDate = dateState.selectedDateMillis ?: fromDate
-                                showDatePicker = false
-                            }) { Text("OK") }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                        onConfirm = {
+                            fromDate = dateState.selectedDateMillis ?: fromDate
+                            showDatePicker = false
                         }
                     ) {
                         DatePicker(state = dateState)
@@ -173,4 +170,56 @@ fun LedgerAddEditScreen(
             }
         }
     )
+}
+
+@Composable
+private fun CenteredAlertDialog(
+    onDismissRequest: () -> Unit,
+    title: @Composable (() -> Unit)? = null,
+    text: @Composable (() -> Unit)? = null,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: (@Composable () -> Unit)? = null
+) {
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = true)) {
+        Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
+            Column(Modifier.padding(24.dp)) {
+                title?.let {
+                    it()
+                    Spacer(Modifier.height(16.dp))
+                }
+                text?.let {
+                    it()
+                    Spacer(Modifier.height(24.dp))
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    dismissButton?.let {
+                        it()
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    confirmButton()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CenteredDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = true)) {
+        Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
+            Column(Modifier.padding(16.dp)) {
+                content()
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismissRequest) { Text("Cancel") }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = onConfirm) { Text("OK") }
+                }
+            }
+        }
+    }
 }

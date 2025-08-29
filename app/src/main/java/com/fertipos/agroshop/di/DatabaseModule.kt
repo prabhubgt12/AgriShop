@@ -11,7 +11,6 @@ import com.fertipos.agroshop.data.local.dao.InvoiceSummaryDao
 import com.fertipos.agroshop.data.local.dao.InvoicePlLinesDao
 import com.fertipos.agroshop.data.local.dao.PurchaseDao
 import com.fertipos.agroshop.data.local.dao.PurchaseSummaryDao
-import com.fertipos.agroshop.data.local.dao.LedgerDao
 import com.fertipos.agroshop.data.local.dao.ProductDao
 import com.fertipos.agroshop.data.local.dao.UserDao
 import com.fertipos.agroshop.data.local.dao.CompanyProfileDao
@@ -91,6 +90,12 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // No-op: Detaching Interest Book entities from the parent app. Keep existing tables if present.
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
@@ -99,7 +104,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "agroshop.db"
         )
-            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
             .build()
 
     @Provides
@@ -129,6 +134,4 @@ object DatabaseModule {
     @Provides
     fun provideCompanyProfileDao(db: AppDatabase): CompanyProfileDao = db.companyProfileDao()
 
-    @Provides
-    fun provideLedgerDao(db: AppDatabase): LedgerDao = db.ledgerDao()
 }
