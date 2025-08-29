@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
@@ -53,13 +54,13 @@ fun HomeScreen(
         ) {
             Tile(
                 title = "Ledger Book",
-                icon = { Icon(Icons.Default.Book, contentDescription = "Ledger Book", modifier = Modifier.size(48.dp)) },
+                icon = Icons.Default.Book,
                 modifier = Modifier.weight(1f)
             ) { onOpenLedger() }
 
             Tile(
                 title = "Settings",
-                icon = { Icon(Icons.Default.Settings, contentDescription = "Settings", modifier = Modifier.size(48.dp)) },
+                icon = Icons.Default.Settings,
                 modifier = Modifier.weight(1f)
             ) { onOpenSettings() }
         }
@@ -69,23 +70,36 @@ fun HomeScreen(
 @Composable
 private fun Tile(
     title: String,
-    icon: @Composable () -> Unit,
+    icon: ImageVector,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
         modifier = modifier
-            .height(120.dp)
-            .clickable { onClick() }
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            icon()
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(36.dp),
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
             Spacer(Modifier.height(8.dp))
-            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
         }
     }
 }

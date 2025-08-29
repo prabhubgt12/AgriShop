@@ -335,6 +335,7 @@ private fun LabelValue(label: String, value: String, modifier: Modifier = Modifi
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CenteredAlertDialog(
     onDismissRequest: () -> Unit,
@@ -343,23 +344,32 @@ private fun CenteredAlertDialog(
     confirmButton: @Composable () -> Unit,
     dismissButton: (@Composable () -> Unit)? = null
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = true)) {
-        Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
-            Column(Modifier.padding(24.dp)) {
-                title?.let {
-                    it()
-                    Spacer(Modifier.height(16.dp))
-                }
-                text?.let {
-                    it()
-                    Spacer(Modifier.height(24.dp))
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    dismissButton?.let {
+    BasicAlertDialog(onDismissRequest = onDismissRequest) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                tonalElevation = 6.dp,
+                modifier = Modifier.fillMaxWidth(0.9f)
+            ) {
+                Column(Modifier.padding(24.dp)) {
+                    title?.let {
                         it()
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.height(16.dp))
                     }
-                    confirmButton()
+                    text?.let {
+                        it()
+                        Spacer(Modifier.height(24.dp))
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        dismissButton?.let {
+                            it()
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        confirmButton()
+                    }
                 }
             }
         }
@@ -372,15 +382,24 @@ private fun CenteredDatePickerDialog(
     onConfirm: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = true)) {
-        Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
-            Column(Modifier.padding(16.dp)) {
-                content()
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismissRequest) { Text("Cancel") }
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = onConfirm) { Text("OK") }
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                tonalElevation = 6.dp,
+                modifier = Modifier.fillMaxWidth(0.9f)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    content()
+                    Spacer(Modifier.height(8.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = onDismissRequest) { Text("Cancel") }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = onConfirm) { Text("OK") }
+                    }
                 }
             }
         }
