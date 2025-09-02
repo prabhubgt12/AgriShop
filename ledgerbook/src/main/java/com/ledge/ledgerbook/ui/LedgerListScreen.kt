@@ -2,6 +2,7 @@ package com.ledge.ledgerbook.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,11 +17,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,6 +33,7 @@ import com.ledge.ledgerbook.util.CurrencyFormatter
 import com.ledge.ledgerbook.util.PdfShareUtils
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.math.roundToInt
 
 typealias LedgerItemVM = LedgerViewModel.LedgerItemVM
 
@@ -62,20 +67,17 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val confirmDeleteId = remember { mutableStateOf<Int?>(null) }
     val context = LocalContext.current
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(onClick = { addPrefillName.value = null; showAdd.value = true }) { Icon(Icons.Default.Add, contentDescription = "Add") }
-        }
-    ) { padding ->
-        LazyColumn(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+    Scaffold() { padding ->
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            // Content list with scrolling header
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
             item {
-                // In-content header row with title only
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -88,6 +90,8 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     )
                 }
                 Spacer(Modifier.height(10.dp))
+            }
+            item {
                 // Overview cards row 1
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OverviewCard(
@@ -307,6 +311,38 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         showName = true
                     )
                     Spacer(Modifier.height(8.dp))
+                }
+            }
+            }
+
+            // Draggable FAB overlay
+            val density = LocalDensity.current
+            val fabSize = 56.dp
+            val edge = 16.dp
+            val maxX = with(density) { (maxWidth - fabSize - edge).toPx() }
+            val maxY = with(density) { (maxHeight - fabSize - edge).toPx() }
+            val minX = with(density) { edge.toPx() }
+            val minY = with(density) { edge.toPx() }
+            var offsetX by remember(maxWidth, maxHeight) { mutableStateOf(maxX) }
+            var offsetY by remember(maxWidth, maxHeight) { mutableStateOf(maxY) }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                FloatingActionButton(
+                    onClick = { addPrefillName.value = null; showAdd.value = true },
+                    modifier = Modifier
+                        .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                offsetX = (offsetX + dragAmount.x).coerceIn(minX, maxX)
+                                offsetY = (offsetY + dragAmount.y).coerceIn(minY, maxY)
+                            }
+                        }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add")
                 }
             }
         }

@@ -53,106 +53,112 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
             )
         }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(text = if (signedIn) "Google Drive: Connected" else "Google Drive: Not Connected")
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = {
-                    activity?.let { signInLauncher.launch(DriveClient.getSignInIntent(it)) }
-                }, enabled = !signedIn) { Text("Sign in") }
-                Button(onClick = {
-                    val ctx = activity ?: return@Button
-                    DriveClient.signOut(ctx)
-                    signedIn = false
-                    status = "Signed out"
-                }, enabled = signedIn) { Text("Sign out") }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(bottom = 24.dp)
+        ) {
+            item {
+                Text(text = if (signedIn) "Google Drive: Connected" else "Google Drive: Not Connected")
             }
-
-            HorizontalDivider()
-
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = {
+                        activity?.let { signInLauncher.launch(DriveClient.getSignInIntent(it)) }
+                    }, enabled = !signedIn) { Text("Sign in") }
+                    Button(onClick = {
+                        val ctx = activity ?: return@Button
+                        DriveClient.signOut(ctx)
+                        signedIn = false
+                        status = "Signed out"
+                    }, enabled = signedIn) { Text("Sign out") }
+                }
+            }
+            item { HorizontalDivider() }
             // Features
-            Text("Features", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            val grouping by themeViewModel.groupingEnabled.collectAsState()
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Group by Customer", style = MaterialTheme.typography.bodyLarge)
-                    Text("Show expandable parent with child transactions.", style = MaterialTheme.typography.labelSmall)
+            item { Text("Features", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                val grouping by themeViewModel.groupingEnabled.collectAsState()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Group by Customer", style = MaterialTheme.typography.bodyLarge)
+                        Text("Show expandable parent with child transactions.", style = MaterialTheme.typography.labelSmall)
+                    }
+                    Switch(checked = grouping, onCheckedChange = { themeViewModel.setGroupingEnabled(it) })
                 }
-                Switch(checked = grouping, onCheckedChange = { themeViewModel.setGroupingEnabled(it) })
             }
-
             // Theme section
-            Text("Theme", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            val currentMode by themeViewModel.themeMode.collectAsState()
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ThemeOptionRow(
-                    label = "System",
-                    selected = currentMode == ThemeViewModel.MODE_SYSTEM,
-                    onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_SYSTEM) }
-                )
-                ThemeOptionRow(
-                    label = "Light",
-                    selected = currentMode == ThemeViewModel.MODE_LIGHT,
-                    onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_LIGHT) }
-                )
-                ThemeOptionRow(
-                    label = "Dark",
-                    selected = currentMode == ThemeViewModel.MODE_DARK,
-                    onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_DARK) }
-                )
+            item { Text("Theme", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                val currentMode by themeViewModel.themeMode.collectAsState()
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ThemeOptionRow(
+                        label = "System",
+                        selected = currentMode == ThemeViewModel.MODE_SYSTEM,
+                        onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_SYSTEM) }
+                    )
+                    ThemeOptionRow(
+                        label = "Light",
+                        selected = currentMode == ThemeViewModel.MODE_LIGHT,
+                        onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_LIGHT) }
+                    )
+                    ThemeOptionRow(
+                        label = "Dark",
+                        selected = currentMode == ThemeViewModel.MODE_DARK,
+                        onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_DARK) }
+                    )
+                }
             }
-
-            HorizontalDivider()
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = {
-                    scope.launch {
-                        val ctx = activity ?: return@launch
-                        val bytes = BackupManager.createBackupZip(ctx)
-                        val ok = DriveClient.uploadAppData("ledgerbook-backup.zip", bytes)
-                        status = if (ok) "Backup uploaded" else (DriveClient.lastError() ?: "Backup failed")
-                    }
-                }, enabled = signedIn) { Text("Backup to Drive") }
-
-                Button(onClick = {
-                    scope.launch {
-                        backups = DriveClient.listBackups()
-                        status = "Found ${backups.size} backups"
-                    }
-                }, enabled = signedIn) { Text("List Backups") }
-            }
-
-            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(backups) { f ->
-                    ElevatedCard(onClick = {
+            item { HorizontalDivider() }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = {
                         scope.launch {
-                            val bytes = DriveClient.download(f.id)
-                            if (bytes != null) {
-                                val ctx = activity
-                                val ok = if (ctx != null) BackupManager.restoreBackupZip(ctx, bytes) else false
-                                status = if (ok) "Restore complete. Restart app." else "Restore failed"
-                            } else status = DriveClient.lastError() ?: "Download failed"
+                            val ctx = activity ?: return@launch
+                            val bytes = BackupManager.createBackupZip(ctx)
+                            val ok = DriveClient.uploadAppData("ledgerbook-backup.zip", bytes)
+                            status = if (ok) "Backup uploaded" else (DriveClient.lastError() ?: "Backup failed")
                         }
-                    }) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(f.name ?: "(no name)")
-                            Text(f.modifiedTime?.toString() ?: "", style = MaterialTheme.typography.labelSmall)
-                            Text("Tap to restore", style = MaterialTheme.typography.labelSmall)
+                    }, enabled = signedIn) { Text("Backup to Drive") }
+
+                    Button(onClick = {
+                        scope.launch {
+                            backups = DriveClient.listBackups()
+                            status = "Found ${backups.size} backups"
                         }
+                    }, enabled = signedIn) { Text("List Backups") }
+                }
+            }
+            items(backups) { f ->
+                ElevatedCard(onClick = {
+                    scope.launch {
+                        val bytes = DriveClient.download(f.id)
+                        if (bytes != null) {
+                            val ctx = activity
+                            val ok = if (ctx != null) BackupManager.restoreBackupZip(ctx, bytes) else false
+                            status = if (ok) "Restore complete. Restart app." else "Restore failed"
+                        } else status = DriveClient.lastError() ?: "Download failed"
+                    }
+                }) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(f.name ?: "(no name)")
+                        Text(f.modifiedTime?.toString() ?: "", style = MaterialTheme.typography.labelSmall)
+                        Text("Tap to restore", style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
-
-            status?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
-
-            Spacer(Modifier.height(4.dp))
-            // Developer and version info (compact spacing)
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.fillMaxWidth()) {
-                Text("Developer: Prabhakar Reddy", style = MaterialTheme.typography.labelSmall)
-                Text("Email: prabhurb@gmail.com", style = MaterialTheme.typography.labelSmall)
-                Text("App version: ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall)
+            item {
+                status?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
+                Spacer(Modifier.height(4.dp))
+                // Developer and version info (compact spacing)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text("Developer: Prabhakar Reddy", style = MaterialTheme.typography.labelSmall)
+                    Text("Email: prabhurb@gmail.com", style = MaterialTheme.typography.labelSmall)
+                    Text("App version: ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
     }

@@ -55,7 +55,7 @@ object PdfShareUtils {
         summaryLine("Principal", CurrencyFormatter.formatInr(item.principal))
         summaryLine("Rate", "${item.rate}% ${item.rateBasis}")
         summaryLine("From", item.dateStr)
-        summaryLine("Accrued", CurrencyFormatter.formatInr(item.accrued))
+        summaryLine("Interest", CurrencyFormatter.formatInr(item.accrued))
         summaryLine("Total", CurrencyFormatter.formatInr(item.total))
         y += 8f
 
@@ -115,7 +115,7 @@ object PdfShareUtils {
             Col("Date", 90f),
             Col("Principal", 100f),
             Col("Rate", 100f),
-            Col("Accrued", 100f),
+            Col("Interest", 100f),
             Col("Total", 100f),
         )
 
