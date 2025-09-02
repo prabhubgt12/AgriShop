@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fertipos.agroshop.ui.screens.AppNavViewModel
 import com.fertipos.agroshop.data.local.entities.Product
@@ -183,28 +185,30 @@ private fun ProductRow(
             val lowStock = p.stockQuantity < lowStockThreshold.toDouble()
             val chipBg = if (lowStock) androidx.compose.ui.graphics.Color(0xFFFFE2E0) else androidx.compose.ui.graphics.Color(0xFFDFF6DD)
             val chipFg = if (lowStock) androidx.compose.ui.graphics.Color(0xFF9A0007) else androidx.compose.ui.graphics.Color(0xFF0B6A0B)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                 Text(text = p.name, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
 
-                // Centered label + chip in the first row
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Stock", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-                    Spacer(Modifier.height(2.dp))
-                    androidx.compose.foundation.layout.Box(
-                        modifier = Modifier
-                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
-                            .background(chipBg)
-                            .padding(vertical = 4.dp, horizontal = 8.dp)
-                    ) {
-                        Text(
-                            "${qtyFmt.format(p.stockQuantity)} ${p.unit}",
-                            color = chipFg,
-                            style = MaterialTheme.typography.labelSmall
-                        )
+                // Right column area (fixed width) with left-aligned content: Stock label + chip
+                Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.CenterStart) {
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text("Stock", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Start)
+                        Spacer(Modifier.height(0.dp))
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                .background(chipBg)
+                                .padding(vertical = 4.dp, horizontal = 8.dp)
+                        ) {
+                            Text(
+                                "${qtyFmt.format(p.stockQuantity)} ${p.unit}",
+                                color = chipFg,
+                                style = MaterialTheme.typography.labelSmall,
+                                textAlign = TextAlign.Start
+                            )
+                        }
                     }
                 }
-
-                Box {
+                Box(modifier = Modifier.width(48.dp)) {
                     IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         DropdownMenuItem(text = { Text("History") }, onClick = { menuExpanded = false; onHistory() })
@@ -212,24 +216,42 @@ private fun ProductRow(
                     }
                 }
             }
-            Spacer(Modifier.height(6.dp))
-            // Row 2: Type (start) and GST (end)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Spacer(Modifier.height(4.dp))
+            // Row 2: Type (left) and GST (right column)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                 Text(
                     text = "Type: ${p.type}",
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f)
                 )
-                Text(
-                    text = "GST: ${p.gstPercent}%",
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.CenterStart) {
+                    Text(
+                        text = "GST: ${p.gstPercent}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Start
+                    )
+                }
+                Spacer(Modifier.width(48.dp))
             }
             Spacer(Modifier.height(2.dp))
-            // Row 3: Prices in one line
-            Text(
-                text = "Sell: ${priceFmt.format(p.sellingPrice)}  |  Buy: ${priceFmt.format(p.purchasePrice)}",
-                style = MaterialTheme.typography.bodySmall
-            )
+            // Row 3: Buy (left) and Sell (right column)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                Text(
+                    text = "Buy: ${priceFmt.format(p.purchasePrice)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.CenterStart) {
+                    Text(
+                        text = "Sell: ${priceFmt.format(p.sellingPrice)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Start
+                    )
+                }
+                Spacer(Modifier.width(48.dp))
+            }
         }
     }
     if (showEdit) {
