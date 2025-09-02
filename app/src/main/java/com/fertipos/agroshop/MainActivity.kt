@@ -1,8 +1,12 @@
 package com.fertipos.agroshop
 
+import android.app.KeyguardManager
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -15,70 +19,89 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.fertipos.agroshop.ui.screens.DashboardScreen
-import com.fertipos.agroshop.ui.screens.LoginScreen
-import com.fertipos.agroshop.ui.screens.RegisterScreen
 import com.fertipos.agroshop.ui.theme.AgroShopTheme
 import com.fertipos.agroshop.ui.theme.ThemeViewModel
 import com.fertipos.agroshop.ui.theme.ThemeMode
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.fertipos.agroshop.ui.auth.SessionViewModel
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import com.fertipos.agroshop.R
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var onUnlock: (() -> Unit)? = null
+    private val confirmDeviceCredential =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+            if (res.resultCode == RESULT_OK) {
+                onUnlock?.invoke()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AgroShopRoot()
+            val themeVm: ThemeViewModel = hiltViewModel()
+            val mode by themeVm.themeMode.collectAsState()
+            val dark = when (mode) {
+                ThemeMode.DARK -> true
+                ThemeMode.LIGHT -> false
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+            AgroShopTheme(useDarkTheme = dark) {
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    var unlocked by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(Unit) {
+                        onUnlock = { unlocked = true }
+                        this@MainActivity.requestUnlockOrGrant()
+                    }
+
+                    if (unlocked) {
+                        val navController = rememberNavController()
+                        AppNavHost(navController, startDestination = Routes.Dashboard)
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Unlocking…")
+                        }
+                    }
+                }
+            }
         }
     }
-}
 
-@Composable
-fun AgroShopRoot() {
-    val themeVm: ThemeViewModel = hiltViewModel()
-    val mode by themeVm.themeMode.collectAsState()
-    val sessionVm: SessionViewModel = hiltViewModel()
-    val loggedIn by sessionVm.loggedIn.collectAsState()
-    val dark = when (mode) {
-        ThemeMode.DARK -> true
-        ThemeMode.LIGHT -> false
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-    }
-    AgroShopTheme(useDarkTheme = dark) {
-        Surface(color = MaterialTheme.colorScheme.background) {
-            val navController = rememberNavController()
-            AppNavHost(navController, startDestination = if (loggedIn) Routes.Dashboard else Routes.Login)
+    private fun requestUnlockOrGrant() {
+        val km = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (km.isKeyguardSecure) {
+            val intent: Intent? = km.createConfirmDeviceCredentialIntent(
+                getString(R.string.app_name),
+                getString(R.string.unlock_to_continue)
+            )
+            if (intent != null) {
+                confirmDeviceCredential.launch(intent)
+            }
+        } else {
+            // No device credential set; allow access immediately
+            onUnlock?.invoke()
         }
     }
 }
 
 object Routes {
-    const val Login = "login"
-    const val Register = "register"
     const val Dashboard = "dashboard"
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController, startDestination: String = Routes.Login, modifier: Modifier = Modifier) {
+fun AppNavHost(navController: NavHostController, startDestination: String = Routes.Dashboard, modifier: Modifier = Modifier) {
     NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
-        composable(Routes.Login) {
-            LoginScreen(
-                onLoginSuccess = { navController.navigate(Routes.Dashboard) { popUpTo(Routes.Login) { inclusive = true } } },
-                onRegister = { navController.navigate(Routes.Register) }
-            )
-        }
-        composable(Routes.Register) {
-            RegisterScreen(onRegistered = { navController.popBackStack() })
-        }
         composable(Routes.Dashboard) {
-            DashboardScreen(
-                onLogout = {
-                    navController.navigate(Routes.Login) {
-                        popUpTo(Routes.Dashboard) { inclusive = true }
-                    }
-                }
-            )
+            DashboardScreen()
         }
     }
 }

@@ -49,7 +49,7 @@ import com.fertipos.agroshop.ui.history.PurchaseHistoryScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun DashboardScreen(onLogout: () -> Unit) {
+fun DashboardScreen() {
     val navVm: AppNavViewModel = hiltViewModel()
     val selected = navVm.selected.collectAsState()
     val previous = navVm.previousSelected.collectAsState()
@@ -78,7 +78,7 @@ fun DashboardScreen(onLogout: () -> Unit) {
             3 -> BillingScreen(navVm)
             4 -> ReportsScreen()
             7 -> PurchaseScreen(navVm)
-            5 -> SettingsScreen(onLogout = onLogout)
+            5 -> SettingsScreen()
             6 -> InvoiceHistoryScreen(navVm)
             8 -> PurchaseHistoryScreen(navVm)
             // Interest Book removed from parent app
