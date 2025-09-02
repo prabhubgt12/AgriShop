@@ -85,6 +85,7 @@ private fun varStatefulForm(
     var email by remember(current) { mutableStateOf(current.email) }
     var logo by remember(current) { mutableStateOf(current.logoUri) }
     var productTypesCsv by remember(current) { mutableStateOf(current.productTypesCsv) }
+    var unitsCsv by remember(current) { mutableStateOf(current.unitsCsv) }
     var lowStockThreshold by remember(current) { mutableStateOf(current.lowStockThreshold.toString()) }
 
     // System document picker with persistable permission for logo
@@ -225,9 +226,11 @@ private fun varStatefulForm(
                             email = email,
                             logoUri = logo,
                             productTypesCsv = productTypesCsv,
+                            unitsCsv = unitsCsv,
                             lowStockThreshold = lowStockThreshold.toIntOrNull() ?: 10
                         )
                     )
+                    scope.launch { snackbarHostState.showSnackbar("Settings saved") }
                 }) { Text("Save") }
             }
 
@@ -240,6 +243,19 @@ private fun varStatefulForm(
                 value = productTypesCsv,
                 onValueChange = { productTypesCsv = it },
                 label = { Text("Types (comma-separated)") },
+                singleLine = false,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+            Text("Units (CSV)")
+            Spacer(Modifier.height(6.dp))
+            OutlinedTextField(
+                value = unitsCsv,
+                onValueChange = { unitsCsv = it },
+                label = { Text("Units (comma-separated)") },
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth()
             )

@@ -78,9 +78,9 @@ fun UnitPicker(
     label: String = "Unit",
     initial: String = "",
     modifier: Modifier = Modifier,
-    onPicked: (String) -> Unit
+    onPicked: (String) -> Unit,
+    options: List<String> = listOf("Kg", "Pcs", "L")
 ) {
-    val options = listOf("Kg", "Pcs", "L")
     var expanded by remember { mutableStateOf(false) }
     // Re-initialize internal selection whenever the external initial changes
     var selection by remember(initial) { mutableStateOf(initial) }

@@ -58,7 +58,7 @@ class BillingViewModel @Inject constructor(
     private val editingInvoiceId = MutableStateFlow<Int?>(null)
     private val billDate = MutableStateFlow(System.currentTimeMillis())
 
-    private val customersFlow = customerDao.getAll()
+    private val customersFlow = customerDao.getNonSuppliers()
     private val productsFlow = productDao.getAll()
 
     private data class Interim(

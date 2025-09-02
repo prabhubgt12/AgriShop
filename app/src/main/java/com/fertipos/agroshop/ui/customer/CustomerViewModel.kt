@@ -30,17 +30,32 @@ class CustomerViewModel @Inject constructor(
         UiState(customers = list, error = err)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
-    fun add(name: String, phone: String?, address: String?) {
+    fun add(name: String, phone: String?, address: String?, isSupplier: Boolean) {
         if (name.isBlank()) return
         viewModelScope.launch {
-            dao.insert(Customer(name = name.trim(), phone = phone?.trim().takeUnless { it.isNullOrBlank() }, address = address?.trim().takeUnless { it.isNullOrBlank() }))
+            dao.insert(
+                Customer(
+                    name = name.trim(),
+                    phone = phone?.trim().takeUnless { it.isNullOrBlank() },
+                    address = address?.trim().takeUnless { it.isNullOrBlank() },
+                    isSupplier = isSupplier
+                )
+            )
         }
     }
 
-    fun update(customer: Customer, name: String, phone: String?, address: String?) {
+    fun update(customer: Customer, name: String, phone: String?, address: String?, isSupplier: Boolean) {
         if (name.isBlank()) return
         viewModelScope.launch {
-            dao.update(customer.copy(name = name.trim(), phone = phone?.trim().takeUnless { it.isNullOrBlank() }, address = address?.trim().takeUnless { it.isNullOrBlank() }, updatedAt = System.currentTimeMillis()))
+            dao.update(
+                customer.copy(
+                    name = name.trim(),
+                    phone = phone?.trim().takeUnless { it.isNullOrBlank() },
+                    address = address?.trim().takeUnless { it.isNullOrBlank() },
+                    isSupplier = isSupplier,
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
         }
     }
 

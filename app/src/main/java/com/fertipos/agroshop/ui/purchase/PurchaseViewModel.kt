@@ -58,7 +58,7 @@ class PurchaseViewModel @Inject constructor(
     private val status = MutableStateFlow(Pair(false, null as String?))
     private val successId = MutableStateFlow<Int?>(null)
 
-    private val suppliersFlow = customerDao.getAll()
+    private val suppliersFlow = customerDao.getSuppliers()
     private val productsFlow = productDao.getAll()
 
     private data class Interim(

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -36,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,9 @@ import androidx.compose.material.icons.outlined.MoreVert
 import com.fertipos.agroshop.data.local.entities.Customer
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.material3.Checkbox
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun CustomerScreen() {
@@ -88,7 +93,7 @@ fun CustomerScreen() {
                 items(filtered, key = { it.id }) { c ->
                     CustomerRow(
                         c = c,
-                        onUpdate = { updated, n, p, a -> vm.update(updated, n, p, a) },
+                        onUpdate = { updated, n, p, a, isSupp -> vm.update(updated, n, p, a, isSupp) },
                         onDelete = { vm.delete(c) }
                     )
                 }
@@ -96,8 +101,8 @@ fun CustomerScreen() {
 
             if (showAdd) {
                 AddCustomerDialog(
-                    onConfirm = { n, p, a ->
-                        vm.add(n, p, a)
+                    onConfirm = { n, p, a, isSupp ->
+                        vm.add(n, p, a, isSupp)
                         showAdd = false
                     },
                     onDismiss = { showAdd = false }
@@ -118,7 +123,7 @@ fun CustomerScreen() {
 @Composable
 private fun CustomerRow(
     c: Customer,
-    onUpdate: (Customer, String, String?, String?) -> Unit,
+    onUpdate: (Customer, String, String?, String?, Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     var showEdit by remember { mutableStateOf(false) }
@@ -145,18 +150,35 @@ private fun CustomerRow(
                         Text(text = "Address: ${c.address}", style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                Box {
-                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
-                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(text = { Text("Delete") }, onClick = { menuExpanded = false; confirmDelete = true })
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (c.isSupplier) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFDFF6DD))
+                                .padding(vertical = 2.dp, horizontal = 6.dp)
+                        ) {
+                            Text(
+                                text = "Supplier",
+                                color = Color(0xFF0B6A0B),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                        Spacer(Modifier.height(0.dp))
+                    }
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(text = { Text("Delete") }, onClick = { menuExpanded = false; confirmDelete = true })
+                        }
                     }
                 }
             }
         }
     }
     if (showEdit) {
-        EditCustomerDialog(initial = c, onConfirm = { n, p, a ->
-            onUpdate(c, n, p, a)
+        EditCustomerDialog(initial = c, onConfirm = { n, p, a, isSupp ->
+            onUpdate(c, n, p, a, isSupp)
             showEdit = false
         }, onDismiss = { showEdit = false })
     }
@@ -176,10 +198,11 @@ private fun CustomerRow(
 }
 
 @Composable
-private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, String?) -> Unit, onDismiss: () -> Unit) {
+private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, String?, Boolean) -> Unit, onDismiss: () -> Unit) {
     var name by remember { mutableStateOf(initial.name) }
     var phone by remember { mutableStateOf(initial.phone ?: "") }
     var address by remember { mutableStateOf(initial.address ?: "") }
+    var isSupplier by remember { mutableStateOf(initial.isSupplier) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -197,11 +220,16 @@ private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, S
                 )
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") })
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = isSupplier, onCheckedChange = { isSupplier = it })
+                    Text("Supplier", modifier = Modifier.padding(start = 4.dp))
+                }
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                onConfirm(name, phone.ifBlank { null }, address.ifBlank { null })
+                onConfirm(name, phone.ifBlank { null }, address.ifBlank { null }, isSupplier)
                 onDismiss()
             }) { Text("Save") }
         },
@@ -212,10 +240,11 @@ private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, S
 }
 
 @Composable
-private fun AddCustomerDialog(onConfirm: (String, String?, String?) -> Unit, onDismiss: () -> Unit) {
+private fun AddCustomerDialog(onConfirm: (String, String?, String?, Boolean) -> Unit, onDismiss: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
+    var isSupplier by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -233,12 +262,17 @@ private fun AddCustomerDialog(onConfirm: (String, String?, String?) -> Unit, onD
                 )
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") })
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = isSupplier, onCheckedChange = { isSupplier = it })
+                    Text("Supplier", modifier = Modifier.padding(start = 4.dp))
+                }
             }
         },
         confirmButton = {
             TextButton(onClick = {
                 if (name.isNotBlank()) {
-                    onConfirm(name.trim(), phone.ifBlank { null }, address.ifBlank { null })
+                    onConfirm(name.trim(), phone.ifBlank { null }, address.ifBlank { null }, isSupplier)
                 }
             }) { Text("Save") }
         },

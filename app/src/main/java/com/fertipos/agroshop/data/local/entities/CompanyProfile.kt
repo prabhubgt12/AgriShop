@@ -21,6 +21,9 @@ data class CompanyProfile(
     // Comma-separated product type list used to populate the Type dropdown
     // Default keeps the existing hardcoded options
     val productTypesCsv: String = "Fertilizer,Pecticide,Fungi,GP,Other",
+    // Comma-separated unit list used to populate the Unit dropdown
+    // Default keeps the existing hardcoded options
+    val unitsCsv: String = "Kg,Pcs,L",
     // Configurable low stock threshold used by Product screen to color stock chip
     val lowStockThreshold: Int = 10
 )

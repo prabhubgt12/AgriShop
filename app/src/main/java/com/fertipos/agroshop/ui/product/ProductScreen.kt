@@ -77,6 +77,12 @@ fun ProductScreen() {
             .filter { it.isNotEmpty() }
             .ifEmpty { listOf("Fertilizer", "Pecticide", "Fungi", "GP", "Other") }
     }
+    val unitOptions = remember(profileState.value.unitsCsv) {
+        profileState.value.unitsCsv.split(',')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .ifEmpty { listOf("Kg", "Pcs", "L") }
+    }
     val lowThreshold = profileState.value.lowStockThreshold
 
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -120,6 +126,7 @@ fun ProductScreen() {
                     ProductRow(
                         p = p,
                         typeOptions = typeOptions,
+                        unitOptions = unitOptions,
                         onUpdate = { prod, n, t, u, sp, pp, st, g -> vm.update(prod, n, t, u, sp, pp, st, g) },
                         onDelete = { vm.delete(p) },
                         onAdjustStock = { delta -> vm.adjustStock(p.id, delta) },
@@ -135,6 +142,7 @@ fun ProductScreen() {
             if (showAdd) {
                 AddProductDialog(
                     typeOptions = typeOptions,
+                    unitOptions = unitOptions,
                     onConfirm = { n, t, u, sp, pp, st, g ->
                         vm.add(n, t, u, sp, pp, st, g)
                         showAdd = false
@@ -158,6 +166,7 @@ fun ProductScreen() {
 private fun ProductRow(
     p: Product,
     typeOptions: List<String>,
+    unitOptions: List<String>,
     onUpdate: (Product, String, String, String, Double, Double, Double, Double) -> Unit,
     onDelete: () -> Unit,
     onAdjustStock: (Double) -> Unit,
@@ -255,7 +264,7 @@ private fun ProductRow(
         }
     }
     if (showEdit) {
-        EditProductDialog(initial = p, typeOptions = typeOptions, onConfirm = { n, t, u, sp, pp, st, g ->
+        EditProductDialog(initial = p, typeOptions = typeOptions, unitOptions = unitOptions, onConfirm = { n, t, u, sp, pp, st, g ->
             onUpdate(p, n, t, u, sp, pp, st, g)
             showEdit = false
         }, onDismiss = { showEdit = false })
@@ -279,6 +288,7 @@ private fun ProductRow(
 private fun EditProductDialog(
     initial: Product,
     typeOptions: List<String>,
+    unitOptions: List<String>,
     onConfirm: (String, String, String, Double, Double, Double, Double) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -317,7 +327,8 @@ private fun EditProductDialog(
                         initial = unit,
                         label = "Unit*",
                         modifier = Modifier.weight(1f),
-                        onPicked = { picked -> unit = picked }
+                        onPicked = { picked -> unit = picked },
+                        options = unitOptions
                     )
                 }
                 Spacer(Modifier.height(6.dp))
@@ -394,12 +405,13 @@ private fun EditProductDialog(
 @Composable
 private fun AddProductDialog(
     typeOptions: List<String>,
+    unitOptions: List<String>,
     onConfirm: (String, String, String, Double, Double, Double, Double) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var type by remember(typeOptions) { mutableStateOf(typeOptions.firstOrNull() ?: "Fertilizer") }
-    var unit by remember { mutableStateOf("Pcs") }
+    var unit by remember(unitOptions) { mutableStateOf(unitOptions.firstOrNull() ?: "Pcs") }
     var stock by remember { mutableStateOf("0") }
     var gst by remember { mutableStateOf("") }
     var purchasePrice by remember { mutableStateOf("0") }
@@ -432,7 +444,8 @@ private fun AddProductDialog(
                         initial = unit,
                         label = "Unit*",
                         modifier = Modifier.weight(1f),
-                        onPicked = { picked -> unit = picked }
+                        onPicked = { picked -> unit = picked },
+                        options = unitOptions
                     )
                 }
                 Spacer(Modifier.height(6.dp))

@@ -9,6 +9,7 @@ data class Customer(
     val name: String,
     val phone: String? = null,
     val address: String? = null,
+    val isSupplier: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

@@ -28,7 +28,7 @@ import com.fertipos.agroshop.data.local.entities.PurchaseItem
         Purchase::class,
         PurchaseItem::class
     ],
-    version = 11,
+    version = 13,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
