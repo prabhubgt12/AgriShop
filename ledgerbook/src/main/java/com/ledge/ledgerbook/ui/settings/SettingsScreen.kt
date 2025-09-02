@@ -67,7 +67,21 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 }, enabled = signedIn) { Text("Sign out") }
             }
 
-            Divider()
+            HorizontalDivider()
+
+            // Features
+            Text("Features", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            val grouping by themeViewModel.groupingEnabled.collectAsState()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Group by Customer", style = MaterialTheme.typography.bodyLarge)
+                    Text("Show expandable parent with child transactions.", style = MaterialTheme.typography.labelSmall)
+                }
+                Switch(checked = grouping, onCheckedChange = { themeViewModel.setGroupingEnabled(it) })
+            }
 
             // Theme section
             Text("Theme", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -90,7 +104,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 )
             }
 
-            Divider()
+            HorizontalDivider()
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(onClick = {

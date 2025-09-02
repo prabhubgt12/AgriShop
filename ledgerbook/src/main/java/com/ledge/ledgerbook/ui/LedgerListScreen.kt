@@ -1,5 +1,6 @@
 package com.ledge.ledgerbook.ui
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,31 +8,50 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import com.ledge.ledgerbook.util.CurrencyFormatter
+import com.ledge.ledgerbook.util.PdfShareUtils
 import java.text.SimpleDateFormat
 import java.util.Date
 
 typealias LedgerItemVM = LedgerViewModel.LedgerItemVM
 
+// Helper to display INR without fractional digits for parent summary
+private fun formatInrNoDecimals(value: Double): String {
+    val full = CurrencyFormatter.formatInr(value)
+    // Strip any decimal portion like .00 or .50; keep sign and currency symbol/grouping
+    return full.replace(Regex("\\.[0-9]+"), "")
+}
+
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
+fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: ThemeViewModel = hiltViewModel()) {
     val state by vm.state.collectAsState()
+    // Settings flag
+    val groupingEnabled by themeViewModel.groupingEnabled.collectAsState()
+    // Precompute groups in composable scope (cannot call remember inside LazyListScope)
+    val groups = remember(state.items) { state.items.groupBy { it.name } }
+    val sortedGroups = remember(groups) { groups.entries.sortedBy { it.key.lowercase() } }
 
     // Dialog-local states
     val showAdd = remember { mutableStateOf(false) }
+    val addPrefillName = remember { mutableStateOf<String?>(null) }
     val partialForId = remember { mutableStateOf<Int?>(null) }
     val partialAmount = remember { mutableStateOf("") }
     val partialDateMillis = remember { mutableStateOf(System.currentTimeMillis()) }
@@ -40,10 +60,11 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
     val previewOutstanding = remember { mutableStateOf(0.0) }
     val detailsForId = remember { mutableStateOf<Int?>(null) }
     val confirmDeleteId = remember { mutableStateOf<Int?>(null) }
+    val context = LocalContext.current
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAdd.value = true }) { Icon(Icons.Default.Add, contentDescription = "Add") }
+            FloatingActionButton(onClick = { addPrefillName.value = null; showAdd.value = true }) { Icon(Icons.Default.Add, contentDescription = "Add") }
         }
     ) { padding ->
         LazyColumn(
@@ -71,14 +92,14 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OverviewCard(
                         title = "Total Lend",
-                        value = CurrencyFormatter.formatInr(state.totalLend),
+                        value = formatInrNoDecimals(state.totalLend),
                         modifier = Modifier.weight(1f),
                         container = Color(0xFFDFF6DD),
                         content = Color(0xFF0B6A0B)
                     )
                     OverviewCard(
                         title = "Lend Interest",
-                        value = CurrencyFormatter.formatInr(state.totalLendInterest),
+                        value = formatInrNoDecimals(state.totalLendInterest),
                         modifier = Modifier.weight(1f),
                         container = Color(0xFFDFF6DD),
                         content = Color(0xFF0B6A0B)
@@ -89,14 +110,14 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OverviewCard(
                         title = "Total Borrow",
-                        value = CurrencyFormatter.formatInr(state.totalBorrow),
+                        value = formatInrNoDecimals(state.totalBorrow),
                         modifier = Modifier.weight(1f),
                         container = Color(0xFFFFE2E0),
                         content = Color(0xFF9A0007)
                     )
                     OverviewCard(
                         title = "Borrow Interest",
-                        value = CurrencyFormatter.formatInr(state.totalBorrowInterest),
+                        value = formatInrNoDecimals(state.totalBorrowInterest),
                         modifier = Modifier.weight(1f),
                         container = Color(0xFFFFE2E0),
                         content = Color(0xFF9A0007)
@@ -106,7 +127,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                 val isPositive = state.finalAmount >= 0
                 OverviewCard(
                     title = "Final Amount",
-                    value = CurrencyFormatter.formatInr(state.finalAmount),
+                    value = formatInrNoDecimals(state.finalAmount),
                     modifier = Modifier.fillMaxWidth(),
                     container = if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0),
                     content = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007)
@@ -114,23 +135,179 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                 Spacer(Modifier.height(10.dp))
             }
 
-            items(state.items) { item ->
-                LedgerRow(
-                    vm = item,
-                    onClick = {
-                        detailsForId.value = item.id
-                        vm.beginEdit(item.id)
-                    },
-                    onHistory = { vm.openPayments(item.id) },
-                    onEdit = { vm.beginEdit(item.id) },
-                    onPartial = {
-                        partialForId.value = item.id
-                        partialAmount.value = ""
-                        partialNote.value = ""
-                        partialDateMillis.value = System.currentTimeMillis()
-                    },
-                    onDelete = { confirmDeleteId.value = item.id }
-                )
+            if (groupingEnabled) {
+                // Group by user name and show expandable parent + children (sorted A–Z)
+                items(sortedGroups, key = { it.key }) { entry ->
+                val name = entry.key
+                val itemsForUser = entry.value
+                val expanded = rememberSaveable(name) { mutableStateOf(false) }
+
+                // Parent card with totals
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { expanded.value = !expanded.value },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min)
+                            .padding(12.dp)
+                    ) {
+                        Box(
+                            Modifier
+                                .width(4.dp)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primary)
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Text(name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                                Icon(
+                                    imageVector = if (expanded.value) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                    contentDescription = if (expanded.value) "Collapse" else "Expand"
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                val parentMenuOpen = remember(name) { mutableStateOf(false) }
+                                Box {
+                                    IconButton(onClick = { parentMenuOpen.value = true }) {
+                                        Icon(
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = "More",
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    DropdownMenu(expanded = parentMenuOpen.value, onDismissRequest = { parentMenuOpen.value = false }) {
+                                        DropdownMenuItem(
+                                            text = { Text("Share Receipt") },
+                                            onClick = {
+                                                parentMenuOpen.value = false
+                                                PdfShareUtils.shareGroup(context, name, itemsForUser)
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Add to Book") },
+                                            onClick = {
+                                                parentMenuOpen.value = false
+                                                addPrefillName.value = name
+                                                showAdd.value = true
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            // Compute net values (LEND - BORROW) per user
+                            val lendPrincipal = itemsForUser.filter { it.type == "LEND" }.sumOf { it.principal }
+                            val borrowPrincipal = itemsForUser.filter { it.type == "BORROW" }.sumOf { it.principal }
+                            val netPrincipal = lendPrincipal - borrowPrincipal
+
+                            val lendInterest = itemsForUser.filter { it.type == "LEND" }.sumOf { it.accrued }
+                            val borrowInterest = itemsForUser.filter { it.type == "BORROW" }.sumOf { it.accrued }
+                            val netInterest = lendInterest - borrowInterest
+
+                            val lendTotal = itemsForUser.filter { it.type == "LEND" }.sumOf { it.total }
+                            val borrowTotal = itemsForUser.filter { it.type == "BORROW" }.sumOf { it.total }
+                            val netTotal = lendTotal - borrowTotal
+
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                LabelValue(
+                                    label = "Total Principal",
+                                    value = formatInrNoDecimals(netPrincipal),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                LabelValue(
+                                    label = "Total Interest",
+                                    value = formatInrNoDecimals(netInterest),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                // Total chip (compact)
+                                val pos = netTotal >= 0
+                                val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
+                                val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                                Column(Modifier.weight(1f)) {
+                                    Text("Total Amount", style = MaterialTheme.typography.labelSmall)
+                                    Spacer(Modifier.height(2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(chipBg)
+                                            .padding(vertical = 4.dp, horizontal = 6.dp)
+                                    ) {
+                                        Text(
+                                            formatInrNoDecimals(netTotal),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = chipFg
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Children list (existing cards) when expanded
+                if (expanded.value) {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 8.dp, top = 6.dp, bottom = 2.dp),
+                    ) {
+                        itemsForUser.forEach { item ->
+                            Spacer(Modifier.height(8.dp))
+                            LedgerRow(
+                                vm = item,
+                                onClick = {
+                                    detailsForId.value = item.id
+                                    vm.beginEdit(item.id)
+                                },
+                                onHistory = { vm.openPayments(item.id) },
+                                onEdit = { vm.beginEdit(item.id) },
+                                onPartial = {
+                                    partialForId.value = item.id
+                                    partialAmount.value = ""
+                                    partialNote.value = ""
+                                    partialDateMillis.value = System.currentTimeMillis()
+                                },
+                                onDelete = { confirmDeleteId.value = item.id },
+                                onShare = { PdfShareUtils.shareEntry(context, item) },
+                                showTypeChip = false
+                            )
+                        }
+                    }
+                }
+            }
+            } else {
+                // Flat list (original child cards only)
+                items(state.items, key = { it.id }) { item ->
+                    LedgerRow(
+                        vm = item,
+                        onClick = {
+                            detailsForId.value = item.id
+                            vm.beginEdit(item.id)
+                        },
+                        onHistory = { vm.openPayments(item.id) },
+                        onEdit = { vm.beginEdit(item.id) },
+                        onPartial = {
+                            partialForId.value = item.id
+                            partialAmount.value = ""
+                            partialNote.value = ""
+                            partialDateMillis.value = System.currentTimeMillis()
+                        },
+                        onDelete = { confirmDeleteId.value = item.id },
+                        onShare = { PdfShareUtils.shareEntry(context, item) },
+                        showName = true
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
             }
         }
         // Close Scaffold content lambda
@@ -141,7 +318,8 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
     if (showAdd.value) {
         LedgerAddEditScreen(
             onDismiss = { showAdd.value = false },
-            onSave = { entry -> vm.saveNew(entry); showAdd.value = false }
+            onSave = { entry -> vm.saveNew(entry); showAdd.value = false },
+            prefillName = addPrefillName.value
         )
     }
     if (editing != null && (detailsForId.value == null)) {
@@ -185,7 +363,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                         LabelValue(label = "From Date", value = SimpleDateFormat("dd/MM/yyyy").format(Date(e.fromDate)))
                         if (!e.notes.isNullOrBlank()) {
                             Spacer(Modifier.height(8.dp))
-                            LabelValue(label = "Notes", value = e.notes!!)
+                            LabelValue(label = "Notes", value = e.notes)
                         }
                     }
                 },
@@ -276,7 +454,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
                                 Text(CurrencyFormatter.formatInr(p.amount), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                                 Text(SimpleDateFormat("dd/MM/yyyy").format(Date(p.date)), style = MaterialTheme.typography.labelSmall)
                                 if (!p.note.isNullOrBlank()) {
-                                    Text(p.note!!, style = MaterialTheme.typography.bodySmall)
+                                    Text(p.note, style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                         }
@@ -300,7 +478,9 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel()) {
             dismissButton = { TextButton(onClick = { confirmDeleteId.value = null }) { Text("Cancel") } }
         )
     }
+
 }
+
 
 @Composable
 private fun OverviewCard(
@@ -413,35 +593,73 @@ private fun LedgerRow(
     onHistory: () -> Unit,
     onEdit: () -> Unit,
     onPartial: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShare: () -> Unit,
+    showName: Boolean = false,
+    showTypeChip: Boolean = true
 ) {
-    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
-        Column(Modifier.padding(12.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(vm.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                val isLend = vm.type == "LEND"
-                val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
-                val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                AssistChip(
-                    onClick = {},
-                    label = { Text(vm.type) },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = chipBg,
-                        labelColor = chipFg
-                    )
-                )
-                val openMenu = remember { mutableStateOf(false) }
-                Box {
-                    IconButton(onClick = { openMenu.value = true }) { Icon(Icons.Default.MoreVert, contentDescription = "More") }
-                    DropdownMenu(expanded = openMenu.value, onDismissRequest = { openMenu.value = false }) {
-                        DropdownMenuItem(text = { Text("Payment History") }, onClick = { openMenu.value = false; onHistory() })
-                        DropdownMenuItem(text = { Text("Partial Payment") }, onClick = { openMenu.value = false; onPartial() })
-                        DropdownMenuItem(text = { Text("Edit") }, onClick = { openMenu.value = false; onEdit() })
-                        DropdownMenuItem(text = { Text("Delete") }, onClick = { openMenu.value = false; onDelete() })
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            val topBarVisible = showName || showTypeChip
+            val openMenu = remember { mutableStateOf(false) }
+            if (topBarVisible) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    // Column 1 (matches grid first column)
+                    Box(Modifier.weight(1f)) {
+                        if (showName) {
+                            Text(
+                                vm.name,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                    }
+
+                    // Inter-column gap (matches rows below)
+                    Spacer(Modifier.width(16.dp))
+
+                    // Column 2 (matches grid second column): chip at start, menu at end
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        if (showTypeChip) {
+                            val isLend = vm.type == "LEND"
+                            val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
+                            val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                            AssistChip(
+                                onClick = {},
+                                label = { Text(vm.type, style = MaterialTheme.typography.labelSmall) },
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = chipBg,
+                                    labelColor = chipFg
+                                )
+                            )
+                        }
+                        Spacer(Modifier.weight(1f))
+                        Box {
+                            IconButton(onClick = { openMenu.value = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            DropdownMenu(expanded = openMenu.value, onDismissRequest = { openMenu.value = false }) {
+                                DropdownMenuItem(text = { Text("Share Receipt") }, onClick = { openMenu.value = false; onShare() })
+                                DropdownMenuItem(text = { Text("Payment History") }, onClick = { openMenu.value = false; onHistory() })
+                                DropdownMenuItem(text = { Text("Partial Payment") }, onClick = { openMenu.value = false; onPartial() })
+                                DropdownMenuItem(text = { Text("Edit") }, onClick = { openMenu.value = false; onEdit() })
+                                DropdownMenuItem(text = { Text("Delete") }, onClick = { openMenu.value = false; onDelete() })
+                            }
+                        }
                     }
                 }
+                Spacer(Modifier.height(8.dp))
             }
-            Spacer(Modifier.height(8.dp))
 
             val msPerDay = 86_400_000L
             val daysTotal = (((System.currentTimeMillis() - vm.fromDateMillis) / msPerDay).toInt()).coerceAtLeast(0)
@@ -456,9 +674,34 @@ private fun LedgerRow(
             }
 
             Column(Modifier.fillMaxWidth()) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabelValue(label = "Principal", value = CurrencyFormatter.formatInr(vm.principal), modifier = Modifier.weight(1f))
-                    LabelValue(label = "Interest Rate", value = "${vm.rate}% ${vm.rateBasis}", modifier = Modifier.weight(1f))
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LabelValue(label = "Principal", value = formatInrNoDecimals(vm.principal), modifier = Modifier.weight(1f))
+                    Box(Modifier.weight(1f)) {
+                        LabelValue(label = "Interest Rate", value = "${vm.rate}% ${vm.rateBasis}")
+                        if (!topBarVisible) {
+                            // Move 3-dots here when header row is hidden (grouping mode)
+                            Box(Modifier.fillMaxWidth()) {
+                                IconButton(onClick = { openMenu.value = true }, modifier = Modifier.align(Alignment.TopEnd)) {
+                                    Icon(
+                                        imageVector = Icons.Default.MoreVert,
+                                        contentDescription = "More",
+                                        tint = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                            DropdownMenu(expanded = openMenu.value, onDismissRequest = { openMenu.value = false }) {
+                                DropdownMenuItem(text = { Text("Share Receipt") }, onClick = { openMenu.value = false; onShare() })
+                                DropdownMenuItem(text = { Text("Payment History") }, onClick = { openMenu.value = false; onHistory() })
+                                DropdownMenuItem(text = { Text("Partial Payment") }, onClick = { openMenu.value = false; onPartial() })
+                                DropdownMenuItem(text = { Text("Edit") }, onClick = { openMenu.value = false; onEdit() })
+                                DropdownMenuItem(text = { Text("Delete") }, onClick = { openMenu.value = false; onDelete() })
+                            }
+                        }
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -467,7 +710,7 @@ private fun LedgerRow(
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabelValue(label = "Interest", value = CurrencyFormatter.formatInr(vm.accrued), modifier = Modifier.weight(1f))
+                    LabelValue(label = "Interest", value = formatInrNoDecimals(vm.accrued), modifier = Modifier.weight(1f))
                     val isLendChip = vm.type == "LEND"
                     val chipBg2 = if (isLendChip) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
                     val chipFg2 = if (isLendChip) Color(0xFF0B6A0B) else Color(0xFF9A0007)
@@ -478,11 +721,11 @@ private fun LedgerRow(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(chipBg2)
-                                .padding(vertical = 6.dp, horizontal = 8.dp)
+                                .padding(vertical = 4.dp, horizontal = 6.dp)
                         ) {
                             Text(
-                                CurrencyFormatter.formatInr(vm.total),
-                                style = MaterialTheme.typography.bodyLarge,
+                                formatInrNoDecimals(vm.total),
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = chipFg2
                             )

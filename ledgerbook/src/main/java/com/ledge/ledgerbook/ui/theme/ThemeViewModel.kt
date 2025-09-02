@@ -26,7 +26,15 @@ class ThemeViewModel @Inject constructor(
     val themeMode: StateFlow<Int> = prefs.themeModeFlow(MODE_SYSTEM)
         .stateIn(viewModelScope, SharingStarted.Eagerly, MODE_SYSTEM)
 
+    // Feature flags
+    val groupingEnabled: StateFlow<Boolean> = prefs.groupingEnabledFlow(true)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     fun setThemeMode(mode: Int) {
         viewModelScope.launch { prefs.setThemeMode(mode) }
+    }
+
+    fun setGroupingEnabled(enabled: Boolean) {
+        viewModelScope.launch { prefs.setGroupingEnabled(enabled) }
     }
 }

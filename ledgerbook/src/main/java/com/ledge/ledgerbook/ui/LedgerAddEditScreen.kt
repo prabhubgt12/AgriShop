@@ -20,12 +20,13 @@ import java.util.Date
 fun LedgerAddEditScreen(
     onDismiss: () -> Unit,
     onSave: (LedgerEntry) -> Unit,
-    existing: LedgerEntry? = null
+    existing: LedgerEntry? = null,
+    prefillName: String? = null
 ) {
     val isEdit = existing != null
 
     var type by remember { mutableStateOf(existing?.type ?: "LEND") }
-    var name by remember { mutableStateOf(existing?.name ?: "") }
+    var name by remember { mutableStateOf(prefillName ?: existing?.name ?: "") }
     var interestType by remember { mutableStateOf(existing?.interestType ?: "SIMPLE") }
     var period by remember { mutableStateOf(existing?.period ?: "MONTHLY") }
     var compoundPeriod by remember { mutableStateOf(existing?.compoundPeriod ?: "MONTHLY") }
