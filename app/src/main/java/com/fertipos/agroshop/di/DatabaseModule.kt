@@ -12,7 +12,6 @@ import com.fertipos.agroshop.data.local.dao.InvoicePlLinesDao
 import com.fertipos.agroshop.data.local.dao.PurchaseDao
 import com.fertipos.agroshop.data.local.dao.PurchaseSummaryDao
 import com.fertipos.agroshop.data.local.dao.ProductDao
-import com.fertipos.agroshop.data.local.dao.UserDao
 import com.fertipos.agroshop.data.local.dao.CompanyProfileDao
 import dagger.Module
 import dagger.Provides
@@ -96,6 +95,13 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Drop legacy users table now that login is removed
+            database.execSQL("DROP TABLE IF EXISTS users")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
@@ -104,11 +110,8 @@ object DatabaseModule {
             AppDatabase::class.java,
             "agroshop.db"
         )
-            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
             .build()
-
-    @Provides
-    fun provideUserDao(db: AppDatabase): UserDao = db.userDao()
 
     @Provides
     fun provideCustomerDao(db: AppDatabase): CustomerDao = db.customerDao()
