@@ -18,6 +18,7 @@ import com.ledge.ledgerbook.BuildConfig
 import com.google.api.services.drive.model.File
 import com.ledge.ledgerbook.data.backup.BackupManager
 import com.ledge.ledgerbook.data.backup.DriveClient
+import com.ledge.ledgerbook.billing.MonetizationViewModel
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import kotlinx.coroutines.launch
 
@@ -32,6 +33,10 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
 
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Monetization state
+    val monetizationVM: MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState()
 
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         val act = activity ?: return@rememberLauncherForActivityResult
@@ -72,6 +77,18 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         signedIn = false
                         status = "Signed out"
                     }, enabled = signedIn) { Text("Sign out") }
+                }
+            }
+            item { HorizontalDivider() }
+            // Monetization
+            item { Text("Monetization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(if (hasRemoveAds) "Ads are removed on this device" else "Ads enabled. Purchase to remove permanently.")
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(onClick = { activity?.let { monetizationVM.purchaseRemoveAds(it) } }, enabled = !hasRemoveAds) { Text("Buy Remove Ads") }
+                        OutlinedButton(onClick = { monetizationVM.restore() }) { Text("Restore purchases") }
+                    }
                 }
             }
             item { HorizontalDivider() }

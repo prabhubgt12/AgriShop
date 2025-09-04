@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#108a49"/>
+      <stop offset="100%" stop-color="#12b161"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background flat square (no rounded corners, no shadow) -->
+  <rect x="32" y="32" width="448" height="448" fill="url(#g)"/>
+
+  <!-- Ledger book icon (more padding + nudged upward to avoid bottom crop) -->
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" transform="translate(256 256) scale(0.82) translate(-256 -270)">
+    <!-- Book cover -->
+    <path d="M168 140h168a36 36 0 0 1 36 36v208a0 0 0 0 1 0 0H204a36 36 0 0 0-36 36V176a36 36 0 0 1 36-36z" stroke-width="22"/>
+    <!-- Book spine strip -->
+    <path d="M204 140v288" stroke-width="22" opacity="0.45"/>
+    <!-- Bookmark -->
+    <path d="M320 168v88l-28-18-28 18v-88" stroke-width="18"/>
+    <!-- Ledger lines -->
+    <path d="M228 232h56M228 272h56M228 312h56" stroke-width="18" opacity="0.9"/>
+  </g>
+
+  <!-- Removed gloss highlight to comply with Play icon guidelines (no lighting effects) -->
+</svg>

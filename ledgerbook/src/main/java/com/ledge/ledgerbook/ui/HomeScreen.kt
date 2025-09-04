@@ -3,8 +3,12 @@ package com.ledge.ledgerbook.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Settings
@@ -36,6 +40,9 @@ import android.content.res.ColorStateList
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.ledge.ledgerbook.ads.BannerAd
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ledge.ledgerbook.billing.MonetizationViewModel
 
 // Compound type for interest calculation
 enum class CompoundType { Monthly, Yearly }
@@ -121,178 +128,190 @@ private fun WheelDatePickerDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
         text = {
             Box(contentAlignment = Alignment.Center) {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Year
                     AndroidView(
                         modifier = Modifier
                             .width(60.dp)
                             .height(120.dp),
-                        factory = { ctx -> NumberPicker(ctx).apply {
-                        descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
-                        setFadingEdgeLength(0)
-                        setBackgroundColor(Color.TRANSPARENT)
-                        wrapSelectorWheel = true
-                        overScrollMode = View.OVER_SCROLL_NEVER
-                        minValue = 1900
-                        maxValue = 2100
-                        value = year
-                        setOnValueChangedListener { _, _, newVal ->
-                            year = newVal
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            for (i in 0 until childCount) {
-                                val c = getChildAt(i)
-                                if (c is EditText) {
-                                    c.setTextColor(onSurfaceColor)
+                        factory = { ctx ->
+                            NumberPicker(ctx).apply {
+                                descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
+                                setFadingEdgeLength(0)
+                                setBackgroundColor(Color.TRANSPARENT)
+                                wrapSelectorWheel = true
+                                overScrollMode = View.OVER_SCROLL_NEVER
+                                minValue = 1900
+                                maxValue = 2100
+                                value = year
+                                setOnValueChangedListener { _, _, newVal ->
+                                    year = newVal
+                                    try {
+                                        val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    } catch (_: Exception) {}
+                                    for (i in 0 until childCount) {
+                                        val c = getChildAt(i)
+                                        if (c is EditText) c.setTextColor(onSurfaceColor)
+                                    }
+                                    invalidate()
                                 }
+                                try {
+                                    val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
+                                    val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
+                                    val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
+                                } catch (_: Exception) {}
+                                setOnScrollListener { _, _ ->
+                                    try {
+                                        val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    } catch (_: Exception) {}
+                                    invalidate()
+                                }
+                                for (i in 0 until childCount) {
+                                    val c = getChildAt(i)
+                                    if (c is EditText) {
+                                        c.setTextColor(onSurfaceColor)
+                                        c.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                                        c.setBackgroundColor(Color.TRANSPARENT)
+                                        c.isCursorVisible = false
+                                        c.highlightColor = Color.TRANSPARENT
+                                        c.isFocusable = false
+                                        c.isFocusableInTouchMode = false
+                                        c.isClickable = false
+                                        c.isLongClickable = false
+                                    }
+                                }
+                                invalidate()
                             }
-                            invalidate()
                         }
-                        try {
-                            val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
-                            val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
-                            val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
-                        } catch (_: Exception) {}
-                        setOnScrollListener { _, _ ->
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            invalidate()
-                        }
-                        for (i in 0 until childCount) {
-                            val c = getChildAt(i)
-                            if (c is EditText) {
-                                c.setTextColor(onSurfaceColor)
-                                c.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-                                c.setBackgroundColor(Color.TRANSPARENT)
-                                c.isCursorVisible = false
-                                c.highlightColor = Color.TRANSPARENT
-                                c.isFocusable = false
-                                c.isFocusableInTouchMode = false
-                                c.isClickable = false
-                                c.isLongClickable = false
-                            }
-                        }
-                        invalidate()
-                    } }
                     )
-                AndroidView(
-                    modifier = Modifier
-                        .width(60.dp)
-                        .height(120.dp),
-                    factory = { ctx -> NumberPicker(ctx).apply {
-                        descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
-                        setFadingEdgeLength(0)
-                        setBackgroundColor(Color.TRANSPARENT)
-                        wrapSelectorWheel = true
-                        overScrollMode = View.OVER_SCROLL_NEVER
-                        minValue = 1
-                        maxValue = 12
-                        value = month
-                        setFormatter { String.format("%02d", it) }
-                        setOnValueChangedListener { _, _, newVal ->
-                            month = newVal
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            for (i in 0 until childCount) {
-                                val c = getChildAt(i)
-                                if (c is EditText) c.setTextColor(onSurfaceColor)
-                            }
-                            invalidate()
-                        }
-                        try {
-                            val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
-                            val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
-                            val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
-                        } catch (_: Exception) {}
-                        setOnScrollListener { _, _ ->
-                            isActivated = false; isPressed = false
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            invalidate()
-                        }
-                        for (i in 0 until childCount) {
-                            val c = getChildAt(i)
-                            if (c is EditText) {
-                                c.setTextColor(onSurfaceColor)
-                                c.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-                                c.setBackgroundColor(Color.TRANSPARENT)
-                                c.isCursorVisible = false
-                                c.highlightColor = Color.TRANSPARENT
-                                c.isFocusable = false
-                                c.isFocusableInTouchMode = false
-                                c.isClickable = false
-                                c.isLongClickable = false
-                            }
-                        }
-                        invalidate()
-                    } }
-                )
-                AndroidView(
-                    modifier = Modifier
-                        .width(60.dp)
-                        .height(120.dp),
-                    factory = { ctx -> NumberPicker(ctx).apply {
-                        descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
-                        setFadingEdgeLength(0)
-                        setBackgroundColor(Color.TRANSPARENT)
-                        wrapSelectorWheel = true
-                        overScrollMode = View.OVER_SCROLL_NEVER
-                        minValue = 1
-                        maxValue = maxDay
-                        value = day.coerceAtMost(maxDay)
-                        setFormatter { String.format("%02d", it) }
-                        setOnValueChangedListener { _, _, newVal ->
-                            day = newVal
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            for (i in 0 until childCount) {
-                                val c = getChildAt(i)
-                                if (c is EditText) c.setTextColor(onSurfaceColor)
-                            }
-                            invalidate()
-                        }
-                        try {
-                            val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
-                            val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
-                            val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
-                        } catch (_: Exception) {}
-                        setOnScrollListener { _, _ ->
-                            isActivated = false; isPressed = false
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            invalidate()
-                        }
-                        for (i in 0 until childCount) {
-                            val c = getChildAt(i)
-                            if (c is EditText) {
-                                c.setTextColor(onSurfaceColor)
-                                c.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-                                c.setBackgroundColor(Color.TRANSPARENT)
-                                c.isCursorVisible = false
-                                c.highlightColor = Color.TRANSPARENT
-                                val states = arrayOf(
-                                    intArrayOf(android.R.attr.state_pressed),
-                                    intArrayOf(android.R.attr.state_focused),
-                                    intArrayOf(android.R.attr.state_activated),
-                                    intArrayOf(android.R.attr.state_selected),
-                                    intArrayOf()
-                                )
-                                val colors = intArrayOf(onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor)
-                                c.setTextColor(ColorStateList(states, colors))
+
+                    // Month
+                    AndroidView(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .height(120.dp),
+                        factory = { ctx ->
+                            NumberPicker(ctx).apply {
+                                descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
+                                setFadingEdgeLength(0)
+                                setBackgroundColor(Color.TRANSPARENT)
+                                wrapSelectorWheel = true
+                                overScrollMode = View.OVER_SCROLL_NEVER
+                                minValue = 1
+                                maxValue = 12
+                                value = month
+                                setFormatter { String.format("%02d", it) }
+                                setOnValueChangedListener { _, _, newVal ->
+                                    month = newVal
+                                    try {
+                                        val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    } catch (_: Exception) {}
+                                    for (i in 0 until childCount) {
+                                        val c = getChildAt(i)
+                                        if (c is EditText) c.setTextColor(onSurfaceColor)
+                                    }
+                                    invalidate()
+                                }
+                                try {
+                                    val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
+                                    val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
+                                    val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
+                                } catch (_: Exception) {}
+                                setOnScrollListener { _, _ ->
+                                    isActivated = false; isPressed = false
+                                    try {
+                                        val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    } catch (_: Exception) {}
+                                    invalidate()
+                                }
+                                for (i in 0 until childCount) {
+                                    val c = getChildAt(i)
+                                    if (c is EditText) {
+                                        c.setTextColor(onSurfaceColor)
+                                        c.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                                        c.setBackgroundColor(Color.TRANSPARENT)
+                                        c.isCursorVisible = false
+                                        c.highlightColor = Color.TRANSPARENT
+                                        c.isFocusable = false
+                                        c.isFocusableInTouchMode = false
+                                        c.isClickable = false
+                                        c.isLongClickable = false
+                                    }
+                                }
+                                invalidate()
                             }
                         }
-                        invalidate()
-                    } },
-                    update = { picker -> picker.maxValue = YearMonth.of(year, month).lengthOfMonth() }
-                )
+                    )
+
+                    // Day
+                    AndroidView(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .height(120.dp),
+                        factory = { ctx ->
+                            NumberPicker(ctx).apply {
+                                descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
+                                setFadingEdgeLength(0)
+                                setBackgroundColor(Color.TRANSPARENT)
+                                wrapSelectorWheel = true
+                                overScrollMode = View.OVER_SCROLL_NEVER
+                                minValue = 1
+                                maxValue = maxDay
+                                value = day.coerceAtMost(maxDay)
+                                setFormatter { String.format("%02d", it) }
+                                setOnValueChangedListener { _, _, newVal ->
+                                    day = newVal
+                                    try {
+                                        val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    } catch (_: Exception) {}
+                                    for (i in 0 until childCount) {
+                                        val c = getChildAt(i)
+                                        if (c is EditText) c.setTextColor(onSurfaceColor)
+                                    }
+                                    invalidate()
+                                }
+                                try {
+                                    val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
+                                    val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
+                                    val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
+                                } catch (_: Exception) {}
+                                setOnScrollListener { _, _ ->
+                                    isActivated = false; isPressed = false
+                                    try {
+                                        val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
+                                    } catch (_: Exception) {}
+                                    invalidate()
+                                }
+                                for (i in 0 until childCount) {
+                                    val c = getChildAt(i)
+                                    if (c is EditText) {
+                                        c.setTextColor(onSurfaceColor)
+                                        c.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                                        c.setBackgroundColor(Color.TRANSPARENT)
+                                        c.isCursorVisible = false
+                                        c.highlightColor = Color.TRANSPARENT
+                                        val states = arrayOf(
+                                            intArrayOf(android.R.attr.state_pressed),
+                                            intArrayOf(android.R.attr.state_focused),
+                                            intArrayOf(android.R.attr.state_activated),
+                                            intArrayOf(android.R.attr.state_selected),
+                                            intArrayOf()
+                                        )
+                                        val colors = intArrayOf(onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor)
+                                        c.setTextColor(ColorStateList(states, colors))
+                                    }
+                                }
+                                invalidate()
+                            }
+                        },
+                        update = { picker -> picker.maxValue = YearMonth.of(year, month).lengthOfMonth() }
+                    )
                 }
             }
         }
@@ -308,14 +327,19 @@ fun HomeScreen(
     // Back from home should finish activity (app-only logout)
     BackHandler(enabled = true) { onRequestLogout() }
 
+    val monetizationVM: MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 10.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -328,7 +352,7 @@ fun HomeScreen(
                 textAlign = TextAlign.Center
             )
         }
-
+        Spacer(Modifier.height(6.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -345,9 +369,20 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f)
             ) { onOpenSettings() }
         }
-
-        // Interest Calculator Card
-        InterestCalculatorCard()
+        Spacer(Modifier.height(6.dp))
+        // Group banner + calculator to ensure only a single parent spacing between tiles and calculator when ad not loaded
+        val homeAdLoaded = remember { mutableStateOf(false) }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            if (!hasRemoveAds) {
+                val adMod = if (homeAdLoaded.value) Modifier.fillMaxWidth() else Modifier.height(0.dp).fillMaxWidth()
+                BannerAd(modifier = adMod, onLoadState = { loaded -> homeAdLoaded.value = loaded })
+                if (homeAdLoaded.value) {
+                    Spacer(Modifier.height(10.dp))
+                }
+            }
+            // Interest Calculator Card
+            InterestCalculatorCard()
+        }
     }
 }
 

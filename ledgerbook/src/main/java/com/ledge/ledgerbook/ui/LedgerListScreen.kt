@@ -21,6 +21,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -28,6 +33,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ledge.ledgerbook.billing.MonetizationViewModel
+import com.ledge.ledgerbook.ads.BannerAd
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import com.ledge.ledgerbook.util.CurrencyFormatter
 import com.ledge.ledgerbook.util.PdfShareUtils
@@ -50,6 +57,9 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val state by vm.state.collectAsState()
     // Settings flag
     val groupingEnabled by themeViewModel.groupingEnabled.collectAsState()
+    // Monetization: remove ads entitlement
+    val monetizationVM: MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState()
     // Precompute groups in composable scope (cannot call remember inside LazyListScope)
     val groups = remember(state.items) { state.items.groupBy { it.name } }
     val sortedGroups = remember(groups) { groups.entries.sortedBy { it.key.lowercase() } }
@@ -67,8 +77,13 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val confirmDeleteId = remember { mutableStateOf<Int?>(null) }
     val context = LocalContext.current
 
-    Scaffold() { padding ->
-        BoxWithConstraints(Modifier.fillMaxSize()) {
+    Scaffold(contentWindowInsets = WindowInsets(0)) { padding ->
+        BoxWithConstraints(
+            Modifier
+                .fillMaxSize()
+                // Ensure content is not under the status bar (fix title overlap)
+                .padding(WindowInsets.statusBars.asPaddingValues())
+        ) {
             // Content list with scrolling header
             LazyColumn(
                 Modifier
@@ -136,7 +151,15 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     container = if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0),
                     content = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007)
                 )
-                Spacer(Modifier.height(10.dp))
+                // Keep banner just below summary cards; avoid extra spacing when not loaded
+                val adLoaded = remember { mutableStateOf(false) }
+                if (!hasRemoveAds) {
+                    Spacer(Modifier.height(10.dp))
+                    BannerAd(modifier = Modifier.fillMaxWidth(), onLoadState = { loaded -> adLoaded.value = loaded })
+                    if (adLoaded.value) {
+                        Spacer(Modifier.height(10.dp))
+                    }
+                }
             }
 
             if (groupingEnabled) {
@@ -313,16 +336,25 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     Spacer(Modifier.height(8.dp))
                 }
             }
+            // (moved banner above after summary cards)
             }
 
             // Draggable FAB overlay
             val density = LocalDensity.current
             val fabSize = 56.dp
             val edge = 16.dp
-            val maxX = with(density) { (maxWidth - fabSize - edge).toPx() }
-            val maxY = with(density) { (maxHeight - fabSize - edge).toPx() }
-            val minX = with(density) { edge.toPx() }
-            val minY = with(density) { edge.toPx() }
+            // Convert sizes to px
+            val fabSizePx = with(density) { fabSize.toPx() }
+            val edgePx = with(density) { edge.toPx() }
+            val maxWidthPx = with(density) { maxWidth.toPx() }
+            val maxHeightPx = with(density) { maxHeight.toPx() }
+            // Respect system insets so FAB isn't cut off by bars
+            val topInsetPx = with(density) { WindowInsets.statusBars.getTop(this).toFloat() }
+            val bottomInsetPx = with(density) { WindowInsets.navigationBars.getBottom(this).toFloat() }
+            val maxX = maxWidthPx - fabSizePx - edgePx
+            val maxY = maxHeightPx - fabSizePx - edgePx - bottomInsetPx
+            val minX = edgePx
+            val minY = topInsetPx + edgePx
             var offsetX by remember(maxWidth, maxHeight) { mutableStateOf(maxX) }
             var offsetY by remember(maxWidth, maxHeight) { mutableStateOf(maxY) }
 

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Hint Play Console that this app supports in-app purchases -->
+    <uses-permission android:name="com.android.vending.BILLING" />
     <application
         android:name=".LedgerBookApp"
         android:allowBackup="true"
@@ -11,6 +13,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.LedgerBook">
+        <!-- AdMob App ID for Google Mobile Ads SDK -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-2556604347710668~4913317579" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
