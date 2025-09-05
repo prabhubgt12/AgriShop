@@ -5,6 +5,13 @@
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
 
+        <!-- Ensure opaque system bars with proper contrast -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/black</item>
+        <!-- Use light icons on the status bar (false = light icons) -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+
         <item name="android:forceDarkAllowed">true</item>
     </style>
 </resources>

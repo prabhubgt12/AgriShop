@@ -41,8 +41,10 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.ledge.ledgerbook.ads.BannerAd
+import com.ledge.ledgerbook.ads.InterstitialAds
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.ledgerbook.billing.MonetizationViewModel
+import androidx.compose.ui.platform.LocalContext
 
 // Compound type for interest calculation
 enum class CompoundType { Monthly, Yearly }
@@ -329,6 +331,14 @@ fun HomeScreen(
 
     val monetizationVM: MonetizationViewModel = hiltViewModel()
     val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState()
+    val context = LocalContext.current
+
+    // Preload interstitial once when entering Home if ads are enabled
+    LaunchedEffect(hasRemoveAds) {
+        if (!hasRemoveAds) {
+            InterstitialAds.preload(context)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -361,7 +371,19 @@ fun HomeScreen(
                 title = "Ledger Book",
                 icon = Icons.Default.Book,
                 modifier = Modifier.weight(1f)
-            ) { onOpenLedger() }
+            ) {
+                if (hasRemoveAds) {
+                    onOpenLedger()
+                } else {
+                    (context as? android.app.Activity)?.let { act ->
+                        InterstitialAds.showIfAvailable(act) {
+                            onOpenLedger()
+                        }
+                    } ?: run {
+                        onOpenLedger()
+                    }
+                }
+            }
 
             Tile(
                 title = "Settings",

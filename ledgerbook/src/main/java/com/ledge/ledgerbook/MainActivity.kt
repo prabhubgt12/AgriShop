@@ -24,6 +24,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.view.WindowCompat
 import com.ledge.ledgerbook.ui.LedgerApp
 import com.ledge.ledgerbook.ui.theme.LedgerTheme
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
@@ -48,6 +49,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val mode = themeVm.themeMode.collectAsState().value
             LedgerTheme(themeMode = mode) {
+                // Enforce black status bar with light icons at runtime (OEM-safe)
+                SideEffect {
+                    window.statusBarColor = android.graphics.Color.BLACK
+                    val ic = WindowCompat.getInsetsController(window, window.decorView)
+                    ic.isAppearanceLightStatusBars = false
+                }
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     var unlocked by remember { mutableStateOf(false) }
 
