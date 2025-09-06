@@ -6,15 +6,15 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "company_profile")
 data class CompanyProfile(
     @PrimaryKey val id: Int = 1,
-    val name: String = "Shivam Agro Traders",
-    val addressLine1: String = "Canal Road, Saicamp",
-    val addressLine2: String = "",
-    val city: String = "Byagawat",
-    val state: String = "",
-    val pincode: String = "584123",
+    val name: String = "Simple Shop",
+    val addressLine1: String = "Address Line 1",
+    val addressLine2: String = "Address Line 2",
+    val city: String = "City Name",
+    val state: String = "Karnataka",
+    val pincode: String = "123456",
     val gstin: String = "",
-    val phone: String = "901948254",
-    val email: String = "",
+    val phone: String = "1234567890",
+    val email: String = "email@yourshopemail.com",
     // Persist image URI as string; UI will resolve and load image
     // Default points to a bundled drawable: res/drawable/ic_shivam_logo.png
     val logoUri: String = "android.resource://com.fertipos.agroshop/drawable/ic_shivam_logo",
