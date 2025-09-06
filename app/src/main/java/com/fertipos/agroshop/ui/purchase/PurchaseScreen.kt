@@ -76,8 +76,8 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         }
     }
 
-    // When editing a purchase, intercept system back to return to previous tab
-    BackHandler(enabled = state.editingPurchaseId != null) {
+    // Always intercept system back to return to the previous tab (Home or History)
+    BackHandler(enabled = true) {
         navVm.navigateTo(prevTab.value)
     }
 

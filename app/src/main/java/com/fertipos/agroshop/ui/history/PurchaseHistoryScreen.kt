@@ -14,10 +14,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -35,8 +38,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fertipos.agroshop.ui.common.DateField
@@ -69,27 +78,66 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
     val list by vm.listState.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp)) {
-            var showFilters by remember { mutableStateOf(false) }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(
-                    text = if (pendingFilter != null) "Purchase History (Product #$pendingFilter)" else "Purchases",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) "Hide filters" else "Filters") }
+    var fabDx by remember { mutableStateOf(0.dp) }
+    var fabDy by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+    val config = LocalConfiguration.current
+    val fabSize = 56.dp
+    val margin = 16.dp
+    // Content size; fallback to screen size if not yet measured
+    var contentW by remember { mutableStateOf(config.screenWidthDp.dp) }
+    var contentH by remember { mutableStateOf(config.screenHeightDp.dp) }
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navVm.navigateTo(7) },
+                modifier = Modifier
+                    .offset(x = fabDx, y = fabDy)
+                    .pointerInput(Unit) {
+                        detectDragGestures(onDrag = { _, dragAmount ->
+                            val dx = with(density) { dragAmount.x.toDp() }
+                            val dy = with(density) { dragAmount.y.toDp() }
+                            val travelX = (contentW - fabSize - margin * 2).coerceAtLeast(0.dp)
+                            val travelY = (contentH - fabSize - margin * 2).coerceAtLeast(0.dp)
+                            // Relative to bottom-end base: negative offsets up to -travel, 0 is base
+                            fabDx = (fabDx + dx).coerceIn(-travelX, 0.dp)
+                            fabDy = (fabDy + dy).coerceIn(-travelY, 0.dp)
+                        })
+                    }
+            ) {
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "New Purchase")
             }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 8.dp, vertical = 8.dp)
+                .onGloballyPositioned { coords ->
+                    contentW = with(density) { coords.size.width.toDp() }
+                    contentH = with(density) { coords.size.height.toDp() }
+                }
+        ) {
+                var showFilters by remember { mutableStateOf(false) }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        text = if (pendingFilter != null) "Purchase History (Product #$pendingFilter)" else "Purchases",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) "Hide filters" else "Filters") }
+                }
 
-            // Search bar (supplier name)
-            var searchQuery by remember { mutableStateOf("") }
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text("Search by supplier name") }
-            )
+                // Search bar (supplier name)
+                var searchQuery by remember { mutableStateOf("") }
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = { Text("Search by supplier name") }
+                )
 
             // Collapsible date filters
             var fromMillis by remember { mutableStateOf<Long?>(null) }

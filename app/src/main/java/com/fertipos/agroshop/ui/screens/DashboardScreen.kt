@@ -57,13 +57,10 @@ fun DashboardScreen() {
     Column(modifier = Modifier.fillMaxSize()) {
         // Intercept system back
         BackHandler(enabled = selected.value != 0) {
-            // If we're on a history screen, return to the previously selected tab (e.g., Products)
+            // If we're on a history screen, go to Home to avoid loops back into Billing/Purchase
             if (selected.value == 6 || selected.value == 8) {
-                val prev = previous.value
-                if (prev != 0) {
-                    navVm.navigateTo(prev)
-                    return@BackHandler
-                }
+                navVm.navigateTo(0)
+                return@BackHandler
             }
             // Default: go back to Home
             navVm.navigateTo(0)

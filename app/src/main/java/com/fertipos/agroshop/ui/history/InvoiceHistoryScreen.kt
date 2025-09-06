@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,18 +17,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,6 +57,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
 
 @Composable
 fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
@@ -62,8 +73,36 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp)) {
+    // Offsets are relative to bottom-end base position (0 = bottom-right). Negative = move left/up.
+    var fabDx by remember { mutableStateOf(0.dp) }
+    var fabDy by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
+    val config = LocalConfiguration.current
+    val fabSize = 56.dp
+    val margin = 16.dp
+    val travelX = (config.screenWidthDp.dp - fabSize - margin * 2)
+    val travelY = (config.screenHeightDp.dp - fabSize - margin * 2)
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navVm.navigateTo(3) },
+                modifier = Modifier
+                    .offset(x = fabDx, y = fabDy)
+                    .pointerInput(Unit) {
+                        detectDragGestures(onDrag = { _, dragAmount ->
+                            val dx = with(density) { dragAmount.x.toDp() }
+                            val dy = with(density) { dragAmount.y.toDp() }
+                            // Clamp within [-travel, 0] so FAB cannot go beyond screen bounds
+                            fabDx = (fabDx + dx).coerceIn(-travelX, 0.dp)
+                            fabDy = (fabDy + dy).coerceIn(-travelY, 0.dp)
+                        })
+                    }
+            ) {
+                Icon(imageVector = Icons.Filled.Add, contentDescription = "New Bill")
+            }
+        }
+    ) { innerPadding ->
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 8.dp, vertical = 8.dp)) {
             var showFilters by remember { mutableStateOf(false) }
             // Header row: Title + Filters toggle
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

@@ -117,8 +117,8 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         }
     }
 
-    // When editing an invoice, intercept back to return to the previous tab
-    BackHandler(enabled = state.value.editingInvoiceId != null) {
+    // Always intercept back to return to the previous tab (Home or History)
+    BackHandler(enabled = true) {
         navVm.navigateTo(prevTab.value)
     }
 
