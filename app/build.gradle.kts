@@ -85,7 +85,7 @@ tasks.register<Copy>("renameDebugApk") {
     val verName = android.defaultConfig.versionName ?: "1.0"
     from("build/outputs/apk/debug/app-debug.apk")
     into("build/outputs/apk/debug")
-    rename("app-debug.apk", "ShivamAgro-debug-${verName}.apk")
+    rename("app-debug.apk", "SimpleShop-debug-${verName}.apk")
     dependsOn("assembleDebug")
 }
 
@@ -93,7 +93,7 @@ tasks.register<Copy>("renameReleaseApk") {
     val verName = android.defaultConfig.versionName ?: "1.0"
     from("build/outputs/apk/release/app-release.apk")
     into("build/outputs/apk/final")
-    rename("app-release.apk", "ShivamAgro-release-${verName}.apk")
+    rename("app-release.apk", "SimpleShop-release-${verName}.apk")
     dependsOn("assembleRelease")
 }
 
@@ -102,7 +102,7 @@ tasks.register<Copy>("renameReleaseUnsignedApk") {
     val verName = android.defaultConfig.versionName ?: "1.0"
     from("build/outputs/apk/release/app-release-unsigned.apk")
     into("build/outputs/apk/final")
-    rename("app-release-unsigned.apk", "ShivamAgro-release-${verName}-unsigned.apk")
+    rename("app-release-unsigned.apk", "SimpleShop-release-${verName}-unsigned.apk")
     dependsOn("assembleRelease")
 }
 
