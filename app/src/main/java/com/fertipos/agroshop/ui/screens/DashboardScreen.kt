@@ -58,6 +58,9 @@ fun DashboardScreen() {
     val navVm: AppNavViewModel = hiltViewModel()
     val selected = navVm.selected.collectAsState()
     val previous = navVm.previousSelected.collectAsState()
+    // Monetization state (remove ads)
+    val monetVm: com.fertipos.agroshop.billing.MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetVm.hasRemoveAds.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Intercept system back
@@ -72,7 +75,7 @@ fun DashboardScreen() {
         }
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             when (selected.value) {
-                0 -> HomeScreen(onNavigateToTab = {
+                0 -> HomeScreen(hasRemoveAds = hasRemoveAds, onNavigateToTab = {
                     if (it == 3) navVm.requestNewBill()
                     navVm.navigateTo(it)
                 })
@@ -87,14 +90,16 @@ fun DashboardScreen() {
                 // Interest Book removed from parent app
             }
         }
-        // Global banner at bottom for all tabs
-        Spacer(Modifier.height(8.dp))
-        BannerAd(modifier = Modifier.fillMaxWidth().navigationBarsPadding())
+        // Global banner at bottom for all tabs (hidden if user purchased remove-ads)
+        if (!hasRemoveAds) {
+            Spacer(Modifier.height(8.dp))
+            BannerAd(modifier = Modifier.fillMaxWidth().navigationBarsPadding())
+        }
     }
 }
 
 @Composable
-private fun HomeScreen(onNavigateToTab: (Int) -> Unit) {
+private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
     val profVm: com.fertipos.agroshop.ui.settings.CompanyProfileViewModel = hiltViewModel()
     val profile by profVm.profile.collectAsState()
     val context = LocalContext.current
@@ -151,11 +156,11 @@ private fun HomeScreen(onNavigateToTab: (Int) -> Unit) {
             TileData("Purchases", Icons.Filled.ReceiptLong) { onNavigateToTab(7) },
             TileData("View Bills", Icons.Filled.History) {
                 val act = (context as? android.app.Activity)
-                if (act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(6) } else onNavigateToTab(6)
+                if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(6) } else onNavigateToTab(6)
             },
             TileData("View Purchases", Icons.Filled.History) {
                 val act = (context as? android.app.Activity)
-                if (act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(8) } else onNavigateToTab(8)
+                if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(8) } else onNavigateToTab(8)
             },
             // Interest Book tile removed (maintained as separate child app)
             TileData("Reports", Icons.Filled.BarChart) { onNavigateToTab(4) },

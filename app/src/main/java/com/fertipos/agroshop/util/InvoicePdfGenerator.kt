@@ -31,7 +31,8 @@ object InvoicePdfGenerator {
         company: CompanyProfile,
         items: List<ItemWithProduct>,
         paid: Double = 0.0,
-        balance: Double = invoice.total
+        balance: Double = invoice.total,
+        hasRemoveAds: Boolean = false
     ): Uri {
         val doc = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 in points (approx)
@@ -116,6 +117,9 @@ object InvoicePdfGenerator {
         canvas.drawText(String.format(Locale.getDefault(), "Paid: %.2f", paid), 400f, y, paint); y += 16f
         canvas.drawText(String.format(Locale.getDefault(), "Balance: %.2f", balance), 400f, y, paint); y += 16f
         paint.typeface = Typeface.DEFAULT
+
+        // Add footer with company stamp
+        PdfFooterUtil.addFooter(context, canvas, paint, 595f, 842f, hasRemoveAds)
 
         doc.finishPage(page)
 

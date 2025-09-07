@@ -22,7 +22,8 @@ object ProductPlPdfGenerator {
         authority: String,
         from: Long,
         to: Long,
-        rows: List<ReportsViewModel.ProductPLRow>
+        rows: List<ReportsViewModel.ProductPLRow>,
+        hasRemoveAds: Boolean = false
     ): Uri {
         val currency = CurrencyFormatter.inr
 
@@ -113,6 +114,9 @@ object ProductPlPdfGenerator {
         canvas.drawText(currency.format(totalSales), colX[2], y, paint)
         canvas.drawText(currency.format(totalCost), colX[3], y, paint)
         canvas.drawText(currency.format(totalProfit), colX[4], y, paint)
+
+        // Footer with stamp and logo (hidden if user purchased remove-ads)
+        PdfFooterUtil.addFooter(context, canvas, paint, pageWidth.toFloat(), pageHeight.toFloat(), hasRemoveAds)
 
         doc.finishPage(page)
 

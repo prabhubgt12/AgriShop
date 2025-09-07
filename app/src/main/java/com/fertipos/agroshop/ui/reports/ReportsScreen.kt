@@ -58,6 +58,9 @@ import android.widget.Toast
 fun ReportsScreen() {
     val vm: ReportsViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
+    // Monetization state for remove-ads
+    val monetVm: com.fertipos.agroshop.billing.MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetVm.hasRemoveAds.collectAsState()
 
     val currency = CurrencyFormatter.inr
     val dateFmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -243,7 +246,8 @@ fun ReportsScreen() {
                                         context.packageName + ".fileprovider",
                                         f,
                                         toEnd,
-                                        rows
+                                        rows,
+                                        hasRemoveAds = hasRemoveAds
                                     )
                                     val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                         type = "application/pdf"
@@ -292,7 +296,8 @@ fun ReportsScreen() {
                                     r.from, r.to,
                                     r.salesSubtotal, r.salesGst, r.salesTotal,
                                     r.purchasesSubtotal, r.purchasesGst, r.purchasesTotal,
-                                    r.grossProfit, r.netAmount
+                                    r.grossProfit, r.netAmount,
+                                    hasRemoveAds = hasRemoveAds
                                 )
                                 val intent = Intent(Intent.ACTION_SEND).apply {
                                     type = "application/pdf"
@@ -321,7 +326,8 @@ fun ReportsScreen() {
                                             context.packageName + ".fileprovider",
                                             f,
                                             toEnd,
-                                            invoices
+                                            invoices,
+                                            hasRemoveAds = hasRemoveAds
                                         )
                                         val intent = Intent(Intent.ACTION_SEND).apply {
                                             type = "application/pdf"
@@ -351,7 +357,8 @@ fun ReportsScreen() {
                                             context.packageName + ".fileprovider",
                                             f,
                                             toEnd,
-                                            purchases
+                                            purchases,
+                                            hasRemoveAds = hasRemoveAds
                                         )
                                         val intent = Intent(Intent.ACTION_SEND).apply {
                                             type = "application/pdf"

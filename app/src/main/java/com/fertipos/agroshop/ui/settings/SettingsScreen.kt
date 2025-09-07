@@ -59,9 +59,15 @@ fun SettingsScreen() {
     val current by vm.profile.collectAsState()
     val themeVm: ThemeViewModel = hiltViewModel()
     val themeMode by themeVm.themeMode.collectAsState()
+    // Monetization (remove-ads) state and actions
+    val monetVm: com.fertipos.agroshop.billing.MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetVm.hasRemoveAds.collectAsState()
 
     varStatefulForm(current, themeMode,
         onThemeChange = { themeVm.setTheme(it) },
+        hasRemoveAds = hasRemoveAds,
+        onBuyRemoveAds = { act -> monetVm.purchaseRemoveAds(act) },
+        onRestorePurchases = { monetVm.restore() }
     ) { updated ->
         vm.save(updated)
     }
@@ -72,6 +78,9 @@ private fun varStatefulForm(
     current: CompanyProfile,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
+    hasRemoveAds: Boolean,
+    onBuyRemoveAds: (android.app.Activity) -> Unit,
+    onRestorePurchases: () -> Unit,
     onSave: (CompanyProfile) -> Unit
 ) {
     var name by remember(current) { mutableStateOf(current.name) }
@@ -232,6 +241,25 @@ private fun varStatefulForm(
                     )
                     scope.launch { snackbarHostState.showSnackbar("Settings saved") }
                 }) { Text("Save") }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+            Text("Premium")
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val act = (context as? android.app.Activity)
+                Button(
+                    onClick = { act?.let { onBuyRemoveAds(it) } },
+                    enabled = act != null && !hasRemoveAds
+                ) { Text("Remove Ads") }
+
+                Button(onClick = { onRestorePurchases() }) { Text("Restore") }
             }
 
             Spacer(Modifier.height(16.dp))

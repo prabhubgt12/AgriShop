@@ -10,14 +10,14 @@ plugins {
 
 android {
     namespace = "com.fertipos.agroshop"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.fertipos.agroshop"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 35
+        versionCode = 4
+        versionName = "1.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -166,6 +166,9 @@ dependencies {
 
     // Google Mobile Ads SDK (AdMob) - test ads
     implementation("com.google.android.gms:play-services-ads:22.6.0")
+
+    // Play Billing for in-app purchases
+    implementation("com.android.billingclient:billing-ktx:6.2.1")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

@@ -73,6 +73,9 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
     val profile by profVm.profile.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    // Monetization for PDF footer
+    val monetVm: com.fertipos.agroshop.billing.MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetVm.hasRemoveAds.collectAsState()
 
     // Interstitials are shown when entering history from Home (Dashboard). No FAB interstitial here.
 
@@ -216,7 +219,8 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                                                 company = profile,
                                                 items = items.map { InvoicePdfGenerator.ItemWithProduct(it.item, it.product) },
                                                 paid = row.invoice.paid,
-                                                balance = balance
+                                                balance = balance,
+                                                hasRemoveAds = hasRemoveAds
                                             )
                                             val intent = Intent(Intent.ACTION_SEND).apply {
                                                 type = "application/pdf"

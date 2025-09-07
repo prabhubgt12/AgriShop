@@ -325,6 +325,9 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     val successId = state.value.successInvoiceId
     val profVm: CompanyProfileViewModel = hiltViewModel()
     val profile by profVm.profile.collectAsState()
+    // Monetization (remove ads) state to control PDF footer
+    val monetVm: com.fertipos.agroshop.billing.MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetVm.hasRemoveAds.collectAsState()
     LaunchedEffect(successId, profile) {
         if (successId != null && pendingPrint != null) {
             val invoice = Invoice(
@@ -360,7 +363,8 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                 company = profile,
                 items = items,
                 paid = pendingPrint!!.paid,
-                balance = pendingPrint!!.balance
+                balance = pendingPrint!!.balance,
+                hasRemoveAds = hasRemoveAds
             )
             val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
             val jobName = "Invoice #$successId"

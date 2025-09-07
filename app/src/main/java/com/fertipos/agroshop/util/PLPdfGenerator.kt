@@ -28,7 +28,8 @@ object PLPdfGenerator {
         purchasesGst: Double,
         purchasesTotal: Double,
         grossProfit: Double,
-        netAmount: Double
+        netAmount: Double,
+        hasRemoveAds: Boolean = false
     ): Uri {
         val doc = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 approx
@@ -69,6 +70,9 @@ object PLPdfGenerator {
         canvas.drawText("Gross Profit: ${currency.format(grossProfit)}", 40f, y, paint); y += 18f
         canvas.drawText("Net Amount: ${currency.format(netAmount)}", 40f, y, paint); y += 18f
         paint.typeface = Typeface.DEFAULT
+
+        // Footer with stamp and logo (hidden if user purchased remove-ads)
+        PdfFooterUtil.addFooter(context, canvas, paint, 595f, 842f, hasRemoveAds)
 
         doc.finishPage(page)
 

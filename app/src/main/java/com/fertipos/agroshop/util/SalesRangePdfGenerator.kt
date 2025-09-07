@@ -22,7 +22,8 @@ object SalesRangePdfGenerator {
         authority: String,
         from: Long,
         to: Long,
-        invoices: List<Invoice>
+        invoices: List<Invoice>,
+        hasRemoveAds: Boolean = false
     ): Uri {
         val doc = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 approx
@@ -91,6 +92,9 @@ object SalesRangePdfGenerator {
         y += 22f
         canvas.drawText("Summary: Total Sale = ${currency.format(tTotal)}, Total Received = ${currency.format(tPaid)}, Total Balance = ${currency.format(tBalance)}", 35f, y, paint)
         paint.typeface = Typeface.DEFAULT
+
+        // Footer with stamp and logo (hidden if user purchased remove-ads)
+        PdfFooterUtil.addFooter(context, canvas, paint, 595f, 842f, hasRemoveAds)
 
         doc.finishPage(page)
 

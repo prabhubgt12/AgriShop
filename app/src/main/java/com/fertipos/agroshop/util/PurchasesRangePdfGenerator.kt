@@ -22,7 +22,8 @@ object PurchasesRangePdfGenerator {
         authority: String,
         from: Long,
         to: Long,
-        purchases: List<Purchase>
+        purchases: List<Purchase>,
+        hasRemoveAds: Boolean = false
     ): Uri {
         val doc = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
@@ -91,6 +92,9 @@ object PurchasesRangePdfGenerator {
         y += 22f
         canvas.drawText("Summary: Total Purchase = ${currency.format(tTotal)}, Total Paid = ${currency.format(tPaid)}, Total Balance = ${currency.format(tBalance)}", 40f, y, paint)
         paint.typeface = Typeface.DEFAULT
+
+        // Footer with stamp and logo (hidden if user purchased remove-ads)
+        PdfFooterUtil.addFooter(context, canvas, paint, 595f, 842f, hasRemoveAds)
 
         doc.finishPage(page)
 
