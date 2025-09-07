@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -26,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +49,9 @@ import com.fertipos.agroshop.ui.settings.SettingsScreen
 import com.fertipos.agroshop.ui.history.InvoiceHistoryScreen
 import com.fertipos.agroshop.ui.history.PurchaseHistoryScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalContext
+import com.fertipos.agroshop.ads.BannerAd
+import com.fertipos.agroshop.ads.InterstitialAds
 
 @Composable
 fun DashboardScreen() {
@@ -65,21 +70,26 @@ fun DashboardScreen() {
             // Default: go back to Home
             navVm.navigateTo(0)
         }
-        when (selected.value) {
-            0 -> HomeScreen(onNavigateToTab = {
-                if (it == 3) navVm.requestNewBill()
-                navVm.navigateTo(it)
-            })
-            1 -> CustomerScreen()
-            2 -> ProductScreen()
-            3 -> BillingScreen(navVm)
-            4 -> ReportsScreen()
-            7 -> PurchaseScreen(navVm)
-            5 -> SettingsScreen()
-            6 -> InvoiceHistoryScreen(navVm)
-            8 -> PurchaseHistoryScreen(navVm)
-            // Interest Book removed from parent app
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            when (selected.value) {
+                0 -> HomeScreen(onNavigateToTab = {
+                    if (it == 3) navVm.requestNewBill()
+                    navVm.navigateTo(it)
+                })
+                1 -> CustomerScreen()
+                2 -> ProductScreen()
+                3 -> BillingScreen(navVm)
+                4 -> ReportsScreen()
+                7 -> PurchaseScreen(navVm)
+                5 -> SettingsScreen()
+                6 -> InvoiceHistoryScreen(navVm)
+                8 -> PurchaseHistoryScreen(navVm)
+                // Interest Book removed from parent app
+            }
         }
+        // Global banner at bottom for all tabs
+        Spacer(Modifier.height(8.dp))
+        BannerAd(modifier = Modifier.fillMaxWidth().navigationBarsPadding())
     }
 }
 
@@ -87,6 +97,7 @@ fun DashboardScreen() {
 private fun HomeScreen(onNavigateToTab: (Int) -> Unit) {
     val profVm: com.fertipos.agroshop.ui.settings.CompanyProfileViewModel = hiltViewModel()
     val profile by profVm.profile.collectAsState()
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -138,8 +149,14 @@ private fun HomeScreen(onNavigateToTab: (Int) -> Unit) {
             TileData("Products", Icons.Filled.Inventory2) { onNavigateToTab(2) },
             TileData("Billing", Icons.Filled.ReceiptLong) { onNavigateToTab(3) },
             TileData("Purchases", Icons.Filled.ReceiptLong) { onNavigateToTab(7) },
-            TileData("View Bills", Icons.Filled.History) { onNavigateToTab(6) },
-            TileData("View Purchases", Icons.Filled.History) { onNavigateToTab(8) },
+            TileData("View Bills", Icons.Filled.History) {
+                val act = (context as? android.app.Activity)
+                if (act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(6) } else onNavigateToTab(6)
+            },
+            TileData("View Purchases", Icons.Filled.History) {
+                val act = (context as? android.app.Activity)
+                if (act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(8) } else onNavigateToTab(8)
+            },
             // Interest Book tile removed (maintained as separate child app)
             TileData("Reports", Icons.Filled.BarChart) { onNavigateToTab(4) },
             TileData("Settings", Icons.Filled.Settings) { onNavigateToTab(5) },
@@ -147,7 +164,7 @@ private fun HomeScreen(onNavigateToTab: (Int) -> Unit) {
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.weight(1f),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 4.dp),
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
             verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
@@ -156,6 +173,7 @@ private fun HomeScreen(onNavigateToTab: (Int) -> Unit) {
                 TileCard(title = t.title, icon = t.icon, onClick = t.onClick)
             }
         }
+        // Banner is now shown globally from Dashboard (except history)
     }
     }
 }

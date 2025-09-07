@@ -63,6 +63,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
@@ -72,6 +73,8 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
     val profile by profVm.profile.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // Interstitials are shown when entering history from Home (Dashboard). No FAB interstitial here.
 
     // Offsets are relative to bottom-end base position (0 = bottom-right). Negative = move left/up.
     var fabDx by remember { mutableStateOf(0.dp) }
