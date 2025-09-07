@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -20,11 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
-import androidx.core.view.WindowCompat
 import com.ledge.ledgerbook.ui.LedgerApp
 import com.ledge.ledgerbook.ui.theme.LedgerTheme
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
@@ -40,8 +36,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    // (Reverted) No explicit status bar adjustments in onResume
-
     private val themeVm: ThemeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,12 +43,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             val mode = themeVm.themeMode.collectAsState().value
             LedgerTheme(themeMode = mode) {
-                // Enforce black status bar with light icons at runtime (OEM-safe)
-                SideEffect {
-                    window.statusBarColor = android.graphics.Color.BLACK
-                    val ic = WindowCompat.getInsetsController(window, window.decorView)
-                    ic.isAppearanceLightStatusBars = false
-                }
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     var unlocked by remember { mutableStateOf(false) }
 

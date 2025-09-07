@@ -11,9 +11,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.Alignment
 import com.ledge.ledgerbook.data.local.entities.LedgerEntry
 import java.text.SimpleDateFormat
 import java.util.Date
+ 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,12 +32,19 @@ fun LedgerAddEditScreen(
     var interestType by remember { mutableStateOf(existing?.interestType ?: "SIMPLE") }
     var period by remember { mutableStateOf(existing?.period ?: "MONTHLY") }
     var compoundPeriod by remember { mutableStateOf(existing?.compoundPeriod ?: "MONTHLY") }
-    var principal by remember { mutableStateOf((existing?.principal ?: 0.0).toString()) }
-    var rateRupees by remember { mutableStateOf((existing?.rateRupees ?: 0.0).toString()) }
+    // Mandatory numeric fields: when adding new, start empty (no default values)
+    var principal by remember { mutableStateOf(if (existing != null) existing.principal.toString() else "") }
+    var rateRupees by remember { mutableStateOf(if (existing != null) existing.rateRupees.toString() else "") }
     var fromDate by remember { mutableStateOf(existing?.fromDate ?: System.currentTimeMillis()) }
     var notes by remember { mutableStateOf(existing?.notes ?: "") }
 
     var showDatePicker by remember { mutableStateOf(false) }
+
+    // Validation for mandatory fields
+    val principalValid = principal.toDoubleOrNull() != null
+    val rateValid = rateRupees.toDoubleOrNull() != null
+    val nameValid = name.isNotBlank()
+    val formValid = nameValid && principalValid && rateValid
 
     CenteredAlertDialog(
         onDismissRequest = onDismiss,
@@ -54,7 +63,7 @@ fun LedgerAddEditScreen(
                     notes = notes.ifBlank { null }
                 )
                 onSave(entry)
-            }) { Text(if (isEdit) "Update" else "Save") }
+            }, enabled = formValid) { Text(if (isEdit) "Update" else "Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
         title = { Text(if (isEdit) "Edit Entry" else "Add to Book", style = MaterialTheme.typography.titleLarge) },
@@ -83,7 +92,11 @@ fun LedgerAddEditScreen(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(if (type.equals("LEND", true)) "Borrower Name" else "Lender Name") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = !nameValid && name.isNotEmpty(),
+                    supportingText = {
+                        if (!nameValid && name.isNotEmpty()) Text("Name is required")
+                    }
                 )
                 Spacer(Modifier.height(8.dp))
 
@@ -125,7 +138,11 @@ fun LedgerAddEditScreen(
                     onValueChange = { principal = it },
                     label = { Text("Principal Amount") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = principal.isNotEmpty() && !principalValid,
+                    supportingText = {
+                        if (principal.isNotEmpty() && !principalValid) Text("Enter a valid number")
+                    }
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
@@ -133,7 +150,11 @@ fun LedgerAddEditScreen(
                     onValueChange = { rateRupees = it },
                     label = { Text("Interest Rate (%)") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = rateRupees.isNotEmpty() && !rateValid,
+                    supportingText = {
+                        if (rateRupees.isNotEmpty() && !rateValid) Text("Enter a valid number")
+                    }
                 )
 
                 Spacer(Modifier.height(8.dp))
@@ -210,15 +231,17 @@ private fun CenteredDatePickerDialog(
     onConfirm: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = true)) {
-        Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
-            Column(Modifier.padding(16.dp)) {
-                content()
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismissRequest) { Text("Cancel") }
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = onConfirm) { Text("OK") }
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp, modifier = Modifier.fillMaxWidth(0.9f)) {
+                Column(Modifier.padding(16.dp)) {
+                    content()
+                    Spacer(Modifier.height(8.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = onDismissRequest) { Text("Cancel") }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = onConfirm) { Text("OK") }
+                    }
                 }
             }
         }

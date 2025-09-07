@@ -14,11 +14,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ledge.ledgerbook.billing.MonetizationViewModel
 import com.ledge.ledgerbook.BuildConfig
 import com.google.api.services.drive.model.File
 import com.ledge.ledgerbook.data.backup.BackupManager
 import com.ledge.ledgerbook.data.backup.DriveClient
-import com.ledge.ledgerbook.billing.MonetizationViewModel
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import kotlinx.coroutines.launch
 
@@ -80,14 +80,14 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 }
             }
             item { HorizontalDivider() }
-            // Monetization
-            item { Text("Monetization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            // Premium
+            item { Text("Premium", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(if (hasRemoveAds) "Ads are removed on this device" else "Ads enabled. Purchase to remove permanently.")
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(onClick = { activity?.let { monetizationVM.purchaseRemoveAds(it) } }, enabled = !hasRemoveAds) { Text("Buy Remove Ads") }
-                        OutlinedButton(onClick = { monetizationVM.restore() }) { Text("Restore purchases") }
+                        Button(onClick = { activity?.let { monetizationVM.purchaseRemoveAds(it) } }, enabled = !hasRemoveAds) { Text("Remove ads") }
+                        OutlinedButton(onClick = { monetizationVM.restore() }) { Text("Restore Purchase") }
                     }
                 }
             }
@@ -172,7 +172,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 Spacer(Modifier.height(4.dp))
                 // Developer and version info (compact spacing)
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.fillMaxWidth()) {
-                    Text("Developer: Prabhakar Reddy", style = MaterialTheme.typography.labelSmall)
+                    Text("Developer: SimpleAndro", style = MaterialTheme.typography.labelSmall)
                     Text("Email: prabhurb@gmail.com", style = MaterialTheme.typography.labelSmall)
                     Text("App version: ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall)
                 }

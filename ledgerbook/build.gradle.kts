@@ -11,14 +11,14 @@ plugins {
 
 android {
     namespace = "com.ledge.ledgerbook"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.ledge.ledgerbook"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 5
-        versionName = "1.0.4"
+        targetSdk = 34
+        versionCode = 6
+        versionName = "6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -130,7 +130,7 @@ dependencies {
     implementation("com.google.http-client:google-http-client-gson:1.43.3")
     implementation("com.google.apis:google-api-services-drive:v3-rev20230815-2.0.0")
 
-    // Play Billing (needed so Play Console enables In-app products UI)
+    // Google Play Billing for IAP
     implementation("com.android.billingclient:billing-ktx:6.2.1")
 
     // Google Mobile Ads SDK (AdMob)
