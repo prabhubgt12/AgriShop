@@ -11,14 +11,14 @@ plugins {
 
 android {
     namespace = "com.ledge.ledgerbook"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.ledge.ledgerbook"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 6
-        versionName = "6"
+        targetSdk = 35
+        versionCode = 7
+        versionName = "7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
