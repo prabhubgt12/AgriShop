@@ -16,6 +16,11 @@ import java.util.Date
 // We refer to it directly here via full name
 
 object PdfShareUtils {
+    private fun toCamel(label: String?): String {
+        if (label.isNullOrBlank()) return ""
+        val lower = label.lowercase()
+        return lower.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    }
     private val dateFmt = SimpleDateFormat("dd/MM/yyyy")
     private const val PAGE_WIDTH = 595 // A4 72dpi
     private const val PAGE_HEIGHT = 842
@@ -51,9 +56,9 @@ object PdfShareUtils {
 
         // Summary (no box)
         fun summaryLine(lbl: String, value: String) { lineL("$lbl: $value", text) }
-        summaryLine("Type", item.type)
+        summaryLine("Type", toCamel(item.type))
         summaryLine("Principal", CurrencyFormatter.formatInr(item.principal))
-        summaryLine("Rate", "${item.rate}% ${item.rateBasis}")
+        summaryLine("Rate", "${item.rate}% ${toCamel(item.rateBasis)}")
         summaryLine("From", item.dateStr)
         summaryLine("Interest", CurrencyFormatter.formatInr(item.accrued))
         summaryLine("Total", CurrencyFormatter.formatInr(item.total))
@@ -161,7 +166,7 @@ object PdfShareUtils {
                 val values = listOf(
                     r.dateStr,
                     CurrencyFormatter.formatInr(r.principal),
-                    "${r.rate}% ${r.rateBasis}",
+                    "${r.rate}% ${toCamel(r.rateBasis)}",
                     CurrencyFormatter.formatInr(r.accrued),
                     CurrencyFormatter.formatInr(r.total),
                 )

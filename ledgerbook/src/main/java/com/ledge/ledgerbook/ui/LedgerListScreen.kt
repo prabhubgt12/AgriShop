@@ -47,16 +47,24 @@ private fun formatInrNoDecimals(value: Double): String {
     return full.replace(Regex("\\.[0-9]+"), "")
 }
 
+// Normalize labels like "BORROW"/"LEND", "MONTHLY"/"YEARLY", "SIMPLE"/"COMPOUND" to Camel case
+private fun toCamel(label: String?): String {
+    if (label.isNullOrBlank()) return ""
+    val lower = label.lowercase()
+    return lower.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+}
+
 // Build a human-readable plain text for an entry, optionally with promo
 private fun buildShareText(vm: LedgerItemVM, includePromo: Boolean): String {
     val sdf = java.text.SimpleDateFormat("dd/MM/yyyy")
-    val typeLabel = if (vm.type == "LEND") "Lend" else "Borrow"
+    val typeLabel = toCamel(vm.type)
+    val basisLabel = toCamel(vm.rateBasis)
     return buildString {
         appendLine("Ledger Entry")
         appendLine("Name: ${vm.name}")
         appendLine("Type: ${typeLabel}")
         appendLine("Principal: ${CurrencyFormatter.formatInr(vm.principal)}")
-        appendLine("Rate: ${vm.rate}% ${vm.rateBasis}")
+        appendLine("Rate: ${vm.rate}% ${basisLabel}")
         appendLine("From: ${sdf.format(java.util.Date(vm.fromDateMillis))}")
         appendLine("Interest till now: ${CurrencyFormatter.formatInr(vm.accrued)}")
         appendLine("Total: ${CurrencyFormatter.formatInr(vm.total)}")
@@ -417,17 +425,17 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         val isLend = e.type == "LEND"
                         val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
                         val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                        AssistChip(onClick = {}, label = { Text(e.type) }, colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg))
+                        AssistChip(onClick = {}, label = { Text(toCamel(e.type)) }, colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg))
                         Spacer(Modifier.height(8.dp))
 
                         LabelValue(label = "Name", value = e.name)
                         Spacer(Modifier.height(8.dp))
-                        LabelValue(label = "Interest Type", value = e.interestType)
+                        LabelValue(label = "Interest Type", value = toCamel(e.interestType))
                         Spacer(Modifier.height(8.dp))
-                        LabelValue(label = "Rate Basis", value = (e.period ?: "MONTHLY").uppercase())
+                        LabelValue(label = "Rate Basis", value = toCamel(e.period ?: "MONTHLY"))
                         if (e.interestType.equals("COMPOUND", true)) {
                             Spacer(Modifier.height(8.dp))
-                            LabelValue(label = "Duration Type", value = e.compoundPeriod.uppercase())
+                            LabelValue(label = "Duration Type", value = toCamel(e.compoundPeriod))
                         }
                         Spacer(Modifier.height(8.dp))
                         LabelValue(label = "Principal", value = CurrencyFormatter.formatInr(e.principal))
@@ -713,7 +721,7 @@ private fun LedgerRow(
                             val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
                             AssistChip(
                                 onClick = {},
-                                label = { Text(vm.type, style = MaterialTheme.typography.labelSmall) },
+                                label = { Text(toCamel(vm.type), style = MaterialTheme.typography.labelSmall) },
                                 colors = AssistChipDefaults.assistChipColors(
                                     containerColor = chipBg,
                                     labelColor = chipFg
@@ -771,7 +779,7 @@ private fun LedgerRow(
                 ) {
                     LabelValue(label = "Principal", value = formatInrNoDecimals(vm.principal), modifier = Modifier.weight(1f))
                     Box(Modifier.weight(1f)) {
-                        LabelValue(label = "Interest Rate", value = "${vm.rate}% ${vm.rateBasis}")
+                        LabelValue(label = "Interest Rate", value = "${vm.rate}% ${toCamel(vm.rateBasis)}")
                         if (!topBarVisible) {
                             // Move 3-dots here when header row is hidden (grouping mode)
                             Box(Modifier.fillMaxWidth()) {
