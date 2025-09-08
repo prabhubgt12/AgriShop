@@ -72,7 +72,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val confirmDeleteId = remember { mutableStateOf<Int?>(null) }
     val context = LocalContext.current
 
-    Scaffold() { padding ->
+    Scaffold(contentWindowInsets = WindowInsets.systemBars) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize()) {
             // Content list with scrolling header
             LazyColumn(
@@ -330,16 +330,20 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
             val density = LocalDensity.current
             val fabSize = 56.dp
             val edge = 16.dp
+            // Calculate system bar insets in px
+            val topInsetPx = with(density) { WindowInsets.statusBars.getTop(this).toFloat() }
+            val bottomInsetPx = with(density) { WindowInsets.navigationBars.getBottom(this).toFloat() }
             val maxX = with(density) { (maxWidth - fabSize - edge).toPx() }
-            val maxY = with(density) { (maxHeight - fabSize - edge).toPx() }
+            val maxY = with(density) { (maxHeight - fabSize - edge).toPx() } - bottomInsetPx
             val minX = with(density) { edge.toPx() }
-            val minY = with(density) { edge.toPx() }
-            var offsetX by remember(maxWidth, maxHeight) { mutableStateOf(maxX) }
-            var offsetY by remember(maxWidth, maxHeight) { mutableStateOf(maxY) }
+            val minY = topInsetPx + with(density) { edge.toPx() }
+            var offsetX by remember(maxWidth, maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf(maxX.coerceAtLeast(minX)) }
+            var offsetY by remember(maxWidth, maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf(maxY.coerceAtLeast(minY)) }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
             ) {
                 FloatingActionButton(
                     onClick = { addPrefillName.value = null; showAdd.value = true },
@@ -456,9 +460,14 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
 
                     OutlinedTextField(
                         value = partialAmount.value,
-                        onValueChange = { partialAmount.value = it },
+                        onValueChange = { input ->
+                            // Allow only digits and a decimal point; disallow negatives
+                            partialAmount.value = input.filter { ch -> ch.isDigit() || ch == '.' }
+                        },
                         label = { Text("Amount") },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                        ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(8.dp))
@@ -475,7 +484,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
             },
             confirmButton = {
                 TextButton(onClick = {
-                    val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
+                    val amt = (partialAmount.value.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0)
                     partialForId.value?.let { vm.applyPartial(it, amt, partialDateMillis.value) }
                     partialForId.value = null
                 }) { Text("Apply") }

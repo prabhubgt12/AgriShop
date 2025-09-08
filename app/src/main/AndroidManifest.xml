@@ -11,10 +11,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AgroShop">
-        <!-- AdMob App ID for Google Mobile Ads SDK (Test ID) -->
+        <!-- AdMob App ID for Google Mobile Ads SDK (Production) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-2556604347710668~6015027121" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

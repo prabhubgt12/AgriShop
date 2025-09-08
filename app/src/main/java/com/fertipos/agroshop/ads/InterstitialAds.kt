@@ -10,8 +10,8 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 
 object InterstitialAds {
-    // Google TEST interstitial ad unit ID
-    private const val TEST_UNIT = "ca-app-pub-3940256099942544/1033173712"
+    // Production interstitial ad unit ID
+    private const val TEST_UNIT = "ca-app-pub-2556604347710668/5265052238"
 
     @Volatile private var interstitial: InterstitialAd? = null
     @Volatile private var isLoading: Boolean = false

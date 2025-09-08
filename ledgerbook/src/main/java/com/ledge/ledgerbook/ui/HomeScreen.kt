@@ -326,6 +326,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -473,7 +474,10 @@ private fun InterestCalculatorCard() {
                         .heightIn(min = compactHeight),
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodySmall,
-                    maxLines = 1
+                    maxLines = 1,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    )
                 )
                 OutlinedTextField(
                     value = ratePerMonth,
@@ -484,7 +488,10 @@ private fun InterestCalculatorCard() {
                         .heightIn(min = compactHeight),
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodySmall,
-                    maxLines = 1
+                    maxLines = 1,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    )
                 )
             }
 
@@ -581,7 +588,10 @@ private fun InterestCalculatorCard() {
                             .heightIn(min = compactHeight),
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodySmall,
-                        maxLines = 1
+                        maxLines = 1,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        )
                     )
                     OutlinedTextField(
                         value = monthsText,
@@ -592,7 +602,10 @@ private fun InterestCalculatorCard() {
                             .heightIn(min = compactHeight),
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodySmall,
-                        maxLines = 1
+                        maxLines = 1,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        )
                     )
                     OutlinedTextField(
                         value = daysText,
@@ -603,7 +616,10 @@ private fun InterestCalculatorCard() {
                             .heightIn(min = compactHeight),
                         singleLine = true,
                         textStyle = MaterialTheme.typography.bodySmall,
-                        maxLines = 1
+                        maxLines = 1,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                        )
                     )
                 }
             }

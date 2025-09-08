@@ -54,11 +54,11 @@ fun LedgerAddEditScreen(
                     id = existing?.id ?: 0,
                     type = type,
                     name = name.trim(),
-                    principal = principal.toDoubleOrNull() ?: 0.0,
+                    principal = (principal.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0),
                     interestType = interestType,
                     period = period,
                     compoundPeriod = compoundPeriod,
-                    rateRupees = rateRupees.toDoubleOrNull() ?: 0.0,
+                    rateRupees = (rateRupees.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0),
                     fromDate = fromDate,
                     notes = notes.ifBlank { null }
                 )
@@ -135,10 +135,13 @@ fun LedgerAddEditScreen(
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = principal,
-                    onValueChange = { principal = it },
+                    onValueChange = { input ->
+                        // Allow only digits and a decimal point; disallow negatives
+                        principal = input.filter { ch -> ch.isDigit() || ch == '.' }
+                    },
                     label = { Text("Principal Amount") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = principal.isNotEmpty() && !principalValid,
                     supportingText = {
                         if (principal.isNotEmpty() && !principalValid) Text("Enter a valid number")
@@ -147,10 +150,13 @@ fun LedgerAddEditScreen(
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = rateRupees,
-                    onValueChange = { rateRupees = it },
+                    onValueChange = { input ->
+                        // Allow only digits and a decimal point; disallow negatives
+                        rateRupees = input.filter { ch -> ch.isDigit() || ch == '.' }
+                    },
                     label = { Text("Interest Rate (%)") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = rateRupees.isNotEmpty() && !rateValid,
                     supportingText = {
                         if (rateRupees.isNotEmpty() && !rateValid) Text("Enter a valid number")

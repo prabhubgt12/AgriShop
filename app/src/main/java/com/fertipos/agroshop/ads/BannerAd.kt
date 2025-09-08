@@ -16,8 +16,8 @@ import android.util.Log
 @Composable
 fun BannerAd(
     modifier: Modifier = Modifier,
-    // Google test banner unit id
-    adUnitId: String = "ca-app-pub-3940256099942544/6300978111",
+    // Production banner unit id
+    adUnitId: String = "ca-app-pub-2556604347710668/7495382334",
     onLoadState: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current

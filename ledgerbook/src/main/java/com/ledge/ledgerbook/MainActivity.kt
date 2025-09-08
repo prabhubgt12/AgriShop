@@ -4,6 +4,9 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.graphics.Color
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -40,10 +44,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Enable edge-to-edge and make bars transparent. Insets will be consumed in Compose.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
         setContent {
             val mode = themeVm.themeMode.collectAsState().value
             LedgerTheme(themeMode = mode) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    // Adjust status/navigation bar icon appearance based on theme
+                    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                    LaunchedEffect(isDark) {
+                        val controller = WindowInsetsControllerCompat(window, window.decorView)
+                        controller.isAppearanceLightStatusBars = !isDark
+                        controller.isAppearanceLightNavigationBars = !isDark
+                    }
                     var unlocked by remember { mutableStateOf(false) }
 
                     LaunchedEffect(Unit) {

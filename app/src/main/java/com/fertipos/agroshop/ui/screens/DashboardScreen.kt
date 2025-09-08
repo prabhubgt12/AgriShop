@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -62,7 +65,7 @@ fun DashboardScreen() {
     val monetVm: com.fertipos.agroshop.billing.MonetizationViewModel = hiltViewModel()
     val hasRemoveAds by monetVm.hasRemoveAds.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
         // Intercept system back
         BackHandler(enabled = selected.value != 0) {
             // If we're on a history screen, go to Home to avoid loops back into Billing/Purchase

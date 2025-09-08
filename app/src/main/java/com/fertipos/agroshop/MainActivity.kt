@@ -4,6 +4,9 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.graphics.Color
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -46,6 +49,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Edge-to-edge: let Compose handle insets and make system bars transparent
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
         setContent {
             val themeVm: ThemeViewModel = hiltViewModel()
             val mode by themeVm.themeMode.collectAsState()
@@ -56,6 +63,12 @@ class MainActivity : ComponentActivity() {
             }
             AgroShopTheme(useDarkTheme = dark) {
                 Surface(color = MaterialTheme.colorScheme.background) {
+                    // Adjust status/navigation bar icon colors for readability
+                    LaunchedEffect(dark) {
+                        val controller = WindowInsetsControllerCompat(window, window.decorView)
+                        controller.isAppearanceLightStatusBars = !dark
+                        controller.isAppearanceLightNavigationBars = !dark
+                    }
                     var unlocked by remember { mutableStateOf(false) }
 
                     LaunchedEffect(Unit) {
