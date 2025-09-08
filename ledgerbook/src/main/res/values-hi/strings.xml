@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">लेजर बुक</string>
+    <!-- app_name defined below as सिंपल खाता; removing duplicate -->
     <string name="unlock_to_continue">आगे बढ़ने के लिए अनलॉक करें</string>
 
     <!-- Share/PDF labels -->
-    <string name="ledger_entry_title">लेखा प्रविष्टि</string>
-    <string name="pdf_title_receipt">रसीद</string>
-    <string name="pdf_title_statement">विवरण-पत्र</string>
+    <string name="ledger_entry_title">खाता प्रविष्टि</string>
+    <string name="pdf_title_receipt">खाता रसीद</string>
+    <string name="pdf_title_statement">खाता विवरण</string>
 
     <string name="label_name_with_value">नाम: %1$s</string>
     <string name="label_type_with_value">प्रकार: %1$s</string>
@@ -38,7 +38,7 @@
     <string name="col_total">कुल</string>
 
     <!-- Footer promo -->
-    <string name="generated_by_footer_with_link">Ledger Book द्वारा निर्मित – %1$s</string>
+    <string name="generated_by_footer_with_link">सिंपल खाता द्वारा निर्मित – %1$s</string>
 
     <!-- Share chooser -->
     <string name="share_via">किसके द्वारा साझा करें</string>
@@ -75,7 +75,9 @@
     <!-- Common/Generic used on Home/Calculator -->
     <string name="ok">ठीक</string>
     <string name="cancel">रद्द</string>
-    <string name="title_ledger_book">लेजर बुक</string>
+    <string name="app_name">सिंपल खाता</string>
+    <string name="title_ledger_book">सिंपल खाता</string>
+    <string name="title_khata_book">खाता बही</string>
     <string name="interest_calculator">ब्याज कैलकुलेटर</string>
     <string name="label_principal_generic">मूलधन</string>
     <string name="label_rate_per_month">दर (%/माह)</string>

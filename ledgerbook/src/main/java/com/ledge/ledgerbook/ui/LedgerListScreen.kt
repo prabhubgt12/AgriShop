@@ -59,8 +59,16 @@ private fun toCamel(label: String?): String {
 // Build a human-readable plain text for an entry, optionally with promo
 private fun buildShareText(ctx: android.content.Context, vm: LedgerItemVM, includePromo: Boolean): String {
     val sdf = java.text.SimpleDateFormat("dd/MM/yyyy")
-    val typeLabel = toCamel(vm.type)
-    val basisLabel = toCamel(vm.rateBasis)
+    val typeLabel = when (vm.type.uppercase()) {
+        "LEND" -> ctx.getString(R.string.lend)
+        "BORROW" -> ctx.getString(R.string.borrow)
+        else -> toCamel(vm.type)
+    }
+    val basisLabel = when (vm.rateBasis.uppercase()) {
+        "MONTHLY" -> ctx.getString(R.string.monthly)
+        "YEARLY" -> ctx.getString(R.string.yearly)
+        else -> toCamel(vm.rateBasis)
+    }
     return buildString {
         appendLine(ctx.getString(R.string.ledger_entry_title))
         appendLine(ctx.getString(R.string.label_name_with_value, vm.name))
@@ -119,7 +127,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Ledger Book",
+                        text = stringResource(R.string.title_khata_book),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f)
@@ -421,37 +429,58 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         if (e != null && e.id == detailsId) {
             CenteredAlertDialog(
                 onDismissRequest = { detailsForId.value = null; vm.clearEdit() },
-                title = { Text("Entry Details") },
+                title = { Text(stringResource(R.string.entry_details)) },
                 text = {
                     Column(Modifier.fillMaxWidth()) {
                         val isLend = e.type == "LEND"
                         val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
                         val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                        AssistChip(onClick = {}, label = { Text(toCamel(e.type)) }, colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg))
+                        val typeLbl = when (e.type.uppercase()) {
+                            "LEND" -> stringResource(R.string.lend)
+                            "BORROW" -> stringResource(R.string.borrow)
+                            else -> toCamel(e.type)
+                        }
+                        AssistChip(onClick = {}, label = { Text(typeLbl) }, colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg))
                         Spacer(Modifier.height(8.dp))
 
-                        LabelValue(label = "Name", value = e.name)
+                        LabelValue(label = stringResource(R.string.name_label), value = e.name)
                         Spacer(Modifier.height(8.dp))
-                        LabelValue(label = "Interest Type", value = toCamel(e.interestType))
+                        val interestTypeValue = when (e.interestType.uppercase()) {
+                            "SIMPLE" -> stringResource(R.string.simple)
+                            "COMPOUND" -> stringResource(R.string.compound)
+                            else -> toCamel(e.interestType)
+                        }
+                        LabelValue(label = stringResource(R.string.interest_type), value = interestTypeValue)
                         Spacer(Modifier.height(8.dp))
-                        LabelValue(label = "Rate Basis", value = toCamel(e.period ?: "MONTHLY"))
+                        val basis = (e.period ?: "MONTHLY").uppercase()
+                        val basisValue = when (basis) {
+                            "MONTHLY" -> stringResource(R.string.monthly)
+                            "YEARLY" -> stringResource(R.string.yearly)
+                            else -> toCamel(basis)
+                        }
+                        LabelValue(label = stringResource(R.string.rate_basis), value = basisValue)
                         if (e.interestType.equals("COMPOUND", true)) {
                             Spacer(Modifier.height(8.dp))
-                            LabelValue(label = "Duration Type", value = toCamel(e.compoundPeriod))
+                            val durValue = when (e.compoundPeriod.uppercase()) {
+                                "MONTHLY" -> stringResource(R.string.monthly)
+                                "YEARLY" -> stringResource(R.string.yearly)
+                                else -> toCamel(e.compoundPeriod)
+                            }
+                            LabelValue(label = stringResource(R.string.duration_type), value = durValue)
                         }
                         Spacer(Modifier.height(8.dp))
-                        LabelValue(label = "Principal", value = CurrencyFormatter.formatInr(e.principal))
+                        LabelValue(label = stringResource(R.string.label_principal_generic), value = CurrencyFormatter.formatInr(e.principal))
                         Spacer(Modifier.height(8.dp))
-                        LabelValue(label = "Interest Rate", value = "${e.rateRupees}%")
+                        LabelValue(label = stringResource(R.string.interest_rate_percent), value = "${e.rateRupees}%")
                         Spacer(Modifier.height(8.dp))
-                        LabelValue(label = "From Date", value = SimpleDateFormat("dd/MM/yyyy").format(Date(e.fromDate)))
+                        LabelValue(label = stringResource(R.string.from_date), value = SimpleDateFormat("dd/MM/yyyy").format(Date(e.fromDate)))
                         if (!e.notes.isNullOrBlank()) {
                             Spacer(Modifier.height(8.dp))
-                            LabelValue(label = "Notes", value = e.notes)
+                            LabelValue(label = stringResource(R.string.notes_optional), value = e.notes)
                         }
                     }
                 },
-                confirmButton = { TextButton(onClick = { detailsForId.value = null; vm.clearEdit() }) { Text("Close") } }
+                confirmButton = { TextButton(onClick = { detailsForId.value = null; vm.clearEdit() }) { Text(stringResource(R.string.ok)) } }
             )
         }
     }
@@ -721,9 +750,14 @@ private fun LedgerRow(
                             val isLend = vm.type == "LEND"
                             val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
                             val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                            val typeLabel = when (vm.type.uppercase()) {
+                                "LEND" -> stringResource(R.string.lend)
+                                "BORROW" -> stringResource(R.string.borrow)
+                                else -> toCamel(vm.type)
+                            }
                             AssistChip(
                                 onClick = {},
-                                label = { Text(toCamel(vm.type), style = MaterialTheme.typography.labelSmall) },
+                                label = { Text(typeLabel, style = MaterialTheme.typography.labelSmall) },
                                 colors = AssistChipDefaults.assistChipColors(
                                     containerColor = chipBg,
                                     labelColor = chipFg
@@ -768,9 +802,12 @@ private fun LedgerRow(
             val months = remAfterYears / 30
             val days = remAfterYears % 30
             val totalTime = buildString {
-                if (years > 0) append("${years} Years ")
-                if (months > 0) append("${months} Months ")
-                append("${days} Days")
+                val yr = stringResource(R.string.year_singular)
+                val mo = stringResource(R.string.month_singular)
+                val dy = stringResource(R.string.day_singular)
+                if (years > 0) append("${years} ${yr} ")
+                if (months > 0) append("${months} ${mo} ")
+                append("${days} ${dy}")
             }
 
             Column(Modifier.fillMaxWidth()) {
@@ -781,7 +818,12 @@ private fun LedgerRow(
                 ) {
                     LabelValue(label = stringResource(R.string.label_principal_generic), value = formatInrNoDecimals(vm.principal), modifier = Modifier.weight(1f))
                     Box(Modifier.weight(1f)) {
-                        LabelValue(label = stringResource(R.string.interest_rate), value = "${vm.rate}% ${toCamel(vm.rateBasis)}")
+                        val basisLabel = when (vm.rateBasis.uppercase()) {
+                            "MONTHLY" -> stringResource(R.string.monthly)
+                            "YEARLY" -> stringResource(R.string.yearly)
+                            else -> toCamel(vm.rateBasis)
+                        }
+                        LabelValue(label = stringResource(R.string.interest_rate), value = "${vm.rate}% ${basisLabel}")
                         if (!topBarVisible) {
                             // Move 3-dots here when header row is hidden (grouping mode)
                             Box(Modifier.fillMaxWidth()) {

@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name">ಲೆಡ್ಜರ್ ಬುಕ್</string>
+    <string name="app_name_legacy">ಲೆಡ್ಜರ್ ಬುಕ್</string>
     <string name="unlock_to_continue">ಮುಂದುವರಿಸಲು ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
 
     <!-- Share/PDF labels -->
-    <string name="ledger_entry_title">ಲೆಡ್ಜರ್ ದಾಖಲಾತಿ</string>
-    <string name="pdf_title_receipt">ಲೆಡ್ಜರ್ ರಸೀತಿ</string>
-    <string name="pdf_title_statement">ಲೆಡ್ಜರ್ ಸ್ಟೇಟ್‌ಮೆಂಟ್</string>
+    <string name="ledger_entry_title">ಖಾತಾ ದಾಖಲಾತಿ</string>
+    <string name="pdf_title_receipt">ಖಾತಾ ರಸೀತಿ</string>
+    <string name="pdf_title_statement">ಖಾತಾ ವಿವರ</string>
 
     <string name="label_name_with_value">ಹೆಸರು: %1$s</string>
     <string name="label_type_with_value">ಪ್ರಕಾರ: %1$s</string>
-    <string name="label_principal_with_value">ಮುಖ್ಯ ಧನ: %1$s</string>
+    <string name="label_principal_with_value">ಮೂಲ ಧನ: %1$s</string>
     <string name="label_rate_with_value">ದರ: %1$s%% %2$s</string>
     <string name="label_from_with_value">ಇಂದ: %1$s</string>
     <string name="label_interest_till_now_with_value">ಇಲ್ಲಿವರೆಗೆ ಬಡ್ಡಿ: %1$s</string>
@@ -24,7 +24,7 @@
     <string name="label_net_with_value">ಒಟ್ಟು ಮೊತ್ತ: %1$s</string>
 
     <string name="label_type">ಪ್ರಕಾರ</string>
-    <string name="label_principal">ಮುಖ್ಯ ಧನ</string>
+    <string name="label_principal">ಮೂಲ ಧನ</string>
     <string name="label_rate">ದರ</string>
     <string name="label_from">ಇಂದ</string>
     <string name="label_interest">ಬಡ್ಡಿ</string>
@@ -33,13 +33,13 @@
 
     <!-- Table column labels -->
     <string name="col_date">ದಿನಾಂಕ</string>
-    <string name="col_principal">ಮುಖ್ಯ ಧನ</string>
+    <string name="col_principal">ಮೂಲ ಧನ</string>
     <string name="col_rate">ದರ</string>
     <string name="col_interest">ಬಡ್ಡಿ</string>
     <string name="col_total">ಒಟ್ಟು</string>
 
     <!-- Footer promo -->
-    <string name="generated_by_footer_with_link">ಲೆಡ್ಜರ್ ಬುಕ್ ಮೂಲಕ ರಚಿಸಲಾಗಿದೆ – %1$s</string>
+    <string name="generated_by_footer_with_link">ಸಿಂಪಲ್ ಖಾತಾ ಮೂಲಕ ರಚಿಸಲಾಗಿದೆ – %1$s</string>
 
     <!-- Share chooser -->
     <string name="share_via">ಇದರ ಮೂಲಕ ಹಂಚಿಕೊಳ್ಳಿ</string>
@@ -51,8 +51,8 @@
     <string name="premium_title">ಪ್ರೀಮಿಯಂ</string>
     <string name="ads_removed">ಈ ಸಾಧನದಲ್ಲಿ ಜಾಹೀರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ</string>
     <string name="ads_enabled_msg">ಜಾಹೀರಾತುಗಳು ಸಕ್ರಿಯವಾಗಿದೆ. ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಲು ಖರೀದಿಸಿ.</string>
-    <string name="remove_ads">ಜಾಹೀರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಿ</string>
-    <string name="restore_purchase">ಖರೀದಿಯನ್ನು ಮರುಸ್ಥಾಪಿಸಿ</string>
+    <string name="remove_ads">ಜಾಹೀರಾತು ತೆಗೆ</string>
+    <string name="restore_purchase">ಖರೀದಿ ಮರುಸ್ಥಾಪಿಸಿ</string>
     <string name="features_title">ವೈಶಿಷ್ಟ್ಯಗಳು</string>
     <string name="group_by_customer">ಗ್ರಾಹಕ ಆಧಾರಿತ ಗುಂಪು</string>
     <string name="group_by_desc">ಪೇರಂಟ್ ಮತ್ತು ಚೈಲ್ಡ್ ವ್ಯವಹಾರಗಳನ್ನು ವಿಸ್ತರಣೆಯೊಂದಿಗೆ ತೋರಿಸಿ.</string>
@@ -77,9 +77,11 @@
     <!-- Common/Generic -->
     <string name="ok">ಸರಿ</string>
     <string name="cancel">ರದ್ದು</string>
-    <string name="title_ledger_book">ಲೆಡ್ಜರ್ ಬುಕ್</string>
+    <string name="app_name">ಸಿಂಪಲ್ ಖಾತಾ</string>
+    <string name="title_ledger_book">ಸಿಂಪಲ್ ಖಾತಾ</string>
+    <string name="title_khata_book">ಖಾತಾ ಪುಸ್ತಕ</string>
     <string name="interest_calculator">ಬಡ್ಡಿ ಗಣಕ</string>
-    <string name="label_principal_generic">ಮುಖ್ಯ ಧನ</string>
+    <string name="label_principal_generic">ಮೂಲ ಧನ</string>
     <string name="label_rate_per_month">ದರ (%/ತಿಂಗಳು)</string>
     <string name="dates">ದಿನಾಂಕಗಳು</string>
     <string name="duration">ಅವಧಿ</string>
@@ -88,11 +90,26 @@
     <string name="years">ವರ್ಷಗಳು</string>
     <string name="months">ತಿಂಗಳು</string>
     <string name="days">ದಿನಗಳು</string>
+    <string name="year_singular">ವರ್ಷ</string>
+    <string name="month_singular">ತಿಂಗಳು</string>
+    <string name="day_singular">ದಿನ</string>
+    <plurals name="years_qty">
+        <item quantity="one">%d ವರ್ಷ</item>
+        <item quantity="other">%d ವರ್ಷಗಳು</item>
+    </plurals>
+    <plurals name="months_qty">
+        <item quantity="one">%d ತಿಂಗಳು</item>
+        <item quantity="other">%d ತಿಂಗಳು</item>
+    </plurals>
+    <plurals name="days_qty">
+        <item quantity="one">%d ದಿನ</item>
+        <item quantity="other">%d ದಿನಗಳು</item>
+    </plurals>
     <string name="simple">ಸರಳ ಬಡ್ಡಿ</string>
     <string name="compound">ಚಕ್ರಬಡ್ಡಿ</string>
     <string name="monthly">ತಿಂಗಳಿಗೆ</string>
     <string name="yearly">ವರ್ಷಕ್ಕೆ</string>
-    <string name="clear">ಖಾಲಿ ಮಾಡಿ</string>
+    <string name="clear">ಅಳಿಸಿ</string>
     <string name="calculate">ಲೆಕ್ಕಿಸಿ</string>
     <string name="rate">ದರ</string>
 
@@ -109,7 +126,7 @@
     <string name="total_time">ಒಟ್ಟು ಸಮಯ</string>
     <string name="total_amount">ಒಟ್ಟು ಮೊತ್ತ</string>
     <string name="total_interest">ಒಟ್ಟು ಬಡ್ಡಿ</string>
-    <string name="total_principal">ಒಟ್ಟು ಮುಖ್ಯ ಧನ</string>
+    <string name="total_principal">ಒಟ್ಟು ಮೂಲ ಧನ</string>
     <string name="total_lend">ಒಟ್ಟು ಸಾಲ (ಕೊಟ್ಟದ್ದು)</string>
     <string name="lend_interest">ಕೊಟ್ಟ ಸಾಲದ ಬಡ್ಡಿ</string>
     <string name="total_borrow">ಒಟ್ಟು ಸಾಲ (ತೆಗೆದುಕೊಂಡದ್ದು)</string>
@@ -120,7 +137,7 @@
     <string name="update">ನವೀಕರಿಸಿ</string>
     <string name="save">ಉಳಿಸಿ</string>
     <string name="edit_entry">ನಮೂದನ್ನು ಸಂಪಾದಿಸಿ</string>
-    <string name="add_to_book">ಬುಕ್‌ಗೆ ಸೇರಿಸಿ</string>
+    <string name="add_to_book">ಪುಸ್ತಕಕ್ಕೆ ಸೇರಿಸಿ</string>
     <string name="lend">ಸಾಲ ಕೊಟ್ಟದ್ದು</string>
     <string name="borrow">ಸಾಲ ತೆಗೆದುಕೊಂಡದ್ದು</string>
     <string name="borrower_name">ಸಾಲಗಾರನ ಹೆಸರು</string>
@@ -129,9 +146,21 @@
     <string name="interest_type">ಬಡ್ಡಿ ಪ್ರಕಾರ</string>
     <string name="rate_basis">ದರ ಆಧಾರ</string>
     <string name="duration_type">ಅವಧಿ ಪ್ರಕಾರ (ಚಕ್ರಬಡ್ಡಿ)</string>
-    <string name="principal_amount">ಮುಖ್ಯ ಧನದ ಮೊತ್ತ</string>
+    <string name="principal_amount">ಮೂಲ ಧನದ ಮೊತ್ತ</string>
     <string name="enter_valid_number">ಮಾನ್ಯ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ</string>
     <string name="interest_rate_percent">ಬಡ್ಡಿ ದರ (%)</string>
     <string name="pick">ಆರಿಸಿ</string>
     <string name="notes_optional">ಟಿಪ್ಪಣಿಗಳು (ಐಚ್ಛಿಕ)</string>
+    
+    <!-- Generic/detail/dialog labels (Kannada) -->
+    <string name="entry_details">ನಮೂದಿನ ವಿವರಗಳು</string>
+    <string name="name_label">ಹೆಸರು</string>
+    <string name="payment_date">ಪಾವತಿ ದಿನಾಂಕ</string>
+    <string name="amount">ಮೊತ್ತ</string>
+    <string name="interest_till_date">ಇಲ್ಲಿಯವರೆಗೆ ಬಡ್ಡಿ</string>
+    <string name="remaining_after_payment">ಪಾವತಿಯ ನಂತರ ಉಳಿದದ್ದು</string>
+    <string name="close">ಮುಚ್ಚು</string>
+    <string name="delete_entry">ನಮೂದನ್ನು ಅಳಿಸಿ</string>
+    <string name="delete_entry_confirm">ಈ ನಮೂದನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ? ಇದರ ಪಾವತಿಗಳೂ ಅಳಿಸಲಾಗುತ್ತದೆ. ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂತೆಗೆದುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="no_payments_yet">ಇನ್ನೂ ಯಾವುದೇ ಪಾವತಿಗಳಿಲ್ಲ.</string>
 </resources>

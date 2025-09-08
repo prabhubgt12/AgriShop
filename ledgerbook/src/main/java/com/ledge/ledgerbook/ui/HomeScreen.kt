@@ -328,6 +328,7 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.systemBars)
+            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 10.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -351,7 +352,7 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Tile(
-                title = stringResource(R.string.title_ledger_book),
+                title = stringResource(R.string.title_khata_book),
                 icon = Icons.Default.Book,
                 modifier = Modifier.weight(1f)
             ) { onOpenLedger() }
