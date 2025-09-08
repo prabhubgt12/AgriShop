@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import com.ledge.ledgerbook.data.local.entities.LedgerEntry
 import java.text.SimpleDateFormat
 import java.util.Date
+import androidx.compose.ui.res.stringResource
+import com.ledge.ledgerbook.R
  
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,10 +65,10 @@ fun LedgerAddEditScreen(
                     notes = notes.ifBlank { null }
                 )
                 onSave(entry)
-            }, enabled = formValid) { Text(if (isEdit) "Update" else "Save") }
+            }, enabled = formValid) { Text(if (isEdit) stringResource(R.string.update) else stringResource(R.string.save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        title = { Text(if (isEdit) "Edit Entry" else "Add to Book", style = MaterialTheme.typography.titleLarge) },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        title = { Text(if (isEdit) stringResource(R.string.edit_entry) else stringResource(R.string.add_to_book), style = MaterialTheme.typography.titleLarge) },
         text = {
             Column(
                 Modifier
@@ -78,12 +80,12 @@ fun LedgerAddEditScreen(
                     FilterChip(
                         selected = type.equals("LEND", true),
                         onClick = { type = "LEND" },
-                        label = { Text("Lend") }
+                        label = { Text(stringResource(R.string.lend)) }
                     )
                     FilterChip(
                         selected = type.equals("BORROW", true),
                         onClick = { type = "BORROW" },
-                        label = { Text("Borrow") }
+                        label = { Text(stringResource(R.string.borrow)) }
                     )
                 }
                 Spacer(Modifier.height(12.dp))
@@ -91,44 +93,44 @@ fun LedgerAddEditScreen(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(if (type.equals("LEND", true)) "Borrower Name" else "Lender Name") },
+                    label = { Text(if (type.equals("LEND", true)) stringResource(R.string.borrower_name) else stringResource(R.string.lender_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = !nameValid && name.isNotEmpty(),
                     supportingText = {
-                        if (!nameValid && name.isNotEmpty()) Text("Name is required")
+                        if (!nameValid && name.isNotEmpty()) Text(stringResource(R.string.name_required))
                     }
                 )
                 Spacer(Modifier.height(8.dp))
 
-                Text("Interest Type", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.interest_type), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.height(4.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     FilterChip(
                         selected = interestType.equals("SIMPLE", true),
                         onClick = { interestType = "SIMPLE" },
-                        label = { Text("Simple") }
+                        label = { Text(stringResource(R.string.simple)) }
                     )
                     FilterChip(
                         selected = interestType.equals("COMPOUND", true),
                         onClick = { interestType = "COMPOUND" },
-                        label = { Text("Compound") }
+                        label = { Text(stringResource(R.string.compound)) }
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("Rate Basis", style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(R.string.rate_basis), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.height(4.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FilterChip(selected = period == "MONTHLY", onClick = { period = "MONTHLY" }, label = { Text("Monthly") })
-                    FilterChip(selected = period == "YEARLY", onClick = { period = "YEARLY" }, label = { Text("Yearly") })
+                    FilterChip(selected = period == "MONTHLY", onClick = { period = "MONTHLY" }, label = { Text(stringResource(R.string.monthly)) })
+                    FilterChip(selected = period == "YEARLY", onClick = { period = "YEARLY" }, label = { Text(stringResource(R.string.yearly)) })
                 }
 
                 if (interestType.equals("COMPOUND", true)) {
                     Spacer(Modifier.height(8.dp))
-                    Text("Duration Type", style = MaterialTheme.typography.labelMedium)
+                    Text(stringResource(R.string.duration_type), style = MaterialTheme.typography.labelMedium)
                     Spacer(Modifier.height(4.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        FilterChip(selected = compoundPeriod == "MONTHLY", onClick = { compoundPeriod = "MONTHLY" }, label = { Text("Monthly") })
-                        FilterChip(selected = compoundPeriod == "YEARLY", onClick = { compoundPeriod = "YEARLY" }, label = { Text("Yearly") })
+                        FilterChip(selected = compoundPeriod == "MONTHLY", onClick = { compoundPeriod = "MONTHLY" }, label = { Text(stringResource(R.string.monthly)) })
+                        FilterChip(selected = compoundPeriod == "YEARLY", onClick = { compoundPeriod = "YEARLY" }, label = { Text(stringResource(R.string.yearly)) })
                     }
                 }
 
@@ -139,12 +141,12 @@ fun LedgerAddEditScreen(
                         // Allow only digits and a decimal point; disallow negatives
                         principal = input.filter { ch -> ch.isDigit() || ch == '.' }
                     },
-                    label = { Text("Principal Amount") },
+                    label = { Text(stringResource(R.string.principal_amount)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = principal.isNotEmpty() && !principalValid,
                     supportingText = {
-                        if (principal.isNotEmpty() && !principalValid) Text("Enter a valid number")
+                        if (principal.isNotEmpty() && !principalValid) Text(stringResource(R.string.enter_valid_number))
                     }
                 )
                 Spacer(Modifier.height(8.dp))
@@ -154,12 +156,12 @@ fun LedgerAddEditScreen(
                         // Allow only digits and a decimal point; disallow negatives
                         rateRupees = input.filter { ch -> ch.isDigit() || ch == '.' }
                     },
-                    label = { Text("Interest Rate (%)") },
+                    label = { Text(stringResource(R.string.interest_rate_percent)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = rateRupees.isNotEmpty() && !rateValid,
                     supportingText = {
-                        if (rateRupees.isNotEmpty() && !rateValid) Text("Enter a valid number")
+                        if (rateRupees.isNotEmpty() && !rateValid) Text(stringResource(R.string.enter_valid_number))
                     }
                 )
 
@@ -168,10 +170,10 @@ fun LedgerAddEditScreen(
                     value = SimpleDateFormat("dd/MM/yyyy").format(Date(fromDate)),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("From Date") },
+                    label = { Text(stringResource(R.string.from_date)) },
                     modifier = Modifier.fillMaxWidth(),
                     trailingIcon = {
-                        TextButton(onClick = { showDatePicker = true }) { Text("Pick") }
+                        TextButton(onClick = { showDatePicker = true }) { Text(stringResource(R.string.pick)) }
                     }
                 )
 
@@ -244,9 +246,9 @@ private fun CenteredDatePickerDialog(
                     content()
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismissRequest) { Text("Cancel") }
+                        TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.cancel)) }
                         Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = onConfirm) { Text("OK") }
+                        TextButton(onClick = onConfirm) { Text(stringResource(R.string.ok)) }
                     }
                 }
             }

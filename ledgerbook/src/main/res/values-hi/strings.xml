@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">लेजर बुक</string>
+    <string name="unlock_to_continue">आगे बढ़ने के लिए अनलॉक करें</string>
+
+    <!-- Share/PDF labels -->
+    <string name="ledger_entry_title">लेखा प्रविष्टि</string>
+    <string name="pdf_title_receipt">रसीद</string>
+    <string name="pdf_title_statement">विवरण-पत्र</string>
+
+    <string name="label_name_with_value">नाम: %1$s</string>
+    <string name="label_type_with_value">प्रकार: %1$s</string>
+    <string name="label_principal_with_value">मूलधन: %1$s</string>
+    <string name="label_rate_with_value">दर: %1$s%% %2$s</string>
+    <string name="label_from_with_value">प्रारंभ: %1$s</string>
+    <string name="label_interest_till_now_with_value">अब तक ब्याज: %1$s</string>
+    <string name="label_total_with_value">कुल: %1$s</string>
+
+    <string name="label_date_with_value">तिथि: %1$s</string>
+    <string name="label_customer_with_value">ग्राहक: %1$s</string>
+    <string name="label_total_lend_with_value">कुल उधार (दिया): %1$s</string>
+    <string name="label_total_borrow_with_value">कुल उधार (लिया): %1$s</string>
+    <string name="label_net_with_value">शुद्ध: %1$s</string>
+
+    <string name="label_type">प्रकार</string>
+    <string name="label_principal">मूलधन</string>
+    <string name="label_rate">दर</string>
+    <string name="label_from">प्रारंभ</string>
+    <string name="label_interest">ब्याज</string>
+    <string name="label_total">कुल</string>
+    <string name="label_subtotal">उप-योग</string>
+
+    <!-- Table column labels -->
+    <string name="col_date">तिथि</string>
+    <string name="col_principal">मूलधन</string>
+    <string name="col_rate">दर</string>
+    <string name="col_interest">ब्याज</string>
+    <string name="col_total">कुल</string>
+
+    <!-- Footer promo -->
+    <string name="generated_by_footer_with_link">Ledger Book द्वारा निर्मित – %1$s</string>
+
+    <!-- Share chooser -->
+    <string name="share_via">किसके द्वारा साझा करें</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="language_title">भाषा</string>
+    <string name="changes_apply_note">बदलाव तुरंत लागू होते हैं। कुछ स्क्रीन पुनः लोड हो सकती हैं।</string>
+    <string name="premium_title">प्रीमियम</string>
+    <string name="ads_removed">इस डिवाइस पर विज्ञापन हटाए गए हैं</string>
+    <string name="ads_enabled_msg">विज्ञापन सक्षम हैं। स्थायी रूप से हटाने के लिए खरीदें।</string>
+    <string name="remove_ads">विज्ञापन हटाएँ</string>
+    <string name="restore_purchase">खरीदारी पुनर्स्थापित करें</string>
+    <string name="features_title">फ़ीचर्स</string>
+    <string name="group_by_customer">ग्राहक के अनुसार समूहित करें</string>
+    <string name="group_by_desc">मूल (पेरेंट) के साथ चाइल्ड लेनदेन को विस्तार योग्य रूप में दिखाएँ।</string>
+    <string name="theme_title">थीम</string>
+    <string name="system_option">सिस्टम</string>
+    <string name="english_label">English</string>
+    <string name="hindi_label">हिन्दी</string>
+    <string name="light_option">लाइट</string>
+    <string name="dark_option">डार्क</string>
+    <string name="backup_to_drive">ड्राइव पर बैकअप</string>
+    <string name="list_backups">बैकअप सूची</string>
+    <string name="tap_to_restore">पुनर्स्थापित करने के लिए टैप करें</string>
+    <string name="developer_label">डेवलपर: SimpleAndro</string>
+    <string name="email_label">ईमेल: prabhurb@gmail.com</string>
+    <string name="app_version_label">ऐप संस्करण: %1$s</string>
+    <string name="gd_connected">गूगल ड्राइव: कनेक्टेड</string>
+    <string name="gd_not_connected">गूगल ड्राइव: कनेक्टेड नहीं</string>
+    <string name="sign_in">साइन इन</string>
+    <string name="sign_out">साइन आउट</string>
+
+    <!-- Common/Generic used on Home/Calculator -->
+    <string name="ok">ठीक</string>
+    <string name="cancel">रद्द</string>
+    <string name="title_ledger_book">लेजर बुक</string>
+    <string name="interest_calculator">ब्याज कैलकुलेटर</string>
+    <string name="label_principal_generic">मूलधन</string>
+    <string name="label_rate_per_month">दर (%/माह)</string>
+    <string name="dates">तिथियाँ</string>
+    <string name="duration">अवधि</string>
+    <string name="from">से</string>
+    <string name="to">तक</string>
+    <string name="years">वर्ष</string>
+    <string name="months">माह</string>
+    <string name="days">दिन</string>
+    <string name="simple">साधारण</string>
+    <string name="compound">चक्रवृद्धि</string>
+    <string name="monthly">मासिक</string>
+    <string name="yearly">वार्षिक</string>
+    <string name="clear">साफ़ करें</string>
+    <string name="calculate">गणना करें</string>
+    <string name="rate">दर</string>
+
+    <!-- Add/Edit Dialog -->
+    <string name="update">अपडेट</string>
+    <string name="save">सहेजें</string>
+    <string name="edit_entry">एंट्री संपादित करें</string>
+    <string name="add_to_book">बुक में जोड़ें</string>
+    <string name="lend">उधार दें</string>
+    <string name="borrow">उधार लें</string>
+    <string name="borrower_name">उधारकर्ता का नाम</string>
+    <string name="lender_name">उधारदाता का नाम</string>
+    <string name="name_required">नाम आवश्यक है</string>
+    <string name="interest_type">ब्याज प्रकार</string>
+    <string name="rate_basis">दर का आधार</string>
+    <string name="duration_type">अवधि प्रकार</string>
+    <string name="principal_amount">मूलधन राशि</string>
+    <string name="enter_valid_number">मान्य संख्या दर्ज करें</string>
+    <string name="interest_rate_percent">ब्याज दर (%)</string>
+    <string name="pick">चुनें</string>
+    <string name="notes_optional">नोट्स (वैकल्पिक)</string>
+
+    <!-- Ledger list menus/labels additions -->
+    <string name="total_principal">कुल मूलधन</string>
+    
+    <!-- Ledger list menus/labels -->
+    <string name="more">अधिक</string>
+    <string name="share_receipt">रसीद साझा करें</string>
+    <string name="share">साझा करें</string>
+    <string name="payment_history">भुगतान इतिहास</string>
+    <string name="partial_payment">आंशिक भुगतान</string>
+    <string name="edit">संपादित करें</string>
+    <string name="delete">हटाएं</string>
+    <string name="interest_rate">ब्याज दर</string>
+    <string name="from_date">तिथि से</string>
+    <string name="total_time">कुल समय</string>
+    <string name="total_amount">कुल राशि</string>
+    <string name="total_interest">कुल ब्याज</string>
+    <string name="total_lend">कुल उधार (दिया)</string>
+    <string name="lend_interest">दिए गए उधार का ब्याज</string>
+    <string name="total_borrow">कुल उधार (लिया)</string>
+    <string name="borrow_interest">लिए गए उधार का ब्याज</string>
+    <string name="final_amount">अंतिम राशि</string>
+</resources>

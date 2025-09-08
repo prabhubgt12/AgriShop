@@ -21,6 +21,14 @@ import com.ledge.ledgerbook.data.backup.BackupManager
 import com.ledge.ledgerbook.data.backup.DriveClient
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import kotlinx.coroutines.launch
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import androidx.compose.foundation.selection.selectable
+import android.widget.Toast
+import com.ledge.ledgerbook.data.prefs.LocalePrefs
+import androidx.lifecycle.lifecycleScope
+import androidx.compose.ui.res.stringResource
+import com.ledge.ledgerbook.R
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,7 +38,6 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     var signedIn by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
     var backups by remember { mutableStateOf<List<File>>(emptyList()) }
-
     val context = LocalContext.current
     val activity = context as? Activity
 
@@ -43,7 +50,6 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
         signedIn = DriveClient.handleSignInResult(act, res.data)
         status = if (signedIn) "Signed in" else (DriveClient.lastError() ?: "Sign-in failed")
     }
-
     LaunchedEffect(Unit) {
         activity?.let { signedIn = DriveClient.tryInitFromLastAccount(it) }
     }
@@ -54,7 +60,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
+                title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
             )
         }
     ) { padding ->
@@ -64,36 +70,96 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             item {
-                Text(text = if (signedIn) "Google Drive: Connected" else "Google Drive: Not Connected")
+                Text(text = if (signedIn) stringResource(R.string.gd_connected) else stringResource(R.string.gd_not_connected))
             }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(onClick = {
                         activity?.let { signInLauncher.launch(DriveClient.getSignInIntent(it)) }
-                    }, enabled = !signedIn) { Text("Sign in") }
+                    }, enabled = !signedIn) { Text(stringResource(R.string.sign_in)) }
                     Button(onClick = {
                         val ctx = activity ?: return@Button
                         DriveClient.signOut(ctx)
                         signedIn = false
-                        status = "Signed out"
-                    }, enabled = signedIn) { Text("Sign out") }
+                        status = context.getString(R.string.sign_out)
+                    }, enabled = signedIn) { Text(stringResource(R.string.sign_out)) }
+                }
+            }
+            item { HorizontalDivider() }
+            // Language
+            item { Text(stringResource(R.string.language_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                val storedTag by LocalePrefs.appLocaleFlow(context).collectAsState(initial = "")
+                val normTag = storedTag.lowercase()
+                val options = listOf(
+                    "" to stringResource(R.string.system_option),
+                    "en" to stringResource(R.string.english_label),
+                    "hi" to stringResource(R.string.hindi_label),
+                    "kn" to stringResource(R.string.kannada_label)
+                )
+                var expanded by remember { mutableStateOf(false) }
+                val current = options.firstOrNull { (tag, _) ->
+                    if (tag.isBlank()) normTag.isBlank() else normTag == tag || normTag.startsWith("$tag-")
+                } ?: options.first()
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+                        OutlinedTextField(
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            value = current.second,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.language_title)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+                        )
+                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            options.forEach { (tag, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        expanded = false
+                                        scope.launch {
+                                            LocalePrefs.setAppLocale(context, tag)
+                                            LocalePrefs.applyLocale(context, tag)
+                                            Toast.makeText(
+                                                context,
+                                                when (tag) {
+                                                    "en" -> "Language: English"
+                                                    "hi" -> "भाषा: हिन्दी"
+                                                    "kn" -> "Language: Kannada"
+                                                    else -> "Language: System"
+                                                },
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            activity?.recreate()
+                                        }
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        text = stringResource(R.string.changes_apply_note),
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
             item { HorizontalDivider() }
             // Premium
-            item { Text("Premium", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item { Text(stringResource(R.string.premium_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(if (hasRemoveAds) "Ads are removed on this device" else "Ads enabled. Purchase to remove permanently.")
+                    Text(if (hasRemoveAds) stringResource(R.string.ads_removed) else stringResource(R.string.ads_enabled_msg))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(onClick = { activity?.let { monetizationVM.purchaseRemoveAds(it) } }, enabled = !hasRemoveAds) { Text("Remove ads") }
-                        OutlinedButton(onClick = { monetizationVM.restore() }) { Text("Restore Purchase") }
+                        Button(onClick = { activity?.let { monetizationVM.purchaseRemoveAds(it) } }, enabled = !hasRemoveAds) { Text(stringResource(R.string.remove_ads)) }
+                        OutlinedButton(onClick = { monetizationVM.restore() }) { Text(stringResource(R.string.restore_purchase)) }
                     }
                 }
             }
             item { HorizontalDivider() }
             // Features
-            item { Text("Features", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item { Text(stringResource(R.string.features_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             item {
                 val grouping by themeViewModel.groupingEnabled.collectAsState()
                 Row(
@@ -101,29 +167,29 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("Group by Customer", style = MaterialTheme.typography.bodyLarge)
-                        Text("Show expandable parent with child transactions.", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.group_by_customer), style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.group_by_desc), style = MaterialTheme.typography.labelSmall)
                     }
                     Switch(checked = grouping, onCheckedChange = { themeViewModel.setGroupingEnabled(it) })
                 }
             }
             // Theme section
-            item { Text("Theme", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item { Text(stringResource(R.string.theme_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             item {
                 val currentMode by themeViewModel.themeMode.collectAsState()
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ThemeOptionRow(
-                        label = "System",
+                        label = stringResource(R.string.system_option),
                         selected = currentMode == ThemeViewModel.MODE_SYSTEM,
                         onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_SYSTEM) }
                     )
                     ThemeOptionRow(
-                        label = "Light",
+                        label = stringResource(R.string.light_option),
                         selected = currentMode == ThemeViewModel.MODE_LIGHT,
                         onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_LIGHT) }
                     )
                     ThemeOptionRow(
-                        label = "Dark",
+                        label = stringResource(R.string.dark_option),
                         selected = currentMode == ThemeViewModel.MODE_DARK,
                         onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_DARK) }
                     )
@@ -139,14 +205,14 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                             val ok = DriveClient.uploadAppData("ledgerbook-backup.zip", bytes)
                             status = if (ok) "Backup uploaded" else (DriveClient.lastError() ?: "Backup failed")
                         }
-                    }, enabled = signedIn) { Text("Backup to Drive") }
+                    }, enabled = signedIn) { Text(stringResource(R.string.backup_to_drive)) }
 
                     Button(onClick = {
                         scope.launch {
                             backups = DriveClient.listBackups()
                             status = "Found ${backups.size} backups"
                         }
-                    }, enabled = signedIn) { Text("List Backups") }
+                    }, enabled = signedIn) { Text(stringResource(R.string.list_backups)) }
                 }
             }
             items(backups) { f ->
@@ -163,7 +229,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     Column(Modifier.padding(12.dp)) {
                         Text(f.name ?: "(no name)")
                         Text(f.modifiedTime?.toString() ?: "", style = MaterialTheme.typography.labelSmall)
-                        Text("Tap to restore", style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(R.string.tap_to_restore), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -172,9 +238,9 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 Spacer(Modifier.height(4.dp))
                 // Developer and version info (compact spacing)
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.fillMaxWidth()) {
-                    Text("Developer: SimpleAndro", style = MaterialTheme.typography.labelSmall)
-                    Text("Email: prabhurb@gmail.com", style = MaterialTheme.typography.labelSmall)
-                    Text("App version: ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.developer_label), style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.email_label), style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.app_version_label, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
@@ -185,6 +251,21 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
 private fun ThemeOptionRow(label: String, selected: Boolean, onSelect: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+        Row {
+            RadioButton(selected = selected, onClick = onSelect)
+        }
+    }
+}
+
+@Composable
+private fun LanguageOptionRow(label: String, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, onClick = onSelect),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(label, style = MaterialTheme.typography.bodyLarge)

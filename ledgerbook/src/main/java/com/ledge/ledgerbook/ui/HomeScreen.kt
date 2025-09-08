@@ -38,10 +38,11 @@ import android.graphics.Color
 import android.view.View
 import android.view.MotionEvent
 import android.content.res.ColorStateList
- 
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.stringResource
+import com.ledge.ledgerbook.R
 
 // Compound type for interest calculation
 enum class CompoundType { Monthly, Yearly }
@@ -122,9 +123,9 @@ private fun WheelDatePickerDialog(
     CenteredAlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = { onConfirm(LocalDate.of(year, month, day)) }) { Text("OK") }
+            TextButton(onClick = { onConfirm(LocalDate.of(year, month, day)) }) { Text(stringResource(R.string.ok)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
         text = {
             Box(contentAlignment = Alignment.Center) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -338,7 +339,7 @@ fun HomeScreen(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
         ) {
             Text(
-                text = "Ledger Book",
+                text = stringResource(R.string.title_ledger_book),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                 textAlign = TextAlign.Center
@@ -350,13 +351,13 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Tile(
-                title = "Ledger Book",
+                title = stringResource(R.string.title_ledger_book),
                 icon = Icons.Default.Book,
                 modifier = Modifier.weight(1f)
             ) { onOpenLedger() }
 
             Tile(
-                title = "Settings",
+                title = stringResource(R.string.settings_title),
                 icon = Icons.Default.Settings,
                 modifier = Modifier.weight(1f)
             ) {
@@ -459,7 +460,7 @@ private fun InterestCalculatorCard() {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Interest Calculator", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.interest_calculator), style = MaterialTheme.typography.titleLarge)
             // Compact minimum height to align fields with chips without breaking focus
             val compactHeight = 40.dp
 
@@ -468,7 +469,7 @@ private fun InterestCalculatorCard() {
                 OutlinedTextField(
                     value = principal,
                     onValueChange = { principal = it.filter { ch -> ch.isDigit() || ch == '.' } },
-                    label = { Text("Principal", style = MaterialTheme.typography.labelSmall) },
+                    label = { Text(stringResource(R.string.label_principal_generic), style = MaterialTheme.typography.labelSmall) },
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = compactHeight),
@@ -482,7 +483,7 @@ private fun InterestCalculatorCard() {
                 OutlinedTextField(
                     value = ratePerMonth,
                     onValueChange = { ratePerMonth = it.filter { ch -> ch.isDigit() || ch == '.' } },
-                    label = { Text("Rate (%/Month)", style = MaterialTheme.typography.labelSmall) },
+                    label = { Text(stringResource(R.string.label_rate_per_month), style = MaterialTheme.typography.labelSmall) },
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = compactHeight),
@@ -500,12 +501,12 @@ private fun InterestCalculatorCard() {
                 FilterChip(
                     selected = useDates,
                     onClick = { useDates = true },
-                    label = { Text("Dates") }
+                    label = { Text(stringResource(R.string.dates)) }
                 )
                 FilterChip(
                     selected = !useDates,
                     onClick = { useDates = false },
-                    label = { Text("Duration") }
+                    label = { Text(stringResource(R.string.duration)) }
                 )
             }
 
@@ -519,7 +520,7 @@ private fun InterestCalculatorCard() {
                         OutlinedTextField(
                             value = fromDateText,
                             onValueChange = {},
-                            label = { Text("From", style = MaterialTheme.typography.labelSmall) },
+                            label = { Text(stringResource(R.string.from), style = MaterialTheme.typography.labelSmall) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = compactHeight),
@@ -538,7 +539,7 @@ private fun InterestCalculatorCard() {
                         OutlinedTextField(
                             value = toDateText,
                             onValueChange = {},
-                            label = { Text("To", style = MaterialTheme.typography.labelSmall) },
+                            label = { Text(stringResource(R.string.to), style = MaterialTheme.typography.labelSmall) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = compactHeight),
@@ -582,7 +583,7 @@ private fun InterestCalculatorCard() {
                     OutlinedTextField(
                         value = yearsText,
                         onValueChange = { yearsText = it.filter { ch -> ch.isDigit() } },
-                        label = { Text("Years", style = MaterialTheme.typography.labelSmall) },
+                        label = { Text(stringResource(R.string.years), style = MaterialTheme.typography.labelSmall) },
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = compactHeight),
@@ -596,7 +597,7 @@ private fun InterestCalculatorCard() {
                     OutlinedTextField(
                         value = monthsText,
                         onValueChange = { monthsText = it.filter { ch -> ch.isDigit() } },
-                        label = { Text("Months", style = MaterialTheme.typography.labelSmall) },
+                        label = { Text(stringResource(R.string.months), style = MaterialTheme.typography.labelSmall) },
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = compactHeight),
@@ -610,7 +611,7 @@ private fun InterestCalculatorCard() {
                     OutlinedTextField(
                         value = daysText,
                         onValueChange = { daysText = it.filter { ch -> ch.isDigit() } },
-                        label = { Text("Days", style = MaterialTheme.typography.labelSmall) },
+                        label = { Text(stringResource(R.string.days), style = MaterialTheme.typography.labelSmall) },
                         modifier = Modifier
                             .weight(1f)
                             .heightIn(min = compactHeight),
@@ -629,12 +630,12 @@ private fun InterestCalculatorCard() {
                 FilterChip(
                     selected = simpleInterest,
                     onClick = { simpleInterest = true },
-                    label = { Text("Simple") }
+                    label = { Text(stringResource(R.string.simple)) }
                 )
                 FilterChip(
                     selected = !simpleInterest,
                     onClick = { simpleInterest = false },
-                    label = { Text("Compound") }
+                    label = { Text(stringResource(R.string.compound)) }
                 )
             }
             // Compound type chips on a separate row to avoid wrap/render issues
@@ -643,12 +644,12 @@ private fun InterestCalculatorCard() {
                     FilterChip(
                         selected = compoundType == CompoundType.Monthly,
                         onClick = { compoundType = CompoundType.Monthly },
-                        label = { Text("Monthly") }
+                        label = { Text(stringResource(R.string.monthly)) }
                     )
                     FilterChip(
                         selected = compoundType == CompoundType.Yearly,
                         onClick = { compoundType = CompoundType.Yearly },
-                        label = { Text("Yearly") }
+                        label = { Text(stringResource(R.string.yearly)) }
                     )
                 }
             }
@@ -672,7 +673,7 @@ private fun InterestCalculatorCard() {
                     resultPrincipal = ""
                     resultInterest = ""
                     resultTotal = ""
-                }, modifier = Modifier.weight(1f)) { Text("Clear") }
+                }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.clear)) }
                 Button(onClick = {
                     val p = principal.toDoubleOrNull() ?: 0.0
                     val rM = ratePerMonth.toDoubleOrNull() ?: 0.0
@@ -715,7 +716,7 @@ private fun InterestCalculatorCard() {
                     resultRate = "%.2f%%/mo".format(rM)
                     resultInterest = "%.2f".format(interest)
                     resultTotal = "%.2f".format(total)
-                }, modifier = Modifier.weight(1f)) { Text("Calculate") }
+                }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.calculate)) }
             }
 
             // Results in a single compact card
@@ -731,28 +732,28 @@ private fun InterestCalculatorCard() {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Duration", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(stringResource(R.string.duration), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
                             Text(resultDuration, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Rate", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(stringResource(R.string.rate), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
                             Text(resultRate, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Principal", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(stringResource(R.string.label_principal_generic), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
                             Text(resultPrincipal, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Interest", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(stringResource(R.string.label_interest), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
                             Text(resultInterest, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                         Divider()
@@ -760,7 +761,7 @@ private fun InterestCalculatorCard() {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Total", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(stringResource(R.string.label_total), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
                             Text(resultTotal, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
                         }
                     }
