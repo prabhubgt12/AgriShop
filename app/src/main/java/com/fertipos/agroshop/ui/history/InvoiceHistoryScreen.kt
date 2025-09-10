@@ -65,6 +65,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 
+import androidx.compose.ui.res.stringResource
+import com.fertipos.agroshop.R
+
 @Composable
 fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
     val vm: InvoiceHistoryViewModel = hiltViewModel()
@@ -104,7 +107,7 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                         })
                     }
             ) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = "New Bill")
+                Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.new_bill_cd))
             }
         }
     ) { innerPadding ->
@@ -112,8 +115,8 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
             var showFilters by remember { mutableStateOf(false) }
             // Header row: Title + Filters toggle
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Invoices", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) "Hide filters" else "Filters") }
+                Text(stringResource(R.string.invoices_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) stringResource(R.string.hide_filters) else stringResource(R.string.filters)) }
             }
 
             // Search bar
@@ -123,7 +126,7 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                label = { Text("Search by customer name") }
+                label = { Text(stringResource(R.string.search_customer_label)) }
             )
 
             // Collapsible date filters (hidden by default)
@@ -132,13 +135,13 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
             if (showFilters) {
                 Spacer(Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DateField(label = "From", value = fromMillis, onChange = { v -> fromMillis = v }, modifier = Modifier.weight(1f))
-                    DateField(label = "To", value = toMillis, onChange = { v -> toMillis = v }, modifier = Modifier.weight(1f))
+                    DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { v -> fromMillis = v }, modifier = Modifier.weight(1f))
+                    DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { v -> toMillis = v }, modifier = Modifier.weight(1f))
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Spacer(Modifier.weight(1f))
-                    TextButton(onClick = { vm.setDateRange(fromMillis, toMillis) }) { Text("Apply") }
-                    TextButton(onClick = { fromMillis = null; toMillis = null; vm.setDateRange(null, null) }) { Text("Clear") }
+                    TextButton(onClick = { vm.setDateRange(fromMillis, toMillis) }) { Text(stringResource(R.string.apply)) }
+                    TextButton(onClick = { fromMillis = null; toMillis = null; vm.setDateRange(null, null) }) { Text(stringResource(R.string.clear)) }
                 }
             }
 
@@ -199,11 +202,11 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                     Column {
-                                        Text("Total", style = MaterialTheme.typography.labelSmall)
+                                        Text(stringResource(R.string.total_label), style = MaterialTheme.typography.labelSmall)
                                         Text(CurrencyFormatter.formatInr(row.invoice.total), fontWeight = FontWeight.SemiBold)
                                     }
                                     Column {
-                                        Text("Balance", style = MaterialTheme.typography.labelSmall)
+                                        Text(stringResource(R.string.balance_label), style = MaterialTheme.typography.labelSmall)
                                         Text(CurrencyFormatter.formatInr(balance), fontWeight = FontWeight.SemiBold)
                                     }
                                 }
@@ -227,17 +230,17 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                                                 putExtra(Intent.EXTRA_STREAM, uri)
                                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                             }
-                                            context.startActivity(Intent.createChooser(intent, "Print"))
+                                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.print)))
                                         }
-                                    }) { Icon(Icons.Outlined.Print, contentDescription = "Print") }
-                                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
+                                    }) { Icon(Icons.Outlined.Print, contentDescription = stringResource(R.string.print)) }
+                                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_cd)) }
                                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                                        DropdownMenuItem(text = { Text("Edit") }, onClick = {
+                                        DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
                                             menuExpanded = false
                                             navVm.requestEditInvoice(row.invoice.id)
                                             navVm.navigateTo(3)
                                         })
-                                        DropdownMenuItem(text = { Text("Delete") }, onClick = {
+                                        DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = {
                                             menuExpanded = false
                                             confirmDelete = true
                                         })
@@ -265,16 +268,16 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                     if (confirmDelete) {
                         AlertDialog(
                             onDismissRequest = { confirmDelete = false },
-                            title = { Text("Delete invoice?") },
-                            text = { Text("This action cannot be undone.") },
+                            title = { Text(stringResource(R.string.delete_invoice_title)) },
+                            text = { Text(stringResource(R.string.delete_invoice_message)) },
                             confirmButton = {
                                 TextButton(onClick = {
                                     confirmDelete = false
                                     vm.deleteInvoice(row.invoice.id)
-                                }) { Text("Delete") }
+                                }) { Text(stringResource(R.string.delete)) }
                             },
                             dismissButton = {
-                                TextButton(onClick = { confirmDelete = false }) { Text("Cancel") }
+                                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) }
                             }
                         )
                     }
@@ -316,14 +319,14 @@ private fun ReadonlyInvoiceDialog(
                 // Items list with constrained height
                 Column(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
                     items.forEach { itw ->
-                        val pname = itw.product?.name ?: "Item ${itw.item.productId}"
+                        val pname = itw.product?.name ?: stringResource(R.string.item_placeholder, itw.item.productId)
                         val qty = itw.item.quantity
                         val price = itw.item.unitPrice
                         val lineTotal = itw.item.lineTotal
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(pname)
-                                Text("x ${qty} @ ${CurrencyFormatter.formatInr(price)}", style = MaterialTheme.typography.labelSmall)
+                                Text(stringResource(R.string.line_item_qty_price, qty.toString(), CurrencyFormatter.formatInr(price)), style = MaterialTheme.typography.labelSmall)
                             }
                             Text(CurrencyFormatter.formatInr(lineTotal), fontWeight = FontWeight.SemiBold)
                         }
@@ -333,34 +336,34 @@ private fun ReadonlyInvoiceDialog(
                 // Totals at the end, right aligned
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Subtotal: ${CurrencyFormatter.formatInr(subtotal)}",
+                    text = stringResource(R.string.subtotal_with_amount, CurrencyFormatter.formatInr(subtotal)),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = "GST: ${CurrencyFormatter.formatInr(gst)}",
+                    text = stringResource(R.string.gst_with_amount, CurrencyFormatter.formatInr(gst)),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = "Total: ${CurrencyFormatter.formatInr(total)}",
+                    text = stringResource(R.string.total_with_amount, CurrencyFormatter.formatInr(total)),
                     modifier = Modifier.fillMaxWidth(),
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = "Paid: ${CurrencyFormatter.formatInr(paid)}",
+                    text = stringResource(R.string.paid_with_amount, CurrencyFormatter.formatInr(paid)),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = "Balance: ${CurrencyFormatter.formatInr(balance)}",
+                    text = stringResource(R.string.balance_with_amount, CurrencyFormatter.formatInr(balance)),
                     modifier = Modifier.fillMaxWidth(),
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.End
                 )
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
     )
 }

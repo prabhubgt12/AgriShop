@@ -13,6 +13,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.fertipos.agroshop.R
 
 object SalesRangePdfGenerator {
     private val df = SimpleDateFormat("dd-MM-yy", Locale.getDefault())
@@ -35,22 +36,22 @@ object SalesRangePdfGenerator {
 
         // Header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Sales Report", 35f, y, paint)
+        canvas.drawText(context.getString(R.string.sales_report_title), 35f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 18f
-        canvas.drawText("From: ${df.format(Date(from))}", 35f, y, paint); y += 16f
-        canvas.drawText("To:   ${df.format(Date(to))}", 35f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.from_colon, df.format(Date(from))), 35f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.to_colon, df.format(Date(to))), 35f, y, paint); y += 16f
         canvas.drawLine(35f, y, 585f, y, paint); y += 16f
 
         // Table header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Inv#", 35f, y, paint)
-        canvas.drawText("Date", 65f, y, paint)
-        canvas.drawText("Subtotal", 135f, y, paint)
-        canvas.drawText("GST", 235f, y, paint)
-        canvas.drawText("Total", 305f, y, paint)
-        canvas.drawText("Paid", 405f, y, paint)
-        canvas.drawText("Balance", 505f, y, paint)
+        canvas.drawText(context.getString(R.string.inv_hash), 35f, y, paint)
+        canvas.drawText(context.getString(R.string.csv_date), 65f, y, paint)
+        canvas.drawText(context.getString(R.string.csv_subtotal), 135f, y, paint)
+        canvas.drawText(context.getString(R.string.csv_gst), 235f, y, paint)
+        canvas.drawText(context.getString(R.string.csv_total), 305f, y, paint)
+        canvas.drawText(context.getString(R.string.paid_label), 405f, y, paint)
+        canvas.drawText(context.getString(R.string.balance_only_label), 505f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 12f
         canvas.drawLine(35f, y, 585f, y, paint); y += 14f
@@ -83,14 +84,24 @@ object SalesRangePdfGenerator {
         y += 10f
         canvas.drawLine(35f, y, 585f, y, paint); y += 16f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Totals:", 65f, y, paint)
+        canvas.drawText(context.getString(R.string.totals_colon), 65f, y, paint)
         canvas.drawText(currency.format(tSubtotal), 135f, y, paint)
         canvas.drawText(currency.format(tGst), 235f, y, paint)
         canvas.drawText(currency.format(tTotal), 305f, y, paint)
         canvas.drawText(currency.format(tPaid), 405f, y, paint)
         canvas.drawText(currency.format(tBalance), 505f, y, paint)
         y += 22f
-        canvas.drawText("Summary: Total Sale = ${currency.format(tTotal)}, Total Received = ${currency.format(tPaid)}, Total Balance = ${currency.format(tBalance)}", 35f, y, paint)
+        canvas.drawText(
+            context.getString(
+                R.string.summary_sales,
+                currency.format(tTotal),
+                currency.format(tPaid),
+                currency.format(tBalance)
+            ),
+            35f,
+            y,
+            paint
+        )
         paint.typeface = Typeface.DEFAULT
 
         // Footer with stamp and logo (hidden if user purchased remove-ads)

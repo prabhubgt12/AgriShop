@@ -56,6 +56,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.fertipos.agroshop.R
 
 @Composable
 fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
@@ -105,7 +107,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                         })
                     }
             ) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = "New Purchase")
+                Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.new_purchase_cd))
             }
         }
     ) { innerPadding ->
@@ -122,11 +124,11 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                 var showFilters by remember { mutableStateOf(false) }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
-                        text = if (pendingFilter != null) "Purchase History (Product #$pendingFilter)" else "Purchases",
+                        text = if (pendingFilter != null) stringResource(R.string.purchase_history_title_with_product, pendingFilter!!) else stringResource(R.string.purchases_title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) "Hide filters" else "Filters") }
+                    TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) stringResource(R.string.hide_filters) else stringResource(R.string.filters)) }
                 }
 
                 // Search bar (supplier name)
@@ -136,7 +138,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                     onValueChange = { searchQuery = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    label = { Text("Search by supplier name") }
+                    label = { Text(stringResource(R.string.search_supplier_label)) }
                 )
 
             // Collapsible date filters
@@ -145,13 +147,13 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
             if (showFilters) {
                 Spacer(Modifier.height(6.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DateField(label = "From", value = fromMillis, onChange = { v -> fromMillis = v }, modifier = Modifier.weight(1f))
-                    DateField(label = "To", value = toMillis, onChange = { v -> toMillis = v }, modifier = Modifier.weight(1f))
+                    DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { v -> fromMillis = v }, modifier = Modifier.weight(1f))
+                    DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { v -> toMillis = v }, modifier = Modifier.weight(1f))
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Spacer(Modifier.weight(1f))
-                    TextButton(onClick = { vm.setDateRange(fromMillis, toMillis) }) { Text("Apply") }
-                    TextButton(onClick = { fromMillis = null; toMillis = null; vm.setDateRange(null, null) }) { Text("Clear") }
+                    TextButton(onClick = { vm.setDateRange(fromMillis, toMillis) }) { Text(stringResource(R.string.apply)) }
+                    TextButton(onClick = { fromMillis = null; toMillis = null; vm.setDateRange(null, null) }) { Text(stringResource(R.string.clear)) }
                 }
             }
 
@@ -191,7 +193,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                     val dfCard = remember { SimpleDateFormat("dd MMM yy", Locale.getDefault()) }
                                     // Row 1: Supplier left, Date right small
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text(text = item.supplierName ?: "Unknown Supplier", fontWeight = FontWeight.SemiBold)
+                                        Text(text = item.supplierName ?: stringResource(R.string.unknown_supplier), fontWeight = FontWeight.SemiBold)
                                         Text(text = "#${item.id}", style = MaterialTheme.typography.labelSmall)
                                         val dateStr = remember(item.date) { dfCard.format(Date(item.date)).uppercase(Locale.getDefault()) }
                                         Text(text = dateStr, style = MaterialTheme.typography.labelSmall)
@@ -201,23 +203,23 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                             Column {
-                                                Text("GST", style = MaterialTheme.typography.labelSmall)
+                                                Text(stringResource(R.string.gst_label), style = MaterialTheme.typography.labelSmall)
                                                 Text(CurrencyFormatter.formatInr(item.gstAmount), fontWeight = FontWeight.SemiBold)
                                             }
                                             Column {
-                                                Text("Total", style = MaterialTheme.typography.labelSmall)
+                                                Text(stringResource(R.string.total_label), style = MaterialTheme.typography.labelSmall)
                                                 Text(CurrencyFormatter.formatInr(item.total), fontWeight = FontWeight.SemiBold)
                                             }
                                         }
                                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
+                                            IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_cd)) }
                                             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                                                DropdownMenuItem(text = { Text("Edit") }, onClick = {
+                                                DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
                                                     menuExpanded = false
                                                     navVm.requestEditPurchase(item.id)
                                                     navVm.navigateTo(7)
                                                 })
-                                                DropdownMenuItem(text = { Text("Delete") }, onClick = {
+                                                DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = {
                                                     menuExpanded = false
                                                     confirmDelete = true
                                                 })
@@ -232,7 +234,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                 val dfCard = remember { SimpleDateFormat("dd MMM yy", Locale.getDefault()) }
                                 PurchaseReadonlyDialog(
                                     onDismiss = { showReadonly = false },
-                                    header = "#${full!!.id} • ${full!!.supplierName ?: "Unknown Supplier"}",
+                                    header = "#${full!!.id} • ${full!!.supplierName ?: stringResource(R.string.unknown_supplier)}",
                                     dateText = dfCard.format(Date(full!!.date)).uppercase(Locale.getDefault()),
                                     subtotal = full!!.subtotal,
                                     gst = full!!.gstAmount,
@@ -246,15 +248,15 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                             if (confirmDelete) {
                                 AlertDialog(
                                     onDismissRequest = { confirmDelete = false },
-                                    title = { Text("Delete Purchase?") },
-                                    text = { Text("Are you sure you want to delete #${item.id}? This cannot be undone.") },
+                                    title = { Text(stringResource(R.string.delete_purchase_title)) },
+                                    text = { Text(stringResource(R.string.delete_purchase_message, item.id)) },
                                     confirmButton = {
                                         TextButton(onClick = {
                                             scope.launch { vm.deletePurchase(item.id) }
                                             confirmDelete = false
-                                        }) { Text("Delete") }
+                                        }) { Text(stringResource(R.string.delete)) }
                                     },
-                                    dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } }
+                                    dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } }
                                 )
                             }
                         }
@@ -275,7 +277,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                 Column(Modifier.padding(12.dp)) {
                                     val dfCard = remember { SimpleDateFormat("dd MMM yy", Locale.getDefault()) }
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text(text = item.supplierName ?: "Unknown Supplier", fontWeight = FontWeight.SemiBold)
+                                        Text(text = item.supplierName ?: stringResource(R.string.unknown_supplier), fontWeight = FontWeight.SemiBold)
                                         Text(text = "#${item.purchaseId}", style = MaterialTheme.typography.labelSmall)
                                         val dateStr = remember(item.date) { dfCard.format(Date(item.date)).uppercase(Locale.getDefault()) }
                                         Text(text = dateStr, style = MaterialTheme.typography.labelSmall)
@@ -283,11 +285,11 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                     Spacer(Modifier.height(6.dp))
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                         Column {
-                                            Text("Qty @ Price", style = MaterialTheme.typography.labelSmall)
+                                            Text(stringResource(R.string.qty_at_price), style = MaterialTheme.typography.labelSmall)
                                             Text("${item.quantity.toStringAsFixed(2)} × ${CurrencyFormatter.formatInr(item.unitPrice)}", fontWeight = FontWeight.SemiBold)
                                         }
                                         Column {
-                                            Text("Total", style = MaterialTheme.typography.labelSmall)
+                                            Text(stringResource(R.string.total_label), style = MaterialTheme.typography.labelSmall)
                                             Text(CurrencyFormatter.formatInr(item.lineTotal), fontWeight = FontWeight.SemiBold)
                                         }
                                     }
@@ -297,7 +299,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                 val dfCard = remember { SimpleDateFormat("dd MMM yy", Locale.getDefault()) }
                                 PurchaseReadonlyDialog(
                                     onDismiss = { showReadonly = false },
-                                    header = "#${full!!.id} • ${full!!.supplierName ?: "Unknown Supplier"}",
+                                    header = "#${full!!.id} • ${full!!.supplierName ?: stringResource(R.string.unknown_supplier)}",
                                     dateText = dfCard.format(Date(full!!.date)).uppercase(Locale.getDefault()),
                                     subtotal = full!!.subtotal,
                                     gst = full!!.gstAmount,
@@ -334,20 +336,20 @@ private fun PurchaseReadonlyDialog(
                 Spacer(Modifier.height(8.dp))
                 if (!notes.isNullOrBlank()) {
                     Spacer(Modifier.height(6.dp))
-                    Text("Notes", style = MaterialTheme.typography.labelSmall)
+                    Text(stringResource(R.string.notes_label), style = MaterialTheme.typography.labelSmall)
                     Text(notes)
                 }
                 Spacer(Modifier.height(10.dp))
                 Column(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
                     items.forEach { d ->
-                        val pname = d.productName ?: "Item ${d.item.productId}"
+                        val pname = d.productName ?: stringResource(R.string.item_placeholder, d.item.productId)
                         val qty = d.item.quantity
                         val price = d.item.unitPrice
                         val line = d.item.lineTotal
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(pname)
-                                Text("x ${qty.toStringAsFixed(2)} @ ${CurrencyFormatter.formatInr(price)}", style = MaterialTheme.typography.labelSmall)
+                                Text(stringResource(R.string.line_item_qty_price, qty.toStringAsFixed(2), CurrencyFormatter.formatInr(price)), style = MaterialTheme.typography.labelSmall)
                             }
                             Text(CurrencyFormatter.formatInr(line), fontWeight = FontWeight.SemiBold)
                         }
@@ -357,24 +359,24 @@ private fun PurchaseReadonlyDialog(
                 // Totals at the end, right aligned
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Subtotal: ${CurrencyFormatter.formatInr(subtotal)}",
+                    text = stringResource(R.string.subtotal_with_amount, CurrencyFormatter.formatInr(subtotal)),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = "GST: ${CurrencyFormatter.formatInr(gst)}",
+                    text = stringResource(R.string.gst_with_amount, CurrencyFormatter.formatInr(gst)),
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.End
                 )
                 Text(
-                    text = "Total: ${CurrencyFormatter.formatInr(total)}",
+                    text = stringResource(R.string.total_with_amount, CurrencyFormatter.formatInr(total)),
                     modifier = Modifier.fillMaxWidth(),
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.End
                 )
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } }
     )
 }
 

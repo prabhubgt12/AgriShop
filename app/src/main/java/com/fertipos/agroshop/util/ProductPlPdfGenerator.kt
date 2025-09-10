@@ -13,6 +13,7 @@ import com.fertipos.agroshop.util.CurrencyFormatter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.fertipos.agroshop.R
 
 object ProductPlPdfGenerator {
     private val df = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -38,21 +39,21 @@ object ProductPlPdfGenerator {
 
         // Header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Product-wise Profit & Loss", 40f, y, paint)
+        canvas.drawText(context.getString(R.string.product_pl_title), 40f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 18f
-        canvas.drawText("From: ${df.format(Date(from))}", 40f, y, paint); y += 16f
-        canvas.drawText("To:   ${df.format(Date(to))}", 40f, y, paint); y += 12f
+        canvas.drawText(context.getString(R.string.from_colon, df.format(Date(from))), 40f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.to_colon, df.format(Date(to))), 40f, y, paint); y += 12f
         canvas.drawLine(40f, y, 555f, y, paint); y += 16f
 
         // Table header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         val colX = floatArrayOf(40f, 300f, 370f, 445f, 520f) // Product | Qty | Sales | Cost | Profit
-        canvas.drawText("Product", colX[0], y, paint)
-        canvas.drawText("Qty", colX[1], y, paint)
-        canvas.drawText("Sales", colX[2], y, paint)
-        canvas.drawText("Cost", colX[3], y, paint)
-        canvas.drawText("Profit", colX[4], y, paint)
+        canvas.drawText(context.getString(R.string.pdf_product), colX[0], y, paint)
+        canvas.drawText(context.getString(R.string.pdf_qty), colX[1], y, paint)
+        canvas.drawText(context.getString(R.string.pdf_sales), colX[2], y, paint)
+        canvas.drawText(context.getString(R.string.pdf_cost), colX[3], y, paint)
+        canvas.drawText(context.getString(R.string.pdf_profit), colX[4], y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 14f
         canvas.drawLine(40f, y, 555f, y, paint); y += 14f
@@ -72,17 +73,17 @@ object ProductPlPdfGenerator {
                 y = 40f
                 // continued header
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                canvas.drawText("Product-wise Profit & Loss (contd.)", 40f, y, paint)
+                canvas.drawText(context.getString(R.string.product_pl_title_contd), 40f, y, paint)
                 paint.typeface = Typeface.DEFAULT
                 y += 18f
                 canvas.drawLine(40f, y, 555f, y, paint); y += 14f
                 // table header
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                canvas.drawText("Product", colX[0], y, paint)
-                canvas.drawText("Qty", colX[1], y, paint)
-                canvas.drawText("Sales", colX[2], y, paint)
-                canvas.drawText("Cost", colX[3], y, paint)
-                canvas.drawText("Profit", colX[4], y, paint)
+                canvas.drawText(context.getString(R.string.pdf_product), colX[0], y, paint)
+                canvas.drawText(context.getString(R.string.pdf_qty), colX[1], y, paint)
+                canvas.drawText(context.getString(R.string.pdf_sales), colX[2], y, paint)
+                canvas.drawText(context.getString(R.string.pdf_cost), colX[3], y, paint)
+                canvas.drawText(context.getString(R.string.pdf_profit), colX[4], y, paint)
                 paint.typeface = Typeface.DEFAULT
                 y += 14f
                 canvas.drawLine(40f, y, 555f, y, paint); y += 14f
@@ -108,7 +109,7 @@ object ProductPlPdfGenerator {
         y += 6f
         canvas.drawLine(40f, y, 555f, y, paint); y += 16f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Totals", colX[0], y, paint)
+        canvas.drawText(context.getString(R.string.pdf_totals), colX[0], y, paint)
         paint.typeface = Typeface.DEFAULT
         canvas.drawText("", colX[1], y, paint)
         canvas.drawText(currency.format(totalSales), colX[2], y, paint)

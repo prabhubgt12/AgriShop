@@ -73,6 +73,8 @@ import androidx.compose.material.icons.filled.Delete
 import com.fertipos.agroshop.ui.common.CustomerPicker
 import com.fertipos.agroshop.ui.common.ProductPicker
 import com.fertipos.agroshop.ui.common.DateField
+import androidx.compose.ui.res.stringResource
+import com.fertipos.agroshop.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,7 +148,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             .navigationBarsPadding()
     ) {
         item {
-            val header = if (state.value.editingInvoiceId != null) "Edit Invoice #${state.value.editingInvoiceId}" else "Create Invoice"
+            val header = if (state.value.editingInvoiceId != null) stringResource(R.string.edit_invoice_with_id, state.value.editingInvoiceId!!) else stringResource(R.string.create_invoice)
             Text(text = header, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
             Spacer(Modifier.height(8.dp))
         }
@@ -154,7 +156,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         // Date at top (bound to VM so create/update and PDF use same date)
         item {
             DateField(
-                label = "Date",
+                label = stringResource(R.string.date_label),
                 value = state.value.dateMillis,
                 onChange = { millis -> vm.setBillDate(millis) },
                 modifier = Modifier.fillMaxWidth()
@@ -167,7 +169,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             val selectedName = state.value.customers.firstOrNull { it.id == state.value.selectedCustomerId }?.name ?: ""
             CustomerPicker(
                 customers = state.value.customers,
-                label = "Customer*",
+                label = stringResource(R.string.customer_required),
                 initialQuery = selectedName,
                 modifier = Modifier.fillMaxWidth(),
                 onPicked = { vm.setCustomer(it.id) }
@@ -179,7 +181,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         item {
             ProductPicker(
                 products = state.value.products,
-                label = "Product*",
+                label = stringResource(R.string.product_required),
                 modifier = Modifier.fillMaxWidth(),
                 onPicked = { p ->
                     selectedProduct = p
@@ -199,7 +201,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                         val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "").let { it } else filtered
                         qtyText = final
                     },
-                    label = { Text("Qty") },
+                    label = { Text(stringResource(R.string.qty_label)) },
                     singleLine = true,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
@@ -211,7 +213,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                         val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "").let { it } else filtered
                         priceText = final
                     },
-                    label = { Text("Price") },
+                    label = { Text(stringResource(R.string.price)) },
                     singleLine = true,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     enabled = selectedProduct != null,
@@ -233,7 +235,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                         }
                     }
                     qtyText = ""
-                }, enabled = selectedProduct != null) { Text("Add Item") }
+                }, enabled = selectedProduct != null) { Text(stringResource(R.string.add_item)) }
             }
             Spacer(Modifier.height(8.dp))
             HorizontalDivider()
@@ -241,7 +243,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         }
 
         // Items list
-        item { Text(text = "Items") }
+        item { Text(text = stringResource(R.string.items_title)) }
         items(state.value.items, key = { it.product.id }) { item ->
             DraftItemRow(item = item, currency = currency, onRemove = { vm.removeItem(item.product.id) })
         }
@@ -249,9 +251,9 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         // Totals and actions as part of list (end of scroll)
         item {
             Spacer(Modifier.height(8.dp))
-            Text("Subtotal: ${currency.format(state.value.subtotal)}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
-            Text("GST: ${currency.format(state.value.gstAmount)}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
-            Text("Total: ${currency.format(state.value.total)}", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+            Text(stringResource(R.string.subtotal_with_amount, currency.format(state.value.subtotal)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+            Text(stringResource(R.string.gst_with_amount, currency.format(state.value.gstAmount)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+            Text(stringResource(R.string.total_with_amount, currency.format(state.value.total)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
             Spacer(Modifier.height(6.dp))
             var paidInFull by remember { mutableStateOf(false) }
             // Keep paid synced to total when checked
@@ -271,7 +273,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                         if (checked) vm.setPaid(state.value.total.toString())
                     }
                 )
-                Text("Paid", modifier = Modifier.padding(start = 4.dp))
+                Text(stringResource(R.string.paid_label), modifier = Modifier.padding(start = 4.dp))
                 TextField(
                     value = if (state.value.paid == 0.0) "" else String.format(Locale.getDefault(), "%.2f", state.value.paid),
                     onValueChange = { vm.setPaid(it); if (paidInFull && it.toDoubleOrNull() != state.value.total) paidInFull = false },
@@ -293,7 +295,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = "Balance: ${currency.format(state.value.balance)}",
+                    text = stringResource(R.string.balance_colon, currency.format(state.value.balance)),
                     textAlign = TextAlign.End
                 )
             }
@@ -312,7 +314,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                     )
                     pendingPrint = snapshot
                     vm.submit()
-                }, enabled = !state.value.loading && state.value.selectedCustomerId != null && state.value.items.isNotEmpty()) { Text("Submit & Print") }
+                }, enabled = !state.value.loading && state.value.selectedCustomerId != null && state.value.items.isNotEmpty()) { Text(stringResource(R.string.submit_and_print)) }
             }
             if (state.value.error != null) {
                 Spacer(Modifier.height(4.dp))
@@ -437,24 +439,24 @@ private fun DraftItemRow(
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(text = item.product.name)
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = "Delete") }
+                IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete)) }
             }
             Spacer(Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Qty: ${item.quantity}")
+                Text(text = stringResource(R.string.qty_label) + ": ${item.quantity}")
                 Spacer(Modifier.weight(1f))
-                Text(text = "Price: ${currency.format(item.unitPrice)}")
+                Text(text = stringResource(R.string.price_label) + ": ${currency.format(item.unitPrice)}")
             }
             Spacer(Modifier.height(2.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "GST ${String.format(java.util.Locale.getDefault(), "%.1f", item.gstPercent)}%")
+                Text(text = stringResource(R.string.gst_percent_colon, String.format(java.util.Locale.getDefault(), "%.1f", item.gstPercent)))
                 Spacer(Modifier.weight(1f))
-                Text(text = "GST Amt: ${currency.format(gstAmt)}")
+                Text(text = stringResource(R.string.gst_amt_colon, currency.format(gstAmt)))
             }
             Spacer(Modifier.height(2.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 Spacer(Modifier.weight(1f))
-                Text(text = "Total: ${currency.format(lineTotal)}")
+                Text(text = stringResource(R.string.total_with_amount, currency.format(lineTotal)))
             }
         }
     }

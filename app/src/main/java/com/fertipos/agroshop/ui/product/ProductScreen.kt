@@ -62,6 +62,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreVert
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import com.fertipos.agroshop.R
 
 @Composable
 fun ProductScreen() {
@@ -91,8 +93,8 @@ fun ProductScreen() {
             // Header with Add button
             var showAdd by remember { mutableStateOf(false) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = "Products", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Button(onClick = { showAdd = true }) { Text("Add") }
+                Text(text = stringResource(R.string.products_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Button(onClick = { showAdd = true }) { Text(stringResource(R.string.add)) }
             }
             Spacer(Modifier.height(8.dp))
             HorizontalDivider()
@@ -105,7 +107,7 @@ fun ProductScreen() {
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                label = { Text("Search by product name") }
+                label = { Text(stringResource(R.string.search_by_product)) }
             )
             Spacer(Modifier.height(8.dp))
 
@@ -200,7 +202,7 @@ private fun ProductRow(
                 // Right column area (fixed width) with left-aligned content: Stock label + chip
                 Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.CenterStart) {
                     Column(horizontalAlignment = Alignment.Start) {
-                        Text("Stock", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Start)
+                        Text(stringResource(R.string.stock_label), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Start)
                         Spacer(Modifier.height(0.dp))
                         androidx.compose.foundation.layout.Box(
                             modifier = Modifier
@@ -218,10 +220,10 @@ private fun ProductRow(
                     }
                 }
                 Box(modifier = Modifier.width(48.dp)) {
-                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
+                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_cd)) }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(text = { Text("History") }, onClick = { menuExpanded = false; onHistory() })
-                        DropdownMenuItem(text = { Text("Delete") }, onClick = { menuExpanded = false; confirmDelete = true })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.history)) }, onClick = { menuExpanded = false; onHistory() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = { menuExpanded = false; confirmDelete = true })
                     }
                 }
             }
@@ -229,13 +231,13 @@ private fun ProductRow(
             // Row 2: Type (left) and GST (right column)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                 Text(
-                    text = "Type: ${p.type}",
+                    text = stringResource(R.string.type_colon, p.type),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.weight(1f)
                 )
                 Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.CenterStart) {
                     Text(
-                        text = "GST: ${p.gstPercent}%",
+                        text = stringResource(R.string.gst_percent_colon, String.format(Locale.getDefault(), "%.1f", p.gstPercent)),
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Start
                     )
@@ -246,13 +248,13 @@ private fun ProductRow(
             // Row 3: Buy (left) and Sell (right column)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                 Text(
-                    text = "Buy: ${priceFmt.format(p.purchasePrice)}",
+                    text = stringResource(R.string.buy_price_colon, priceFmt.format(p.purchasePrice)),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.weight(1f)
                 )
                 Box(modifier = Modifier.width(100.dp), contentAlignment = Alignment.CenterStart) {
                     Text(
-                        text = "Sell: ${priceFmt.format(p.sellingPrice)}",
+                        text = stringResource(R.string.sell_price_colon, priceFmt.format(p.sellingPrice)),
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -272,13 +274,13 @@ private fun ProductRow(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete Product?") },
-            text = { Text("Are you sure you want to delete '${p.name}'? This cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_product_title)) },
+            text = { Text(stringResource(R.string.delete_product_message, p.name)) },
             confirmButton = {
-                TextButton(onClick = { onDelete(); confirmDelete = false }) { Text("Delete") }
+                TextButton(onClick = { onDelete(); confirmDelete = false }) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text("Cancel") }
+                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -302,14 +304,14 @@ private fun EditProductDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Product") },
+        title = { Text(stringResource(R.string.edit_product)) },
         text = {
             Column {
                 // 1) Name (full width)
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name*") },
+                    label = { Text(stringResource(R.string.name_required)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(6.dp))
@@ -318,14 +320,14 @@ private fun EditProductDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     TypePicker(
                         initial = type,
-                        label = "Type*",
+                        label = stringResource(R.string.type_required),
                         modifier = Modifier.weight(1f),
                         onPicked = { picked -> type = picked },
                         options = typeOptions
                     )
                     UnitPicker(
                         initial = unit,
-                        label = "Unit*",
+                        label = stringResource(R.string.unit_required),
                         modifier = Modifier.weight(1f),
                         onPicked = { picked -> unit = picked },
                         options = unitOptions
@@ -342,7 +344,7 @@ private fun EditProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             stock = final
                         },
-                        label = { Text("Stock") },
+                        label = { Text(stringResource(R.string.stock)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -353,7 +355,7 @@ private fun EditProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             gst = final
                         },
-                        label = { Text("GST%") },
+                        label = { Text(stringResource(R.string.gst_percent)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -369,7 +371,7 @@ private fun EditProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             purchasePrice = final
                         },
-                        label = { Text("Buy Price") },
+                        label = { Text(stringResource(R.string.buy_price)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -380,7 +382,7 @@ private fun EditProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             sellingPrice = final
                         },
-                        label = { Text("Sell Price") },
+                        label = { Text(stringResource(R.string.sell_price)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -394,10 +396,10 @@ private fun EditProductDialog(
                 val st = stock.toDoubleOrNull() ?: 0.0
                 val g = gst.toDoubleOrNull() ?: 0.0
                 onConfirm(name, type, unit, sp, pp, st, g)
-            }) { Text("Save") }
+            }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
@@ -419,14 +421,14 @@ private fun AddProductDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Product") },
+        title = { Text(stringResource(R.string.add_product)) },
         text = {
             Column {
                 // 1) Name (full width)
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name*") },
+                    label = { Text(stringResource(R.string.name_required)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(6.dp))
@@ -435,14 +437,14 @@ private fun AddProductDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     TypePicker(
                         initial = type,
-                        label = "Type*",
+                        label = stringResource(R.string.type_required),
                         modifier = Modifier.weight(1f),
                         onPicked = { picked -> type = picked },
                         options = typeOptions
                     )
                     UnitPicker(
                         initial = unit,
-                        label = "Unit*",
+                        label = stringResource(R.string.unit_required),
                         modifier = Modifier.weight(1f),
                         onPicked = { picked -> unit = picked },
                         options = unitOptions
@@ -459,7 +461,7 @@ private fun AddProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             stock = final
                         },
-                        label = { Text("Stock") },
+                        label = { Text(stringResource(R.string.stock)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -470,7 +472,7 @@ private fun AddProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             gst = final
                         },
-                        label = { Text("GST%") },
+                        label = { Text(stringResource(R.string.gst_percent)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -486,7 +488,7 @@ private fun AddProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             purchasePrice = final
                         },
-                        label = { Text("Buy Price") },
+                        label = { Text(stringResource(R.string.buy_price)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -497,7 +499,7 @@ private fun AddProductDialog(
                             val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                             sellingPrice = final
                         },
-                        label = { Text("Sell Price") },
+                        label = { Text(stringResource(R.string.sell_price)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         modifier = Modifier.weight(1f)
                     )
@@ -511,8 +513,8 @@ private fun AddProductDialog(
                 val st = stock.toDoubleOrNull() ?: 0.0
                 val g = gst.toDoubleOrNull() ?: 0.0
                 onConfirm(name, type, unit, sp, pp, st, g)
-            }) { Text("Save") }
+            }) { Text(stringResource(R.string.save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }

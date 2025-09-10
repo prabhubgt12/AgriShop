@@ -17,6 +17,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.fertipos.agroshop.R
 
 object InvoicePdfGenerator {
     private val df = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
@@ -43,7 +44,7 @@ object InvoicePdfGenerator {
 
         // Header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText(company.name.ifBlank { "Invoice" }, 40f, y, paint)
+        canvas.drawText(company.name.ifBlank { context.getString(R.string.invoice_fallback_title) }, 40f, y, paint)
         paint.typeface = Typeface.DEFAULT
         // Optional Logo at top-right
         if (company.logoUri.isNotBlank()) {
@@ -68,26 +69,26 @@ object InvoicePdfGenerator {
         if (addr1.isNotBlank()) { canvas.drawText(addr1, 40f, y, paint); y += 16f }
         val addr2 = listOf(company.city, company.state, company.pincode).filter { it.isNotBlank() }.joinToString(", ")
         if (addr2.isNotBlank()) { canvas.drawText(addr2, 40f, y, paint); y += 16f }
-        if (company.gstin.isNotBlank()) { canvas.drawText("GSTIN: ${company.gstin}", 40f, y, paint); y += 16f }
-        if (company.phone.isNotBlank()) { canvas.drawText("Phone: ${company.phone}", 40f, y, paint); y += 16f }
-        if (company.email.isNotBlank()) { canvas.drawText("Email: ${company.email}", 40f, y, paint); y += 16f }
+        if (company.gstin.isNotBlank()) { canvas.drawText(context.getString(R.string.gstin_colon, company.gstin), 40f, y, paint); y += 16f }
+        if (company.phone.isNotBlank()) { canvas.drawText(context.getString(R.string.phone_colon_pdf, company.phone), 40f, y, paint); y += 16f }
+        if (company.email.isNotBlank()) { canvas.drawText(context.getString(R.string.email_colon_pdf, company.email), 40f, y, paint); y += 16f }
 
         y += 8f
         canvas.drawLine(40f, y, 555f, y, paint); y += 18f
 
         // Invoice meta
-        canvas.drawText("Invoice ID: ${invoice.id}", 40f, y, paint); y += 16f
-        canvas.drawText("Date: ${df.format(Date(invoice.date))}", 40f, y, paint); y += 16f
-        canvas.drawText("Customer: $customerName", 40f, y, paint); y += 20f
+        canvas.drawText(context.getString(R.string.invoice_id_colon, invoice.id.toString()), 40f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.date_colon, df.format(Date(invoice.date))), 40f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.customer_colon, customerName), 40f, y, paint); y += 20f
 
         // Table header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Item", 40f, y, paint)
-        canvas.drawText("Qty", 230f, y, paint)
-        canvas.drawText("Price", 290f, y, paint)
-        canvas.drawText("GST%", 360f, y, paint)
-        canvas.drawText("GST Amt", 420f, y, paint)
-        canvas.drawText("Line Total", 500f, y, paint)
+        canvas.drawText(context.getString(R.string.pdf_item), 40f, y, paint)
+        canvas.drawText(context.getString(R.string.pdf_qty), 230f, y, paint)
+        canvas.drawText(context.getString(R.string.pdf_price), 290f, y, paint)
+        canvas.drawText(context.getString(R.string.pdf_gst_percent), 360f, y, paint)
+        canvas.drawText(context.getString(R.string.pdf_gst_amount), 420f, y, paint)
+        canvas.drawText(context.getString(R.string.pdf_line_total), 500f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 14f
         canvas.drawLine(40f, y, 555f, y, paint); y += 14f
@@ -95,7 +96,7 @@ object InvoicePdfGenerator {
         // Items
         items.forEach { row ->
             if (y > 760f) { /* pagination skipped for brevity */ }
-            val name = row.product?.name ?: "Item ${row.item.productId}"
+            val name = row.product?.name ?: ("Item " + row.item.productId)
             val base = row.item.quantity * row.item.unitPrice
             val gstAmt = base * (row.item.gstPercent / 100.0)
             canvas.drawText(name.take(30), 40f, y, paint)
@@ -111,11 +112,11 @@ object InvoicePdfGenerator {
         canvas.drawLine(40f, y, 555f, y, paint); y += 18f
         // Totals
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText(String.format(Locale.getDefault(), "Subtotal: %.2f", invoice.subtotal), 400f, y, paint); y += 16f
-        canvas.drawText(String.format(Locale.getDefault(), "GST: %.2f", invoice.gstAmount), 400f, y, paint); y += 16f
-        canvas.drawText(String.format(Locale.getDefault(), "Total: %.2f", invoice.total), 400f, y, paint); y += 16f
-        canvas.drawText(String.format(Locale.getDefault(), "Paid: %.2f", paid), 400f, y, paint); y += 16f
-        canvas.drawText(String.format(Locale.getDefault(), "Balance: %.2f", balance), 400f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.pdf_subtotal_with_amount, String.format(Locale.getDefault(), "%.2f", invoice.subtotal)), 400f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.pdf_gst_with_amount, String.format(Locale.getDefault(), "%.2f", invoice.gstAmount)), 400f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.pdf_total_with_amount, String.format(Locale.getDefault(), "%.2f", invoice.total)), 400f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.pdf_paid_with_amount, String.format(Locale.getDefault(), "%.2f", paid)), 400f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.pdf_balance_with_amount, String.format(Locale.getDefault(), "%.2f", balance)), 400f, y, paint); y += 16f
         paint.typeface = Typeface.DEFAULT
 
         // Add footer with company stamp

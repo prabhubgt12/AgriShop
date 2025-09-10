@@ -1,4 +1,296 @@
 <resources>
     <string name="app_name">Simple Shop</string>
     <string name="unlock_to_continue">Unlock to continue</string>
+
+    <!-- Settings / Company Profile -->
+    <string name="company_profile">Company Profile</string>
+    <string name="name_label">Name</string>
+    <string name="address_line1_label">Address Line 1</string>
+    <string name="address_line2_label">Address Line 2</string>
+    <string name="city_label">City</string>
+    <string name="state_label">State</string>
+    <string name="pincode_label">Pincode</string>
+    <string name="phone_label">Phone</string>
+    <string name="gstin_label">GSTIN</string>
+    <string name="email_label">Email</string>
+    <string name="pick_logo">Pick Logo</string>
+    <string name="change_logo">Change Logo</string>
+    <string name="logo_preview">Logo preview</string>
+    <string name="save">Save</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="settings_title">Settings</string>
+
+    <!-- Inventory -->
+    <string name="inventory">Inventory</string>
+    <string name="low_stock_threshold">Low stock threshold</string>
+
+    <!-- Theme -->
+    <string name="theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- Language -->
+    <string name="language_title">Language</string>
+    <string name="system_option">System</string>
+    <string name="english_label">English</string>
+    <string name="hindi_label">Hindi</string>
+    <string name="kannada_label">Kannada</string>
+    <string name="changes_apply_note">Changes apply instantly; some screens may refresh.</string>
+
+    <!-- Premium / IAP -->
+    <string name="premium">Premium</string>
+    <string name="remove_ads">Remove Ads</string>
+    <string name="restore_purchases">Restore</string>
+
+    <!-- Product Types / Units -->
+    <string name="product_types_csv">Product Types (CSV)</string>
+    <string name="types_comma_separated">Types (comma-separated)</string>
+    <string name="units_csv">Units (CSV)</string>
+    <string name="units_comma_separated">Units (comma-separated)</string>
+
+    <!-- Backup & Sync -->
+    <string name="backup_and_sync">Backup &amp; Sync</string>
+    <string name="sign_in_google">Sign in Google</string>
+    <string name="sign_out_google">Sign out Google</string>
+    <string name="signed_in">Signed in</string>
+    <string name="not_signed_in">Not signed in</string>
+    <string name="signed_out">Signed out</string>
+    <string name="signed_in_to_google">Signed in to Google</string>
+    <string name="sign_in_failed_with_error">Sign-in failed: %1$s</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="backup_now">Backup now</string>
+    <string name="backup_uploaded">Backup uploaded</string>
+    <string name="backup_failed_with_error">Backup failed: %1$s</string>
+    <string name="no_backups_found">No backups found</string>
+    <string name="restore">Restore</string>
+    <string name="restore_complete_restart">Restore complete (restart app)</string>
+    <string name="restore_failed_with_error">Restore failed: %1$s</string>
+
+    <!-- Purchase History -->
+    <string name="new_purchase_cd">New Purchase</string>
+    <string name="purchases_title">Purchases</string>
+    <string name="purchase_history_title_with_product">Purchase History (Product #%1$d)</string>
+    <string name="filters">Filters</string>
+    <string name="hide_filters">Hide filters</string>
+    <string name="search_supplier_label">Search by supplier name</string>
+    <string name="from_label">From</string>
+    <string name="to_label">To</string>
+    <string name="apply">Apply</string>
+    <string name="clear">Clear</string>
+    <string name="unknown_supplier">Unknown Supplier</string>
+    <string name="gst_label">GST</string>
+    <string name="total_label">Total</string>
+    <string name="more_cd">More</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete_purchase_title">Delete Purchase?</string>
+    <string name="delete_purchase_message">Are you sure you want to delete #%1$d? This cannot be undone.</string>
+    <string name="qty_at_price">Qty @ Price</string>
+    <string name="item_placeholder">Item %1$d</string>
+    <string name="line_item_qty_price">x %1$s @ %2$s</string>
+    <string name="notes_label">Notes</string>
+    <string name="subtotal_with_amount">Subtotal: %1$s</string>
+    <string name="gst_with_amount">GST: %1$s</string>
+    <string name="total_with_amount">Total: %1$s</string>
+    <string name="close">Close</string>
+
+    <!-- Invoice History -->
+    <string name="new_bill_cd">New Bill</string>
+    <string name="invoices_title">Invoices</string>
+    <string name="search_customer_label">Search by customer name</string>
+    <string name="balance_label">Balance</string>
+    <string name="print">Print</string>
+    <string name="delete_invoice_title">Delete invoice?</string>
+    <string name="delete_invoice_message">This action cannot be undone.</string>
+    <string name="paid_with_amount">Paid: %1$s</string>
+    <string name="balance_with_amount">Balance: %1$s</string>
+
+    <!-- Common UI -->
+    <string name="back">Back</string>
+    <string name="export">Export</string>
+    <string name="share_pdf">Share PDF</string>
+    <string name="share_csv">Share CSV</string>
+    <string name="items">Items</string>
+    <string name="date_label">Date</string>
+    <string name="customer_required">Customer*</string>
+    <string name="product_required">Product*</string>
+    <string name="price_label">Price</string>
+    <string name="qty_label">Qty</string>
+    <string name="paid_label">Paid</string>
+    <string name="balance_only_label">Balance</string>
+    <string name="apply_action">Apply</string>
+    <string name="clear_action">Clear</string>
+
+    <!-- Reports Screen -->
+    <string name="reports_title">Reports</string>
+    <string name="billing_title">Billing</string>
+    <string name="view_bills">View Bills</string>
+    <string name="view_purchases">View Purchases</string>
+    <string name="your_shop">Your Shop</string>
+    <string name="reports_home_pl">Product P &amp; L</string>
+    <string name="reports_home_customer">Customer Reports</string>
+    <string name="reports_back">Back</string>
+    <string name="pl_title">Profit &amp; Loss</string>
+    <string name="today">Today</string>
+    <string name="week">Week</string>
+    <string name="month">Month</string>
+    <string name="costing_method">Costing Method</string>
+    <string name="method_label">Method</string>
+    <string name="compute_pl">Compute P&amp;L</string>
+    <string name="product_pl_pdf">Product P &amp; L</string>
+    <string name="share_product_pl_pdf">Share Product P&amp;L PDF</string>
+    <string name="export_pl_csv">Export P&amp;L</string>
+    <string name="share_pl_pdf">Export P&amp;L PDF</string>
+    <string name="share_pl_pdf_title">Share P&amp;L PDF</string>
+    <string name="export_sale_pdf">Export Sale</string>
+    <string name="export_purchase_pdf">Export Purchase</string>
+    <string name="share_sales_pdf">Share Sales PDF</string>
+    <string name="share_purchases_pdf">Share Purchases PDF</string>
+    <string name="no_sales_in_range">No sales found in date range</string>
+    <string name="no_purchases_in_range">No purchases found in date range</string>
+    <string name="customer_title">Customer</string>
+    <string name="pick_customer">Pick customer</string>
+    <string name="select">Select</string>
+    <string name="share_csv_title">Share CSV</string>
+    <string name="export_selected">Export Selected</string>
+    <string name="export_all">Export All</string>
+    <string name="sales_label">Sales</string>
+    <string name="purchases_label">Purchases</string>
+    <string name="gross_profit_label">Gross Profit</string>
+    <string name="net_amount_label">Net Amount</string>
+    <string name="subtotal_label">Subtotal</string>
+
+    <!-- Product Screen -->
+    <string name="products_title">Products</string>
+    <string name="add">Add</string>
+    <string name="search_by_product">Search by product name</string>
+    <string name="stock_label">Stock</string>
+    <string name="history">History</string>
+    <string name="delete_product_title">Delete Product?</string>
+    <string name="delete_product_message">Are you sure you want to delete %1$s? This cannot be undone.</string>
+    <string name="type_colon">Type: %1$s</string>
+    <string name="gst_percent_colon">GST: %1$s%%</string>
+    <string name="buy_price_colon">Buy: %1$s</string>
+    <string name="sell_price_colon">Sell: %1$s</string>
+    <string name="edit_product">Edit Product</string>
+    <string name="name_required">Name*</string>
+    <string name="type_required">Type*</string>
+    <string name="unit_required">Unit*</string>
+    <string name="stock">Stock</string>
+    <string name="gst_percent">GST%</string>
+    <string name="buy_price">Buy Price</string>
+    <string name="sell_price">Sell Price</string>
+    <string name="add_product">Add Product</string>
+
+    <!-- Customer Screen -->
+    <string name="customers_title">Customers</string>
+    <string name="search_by_customer">Search by customer name</string>
+    <string name="phone_colon">Phone: %1$s</string>
+    <string name="address_colon">Address: %1$s</string>
+    <string name="supplier_chip">Supplier</string>
+    <string name="delete_customer_title">Delete Customer?</string>
+    <string name="delete_customer_message">Are you sure you want to delete %1$s? This cannot be undone.</string>
+    <string name="edit_customer">Edit Customer</string>
+    <string name="phone">Phone</string>
+    <string name="address">Address</string>
+    <string name="supplier">Supplier</string>
+    <string name="add_customer">Add Customer</string>
+
+    <!-- Purchase Screen -->
+    <string name="create_purchase">Create Purchase</string>
+    <string name="edit_purchase_with_id">Edit Purchase #%1$d</string>
+    <string name="date">Date</string>
+    <string name="supplier_label">Supplier</string>
+    <string name="product_label">Product</string>
+    <string name="qty">Qty</string>
+    <string name="unit_price">Unit Price</string>
+    <string name="add_item">Add Item</string>
+    <string name="clear_action_text">Clear</string>
+    <string name="gst_amt_colon">GST Amt: %1$s</string>
+    <string name="paid_checkbox">Paid</string>
+    <string name="balance_colon">Balance: %1$s</string>
+    <string name="save_purchase">Save Purchase</string>
+    <string name="reset_status">Reset Status</string>
+    
+
+    <!-- Billing Screen -->
+    <string name="create_invoice">Create Invoice</string>
+    <string name="edit_invoice_with_id">Edit Invoice #%1$d</string>
+    <string name="price">Price</string>
+    <string name="items_title">Items</string>
+    <string name="submit_and_print">Submit &amp; Print</string>
+
+    <!-- Billing-specific/common labels used across screens -->
+
+    <!-- PDF labels (Invoice) -->
+    <string name="invoice_fallback_title">Invoice</string>
+    <string name="gstin_colon">GSTIN: %1$s</string>
+    <string name="phone_colon_pdf">Phone: %1$s</string>
+    <string name="email_colon_pdf">Email: %1$s</string>
+    <string name="invoice_id_colon">Invoice ID: %1$s</string>
+    <string name="date_colon">Date: %1$s</string>
+    <string name="customer_colon">Customer: %1$s</string>
+    <string name="pdf_item">Item</string>
+    <string name="pdf_qty">Qty</string>
+    <string name="pdf_price">Price</string>
+    <string name="pdf_gst_percent">GST%</string>
+    <string name="pdf_gst_amount">GST Amt</string>
+    <string name="pdf_line_total">Line Total</string>
+    <string name="pdf_subtotal_with_amount">Subtotal: %1$s</string>
+    <string name="pdf_gst_with_amount">GST: %1$s</string>
+    <string name="pdf_total_with_amount">Total: %1$s</string>
+    <string name="pdf_paid_with_amount">Paid: %1$s</string>
+    <string name="pdf_balance_with_amount">Balance: %1$s</string>
+
+    <!-- Sales/Purchases range PDFs -->
+    <string name="sales_report_title">Sales Report</string>
+    <string name="purchase_report_title">Purchase Report</string>
+    <string name="from_colon">From: %1$s</string>
+    <string name="to_colon">To: %1$s</string>
+    <string name="inv_hash">Inv#</string>
+    <string name="po_hash">PO#</string>
+    <string name="totals_colon">Totals:</string>
+    <string name="summary_sales">Summary: Total Sale = %1$s, Total Received = %2$s, Total Balance = %3$s</string>
+    <string name="summary_purchases">Summary: Total Purchase = %1$s, Total Paid = %2$s, Total Balance = %3$s</string>
+
+    <!-- Product-wise PL PDF -->
+    <string name="product_pl_title">Product-wise Profit &amp; Loss</string>
+    <string name="product_pl_title_contd">Product-wise Profit &amp; Loss (contd.)</string>
+    <string name="pdf_product">Product</string>
+    <string name="pdf_sales">Sales</string>
+    <string name="pdf_cost">Cost</string>
+    <string name="pdf_profit">Profit</string>
+    <string name="pdf_totals">Totals</string>
+
+    <!-- P&L PDF -->
+    <string name="pl_report_title">Profit &amp; Loss Report</string>
+    <string name="section_sales">Sales</string>
+    <string name="section_purchases">Purchases</string>
+    <string name="gross_profit_colon">Gross Profit: %1$s</string>
+    <string name="net_amount_colon">Net Amount: %1$s</string>
+
+    <!-- CSV headers (ReportExporter) -->
+    <string name="csv_from">From</string>
+    <string name="csv_to">To</string>
+    <string name="csv_section">Section</string>
+    <string name="csv_subtotal">Subtotal</string>
+    <string name="csv_gst">GST</string>
+    <string name="csv_total">Total</string>
+    <string name="csv_sales">Sales</string>
+    <string name="csv_purchases">Purchases</string>
+    <string name="csv_metric">Metric</string>
+    <string name="csv_gross_profit_metric">Gross Profit (Sales Subtotal - Purchases Subtotal)</string>
+    <string name="csv_net_amount_metric">Net Amount (Sales Total - Purchases Total)</string>
+    <string name="csv_customer">Customer</string>
+    <string name="csv_invoice_no">Invoice No</string>
+    <string name="csv_date">Date</string>
+    <string name="csv_product">Product</string>
+    <string name="csv_qty">Qty</string>
+    <string name="csv_unit_price">Unit Price</string>
+    <string name="csv_gst_percent">GST%</string>
+    <string name="csv_line_total">Line Total</string>
+    <string name="csv_subtotal_summary">Subtotal</string>
+    <string name="csv_grand_total">Grand Total</string>
 </resources>

@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.fertipos.agroshop.R
 
 object ReportExporter {
     private val dateFmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -21,7 +22,7 @@ object ReportExporter {
         rows: List<InvoiceDao.ExportRow>
     ): Uri {
         val outFile = File(context.cacheDir, "report_${sanitize(customerName)}_${System.currentTimeMillis()}.csv")
-        writeCustomerCsv(outFile, customerName, rows)
+        writeCustomerCsv(context, outFile, customerName, rows)
         return FileProvider.getUriForFile(context, authority, outFile)
     }
 
@@ -39,22 +40,33 @@ object ReportExporter {
         grossProfit: Double,
         netAmount: Double
     ): Uri {
-        val outFile = File(context.cacheDir, "pl_${System.currentTimeMillis()}.csv")
+        val outFile = File(context.cacheDir, "pl_${'$'}{System.currentTimeMillis()}.csv")
         FileOutputStream(outFile).use { fos ->
             val lines = mutableListOf<String>()
-            lines += listOf("From", "To").joinToString(",") + "\n"
+            lines += listOf(context.getString(R.string.csv_from), context.getString(R.string.csv_to)).joinToString(",") + "\n"
             lines += listOf(
                 escape(dateFmt.format(Date(from))),
                 escape(dateFmt.format(Date(to)))
             ).joinToString(",") + "\n\n"
 
-            lines += listOf("Section", "Subtotal", "GST", "Total").joinToString(",") + "\n"
-            lines += listOf("Sales", salesSubtotal.toString(), salesGst.toString(), salesTotal.toString()).joinToString(",") + "\n"
-            lines += listOf("Purchases", purchasesSubtotal.toString(), purchasesGst.toString(), purchasesTotal.toString()).joinToString(",") + "\n\n"
+            lines += listOf(
+                context.getString(R.string.csv_section),
+                context.getString(R.string.csv_subtotal),
+                context.getString(R.string.csv_gst),
+                context.getString(R.string.csv_total)
+            ).joinToString(",") + "\n"
+            lines += listOf(
+                context.getString(R.string.csv_sales),
+                salesSubtotal.toString(), salesGst.toString(), salesTotal.toString()
+            ).joinToString(",") + "\n"
+            lines += listOf(
+                context.getString(R.string.csv_purchases),
+                purchasesSubtotal.toString(), purchasesGst.toString(), purchasesTotal.toString()
+            ).joinToString(",") + "\n\n"
 
-            lines += listOf("Metric", "Amount").joinToString(",") + "\n"
-            lines += listOf("Gross Profit (Sales Subtotal - Purchases Subtotal)", grossProfit.toString()).joinToString(",") + "\n"
-            lines += listOf("Net Amount (Sales Total - Purchases Total)", netAmount.toString()).joinToString(",") + "\n"
+            lines += listOf(context.getString(R.string.csv_metric), context.getString(R.string.net_amount_label)).joinToString(",") + "\n"
+            lines += listOf(context.getString(R.string.csv_gross_profit_metric), grossProfit.toString()).joinToString(",") + "\n"
+            lines += listOf(context.getString(R.string.csv_net_amount_metric), netAmount.toString()).joinToString(",") + "\n"
 
             lines.forEach { fos.write(it.toByteArray(StandardCharsets.UTF_8)) }
         }
@@ -67,12 +79,21 @@ object ReportExporter {
         rows: List<InvoiceDao.ExportRowAll>
     ): Uri {
         val outFile = File(context.cacheDir, "report_ALL_${System.currentTimeMillis()}.csv")
-        writeAllCsv(outFile, rows)
+        writeAllCsv(context, outFile, rows)
         return FileProvider.getUriForFile(context, authority, outFile)
     }
 
-    private fun writeCustomerCsv(file: File, customerName: String, rows: List<InvoiceDao.ExportRow>) {
-        val header = listOf("Customer", "Invoice No", "Date", "Product", "Qty", "Unit Price", "GST%", "Line Total")
+    private fun writeCustomerCsv(context: Context, file: File, customerName: String, rows: List<InvoiceDao.ExportRow>) {
+        val header = listOf(
+            context.getString(R.string.csv_customer),
+            context.getString(R.string.csv_invoice_no),
+            context.getString(R.string.csv_date),
+            context.getString(R.string.csv_product),
+            context.getString(R.string.csv_qty),
+            context.getString(R.string.csv_unit_price),
+            context.getString(R.string.csv_gst_percent),
+            context.getString(R.string.csv_line_total)
+        )
         var total = 0.0
         var totalQty = 0.0
         FileOutputStream(file).use { fos ->
@@ -93,13 +114,22 @@ object ReportExporter {
                 fos.write((row + "\n").toByteArray(StandardCharsets.UTF_8))
             }
             // Summary line
-            val sumLine = listOf("Subtotal", "", "", "", totalQty.toString(), "", "", total.toString()).joinToString(",")
+            val sumLine = listOf(context.getString(R.string.csv_subtotal_summary), "", "", "", totalQty.toString(), "", "", total.toString()).joinToString(",")
             fos.write((sumLine + "\n").toByteArray(StandardCharsets.UTF_8))
         }
     }
 
-    private fun writeAllCsv(file: File, rows: List<InvoiceDao.ExportRowAll>) {
-        val header = listOf("Customer", "Invoice No", "Date", "Product", "Qty", "Unit Price", "GST%", "Line Total")
+    private fun writeAllCsv(context: Context, file: File, rows: List<InvoiceDao.ExportRowAll>) {
+        val header = listOf(
+            context.getString(R.string.csv_customer),
+            context.getString(R.string.csv_invoice_no),
+            context.getString(R.string.csv_date),
+            context.getString(R.string.csv_product),
+            context.getString(R.string.csv_qty),
+            context.getString(R.string.csv_unit_price),
+            context.getString(R.string.csv_gst_percent),
+            context.getString(R.string.csv_line_total)
+        )
         var total = 0.0
         var totalQty = 0.0
         FileOutputStream(file).use { fos ->
@@ -119,7 +149,7 @@ object ReportExporter {
                 ).joinToString(",")
                 fos.write((row + "\n").toByteArray(StandardCharsets.UTF_8))
             }
-            val sumLine = listOf("Grand Total", "", "", "", totalQty.toString(), "", "", total.toString()).joinToString(",")
+            val sumLine = listOf(context.getString(R.string.csv_grand_total), "", "", "", totalQty.toString(), "", "", total.toString()).joinToString(",")
             fos.write((sumLine + "\n").toByteArray(StandardCharsets.UTF_8))
         }
     }

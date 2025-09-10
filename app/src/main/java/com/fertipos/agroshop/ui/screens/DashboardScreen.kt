@@ -55,6 +55,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import com.fertipos.agroshop.ads.BannerAd
 import com.fertipos.agroshop.ads.InterstitialAds
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun DashboardScreen() {
@@ -135,13 +136,13 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
             ) {
                 AsyncImage(
                     model = profile.logoUri.takeIf { it.isNotBlank() },
-                    contentDescription = "Logo",
+                    contentDescription = stringResource(com.fertipos.agroshop.R.string.logo_preview),
                     modifier = Modifier.size(56.dp)
                 )
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = profile.name.ifBlank { "Your Shop" },
+                        text = profile.name.ifBlank { stringResource(com.fertipos.agroshop.R.string.your_shop) },
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
@@ -153,21 +154,21 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
 
         // Tiles grid
         val tiles = listOf(
-            TileData("Customers", Icons.Filled.People) { onNavigateToTab(1) },
-            TileData("Products", Icons.Filled.Inventory2) { onNavigateToTab(2) },
-            TileData("Billing", Icons.Filled.ReceiptLong) { onNavigateToTab(3) },
-            TileData("Purchases", Icons.Filled.ReceiptLong) { onNavigateToTab(7) },
-            TileData("View Bills", Icons.Filled.History) {
+            TileData(stringResource(com.fertipos.agroshop.R.string.customers_title), Icons.Filled.People) { onNavigateToTab(1) },
+            TileData(stringResource(com.fertipos.agroshop.R.string.products_title), Icons.Filled.Inventory2) { onNavigateToTab(2) },
+            TileData(stringResource(com.fertipos.agroshop.R.string.billing_title), Icons.Filled.ReceiptLong) { onNavigateToTab(3) },
+            TileData(stringResource(com.fertipos.agroshop.R.string.purchases_title), Icons.Filled.ReceiptLong) { onNavigateToTab(7) },
+            TileData(stringResource(com.fertipos.agroshop.R.string.view_bills), Icons.Filled.History) {
                 val act = (context as? android.app.Activity)
                 if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(6) } else onNavigateToTab(6)
             },
-            TileData("View Purchases", Icons.Filled.History) {
+            TileData(stringResource(com.fertipos.agroshop.R.string.view_purchases), Icons.Filled.History) {
                 val act = (context as? android.app.Activity)
                 if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(8) } else onNavigateToTab(8)
             },
             // Interest Book tile removed (maintained as separate child app)
-            TileData("Reports", Icons.Filled.BarChart) { onNavigateToTab(4) },
-            TileData("Settings", Icons.Filled.Settings) { onNavigateToTab(5) },
+            TileData(stringResource(com.fertipos.agroshop.R.string.reports_title), Icons.Filled.BarChart) { onNavigateToTab(4) },
+            TileData(stringResource(com.fertipos.agroshop.R.string.settings_title), Icons.Filled.Settings) { onNavigateToTab(5) },
         )
 
         LazyVerticalGrid(

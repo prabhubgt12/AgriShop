@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">सिंपल शॉप</string>
+    <string name="unlock_to_continue">जारी रखने के लिए अनलॉक करें</string>
+
+    <!-- Settings / Company Profile -->
+    <string name="company_profile">कंपनी विवरण</string>
+    <string name="name_label">नाम</string>
+    <string name="address_line1_label">पता पंक्ति 1</string>
+    <string name="address_line2_label">पता पंक्ति 2</string>
+    <string name="city_label">शहर</string>
+    <string name="state_label">राज्य</string>
+    <string name="pincode_label">पिनकोड</string>
+    <string name="phone_label">फ़ोन</string>
+    <string name="gstin_label">जीएसटीआईएन</string>
+    <string name="email_label">ईमेल</string>
+    <string name="pick_logo">लोगो चुनें</string>
+    <string name="change_logo">लोगो बदलें</string>
+    <string name="logo_preview">लोगो पूर्वावलोकन</string>
+    <string name="save">सहेजें</string>
+    <string name="settings_saved">सेटिंग्स सहेजी गईं</string>
+    <string name="settings_title">सेटिंग्स</string>
+
+    <!-- Inventory -->
+    <string name="inventory">इन्वेंटरी</string>
+    <string name="low_stock_threshold">लो स्टॉक सीमा</string>
+
+    <!-- Theme -->
+    <string name="theme">थीम</string>
+    <string name="theme_system">सिस्टम</string>
+    <string name="theme_light">लाइट</string>
+    <string name="theme_dark">डार्क</string>
+
+    <!-- Language -->
+    <string name="language_title">भाषा</string>
+    <string name="system_option">सिस्टम</string>
+    <string name="english_label">अंग्रेज़ी</string>
+    <string name="hindi_label">हिन्दी</string>
+    <string name="kannada_label">कन्नड़</string>
+    <string name="changes_apply_note">परिवर्तन तुरंत लागू होते हैं; कुछ स्क्रीन रीफ़्रेश हो सकती हैं।</string>
+
+    <!-- Premium / IAP -->
+    <string name="premium">प्रीमियम</string>
+    <string name="remove_ads">विज्ञापन हटाएं</string>
+    <string name="restore_purchases">रिस्टोर</string>
+
+    <!-- Product Types / Units -->
+    <string name="product_types_csv">उत्पाद प्रकार (CSV)</string>
+    <string name="types_comma_separated">प्रकार (अल्पविराम से अलग)</string>
+    <string name="units_csv">इकाइयाँ (CSV)</string>
+    <string name="units_comma_separated">इकाइयाँ (अल्पविराम से अलग)</string>
+
+    <!-- Backup & Sync -->
+    <string name="backup_and_sync">बैकअप और सिंक</string>
+    <string name="sign_in_google">गूगल साइन इन</string>
+    <string name="sign_out_google">गूगल साइन आउट</string>
+    <string name="signed_in">साइन इन</string>
+    <string name="not_signed_in">साइन इन नहीं</string>
+    <string name="signed_out">साइन आउट हो गया</string>
+    <string name="signed_in_to_google">गूगल में साइन इन किया</string>
+    <string name="sign_in_failed_with_error">साइन-इन विफल: %1$s</string>
+    <string name="unknown_error">अज्ञात त्रुटि</string>
+    <string name="backup_now">अभी बैकअप लें</string>
+    <string name="backup_uploaded">बैकअप अपलोड किया गया</string>
+    <string name="backup_failed_with_error">बैकअप विफल: %1$s</string>
+    <string name="no_backups_found">कोई बैकअप नहीं मिला</string>
+    <string name="restore">रिस्टोर</string>
+    <string name="restore_complete_restart">रिस्टोर पूरा (ऐप पुनः शुरू करें)</string>
+    <string name="restore_failed_with_error">रिस्टोर विफल: %1$s</string>
+
+    <!-- Common UI -->
+    <string name="back">वापस</string>
+    <string name="export">एक्सपोर्ट</string>
+    <string name="share_pdf">पीडीएफ शेयर करें</string>
+    <string name="share_csv">CSV शेयर करें</string>
+    <string name="items">आइटम्स</string>
+    <string name="date_label">तारीख</string>
+    <string name="customer_required">ग्राहक*</string>
+    <string name="product_required">उत्पाद*</string>
+    <string name="price_label">कीमत</string>
+    <string name="qty_label">मात्रा</string>
+    <string name="paid_label">भुगतान</string>
+    <string name="balance_only_label">बाकी</string>
+    <string name="apply_action">लागू करें</string>
+    <string name="clear_action">साफ करें</string>
+    <string name="more_cd">अधिक</string>
+    <string name="edit">संपादित करें</string>
+    <string name="delete">हटाएं</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="subtotal_with_amount">उप-योग: %1$s</string>
+    <string name="gst_with_amount">जीएसटी: %1$s</string>
+    <string name="total_with_amount">कुल: %1$s</string>
+
+    <!-- History filters / labels -->
+    <string name="filters">फ़िल्टर</string>
+    <string name="hide_filters">फ़िल्टर छुपाएँ</string>
+    <string name="search_customer_label">ग्राहक नाम से खोजें</string>
+    <string name="search_supplier_label">सप्लायर नाम से खोजें</string>
+    <string name="from_label">से</string>
+    <string name="to_label">तक</string>
+    <string name="apply">लागू करें</string>
+    <string name="clear">साफ करें</string>
+
+    <!-- Reports -->
+    <string name="reports_title">रिपोर्ट</string>
+    <string name="billing_title">बिलिंग</string>
+    <string name="view_bills">बिल देखें</string>
+    <string name="view_purchases">खरीद देखें</string>
+    <string name="your_shop">आपकी दुकान</string>
+    <string name="reports_home_pl">प्रोडक्ट पी &amp; एल</string>
+    <string name="reports_home_customer">ग्राहक रिपोर्ट</string>
+    <string name="reports_back">वापस</string>
+    <string name="pl_title">प्रॉफिट और लॉस</string>
+    <string name="today">आज</string>
+    <string name="week">सप्ताह</string>
+    <string name="month">माह</string>
+    <string name="costing_method">कॉस्टिंग मेथड</string>
+    <string name="method_label">मेथड</string>
+    <string name="compute_pl">पी &amp; एल निकालें</string>
+    <string name="product_pl_pdf">प्रोडक्ट पी &amp; एल</string>
+    <string name="share_product_pl_pdf">प्रोडक्ट पी &amp; एल पीडीएफ शेयर करें</string>
+    <string name="export_pl_csv">पी &amp; एल एक्सपोर्ट</string>
+    <string name="share_pl_pdf">पी &amp; एल पीडीएफ</string>
+    <string name="share_pl_pdf_title">पी &amp; एल पीडीएफ शेयर करें</string>
+    <string name="export_sale_pdf">बिक्री एक्सपोर्ट</string>
+    <string name="export_purchase_pdf">खरीद एक्सपोर्ट</string>
+    <string name="share_sales_pdf">सेल्स पीडीएफ शेयर करें</string>
+    <string name="share_purchases_pdf">परचेज पीडीएफ शेयर करें</string>
+    <string name="no_sales_in_range">चुनी गई तारीखों में बिक्री नहीं मिली</string>
+    <string name="no_purchases_in_range">चुनी गई तारीखों में खरीद नहीं मिली</string>
+    <string name="customer_title">ग्राहक</string>
+    <string name="pick_customer">ग्राहक चुनें</string>
+    <string name="select">चुनें</string>
+    <string name="share_csv_title">CSV शेयर करें</string>
+    <string name="export_selected">चुना हुआ एक्सपोर्ट</string>
+    <string name="export_all">सब एक्सपोर्ट</string>
+    <string name="sales_label">बिक्री</string>
+    <string name="purchases_label">खरीद</string>
+    <string name="gross_profit_label">सकल लाभ</string>
+    <string name="net_amount_label">शुद्ध राशि</string>
+    <string name="subtotal_label">उप-योग</string>
+
+    <!-- Product -->
+    <string name="products_title">उत्पाद</string>
+    <string name="add">जोड़ें</string>
+    <string name="search_by_product">उत्पाद नाम से खोजें</string>
+    <string name="stock_label">स्टॉक</string>
+    <string name="history">इतिहास</string>
+    <string name="delete_product_title">उत्पाद हटाएं?</string>
+    <string name="delete_product_message">क्या आप %1$s हटाना चाहते हैं? यह पूर्ववत नहीं होगा।</string>
+    <string name="type_colon">प्रकार: %1$s</string>
+    <string name="gst_percent_colon">जीएसटी: %1$s%%</string>
+    <string name="buy_price_colon">खरीद: %1$s</string>
+    <string name="sell_price_colon">विक्रय: %1$s</string>
+    <string name="edit_product">उत्पाद संपादित करें</string>
+    <string name="name_required">नाम*</string>
+    <string name="type_required">प्रकार*</string>
+    <string name="unit_required">इकाई*</string>
+    <string name="stock">स्टॉक</string>
+    <string name="gst_percent">जीएसटी%</string>
+    <string name="buy_price">खरीद मूल्य</string>
+    <string name="sell_price">विक्रय मूल्य</string>
+    <string name="add_product">उत्पाद जोड़ें</string>
+
+    <!-- Customer -->
+    <string name="customers_title">ग्राहक</string>
+    <string name="search_by_customer">ग्राहक नाम से खोजें</string>
+    <string name="phone_colon">फोन: %1$s</string>
+    <string name="address_colon">पता: %1$s</string>
+    <string name="supplier_chip">सप्लायर</string>
+    <string name="delete_customer_title">ग्राहक हटाएं?</string>
+    <string name="delete_customer_message">क्या आप %1$s हटाना चाहते हैं? यह पूर्ववत नहीं होगा।</string>
+    <string name="edit_customer">ग्राहक संपादित करें</string>
+    <string name="phone">फोन</string>
+    <string name="address">पता</string>
+    <string name="supplier">सप्लायर</string>
+    <string name="add_customer">ग्राहक जोड़ें</string>
+
+    <!-- Purchase -->
+    <string name="create_purchase">खरीद बनाएं</string>
+    <string name="edit_purchase_with_id">खरीद #%1$d संपादित करें</string>
+    <string name="date">तारीख</string>
+    <string name="supplier_label">सप्लायर</string>
+    <string name="product_label">उत्पाद</string>
+    <string name="qty">मात्रा</string>
+    <string name="unit_price">यूनिट मूल्य</string>
+    <string name="add_item">आइटम जोड़ें</string>
+    <string name="clear_action_text">साफ करें</string>
+    <string name="gst_amt_colon">जीएसटी राशि: %1$s</string>
+    <string name="balance_colon">बाकी: %1$s</string>
+    <string name="save_purchase">खरीद सहेजें</string>
+    <string name="reset_status">स्थिति रीसेट</string>
+
+    <!-- Billing -->
+    <string name="create_invoice">इनवॉइस बनाएं</string>
+    <string name="edit_invoice_with_id">इनवॉइस #%1$d संपादित करें</string>
+    <string name="price">कीमत</string>
+    <string name="items_title">आइटम्स</string>
+    <string name="submit_and_print">सबमिट और प्रिंट</string>
+
+    <!-- PDF / CSV -->
+    <string name="invoice_fallback_title">इनवॉइस</string>
+    <string name="gstin_colon">जीएसटीआईएन: %1$s</string>
+    <string name="phone_colon_pdf">फोन: %1$s</string>
+    <string name="email_colon_pdf">ईमेल: %1$s</string>
+    <string name="invoice_id_colon">इनवॉइस आईडी: %1$s</string>
+    <string name="date_colon">तारीख: %1$s</string>
+    <string name="customer_colon">ग्राहक: %1$s</string>
+    <string name="pdf_item">आइटम</string>
+    <string name="pdf_qty">मात्रा</string>
+    <string name="pdf_price">कीमत</string>
+    <string name="pdf_gst_percent">जीएसटी%</string>
+    <string name="pdf_gst_amount">जीएसटी राशि</string>
+    <string name="pdf_line_total">कुल</string>
+    <string name="pdf_subtotal_with_amount">उप-योग: %1$s</string>
+    <string name="pdf_gst_with_amount">जीएसटी: %1$s</string>
+    <string name="pdf_total_with_amount">कुल: %1$s</string>
+    <string name="pdf_paid_with_amount">भुगतान: %1$s</string>
+    <string name="pdf_balance_with_amount">बाकी: %1$s</string>
+    <string name="sales_report_title">बिक्री रिपोर्ट</string>
+    <string name="purchase_report_title">खरीद रिपोर्ट</string>
+    <string name="from_colon">से: %1$s</string>
+    <string name="to_colon">तक: %1$s</string>
+    <string name="inv_hash">इनव#</string>
+    <string name="po_hash">पीओ#</string>
+    <string name="totals_colon">कुल:</string>
+    <string name="summary_sales">सारांश: कुल बिक्री = %1$s, कुल प्राप्त = %2$s, कुल बाकी = %3$s</string>
+    <string name="summary_purchases">सारांश: कुल खरीद = %1$s, कुल भुगतान = %2$s, कुल बाकी = %3$s</string>
+    <string name="product_pl_title">प्रोडक्ट-वार लाभ और हानि</string>
+    <string name="product_pl_title_contd">प्रोडक्ट-वार लाभ और हानि (जारी)</string>
+    <string name="pdf_product">उत्पाद</string>
+    <string name="pdf_sales">बिक्री</string>
+    <string name="pdf_cost">लागत</string>
+    <string name="pdf_profit">लाभ</string>
+    <string name="pdf_totals">कुल</string>
+    <string name="pl_report_title">प्रॉफिट और लॉस रिपोर्ट</string>
+    <string name="section_sales">बिक्री</string>
+    <string name="section_purchases">खरीद</string>
+    <string name="gross_profit_colon">सकल लाभ: %1$s</string>
+    <string name="net_amount_colon">शुद्ध राशि: %1$s</string>
+    <string name="csv_from">From</string>
+    <string name="csv_to">To</string>
+    <string name="csv_section">Section</string>
+    <string name="csv_subtotal">Subtotal</string>
+    <string name="csv_gst">GST</string>
+    <string name="csv_total">Total</string>
+    <string name="csv_sales">Sales</string>
+    <string name="csv_purchases">Purchases</string>
+    <string name="csv_metric">Metric</string>
+    <string name="csv_gross_profit_metric">Gross Profit (Sales Subtotal - Purchases Subtotal)</string>
+    <string name="csv_net_amount_metric">Net Amount (Sales Total - Purchases Total)</string>
+    <string name="csv_customer">Customer</string>
+    <string name="csv_invoice_no">Invoice No</string>
+    <string name="csv_date">Date</string>
+    <string name="csv_product">Product</string>
+    <string name="csv_qty">Qty</string>
+    <string name="csv_unit_price">Unit Price</string>
+    <string name="csv_gst_percent">GST%</string>
+    <string name="csv_line_total">Line Total</string>
+    <string name="csv_subtotal_summary">Subtotal</string>
+    <string name="csv_grand_total">Grand Total</string>
+
+    <!-- History (Invoices/Purchases) missing translations -->
+    <string name="invoices_title">इनवॉइस</string>
+    <string name="purchases_title">खरीद</string>
+    <string name="purchase_history_title_with_product">खरीद इतिहास (उत्पाद #%1$d)</string>
+    <string name="new_bill_cd">नया बिल</string>
+    <string name="new_purchase_cd">नई खरीद</string>
+    <string name="unknown_supplier">अज्ञात सप्लायर</string>
+    <string name="total_label">कुल</string>
+    <string name="gst_label">जीएसटी</string>
+    <string name="balance_label">बाकी</string>
+    <string name="paid_with_amount">भुगतान: %1$s</string>
+    <string name="balance_with_amount">बाकी: %1$s</string>
+    <string name="close">बंद करें</string>
+    <string name="qty_at_price">मात्रा @ मूल्य</string>
+</resources>

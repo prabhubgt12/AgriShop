@@ -36,6 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import com.fertipos.agroshop.R
+import com.fertipos.agroshop.data.prefs.LocalePrefs
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -49,6 +52,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Apply persisted locale before composing UI
+        val tag = LocalePrefs.getAppLocale(this)
+        LocalePrefs.applyLocale(this, tag)
         // Edge-to-edge: let Compose handle insets and make system bars transparent
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT

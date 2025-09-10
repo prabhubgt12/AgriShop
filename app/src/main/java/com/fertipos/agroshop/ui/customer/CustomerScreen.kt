@@ -50,6 +50,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.Checkbox
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.fertipos.agroshop.R
 
 @Composable
 fun CustomerScreen() {
@@ -63,8 +65,8 @@ fun CustomerScreen() {
             // Header with Add button
             var showAdd by remember { mutableStateOf(false) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = "Customers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Button(onClick = { showAdd = true }) { Text("Add") }
+                Text(text = stringResource(R.string.customers_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Button(onClick = { showAdd = true }) { Text(stringResource(R.string.add)) }
             }
             Spacer(Modifier.height(8.dp))
             HorizontalDivider()
@@ -77,7 +79,7 @@ fun CustomerScreen() {
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                label = { Text("Search by customer name") }
+                label = { Text(stringResource(R.string.search_by_customer)) }
             )
             Spacer(Modifier.height(8.dp))
 
@@ -143,11 +145,11 @@ private fun CustomerRow(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = c.name, fontWeight = FontWeight.SemiBold)
                     if (!c.phone.isNullOrBlank()) {
-                        Text(text = "Phone: ${c.phone}", style = MaterialTheme.typography.bodySmall)
+                        Text(text = stringResource(R.string.phone_colon, c.phone ?: ""), style = MaterialTheme.typography.bodySmall)
                     }
                     if (!c.address.isNullOrBlank()) {
                         Spacer(Modifier.height(2.dp))
-                        Text(text = "Address: ${c.address}", style = MaterialTheme.typography.bodySmall)
+                        Text(text = stringResource(R.string.address_colon, c.address ?: ""), style = MaterialTheme.typography.bodySmall)
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -159,7 +161,7 @@ private fun CustomerRow(
                                 .padding(vertical = 2.dp, horizontal = 6.dp)
                         ) {
                             Text(
-                                text = "Supplier",
+                                text = stringResource(R.string.supplier_chip),
                                 color = Color(0xFF0B6A0B),
                                 style = MaterialTheme.typography.labelSmall
                             )
@@ -167,9 +169,9 @@ private fun CustomerRow(
                         Spacer(Modifier.height(0.dp))
                     }
                     Box {
-                        IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = "More") }
+                        IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_cd)) }
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                            DropdownMenuItem(text = { Text("Delete") }, onClick = { menuExpanded = false; confirmDelete = true })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = { menuExpanded = false; confirmDelete = true })
                         }
                     }
                 }
@@ -185,13 +187,13 @@ private fun CustomerRow(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text("Delete Customer?") },
-            text = { Text("Are you sure you want to delete '${c.name}'? This cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_customer_title)) },
+            text = { Text(stringResource(R.string.delete_customer_message, c.name)) },
             confirmButton = {
-                TextButton(onClick = { onDelete(); confirmDelete = false }) { Text("Delete") }
+                TextButton(onClick = { onDelete(); confirmDelete = false }) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text("Cancel") }
+                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -206,24 +208,24 @@ private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, S
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Customer") },
+        title = { Text(stringResource(R.string.edit_customer)) },
         text = {
             Column {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name*") })
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.name_required)) })
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { raw -> phone = raw.filter { it.isDigit() } },
-                    label = { Text("Phone") },
+                    label = { Text(stringResource(R.string.phone)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 Spacer(Modifier.height(6.dp))
-                OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") })
+                OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.address)) })
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = isSupplier, onCheckedChange = { isSupplier = it })
-                    Text("Supplier", modifier = Modifier.padding(start = 4.dp))
+                    Text(stringResource(R.string.supplier), modifier = Modifier.padding(start = 4.dp))
                 }
             }
         },
@@ -231,10 +233,10 @@ private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, S
             TextButton(onClick = {
                 onConfirm(name, phone.ifBlank { null }, address.ifBlank { null }, isSupplier)
                 onDismiss()
-            }) { Text("Save") }
+            }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
@@ -248,24 +250,24 @@ private fun AddCustomerDialog(onConfirm: (String, String?, String?, Boolean) -> 
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Customer") },
+        title = { Text(stringResource(R.string.add_customer)) },
         text = {
             Column {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name*") })
+                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.name_required)) })
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { raw -> phone = raw.filter { it.isDigit() } },
-                    label = { Text("Phone") },
+                    label = { Text(stringResource(R.string.phone)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 Spacer(Modifier.height(6.dp))
-                OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text("Address") })
+                OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.address)) })
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = isSupplier, onCheckedChange = { isSupplier = it })
-                    Text("Supplier", modifier = Modifier.padding(start = 4.dp))
+                    Text(stringResource(R.string.supplier), modifier = Modifier.padding(start = 4.dp))
                 }
             }
         },
@@ -274,10 +276,10 @@ private fun AddCustomerDialog(onConfirm: (String, String?, String?, Boolean) -> 
                 if (name.isNotBlank()) {
                     onConfirm(name.trim(), phone.ifBlank { null }, address.ifBlank { null }, isSupplier)
                 }
-            }) { Text("Save") }
+            }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

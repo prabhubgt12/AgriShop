@@ -53,6 +53,8 @@ import java.util.Locale
 import java.util.Calendar
 import com.fertipos.agroshop.ui.common.DateField
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
+import com.fertipos.agroshop.R
 
 @Composable
 fun ReportsScreen() {
@@ -67,7 +69,7 @@ fun ReportsScreen() {
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
-            Text(text = "Reports", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+            Text(text = stringResource(R.string.reports_title), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
             Spacer(Modifier.height(16.dp))
             var section by remember { mutableStateOf("home") } // home | pl | customer
             if (section == "home") {
@@ -85,7 +87,7 @@ fun ReportsScreen() {
                         Column(Modifier.fillMaxSize().padding(12.dp)) {
                             Icon(Icons.Filled.Assessment, contentDescription = null)
                             Spacer(Modifier.height(8.dp))
-                            Text("Product P & L", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.reports_home_pl), fontWeight = FontWeight.SemiBold)
                         }
                     }
                     androidx.compose.material3.Card(
@@ -98,7 +100,7 @@ fun ReportsScreen() {
                         Column(Modifier.fillMaxSize().padding(12.dp)) {
                             Icon(Icons.Filled.People, contentDescription = null)
                             Spacer(Modifier.height(8.dp))
-                            Text("Customer Reports", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.reports_home_customer), fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -107,7 +109,7 @@ fun ReportsScreen() {
             } else {
                 // Back button
                 Row(Modifier.fillMaxWidth()) {
-                    Button(onClick = { section = "home" }) { Text("Back") }
+                    Button(onClick = { section = "home" }) { Text(stringResource(R.string.reports_back)) }
                 }
                 Spacer(Modifier.height(8.dp))
             }
@@ -124,7 +126,7 @@ fun ReportsScreen() {
 
             if (section == "pl") Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp).verticalScroll(rememberScrollState())) {
-                    Text(text = "Profit & Loss", fontWeight = FontWeight.SemiBold)
+                    Text(text = stringResource(R.string.pl_title), fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(6.dp))
                     // Quick presets (fit 3 in one row)
                     Row(Modifier.fillMaxWidth()) {
@@ -141,7 +143,7 @@ fun ReportsScreen() {
                             },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             modifier = Modifier.weight(1f)
-                        ) { Text("Today") }
+                        ) { Text(stringResource(R.string.today)) }
                         Spacer(Modifier.width(6.dp))
                         Button(
                             onClick = {
@@ -152,7 +154,7 @@ fun ReportsScreen() {
                             },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             modifier = Modifier.weight(1f)
-                        ) { Text("Week") }
+                        ) { Text(stringResource(R.string.week)) }
                         Spacer(Modifier.width(6.dp))
                         Button(
                             onClick = {
@@ -163,35 +165,35 @@ fun ReportsScreen() {
                             },
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             modifier = Modifier.weight(1f)
-                        ) { Text("Month") }
+                        ) { Text(stringResource(R.string.month)) }
                     }
                     Spacer(Modifier.height(6.dp))
                     // Date pickers: stack on narrow widths
                     BoxWithConstraints(Modifier.fillMaxWidth()) {
                         if (maxWidth < 360.dp) {
                             Column(Modifier.fillMaxWidth()) {
-                                DateField(label = "From", value = fromMillis, onChange = { fromMillis = it }, modifier = Modifier.fillMaxWidth())
+                                DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { fromMillis = it }, modifier = Modifier.fillMaxWidth())
                                 Spacer(Modifier.height(6.dp))
-                                DateField(label = "To", value = toMillis, onChange = { toMillis = it }, modifier = Modifier.fillMaxWidth())
+                                DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { toMillis = it }, modifier = Modifier.fillMaxWidth())
                             }
                         } else {
                             Row(Modifier.fillMaxWidth()) {
-                                DateField(label = "From", value = fromMillis, onChange = { fromMillis = it }, modifier = Modifier.weight(1f))
+                                DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { fromMillis = it }, modifier = Modifier.weight(1f))
                                 Spacer(Modifier.width(8.dp))
-                                DateField(label = "To", value = toMillis, onChange = { toMillis = it }, modifier = Modifier.weight(1f))
+                                DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { toMillis = it }, modifier = Modifier.weight(1f))
                             }
                         }
                     }
                     Spacer(Modifier.height(6.dp))
                     // Costing method selector
-                    Text(text = "Costing Method")
+                    Text(text = stringResource(R.string.costing_method))
                     Row(Modifier.fillMaxWidth()) {
                         androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
                             OutlinedTextField(
                                 value = costingMethod.name,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Method") },
+                                label = { Text(stringResource(R.string.method_label)) },
                                 trailingIcon = {
                                     Button(onClick = { costingExpanded = !costingExpanded }) { Text(if (costingExpanded) "▲" else "▼") }
                                 },
@@ -222,21 +224,21 @@ fun ReportsScreen() {
                             val f = fromMillis
                             val t = toMillis
                             if (f == null || t == null) {
-                                plError = "Please select both From and To dates"
+                                plError = context.getString(R.string.apply_action) // reuse generic; ideally have a specific message
                             } else {
                                 val toEnd = t + 86_399_999 // include end day
                                 plScope.launch {
                                     plResult = vm.computeProfitAndLoss(f, toEnd, costingMethod)
                                 }
                             }
-                        }) { Text("Compute P&L") }
+                        }) { Text(stringResource(R.string.compute_pl)) }
                         Spacer(Modifier.width(8.dp))
                         Button(onClick = {
                             plError = null
                             val f = fromMillis
                             val t = toMillis
                             if (f == null || t == null) {
-                                plError = "Please select both From and To dates"
+                                plError = context.getString(R.string.apply_action)
                             } else {
                                 val toEnd = t + 86_399_999
                                 plScope.launch {
@@ -256,12 +258,12 @@ fun ReportsScreen() {
                                     }
                                     androidx.core.content.ContextCompat.startActivity(
                                         context,
-                                        android.content.Intent.createChooser(intent, "Share Product P&L PDF"),
+                                        android.content.Intent.createChooser(intent, context.getString(R.string.share_product_pl_pdf)),
                                         null
                                     )
                                 }
                             }
-                        }) { Text("Product P & L") }
+                        }) { Text(stringResource(R.string.product_pl_pdf)) }
                     }
                     Spacer(Modifier.height(6.dp))
                     // Action row 2 (P&L exports)
@@ -283,9 +285,9 @@ fun ReportsScreen() {
                                     putExtra(Intent.EXTRA_STREAM, uri)
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                ContextCompat.startActivity(context, Intent.createChooser(intent, "Share P&L"), null)
+                                ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_csv_title)), null)
                             }
-                        }, enabled = plResult != null) { Text("Export P&L") }
+                        }, enabled = plResult != null) { Text(stringResource(R.string.export_pl_csv)) }
                         Spacer(Modifier.width(8.dp))
                         Button(onClick = {
                             val r = plResult
@@ -304,9 +306,9 @@ fun ReportsScreen() {
                                     putExtra(Intent.EXTRA_STREAM, uri)
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                ContextCompat.startActivity(context, Intent.createChooser(intent, "Share P&L PDF"), null)
+                                ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_pl_pdf_title)), null)
                             }
-                        }, enabled = plResult != null) { Text("Export P&L PDF") }
+                        }, enabled = plResult != null) { Text(stringResource(R.string.share_pl_pdf)) }
                     }
                     Spacer(Modifier.height(8.dp))
                     // Action row 3 (Sales/Purchase exports) - always visible without horizontal scroll
@@ -334,13 +336,13 @@ fun ReportsScreen() {
                                             putExtra(Intent.EXTRA_STREAM, uri)
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
-                                        ContextCompat.startActivity(context, Intent.createChooser(intent, "Share Sales PDF"), null)
+                                        ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_sales_pdf)), null)
                                     } else {
-                                        Toast.makeText(context, "No sales found in date range", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.no_sales_in_range), Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
-                        }, enabled = fromMillis != null && toMillis != null) { Text("Export Sale") }
+                        }, enabled = fromMillis != null && toMillis != null) { Text(stringResource(R.string.export_sale_pdf)) }
 
                         Spacer(Modifier.width(8.dp))
                         // Export Purchases PDF (by date range)
@@ -365,13 +367,13 @@ fun ReportsScreen() {
                                             putExtra(Intent.EXTRA_STREAM, uri)
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
-                                        ContextCompat.startActivity(context, Intent.createChooser(intent, "Share Purchases PDF"), null)
+                                        ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_purchases_pdf)), null)
                                     } else {
-                                        Toast.makeText(context, "No purchases found in date range", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.no_purchases_in_range), Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
-                        }, enabled = fromMillis != null && toMillis != null) { Text("Export Purchase") }
+                        }, enabled = fromMillis != null && toMillis != null) { Text(stringResource(R.string.export_purchase_pdf)) }
                     }
                     if (plError != null) {
                         Spacer(Modifier.height(4.dp))
@@ -380,7 +382,7 @@ fun ReportsScreen() {
                     plResult?.let { r ->
                         Spacer(Modifier.height(8.dp))
                         Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
-                            Text("Sales", modifier = Modifier.weight(1f))
+                            Text(stringResource(R.string.sales_label), modifier = Modifier.weight(1f))
                             Text(
                                 currency.format(r.salesSubtotal),
                                 modifier = Modifier.weight(1f),
@@ -389,7 +391,7 @@ fun ReportsScreen() {
                             )
                         }
                         Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
-                            Text("Purchases", modifier = Modifier.weight(1f))
+                            Text(stringResource(R.string.purchases_label), modifier = Modifier.weight(1f))
                             Text(
                                 currency.format(r.purchasesSubtotal),
                                 modifier = Modifier.weight(1f),
@@ -399,7 +401,7 @@ fun ReportsScreen() {
                         }
                         HorizontalDivider()
                         Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
-                            Text("Gross Profit", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.gross_profit_label), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
                             Text(
                                 currency.format(r.grossProfit),
                                 modifier = Modifier.weight(1f),
@@ -408,7 +410,7 @@ fun ReportsScreen() {
                             )
                         }
                         Row(Modifier.fillMaxWidth().padding(top = 2.dp)) {
-                            Text("Net Amount", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.net_amount_label), modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
                             Text(
                                 currency.format(r.netAmount),
                                 modifier = Modifier.weight(1f),
@@ -428,19 +430,19 @@ fun ReportsScreen() {
             var expanded by remember { mutableStateOf(false) }
             val customers = state.value.customers
             val selectedId = state.value.selectedCustomerId
-            val selectedName = customers.firstOrNull { it.id == selectedId }?.name ?: "Select customer"
+            val selectedName = customers.firstOrNull { it.id == selectedId }?.name ?: stringResource(R.string.pick_customer)
             val scope = rememberCoroutineScope()
 
             if (section == "customer") Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                    Text(text = "Customer", fontWeight = FontWeight.SemiBold)
+                    Text(text = stringResource(R.string.customer_title), fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(6.dp))
                     androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = selectedName,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Pick customer") },
+                            label = { Text(stringResource(R.string.pick_customer)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                         // Click overlay to open menu
@@ -464,7 +466,7 @@ fun ReportsScreen() {
                     }
                     // Simple toggle to open menu
                     Spacer(Modifier.height(6.dp))
-                    androidx.compose.material3.Button(onClick = { expanded = true }) { Text("Select") }
+                    androidx.compose.material3.Button(onClick = { expanded = true }) { Text(stringResource(R.string.select)) }
                 }
             }
 
@@ -488,10 +490,10 @@ fun ReportsScreen() {
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
-                            ContextCompat.startActivity(context, Intent.createChooser(intent, "Share CSV"), null)
+                            ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_csv_title)), null)
                         }
                     }
-                }, enabled = canExportSelected) { Text("Export Selected") }
+                }, enabled = canExportSelected) { Text(stringResource(R.string.export_selected)) }
 
                 Spacer(Modifier.width(12.dp))
 
@@ -508,9 +510,9 @@ fun ReportsScreen() {
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-                        ContextCompat.startActivity(context, Intent.createChooser(intent, "Share CSV"), null)
+                        ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_csv_title)), null)
                     }
-                }) { Text("Export All") }
+                }) { Text(stringResource(R.string.export_all)) }
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -531,7 +533,7 @@ fun ReportsScreen() {
                     item {
                         Spacer(Modifier.height(8.dp))
                         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                            Text("Subtotal", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.3f))
+                            Text(stringResource(R.string.subtotal_label), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1.3f))
                             Text(currency.format(state.value.subtotal), fontWeight = FontWeight.Bold)
                         }
                     }

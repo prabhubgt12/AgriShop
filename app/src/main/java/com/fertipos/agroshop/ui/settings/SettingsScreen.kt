@@ -52,6 +52,10 @@ import com.fertipos.agroshop.data.backup.DriveClient
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
+import com.fertipos.agroshop.R
+import com.fertipos.agroshop.data.prefs.LocalePrefs
+import androidx.compose.material3.ExperimentalMaterial3Api
 
 @Composable
 fun SettingsScreen() {
@@ -74,6 +78,7 @@ fun SettingsScreen() {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun varStatefulForm(
     current: CompanyProfile,
     themeMode: ThemeMode,
@@ -124,9 +129,11 @@ private fun varStatefulForm(
         val ok = DriveClient.handleSignInResult(context, res.data)
         signedIn.value = ok && DriveClient.isSignedIn(context)
         scope.launch {
-            snackbarHostState.showSnackbar(
-                if (signedIn.value) "Signed in to Google" else "Sign-in failed: ${DriveClient.lastError() ?: "Unknown error"}"
+            val msg = if (signedIn.value) context.getString(R.string.signed_in_to_google) else context.getString(
+                R.string.sign_in_failed_with_error,
+                DriveClient.lastError() ?: context.getString(R.string.unknown_error)
             )
+            snackbarHostState.showSnackbar(msg)
         }
     }
 
@@ -148,38 +155,38 @@ private fun varStatefulForm(
                 .imePadding()
                 .navigationBarsPadding()
         ) {
-            Text("Company Profile", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+            Text(stringResource(R.string.company_profile), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
             Spacer(Modifier.height(6.dp))
 
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(stringResource(R.string.name_label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(6.dp))
-            OutlinedTextField(value = addr1, onValueChange = { addr1 = it }, label = { Text("Address Line 1") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = addr1, onValueChange = { addr1 = it }, label = { Text(stringResource(R.string.address_line1_label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(6.dp))
-            OutlinedTextField(value = addr2, onValueChange = { addr2 = it }, label = { Text("Address Line 2") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = addr2, onValueChange = { addr2 = it }, label = { Text(stringResource(R.string.address_line2_label)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(6.dp))
 
             Row(Modifier.fillMaxWidth()) {
-                OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("City") }, singleLine = true, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(stringResource(R.string.city_label)) }, singleLine = true, modifier = Modifier.weight(1f))
                 Spacer(Modifier.width(8.dp))
-                OutlinedTextField(value = state, onValueChange = { state = it }, label = { Text("State") }, singleLine = true, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = state, onValueChange = { state = it }, label = { Text(stringResource(R.string.state_label)) }, singleLine = true, modifier = Modifier.weight(1f))
             }
             Spacer(Modifier.height(6.dp))
             Row(Modifier.fillMaxWidth()) {
-                OutlinedTextField(value = pin, onValueChange = { pin = it }, label = { Text("Pincode") }, singleLine = true, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = pin, onValueChange = { pin = it }, label = { Text(stringResource(R.string.pincode_label)) }, singleLine = true, modifier = Modifier.weight(1f))
                 Spacer(Modifier.width(8.dp))
-                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Phone") }, singleLine = true, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(stringResource(R.string.phone_label)) }, singleLine = true, modifier = Modifier.weight(1f))
             }
             Spacer(Modifier.height(6.dp))
             Row(Modifier.fillMaxWidth()) {
-                OutlinedTextField(value = gst, onValueChange = { gst = it }, label = { Text("GSTIN") }, singleLine = true, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = gst, onValueChange = { gst = it }, label = { Text(stringResource(R.string.gstin_label)) }, singleLine = true, modifier = Modifier.weight(1f))
                 Spacer(Modifier.width(8.dp))
-                OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, singleLine = true, modifier = Modifier.weight(1f))
+                OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(stringResource(R.string.email_label)) }, singleLine = true, modifier = Modifier.weight(1f))
             }
 
             Spacer(Modifier.height(12.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Text("Inventory")
+            Text(stringResource(R.string.inventory))
             Spacer(Modifier.height(6.dp))
             OutlinedTextField(
                 value = lowStockThreshold,
@@ -187,7 +194,7 @@ private fun varStatefulForm(
                     val digits = raw.filter { it.isDigit() }
                     lowStockThreshold = digits
                 },
-                label = { Text("Low stock threshold") },
+                label = { Text(stringResource(R.string.low_stock_threshold)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
@@ -196,26 +203,80 @@ private fun varStatefulForm(
             Spacer(Modifier.height(12.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Text("Theme")
+            Text(stringResource(R.string.theme))
             Spacer(Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ThemeChoice(label = "System", selected = themeMode == ThemeMode.SYSTEM) { onThemeChange(ThemeMode.SYSTEM) }
-                ThemeChoice(label = "Light", selected = themeMode == ThemeMode.LIGHT) { onThemeChange(ThemeMode.LIGHT) }
-                ThemeChoice(label = "Dark", selected = themeMode == ThemeMode.DARK) { onThemeChange(ThemeMode.DARK) }
+                ThemeChoice(label = stringResource(R.string.theme_system), selected = themeMode == ThemeMode.SYSTEM) { onThemeChange(ThemeMode.SYSTEM) }
+                ThemeChoice(label = stringResource(R.string.theme_light), selected = themeMode == ThemeMode.LIGHT) { onThemeChange(ThemeMode.LIGHT) }
+                ThemeChoice(label = stringResource(R.string.theme_dark), selected = themeMode == ThemeMode.DARK) { onThemeChange(ThemeMode.DARK) }
+            }
+
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+            // Language
+            Text(stringResource(R.string.language_title))
+            Spacer(Modifier.height(6.dp))
+            run {
+                var expanded by remember { mutableStateOf(false) }
+                var tag by remember { mutableStateOf(LocalePrefs.getAppLocale(context)) }
+                val options = listOf(
+                    "" to stringResource(R.string.system_option),
+                    "en" to "English",
+                    "hi" to "हिन्दी",
+                    "kn" to "ಕನ್ನಡ"
+                )
+                val normTag = tag.lowercase()
+                val current = options.firstOrNull { (t, _) ->
+                    if (t.isBlank()) normTag.isBlank() else normTag == t || normTag.startsWith("$t-")
+                } ?: options.first()
+                androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = current.second,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.language_title)) }
+                    )
+                    // Click overlay to open menu
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { expanded = true }
+                    )
+                    androidx.compose.material3.DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        options.forEach { (t, label) ->
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    expanded = false
+                                    if (tag != t) {
+                                        tag = t
+                                        LocalePrefs.setAppLocale(context, t)
+                                        LocalePrefs.applyLocale(context, t)
+                                        // Recreate activity to ensure immediate UI refresh
+                                        (context as? android.app.Activity)?.recreate()
+                                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.changes_apply_note)) }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth()) {
-                Button(onClick = { pickLogo.launch(arrayOf("image/*")) }) { Text(if (logo.isBlank()) "Pick Logo" else "Change Logo") }
+                Button(onClick = { pickLogo.launch(arrayOf("image/*")) }) { Text(if (logo.isBlank()) stringResource(R.string.pick_logo) else stringResource(R.string.change_logo)) }
                 if (logo.isNotBlank()) {
                     Spacer(Modifier.width(8.dp))
                     AsyncImage(
                         model = logo,
-                        contentDescription = "Logo preview",
+                        contentDescription = stringResource(R.string.logo_preview),
                         modifier = Modifier.size(40.dp)
                     )
                 }
@@ -239,14 +300,14 @@ private fun varStatefulForm(
                             lowStockThreshold = lowStockThreshold.toIntOrNull() ?: 10
                         )
                     )
-                    scope.launch { snackbarHostState.showSnackbar("Settings saved") }
-                }) { Text("Save") }
+                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.settings_saved)) }
+                }) { Text(stringResource(R.string.save)) }
             }
 
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Text("Premium")
+            Text(stringResource(R.string.premium))
             Spacer(Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -257,20 +318,20 @@ private fun varStatefulForm(
                 Button(
                     onClick = { act?.let { onBuyRemoveAds(it) } },
                     enabled = act != null && !hasRemoveAds
-                ) { Text("Remove Ads") }
+                ) { Text(stringResource(R.string.remove_ads)) }
 
-                Button(onClick = { onRestorePurchases() }) { Text("Restore") }
+                Button(onClick = { onRestorePurchases() }) { Text(stringResource(R.string.restore_purchases)) }
             }
 
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Text("Product Types (CSV)")
+            Text(stringResource(R.string.product_types_csv))
             Spacer(Modifier.height(6.dp))
             OutlinedTextField(
                 value = productTypesCsv,
                 onValueChange = { productTypesCsv = it },
-                label = { Text("Types (comma-separated)") },
+                label = { Text(stringResource(R.string.types_comma_separated)) },
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -278,12 +339,12 @@ private fun varStatefulForm(
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Text("Units (CSV)")
+            Text(stringResource(R.string.units_csv))
             Spacer(Modifier.height(6.dp))
             OutlinedTextField(
                 value = unitsCsv,
                 onValueChange = { unitsCsv = it },
-                label = { Text("Units (comma-separated)") },
+                label = { Text(stringResource(R.string.units_comma_separated)) },
                 singleLine = false,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -291,36 +352,48 @@ private fun varStatefulForm(
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
-            Text("Backup & Sync")
+            Text(stringResource(R.string.backup_and_sync))
+            Spacer(Modifier.height(8.dp))
+            // Google Drive sign-in status and single action button (toggle sign in/out)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(onClick = {
+                    if (signedIn.value) {
+                        DriveClient.signOut(context)
+                        signedIn.value = false
+                        scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.signed_out)) }
+                    } else {
+                        signInLauncher.launch(DriveClient.getSignInIntent(context))
+                    }
+                }) {
+                    Text(if (signedIn.value) stringResource(R.string.sign_out_google) else stringResource(R.string.sign_in_google))
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(if (signedIn.value) stringResource(R.string.signed_in) else stringResource(R.string.not_signed_in))
+            }
             Spacer(Modifier.height(8.dp))
 
             // Sign in/out row
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Button(enabled = !isWorking, onClick = {
-                    if (!signedIn.value) {
-                        signInLauncher.launch(DriveClient.getSignInIntent(context))
-                    } else {
-                        DriveClient.signOut(context)
-                        signedIn.value = false
-                        scope.launch { snackbarHostState.showSnackbar("Signed out") }
+                Button(
+                    enabled = !isWorking,
+                    onClick = {
+                        scope.launch {
+                            isWorking = true
+                            val zip = BackupManager.createBackupZip(context)
+                            val ok = DriveClient.uploadAppData("agroshop_backup.zip", zip)
+                            isWorking = false
+                            val msg = if (ok) context.getString(R.string.backup_uploaded) else context.getString(
+                                R.string.backup_failed_with_error,
+                                DriveClient.lastError() ?: context.getString(R.string.unknown_error)
+                            )
+                            snackbarHostState.showSnackbar(msg)
+                        }
                     }
-                }) { Text(if (signedIn.value) "Sign out Google" else "Sign in Google") }
-                Text(if (signedIn.value) "Signed in" else "Not signed in")
-            }
-
-            Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Button(enabled = signedIn.value && !isWorking, onClick = {
-                    scope.launch {
-                        isWorking = true
-                        val zip = BackupManager.createBackupZip(context)
-                        val ok = DriveClient.uploadAppData("agroshop_backup.zip", zip)
-                        isWorking = false
-                        snackbarHostState.showSnackbar(
-                            if (ok) "Backup uploaded" else "Backup failed: ${DriveClient.lastError() ?: "Unknown error"}"
-                        )
-                    }
-                }) { Text("Backup now") }
+                ) { Text(stringResource(R.string.backup_now)) }
 
                 Button(enabled = signedIn.value && !isWorking, onClick = {
                     scope.launch {
@@ -329,14 +402,17 @@ private fun varStatefulForm(
                         val latest = files.firstOrNull()
                         val msg = if (latest != null) {
                             val bytes = DriveClient.download(latest.id)
-                            if (bytes != null && BackupManager.restoreBackupZip(context, bytes)) "Restore complete (restart app)" else "Restore failed: ${DriveClient.lastError() ?: "Unknown error"}"
+                            if (bytes != null && BackupManager.restoreBackupZip(context, bytes)) context.getString(R.string.restore_complete_restart) else context.getString(
+                                R.string.restore_failed_with_error,
+                                DriveClient.lastError() ?: context.getString(R.string.unknown_error)
+                            )
                         } else {
-                            "No backups found"
+                            context.getString(R.string.no_backups_found)
                         }
                         isWorking = false
                         snackbarHostState.showSnackbar(msg)
                     }
-                }) { Text("Restore") }
+                }) { Text(stringResource(R.string.restore)) }
 
                 if (isWorking) {
                     CircularProgressIndicator(modifier = Modifier.height(24.dp))

@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ಸಿಂಪಲ್ ಶಾಪ್</string>
+    <string name="unlock_to_continue">ಮುಂದುವರಿಸಲು ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
+
+    <!-- Settings / Company Profile -->
+    <string name="company_profile">ಕಂಪನಿ ವಿವರ</string>
+    <string name="name_label">ಹೆಸರು</string>
+    <string name="address_line1_label">ವಿಳಾಸ ಸಾಲು 1</string>
+    <string name="address_line2_label">ವಿಳಾಸ ಸಾಲು 2</string>
+    <string name="city_label">ನಗರ</string>
+    <string name="state_label">ರಾಜ್ಯ</string>
+    <string name="pincode_label">ಪಿನ್‌ಕೋಡ್</string>
+    <string name="phone_label">ಫೋನ್</string>
+    <string name="gstin_label">ಜಿಎಸ್‌ಟಿಐಎನ್</string>
+    <string name="email_label">ಇಮೇಲ್</string>
+    <string name="pick_logo">ಲೋಗೋ ಆಯ್ಕೆ ಮಾಡಿ</string>
+    <string name="change_logo">ಲೋಗೋ ಬದಲಾಯಿಸಿ</string>
+    <string name="logo_preview">ಲೋಗೋ ಪೂರ್ವವೀಕ್ಷಣೆ</string>
+    <string name="save">ಉಳಿಸಿ</string>
+    <string name="settings_saved">ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಉಳಿಸಲಾಗಿವೆ</string>
+    <string name="settings_title">ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
+
+    <!-- Inventory -->
+    <string name="inventory">ಇನ್‌ವೆಂಟರಿ</string>
+    <string name="low_stock_threshold">ಕಡಿಮೆ ಸ್ಟಾಕ್ ಮಿತಿ</string>
+
+    <!-- Theme -->
+    <string name="theme">ಥೀಮ್</string>
+    <string name="theme_system">ಸಿಸ್ಟಮ್</string>
+    <string name="theme_light">ಲೈಟ್</string>
+    <string name="theme_dark">ಡಾರ್ಕ್</string>
+
+    <!-- Language -->
+    <string name="language_title">ಭಾಷೆ</string>
+    <string name="system_option">ವ್ಯವಸ್ಥೆ</string>
+    <string name="english_label">ಇಂಗ್ಲಿಷ್</string>
+    <string name="hindi_label">ಹಿಂದಿ</string>
+    <string name="kannada_label">ಕನ್ನಡ</string>
+    <string name="changes_apply_note">ಬದಲಾವಣೆಗಳು ತಕ್ಷಣ ಅನ್ವಯಿಸುತ್ತವೆ; ಕೆಲವು ಪರದೆಗಳು ರಿಫ್ರೆಶ್ ಆಗಬಹುದು.</string>
+
+    <!-- Premium / IAP -->
+    <string name="premium">ಪ್ರೀಮಿಯಂ</string>
+    <string name="remove_ads">ಜಾಹೀರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಿ</string>
+    <string name="restore_purchases">ರಿಸ್ಟೋರ್</string>
+
+    <!-- Product Types / Units -->
+    <string name="product_types_csv">ಉತ್ಪನ್ನಗಳ ವಿಧಗಳು (CSV)</string>
+    <string name="types_comma_separated">ವಿಧಗಳು (ಅವಧಾನ ಚಿಹ್ನೆ ಹಾಕಿ ಬೇರ್ಪಡಿಸಿ)</string>
+    <string name="units_csv">ಘಟಕಗಳು (CSV)</string>
+    <string name="units_comma_separated">ಘಟಕಗಳು (ಅವಧಾನ ಚಿಹ್ನೆ ಹಾಕಿ ಬೇರ್ಪಡಿಸಿ)</string>
+
+    <!-- Backup & Sync -->
+    <string name="backup_and_sync">ಬ್ಯಾಕಪ್ ಮತ್ತು ಸಿಂಕ್</string>
+    <string name="sign_in_google">ಗೂಗಲ್ ಸೈನ್ ಇನ್</string>
+    <string name="sign_out_google">ಗೂಗಲ್ ಸೈನ್ ಔಟ್</string>
+    <string name="signed_in">ಸೈನ್ ಇನ್ ಆಗಿದೆ</string>
+    <string name="not_signed_in">ಸೈನ್ ಇನ್ ಆಗಿಲ್ಲ</string>
+    <string name="signed_out">ಸೈನ್ ಔಟ್ ಆಗಿದೆ</string>
+    <string name="signed_in_to_google">ಗೂಗಲ್‌ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಲಾಗಿದೆ</string>
+    <string name="sign_in_failed_with_error">ಸೈನ್-ಇನ್ ವಿಫಲ: %1$s</string>
+    <string name="unknown_error">ಅಜ್ಞಾತ ದೋಷ</string>
+    <string name="backup_now">ಈಗ ಬ್ಯಾಕಪ್ ಮಾಡಿ</string>
+    <string name="backup_uploaded">ಬ್ಯಾಕಪ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಲಾಗಿದೆ</string>
+    <string name="backup_failed_with_error">ಬ್ಯಾಕಪ್ ವಿಫಲ: %1$s</string>
+    <string name="no_backups_found">ಯಾವುದೇ ಬ್ಯಾಕಪ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ</string>
+    <string name="restore">ರಿಸ್ಟೋರ್</string>
+    <string name="restore_complete_restart">ರಿಸ್ಟೋರ್ ಪೂರ್ಣ (ಅ್ಯಾಪ್ ಮರುಪ್ರಾರಂಭಿಸಿ)</string>
+    <string name="restore_failed_with_error">ರಿಸ್ಟೋರ್ ವಿಫಲ: %1$s</string>
+
+    <!-- Common UI -->
+    <string name="back">ಹಿಂದೆ</string>
+    <string name="export">ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
+    <string name="share_pdf">PDF ಹಂಚಿಕೆ</string>
+    <string name="share_csv">CSV ಹಂಚಿಕೆ</string>
+    <string name="items">ಐಟಂಗಳು</string>
+    <string name="date_label">ದಿನಾಂಕ</string>
+    <string name="customer_required">ಗ್ರಾಹಕ*</string>
+    <string name="product_required">ಉತ್ಪನ್ನ*</string>
+    <string name="price_label">ಬೆಲೆ</string>
+    <string name="qty_label">ಪ್ರಮಾಣ</string>
+    <string name="paid_label">ಪಾವತಿ</string>
+    <string name="balance_only_label">ಬಾಕಿ</string>
+    <string name="apply_action">ಅನ್ವಯಿಸು</string>
+    <string name="clear_action">ಕ್ಲೀರ್</string>
+    <!-- History read-only dialogs -->
+    <string name="close">ಮುಚ್ಚಿ</string>
+    <string name="qty_at_price">ಪ್ರಮಾಣ @ ಬೆಲೆ</string>
+    <string name="unknown_supplier">ಅಪರಿಚಿತ ಸಪ್ಲೈಯರ್</string>
+    <string name="more_cd">ಇನ್ನಷ್ಟು</string>
+    <string name="edit">ಸಂಪಾದನೆ</string>
+    <string name="delete">ಅಳಿಸಿ</string>
+    <string name="cancel">ರದ್ದು</string>
+    <string name="subtotal_with_amount">ಉಪಒಟ್ಟು: %1$s</string>
+    <string name="gst_with_amount">ಜಿಎಸ್‌ಟಿ: %1$s</string>
+    <string name="total_with_amount">ಒಟ್ಟು: %1$s</string>
+
+    <!-- History filters / labels -->
+    <string name="filters">ಫಿಲ್ಟರ್‌ಗಳು</string>
+    <string name="hide_filters">ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಮರೆಮಾಡಿ</string>
+    <string name="search_customer_label">ಗ್ರಾಹಕ ಹೆಸರಿನಿಂದ ಹುಡುಕಿ</string>
+    <string name="search_supplier_label">ಸಪ್ಲೈಯರ್ ಹೆಸರಿನಿಂದ ಹುಡುಕಿ</string>
+    <string name="from_label">ಇಂದ</string>
+    <string name="to_label">ತನಕ</string>
+    <string name="apply">ಅನ್ವಯಿಸು</string>
+    <string name="clear">ಕ್ಲೀರ್</string>
+
+    <!-- Reports -->
+    <string name="reports_title">ವರದಿಗಳು</string>
+    <string name="billing_title">ಬಿಲ್ಲಿಂಗ್</string>
+    <string name="view_bills">ಬಿಲ್‌ಗಳು ನೋಡಿ</string>
+    <string name="view_purchases">ಖರೀದಿಗಳು ನೋಡಿ</string>
+    <string name="your_shop">ನಿಮ್ಮ ಅಂಗಡಿ</string>
+    <string name="reports_home_pl">ಉತ್ಪನ್ನ P &amp; L</string>
+    <string name="reports_home_customer">ಗ್ರಾಹಕ ವರದಿಗಳು</string>
+    <string name="reports_back">ಹಿಂದೆ</string>
+    <string name="pl_title">ಲಾಭ ಮತ್ತು ನಷ್ಟ</string>
+    <string name="today">ಇಂದು</string>
+    <string name="week">ವಾರ</string>
+    <string name="month">ತಿಂಗಳು</string>
+    <string name="costing_method">ಖರ್ಚು ವಿಧಾನ</string>
+    <string name="method_label">ವಿಧಾನ</string>
+    <string name="compute_pl">P &amp; L ಲೆಕ್ಕಿಸಿ</string>
+    <string name="product_pl_pdf">ಉತ್ಪನ್ನ P &amp; L</string>
+    <string name="share_product_pl_pdf">ಉತ್ಪನ್ನ P &amp; L PDF ಹಂಚಿಕೆ</string>
+    <string name="export_pl_csv">P &amp; L ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
+    <string name="share_pl_pdf">P &amp; L PDF</string>
+    <string name="share_pl_pdf_title">P &amp; L PDF ಹಂಚಿಕೆ</string>
+    <string name="export_sale_pdf">ಮಾರಾಟ ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
+    <string name="export_purchase_pdf">ಖರೀದಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
+    <string name="share_sales_pdf">ಮಾರಾಟ PDF ಹಂಚಿಕೆ</string>
+    <string name="share_purchases_pdf">ಖರೀದಿ PDF ಹಂಚಿಕೆ</string>
+    <string name="no_sales_in_range">ದಿನಾಂಕ ವ್ಯಾಪ್ತಿಯಲ್ಲಿ ಮಾರಾಟ ಕಂಡುಬಂದಿಲ್ಲ</string>
+    <string name="no_purchases_in_range">ದಿನಾಂಕ ವ್ಯಾಪ್ತಿಯಲ್ಲಿ ಖರೀದಿ ಕಂಡುಬಂದಿಲ್ಲ</string>
+    <string name="customer_title">ಗ್ರಾಹಕ</string>
+    <string name="pick_customer">ಗ್ರಾಹಕ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="select">ಆಯ್ಕೆ</string>
+    <string name="share_csv_title">CSV ಹಂಚಿಕೆ</string>
+    <string name="export_selected">ಆಯ್ಕೆಯನ್ನು ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
+    <string name="export_all">ಎಲ್ಲವನ್ನು ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
+    <string name="sales_label">ಮಾರಾಟ</string>
+    <string name="purchases_label">ಖರೀದಿ</string>
+    <string name="gst_label">ಜಿಎಸ್‌ಟಿ</string>
+    <string name="total_label">ಒಟ್ಟು</string>
+    <string name="balance_label">ಬಾಕಿ</string>
+    <string name="gross_profit_label">ಒಟ್ಟು ಲಾಭ</string>
+    <string name="net_amount_label">ನಿವ್ವಳ ಮೊತ್ತ</string>
+    <string name="subtotal_label">ಉಪಒಟ್ಟು</string>
+
+    <!-- Product -->
+    <string name="products_title">ಉತ್ಪನ್ನಗಳು</string>
+    <string name="add">ಸೇರಿಸಿ</string>
+    <string name="search_by_product">ಉತ್ಪನ್ನ ಹೆಸರಿನಿಂದ ಹುಡುಕಿ</string>
+    <string name="stock_label">ಸ್ಟಾಕ್</string>
+    <string name="history">ಇತಿಹಾಸ</string>
+    <string name="delete_product_title">ಉತ್ಪನ್ನ ಅಳಿಸಬೇಕೇ?</string>
+    <string name="delete_product_message">%1$s ಅನ್ನು ಅಳಿಸಲು ಖಚಿತವೇ? ಇದನ್ನು ಹಿಂದಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="type_colon">ವಿಧ: %1$s</string>
+    <string name="gst_percent_colon">ಜಿಎಸ್‌ಟಿ: %1$s%%</string>
+    <string name="buy_price_colon">ಖರೀದಿ: %1$s</string>
+    <string name="sell_price_colon">ಮಾರಾಟ: %1$s</string>
+    <string name="edit_product">ಉತ್ಪನ್ನ ಸಂಪಾದಿಸಿ</string>
+    <string name="name_required">ಹೆಸರು*</string>
+    <string name="type_required">ವಿಧ*</string>
+    <string name="unit_required">ಘಟಕ*</string>
+    <string name="stock">ಸ್ಟಾಕ್</string>
+    <string name="gst_percent">ಜಿಎಸ್‌ಟಿ%</string>
+    <string name="buy_price">ಖರೀದಿ ಬೆಲೆ</string>
+    <string name="sell_price">ಮಾರಾಟ ಬೆಲೆ</string>
+    <string name="add_product">ಉತ್ಪನ್ನ ಸೇರಿಸಿ</string>
+
+    <!-- Customer -->
+    <string name="customers_title">ಗ್ರಾಹಕರು</string>
+    <string name="search_by_customer">ಗ್ರಾಹಕ ಹೆಸರಿನಿಂದ ಹುಡುಕಿ</string>
+    <string name="phone_colon">ಫೋನ್: %1$s</string>
+    <string name="address_colon">ವಿಳಾಸ: %1$s</string>
+    <string name="supplier_chip">ಸಪ್ಲೈಯರ್</string>
+    <string name="delete_customer_title">ಗ್ರಾಹಕ ಅಳಿಸಬೇಕೇ?</string>
+    <string name="delete_customer_message">%1$s ಅನ್ನು ಅಳಿಸಲು ಖಚಿತವೇ? ಇದನ್ನು ಹಿಂದಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="edit_customer">ಗ್ರಾಹಕ ಸಂಪಾದಿಸಿ</string>
+    <string name="phone">ಫೋನ್</string>
+    <string name="address">ವಿಳಾಸ</string>
+    <string name="supplier">ಸಪ್ಲೈಯರ್</string>
+    <string name="add_customer">ಗ್ರಾಹಕ ಸೇರಿಸಿ</string>
+
+    <!-- Purchase -->
+    <string name="create_purchase">ಖರೀದಿ ರಚಿಸಿ</string>
+    <string name="edit_purchase_with_id">ಖರೀದಿ #%1$d ಸಂಪಾದಿಸಿ</string>
+    <string name="purchases_title">ಖರೀದಿಗಳು</string>
+    <string name="purchase_history_title_with_product">ಖರೀದಿ ಇತಿಹಾಸ (ಉತ್ಪನ್ನ #%1$d)</string>
+    <string name="new_purchase_cd">ಹೊಸ ಖರೀದಿ</string>
+    <string name="date">ದಿನಾಂಕ</string>
+    <string name="supplier_label">ಸಪ್ಲೈಯರ್</string>
+    <string name="product_label">ಉತ್ಪನ್ನ</string>
+    <string name="qty">ಪ್ರಮಾಣ</string>
+    <string name="unit_price">ಯುನಿಟ್ ಬೆಲೆ</string>
+    <string name="add_item">ಐಟಂ ಸೇರಿಸಿ</string>
+    <string name="clear_action_text">ಕ್ಲೀರ್</string>
+    <string name="gst_amt_colon">ಜಿಎಸ್‌ಟಿ ಮೊತ್ತ: %1$s</string>
+    <string name="balance_colon">ಬಾಕಿ: %1$s</string>
+    <string name="save_purchase">ಖರೀದಿ ಉಳಿಸಿ</string>
+    <string name="reset_status">ಸ್ಥಿತಿ ಮರುಹೊಂದಿಸಿ</string>
+
+    <!-- Billing -->
+    <string name="create_invoice">ಸರಕುಪಟ್ಟಿ ರಚಿಸಿ</string>
+    <string name="edit_invoice_with_id">ಸರಕುಪಟ್ಟಿ #%1$d ಸಂಪಾದಿಸಿ</string>
+    <string name="invoices_title">ಸರಕುಪಟ್ಟಿಗಳು</string>
+    <string name="new_bill_cd">ಹೊಸ ಬಿಲ್</string>
+    <string name="price">ಬೆಲೆ</string>
+    <string name="items_title">ಐಟಂಗಳು</string>
+    <string name="submit_and_print">ಸಲ್ಲಿಸಿ ಮತ್ತು ಮುದ್ರಿಸಿ</string>
+
+    <!-- PDF / CSV -->
+    <string name="invoice_fallback_title">ಸರಕುಪಟ್ಟಿ</string>
+    <string name="gstin_colon">ಜಿಎಸ್‌ಟಿಐಎನ್: %1$s</string>
+    <string name="phone_colon_pdf">ಫೋನ್: %1$s</string>
+    <string name="email_colon_pdf">ಇಮೇಲ್: %1$s</string>
+    <string name="invoice_id_colon">ಸರಕುಪಟ್ಟಿ ಐಡಿ: %1$s</string>
+    <string name="date_colon">ದಿನಾಂಕ: %1$s</string>
+    <string name="customer_colon">ಗ್ರಾಹಕ: %1$s</string>
+    <string name="pdf_item">ಐಟಂ</string>
+    <string name="pdf_qty">ಪ್ರಮಾಣ</string>
+    <string name="pdf_price">ಬೆಲೆ</string>
+    <string name="pdf_gst_percent">ಜಿಎಸ್‌ಟಿ%</string>
+    <string name="pdf_gst_amount">ಜಿಎಸ್‌ಟಿ ಮೊತ್ತ</string>
+    <string name="pdf_line_total">ಒಟ್ಟು</string>
+    <string name="pdf_subtotal_with_amount">ಉಪಒಟ್ಟು: %1$s</string>
+    <string name="pdf_gst_with_amount">ಜಿಎಸ್‌ಟಿ: %1$s</string>
+    <string name="pdf_total_with_amount">ಒಟ್ಟು: %1$s</string>
+    <string name="pdf_paid_with_amount">ಪಾವತಿ: %1$s</string>
+    <string name="pdf_balance_with_amount">ಬಾಕಿ: %1$s</string>
+    <string name="paid_with_amount">ಪಾವತಿ: %1$s</string>
+    <string name="balance_with_amount">ಬಾಕಿ: %1$s</string>
+    <string name="sales_report_title">ಮಾರಾಟ ವರದಿ</string>
+    <string name="purchase_report_title">ಖರೀದಿ ವರದಿ</string>
+    <string name="from_colon">ಇಂದ: %1$s</string>
+    <string name="to_colon">ತನಕ: %1$s</string>
+    <string name="inv_hash">ಇನ್‌ವ್#</string>
+    <string name="po_hash">ಪಿಓ#</string>
+    <string name="totals_colon">ಒಟ್ಟು:</string>
+    <string name="summary_sales">ಸಾರಾಂಶ: ಒಟ್ಟು ಮಾರಾಟ = %1$s, ಒಟ್ಟು ಪಡೆದ = %2$s, ಒಟ್ಟು ಬಾಕಿ = %3$s</string>
+    <string name="summary_purchases">ಸಾರಾಂಶ: ಒಟ್ಟು ಖರೀದಿ = %1$s, ಒಟ್ಟು ಪಾವತಿ = %2$s, ಒಟ್ಟು ಬಾಕಿ = %3$s</string>
+    <string name="product_pl_title">ಉತ್ಪನ್ನವಾರ ಲಾಭ ಮತ್ತು ನಷ್ಟ</string>
+    <string name="product_pl_title_contd">ಉತ್ಪನ್ನವಾರ ಲಾಭ ಮತ್ತು ನಷ್ಟ (ಮುಂದುವರಿಕೆ)</string>
+    <string name="pdf_product">ಉತ್ಪನ್ನ</string>
+    <string name="pdf_sales">ಮಾರಾಟ</string>
+    <string name="pdf_cost">ಖರ್ಚು</string>
+    <string name="pdf_profit">ಲಾಭ</string>
+    <string name="pdf_totals">ಒಟ್ಟು</string>
+    <string name="pl_report_title">ಲಾಭ ಮತ್ತು ನಷ್ಟ ವರದಿ</string>
+    <string name="section_sales">ಮಾರಾಟ</string>
+    <string name="section_purchases">ಖರೀದಿ</string>
+    <string name="gross_profit_colon">ಒಟ್ಟು ಲಾಭ: %1$s</string>
+    <string name="net_amount_colon">ನಿವ್ವಳ ಮೊತ್ತ: %1$s</string>
+    <string name="csv_from">From</string>
+    <string name="csv_to">To</string>
+    <string name="csv_section">Section</string>
+    <string name="csv_subtotal">Subtotal</string>
+    <string name="csv_gst">GST</string>
+    <string name="csv_total">Total</string>
+    <string name="csv_sales">Sales</string>
+    <string name="csv_purchases">Purchases</string>
+    <string name="csv_metric">Metric</string>
+    <string name="csv_gross_profit_metric">Gross Profit (Sales Subtotal - Purchases Subtotal)</string>
+    <string name="csv_net_amount_metric">Net Amount (Sales Total - Purchases Total)</string>
+    <string name="csv_customer">Customer</string>
+    <string name="csv_invoice_no">Invoice No</string>
+    <string name="csv_date">Date</string>
+    <string name="csv_product">Product</string>
+    <string name="csv_qty">Qty</string>
+    <string name="csv_unit_price">Unit Price</string>
+    <string name="csv_gst_percent">GST%</string>
+    <string name="csv_line_total">Line Total</string>
+    <string name="csv_subtotal_summary">Subtotal</string>
+    <string name="csv_grand_total">Grand Total</string>
+</resources>

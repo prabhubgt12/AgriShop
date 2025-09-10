@@ -49,6 +49,9 @@ import java.util.Locale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.activity.compose.BackHandler
+import androidx.compose.ui.res.stringResource
+import com.fertipos.agroshop.R
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun PurchaseScreen(navVm: AppNavViewModel) {
@@ -81,10 +84,11 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         navVm.navigateTo(prevTab.value)
     }
 
+    val context = LocalContext.current
     LaunchedEffect(state.successPurchaseId) {
         val id = state.successPurchaseId
         if (id != null) {
-            snackbar.showSnackbar("Purchase #$id created")
+            snackbar.showSnackbar("#" + id + " " + context.getString(R.string.create_purchase))
             vm.clearSuccess()
         }
     }
@@ -109,7 +113,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             SnackbarHost(hostState = snackbar)
 
             // Header
-            val header = if (state.editingPurchaseId != null) "Edit Purchase #${state.editingPurchaseId}" else "Create Purchase"
+            val header = if (state.editingPurchaseId != null) stringResource(R.string.edit_purchase_with_id, state.editingPurchaseId!!) else stringResource(R.string.create_purchase)
             Text(text = header, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
         }
@@ -117,7 +121,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         // Date (always visible at top). Bound to VM for both new and edit.
         item {
             DateField(
-                label = "Date",
+                label = stringResource(R.string.date),
                 value = if (state.editingPurchaseId != null) (state.editingDateMillis ?: state.newDateMillis) else state.newDateMillis,
                 onChange = { millis -> if (state.editingPurchaseId != null) vm.setEditingDate(millis) else vm.setNewDate(millis) },
                 modifier = Modifier.fillMaxWidth()
@@ -130,7 +134,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             val selectedName = state.suppliers.firstOrNull { it.id == state.selectedSupplierId }?.name ?: ""
             CustomerPicker(
                 customers = state.suppliers,
-                label = "Supplier",
+                label = stringResource(R.string.supplier_label),
                 initialQuery = selectedName,
                 modifier = Modifier.fillMaxWidth(),
                 onPicked = { vm.setSupplier(it.id) }
@@ -143,7 +147,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             // Product on its own full-width row
             ProductPicker(
                 products = state.products,
-                label = "Product",
+                label = stringResource(R.string.product_label),
                 modifier = Modifier.fillMaxWidth(),
                 onPicked = { p ->
                     selectedProduct = p
@@ -160,7 +164,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                         val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                         qtyText = final
                     },
-                    label = { Text("Qty") },
+                    label = { Text(stringResource(R.string.qty)) },
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
                 )
@@ -171,7 +175,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                         val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
                         priceText = final
                     },
-                    label = { Text("Unit Price") },
+                    label = { Text(stringResource(R.string.unit_price)) },
                     singleLine = true,
                     enabled = selectedProduct != null,
                     placeholder = { Text(selectedProduct?.purchasePrice?.toStringAsFixed(2) ?: "") },
@@ -193,8 +197,8 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                     }
                     // Keep product selected like Billing; just clear qty for fast repeated adds
                     qtyText = ""
-                }) { Text("Add Item") }
-                TextButton(onClick = { vm.setNotes(""); vm.clearSuccess() }) { Text("Clear") }
+                }) { Text(stringResource(R.string.add_item)) }
+                TextButton(onClick = { vm.setNotes(""); vm.clearSuccess() }) { Text(stringResource(R.string.clear_action_text)) }
             }
             Spacer(Modifier.height(12.dp))
             HorizontalDivider()
@@ -209,17 +213,17 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         // Totals + submit at end of scroll
         item {
             Text(
-                "Subtotal: ${state.subtotal.toStringAsFixed(2)}",
+                stringResource(R.string.subtotal_with_amount, state.subtotal.toStringAsFixed(2)),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = androidx.compose.ui.text.style.TextAlign.End
             )
             Text(
-                "GST: ${state.gstAmount.toStringAsFixed(2)}",
+                stringResource(R.string.gst_with_amount, state.gstAmount.toStringAsFixed(2)),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = androidx.compose.ui.text.style.TextAlign.End
             )
             Text(
-                "Total: ${state.total.toStringAsFixed(2)}",
+                stringResource(R.string.total_with_amount, state.total.toStringAsFixed(2)),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = androidx.compose.ui.text.style.TextAlign.End
             )
@@ -240,7 +244,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                         if (checked) vm.setPaid(state.total.toStringAsFixed(2))
                     }
                 )
-                Text("Paid", modifier = Modifier.padding(start = 4.dp))
+                Text(stringResource(R.string.paid_label), modifier = Modifier.padding(start = 4.dp))
                 TextField(
                     value = if (state.paid == 0.0) "" else state.paid.toStringAsFixed(2),
                     onValueChange = { vm.setPaid(it); if (paidInFull && it.toDoubleOrNull() != state.total) paidInFull = false },
@@ -260,14 +264,14 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 Spacer(Modifier.weight(1f))
                 Text(
-                    text = "Balance: ${String.format(Locale.getDefault(), "%.2f", state.balance)}"
+                    text = stringResource(R.string.balance_colon, String.format(Locale.getDefault(), "%.2f", state.balance))
                 )
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val buttonText = if (state.editingPurchaseId != null) "Save Purchase" else "Create Purchase"
+                val buttonText = if (state.editingPurchaseId != null) stringResource(R.string.save_purchase) else stringResource(R.string.create_purchase)
                 Button(onClick = { vm.submit() }, enabled = state.items.isNotEmpty()) { Text(buttonText) }
-                TextButton(onClick = { vm.clearSuccess() }) { Text("Reset Status") }
+                TextButton(onClick = { vm.clearSuccess() }) { Text(stringResource(R.string.reset_status)) }
             }
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
@@ -293,24 +297,24 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Text(text = item.product.name, style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.weight(1f))
-                    IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = "Delete") }
+                    IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete)) }
                 }
                 Spacer(Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(text = "Qty: ${item.quantity.toStringAsFixed(2)} ${item.product.unit}")
+                    Text(text = stringResource(R.string.qty_label) + ": " + item.quantity.toStringAsFixed(2) + " " + item.product.unit)
                     Spacer(Modifier.weight(1f))
-                    Text(text = "Price: ${item.unitPrice.toStringAsFixed(2)}")
+                    Text(text = stringResource(R.string.price_label) + ": " + item.unitPrice.toStringAsFixed(2))
                 }
                 Spacer(Modifier.height(2.dp))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(text = "GST ${String.format(Locale.getDefault(), "%.1f", item.gstPercent)}%")
+                    Text(text = stringResource(R.string.gst_percent_colon, String.format(Locale.getDefault(), "%.1f", item.gstPercent)))
                     Spacer(Modifier.weight(1f))
-                    Text(text = "GST Amt: ${gstAmt.toStringAsFixed(2)}")
+                    Text(text = stringResource(R.string.gst_amt_colon, gstAmt.toStringAsFixed(2)))
                 }
                 Spacer(Modifier.height(2.dp))
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Spacer(Modifier.weight(1f))
-                    Text(text = "Total: ${lineTotal.toStringAsFixed(2)}")
+                    Text(text = stringResource(R.string.total_with_amount, lineTotal.toStringAsFixed(2)))
                 }
             }
         }

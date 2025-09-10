@@ -12,6 +12,7 @@ import com.fertipos.agroshop.util.CurrencyFormatter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.fertipos.agroshop.R
 
 object PLPdfGenerator {
     private val df = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -41,34 +42,34 @@ object PLPdfGenerator {
 
         // Header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Profit & Loss Report", 40f, y, paint)
+        canvas.drawText(context.getString(R.string.pl_report_title), 40f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 20f
-        canvas.drawText("From: ${df.format(Date(from))}", 40f, y, paint); y += 16f
-        canvas.drawText("To:   ${df.format(Date(to))}", 40f, y, paint); y += 20f
+        canvas.drawText(context.getString(R.string.from_colon, df.format(Date(from))), 40f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.to_colon, df.format(Date(to))), 40f, y, paint); y += 20f
         canvas.drawLine(40f, y, 555f, y, paint); y += 18f
 
         // Sections
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Sales", 40f, y, paint)
+        canvas.drawText(context.getString(R.string.section_sales), 40f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 16f
-        canvas.drawText("Subtotal: ${currency.format(salesSubtotal)}", 60f, y, paint); y += 16f
-        canvas.drawText("GST: ${currency.format(salesGst)}", 60f, y, paint); y += 16f
-        canvas.drawText("Total: ${currency.format(salesTotal)}", 60f, y, paint); y += 20f
+        canvas.drawText(context.getString(R.string.subtotal_with_amount, currency.format(salesSubtotal)), 60f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.gst_with_amount, currency.format(salesGst)), 60f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.total_with_amount, currency.format(salesTotal)), 60f, y, paint); y += 20f
 
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Purchases", 40f, y, paint)
+        canvas.drawText(context.getString(R.string.section_purchases), 40f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 16f
-        canvas.drawText("Subtotal: ${currency.format(purchasesSubtotal)}", 60f, y, paint); y += 16f
-        canvas.drawText("GST: ${currency.format(purchasesGst)}", 60f, y, paint); y += 16f
-        canvas.drawText("Total: ${currency.format(purchasesTotal)}", 60f, y, paint); y += 20f
+        canvas.drawText(context.getString(R.string.subtotal_with_amount, currency.format(purchasesSubtotal)), 60f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.gst_with_amount, currency.format(purchasesGst)), 60f, y, paint); y += 16f
+        canvas.drawText(context.getString(R.string.total_with_amount, currency.format(purchasesTotal)), 60f, y, paint); y += 20f
 
         canvas.drawLine(40f, y, 555f, y, paint); y += 18f
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText("Gross Profit: ${currency.format(grossProfit)}", 40f, y, paint); y += 18f
-        canvas.drawText("Net Amount: ${currency.format(netAmount)}", 40f, y, paint); y += 18f
+        canvas.drawText(context.getString(R.string.gross_profit_colon, currency.format(grossProfit)), 40f, y, paint); y += 18f
+        canvas.drawText(context.getString(R.string.net_amount_colon, currency.format(netAmount)), 40f, y, paint); y += 18f
         paint.typeface = Typeface.DEFAULT
 
         // Footer with stamp and logo (hidden if user purchased remove-ads)
