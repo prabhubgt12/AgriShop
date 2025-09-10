@@ -4,6 +4,7 @@ import android.app.Application
 import com.ledge.ledgerbook.data.prefs.LocalePrefs
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.runBlocking
+import com.google.android.gms.ads.MobileAds
 
 @HiltAndroidApp
 class LedgerBookApp : Application() {
@@ -14,5 +15,7 @@ class LedgerBookApp : Application() {
             val tag = LocalePrefs.getAppLocaleTag(applicationContext)
             LocalePrefs.applyLocale(applicationContext, tag)
         }
+        // Initialize Google Mobile Ads SDK explicitly
+        MobileAds.initialize(this)
     }
 }

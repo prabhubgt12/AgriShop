@@ -12,30 +12,35 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.fertipos.agroshop.BuildConfig
 
 object InterstitialAds {
-    // Production interstitial ad unit ID
-    private const val TEST_UNIT = "ca-app-pub-2556604347710668/5265052238"
+    // Production and Google sample interstitial units
+    private const val PROD_UNIT = "ca-app-pub-2556604347710668/5265052238"
+    private const val TEST_UNIT = "ca-app-pub-3940256099942544/1033173712"
 
     @Volatile private var interstitial: InterstitialAd? = null
     @Volatile private var isLoading: Boolean = false
+    @Volatile private var lastShownAt: Long = 0L
+    private const val MIN_INTERVAL_MS: Long = 2 * 60 * 1000 // 2 minutes
 
     fun preload(context: Context) {
         if (isLoading || interstitial != null) return
         isLoading = true
         val request = AdRequest.Builder().build()
+        val unit = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else PROD_UNIT
         InterstitialAd.load(
             context,
-            TEST_UNIT,
+            unit,
             request,
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
-                    Log.d("InterstitialAds", "Loaded test interstitial")
+                    Log.d("InterstitialAds", "Loaded interstitial (unit=" + unit + ")")
                     isLoading = false
                     interstitial = ad
                 }
                 override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.e("InterstitialAds", "Failed to load test interstitial: ${error.code} ${error.message}")
+                    Log.e("InterstitialAds", "Failed to load interstitial (unit=" + unit + "): ${error.code} ${error.message}")
                     isLoading = false
                     interstitial = null
                 }
@@ -44,8 +49,17 @@ object InterstitialAds {
     }
 
     fun showIfAvailable(activity: Activity, onDismiss: (() -> Unit)? = null) {
+        val now = System.currentTimeMillis()
+        if (now - lastShownAt < MIN_INTERVAL_MS) {
+            Log.d("InterstitialAds", "Throttled: lastShownAt=$lastShownAt now=$now")
+            onDismiss?.invoke(); return
+        }
         val ad = interstitial
-        if (ad == null) { onDismiss?.invoke(); return }
+        if (ad == null) {
+            Log.d("InterstitialAds", "No interstitial ready; triggering preload and continuing")
+            preload(activity.applicationContext)
+            onDismiss?.invoke(); return
+        }
         // Temporarily disable edge-to-edge and ensure system bars are visible with an opaque nav bar
         // so the interstitial's close button doesn't sit behind gesture/3-button navigation overlays.
         WindowCompat.setDecorFitsSystemWindows(activity.window, true)
@@ -58,6 +72,7 @@ object InterstitialAds {
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 interstitial = null
+                lastShownAt = System.currentTimeMillis()
                 // Restore edge-to-edge
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
                 // Restore previous nav bar color

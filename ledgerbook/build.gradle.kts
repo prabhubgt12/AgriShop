@@ -43,6 +43,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Enable test ads in debug builds
+            buildConfigField("boolean", "USE_TEST_ADS", "true")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -51,6 +55,8 @@ android {
             )
             // Use release signing if configured
             signingConfig = signingConfigs.getByName("release")
+            // Disable test ads in release builds by default
+            buildConfigField("boolean", "USE_TEST_ADS", "true")
         }
     }
 

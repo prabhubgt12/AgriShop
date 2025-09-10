@@ -7,6 +7,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import android.graphics.Color
+import com.ledge.ledgerbook.BuildConfig
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
@@ -16,31 +17,37 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 object InterstitialAds {
     // Production interstitial unit id provided by user
     private const val PROD_UNIT = "ca-app-pub-2556604347710668/2929559167"
+    private const val TEST_UNIT = "ca-app-pub-3940256099942544/1033173712"
 
     @Volatile
     private var interstitial: InterstitialAd? = null
     @Volatile
     private var isLoading: Boolean = false
     @Volatile
-    private var shownThisSession: Boolean = false
+    private var lastShownAt: Long = 0L
+    private const val MIN_INTERVAL_MS: Long = 2 * 60 * 1000 // 2 minutes
 
     fun preload(context: Context) {
-        if (isLoading || interstitial != null || shownThisSession) return
+        if (isLoading || interstitial != null) {
+            Log.d("InterstitialAds", "preload skipped: isLoading=$isLoading hasAd=${interstitial != null}")
+            return
+        }
         isLoading = true
         val request = AdRequest.Builder().build()
+        val unitId = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else PROD_UNIT
         InterstitialAd.load(
             context,
-            PROD_UNIT,
+            unitId,
             request,
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
-                    Log.d("InterstitialAds", "Loaded interstitial")
+                    Log.d("InterstitialAds", "Loaded interstitial unit=" + unitId)
                     isLoading = false
                     interstitial = ad
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.e("InterstitialAds", "Failed to load interstitial code=${error.code} message=${error.message}")
+                    Log.e("InterstitialAds", "Failed to load interstitial unit=" + unitId + " code=${error.code} message=${error.message}")
                     isLoading = false
                     interstitial = null
                 }
@@ -49,11 +56,15 @@ object InterstitialAds {
     }
 
     fun showIfAvailable(activity: Activity, onDismiss: (() -> Unit)? = null) {
-        if (shownThisSession) {
+        val now = System.currentTimeMillis()
+        if (now - lastShownAt < MIN_INTERVAL_MS) {
+            Log.d("InterstitialAds", "Throttled: lastShownAt=$lastShownAt now=$now")
             onDismiss?.invoke(); return
         }
         val ad = interstitial
         if (ad == null) {
+            Log.d("InterstitialAds", "No interstitial ready; triggering preload and continuing")
+            preload(activity)
             onDismiss?.invoke(); return
         }
         // Prepare window so interstitial never sits behind nav overlays:
@@ -68,10 +79,12 @@ object InterstitialAds {
             override fun onAdDismissedFullScreenContent() {
                 Log.d("InterstitialAds", "Dismissed")
                 interstitial = null
-                shownThisSession = true
+                lastShownAt = System.currentTimeMillis()
                 // Restore window settings
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
                 activity.window.navigationBarColor = prevNavColor
+                // Preload next for future
+                preload(activity)
                 onDismiss?.invoke()
             }
             override fun onAdFailedToShowFullScreenContent(p0: com.google.android.gms.ads.AdError) {
@@ -80,6 +93,8 @@ object InterstitialAds {
                 // Restore window settings
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
                 activity.window.navigationBarColor = prevNavColor
+                // Try to load a fresh one for next time
+                preload(activity)
                 onDismiss?.invoke()
             }
             override fun onAdShowedFullScreenContent() {

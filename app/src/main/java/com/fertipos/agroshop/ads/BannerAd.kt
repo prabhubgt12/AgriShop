@@ -12,6 +12,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import android.util.Log
+import com.fertipos.agroshop.BuildConfig
 
 @Composable
 fun BannerAd(
@@ -23,22 +24,27 @@ fun BannerAd(
     val context = LocalContext.current
     val widthDp = (context.resources.displayMetrics.widthPixels / context.resources.displayMetrics.density).toInt()
     val adaptiveSize = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp)
+    // Select ad unit based on BuildConfig flag
+    val unit = if (BuildConfig.USE_TEST_ADS) {
+        // Google sample banner (320x50). SDK will adapt size as requested above.
+        "ca-app-pub-3940256099942544/9214589741"
+    } else adUnitId
 
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
             AdView(ctx).apply {
                 setAdSize(adaptiveSize)
-                this.adUnitId = adUnitId
+                this.adUnitId = unit
                 visibility = View.GONE
                 adListener = object : AdListener() {
                     override fun onAdLoaded() {
-                        Log.d("BannerAd", "Test ad loaded")
+                        Log.d("BannerAd", "Banner loaded (unit=" + unit + ")")
                         visibility = View.VISIBLE
                         onLoadState(true)
                     }
                     override fun onAdFailedToLoad(error: LoadAdError) {
-                        Log.e("BannerAd", "Test ad failed to load code=${error.code} message=${error.message}")
+                        Log.e("BannerAd", "Banner failed to load (unit=" + unit + ") code=${error.code} message=${error.message}")
                         visibility = View.GONE
                         onLoadState(false)
                     }

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App -->
-    <string name="app_name_legacy">ಲೆಡ್ಜರ್ ಬುಕ್</string>
     <string name="unlock_to_continue">ಮುಂದುವರಿಸಲು ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
 
     <!-- Share/PDF labels -->
@@ -11,7 +10,7 @@
 
     <string name="label_name_with_value">ಹೆಸರು: %1$s</string>
     <string name="label_type_with_value">ಪ್ರಕಾರ: %1$s</string>
-    <string name="label_principal_with_value">ಮೂಲ ಧನ: %1$s</string>
+    <string name="label_principal_with_value">ಅಸಲು ಮೊತ್ತ: %1$s</string>
     <string name="label_rate_with_value">ದರ: %1$s%% %2$s</string>
     <string name="label_from_with_value">ಇಂದ: %1$s</string>
     <string name="label_interest_till_now_with_value">ಇಲ್ಲಿವರೆಗೆ ಬಡ್ಡಿ: %1$s</string>
@@ -24,7 +23,7 @@
     <string name="label_net_with_value">ಒಟ್ಟು ಮೊತ್ತ: %1$s</string>
 
     <string name="label_type">ಪ್ರಕಾರ</string>
-    <string name="label_principal">ಮೂಲ ಧನ</string>
+    <string name="label_principal">ಅಸಲು ಮೊತ್ತ</string>
     <string name="label_rate">ದರ</string>
     <string name="label_from">ಇಂದ</string>
     <string name="label_interest">ಬಡ್ಡಿ</string>
@@ -33,7 +32,7 @@
 
     <!-- Table column labels -->
     <string name="col_date">ದಿನಾಂಕ</string>
-    <string name="col_principal">ಮೂಲ ಧನ</string>
+    <string name="col_principal">ಅಸಲು ಮೊತ್ತ</string>
     <string name="col_rate">ದರ</string>
     <string name="col_interest">ಬಡ್ಡಿ</string>
     <string name="col_total">ಒಟ್ಟು</string>
@@ -81,7 +80,7 @@
     <string name="title_ledger_book">ಸಿಂಪಲ್ ಖಾತಾ</string>
     <string name="title_khata_book">ಖಾತಾ ಪುಸ್ತಕ</string>
     <string name="interest_calculator">ಬಡ್ಡಿ ಗಣಕ</string>
-    <string name="label_principal_generic">ಮೂಲ ಧನ</string>
+    <string name="label_principal_generic">ಅಸಲು ಮೊತ್ತ</string>
     <string name="label_rate_per_month">ದರ (%/ತಿಂಗಳು)</string>
     <string name="dates">ದಿನಾಂಕಗಳು</string>
     <string name="duration">ಅವಧಿ</string>
@@ -119,14 +118,14 @@
     <string name="share">ಹಂಚಿಕೊಳ್ಳಿ</string>
     <string name="payment_history">ಪಾವತಿ ಇತಿಹಾಸ</string>
     <string name="partial_payment">ಭಾಗಶಃ ಪಾವತಿ</string>
-    <string name="edit">ಸಂಪಾದಿಸಿ</string>
+    <string name="edit">ತಿದ್ದು</string>
     <string name="delete">ಅಳಿಸಿ</string>
     <string name="interest_rate">ಬಡ್ಡಿ ದರ</string>
     <string name="from_date">ದಿನಾಂಕದಿಂದ</string>
     <string name="total_time">ಒಟ್ಟು ಸಮಯ</string>
     <string name="total_amount">ಒಟ್ಟು ಮೊತ್ತ</string>
     <string name="total_interest">ಒಟ್ಟು ಬಡ್ಡಿ</string>
-    <string name="total_principal">ಒಟ್ಟು ಮೂಲ ಧನ</string>
+    <string name="total_principal">ಒಟ್ಟು ಅಸಲು ಮೊತ್ತ</string>
     <string name="total_lend">ಒಟ್ಟು ಸಾಲ (ಕೊಟ್ಟದ್ದು)</string>
     <string name="lend_interest">ಕೊಟ್ಟ ಸಾಲದ ಬಡ್ಡಿ</string>
     <string name="total_borrow">ಒಟ್ಟು ಸಾಲ (ತೆಗೆದುಕೊಂಡದ್ದು)</string>
@@ -136,7 +135,7 @@
     <!-- Add/Edit Dialog -->
     <string name="update">ನವೀಕರಿಸಿ</string>
     <string name="save">ಉಳಿಸಿ</string>
-    <string name="edit_entry">ನಮೂದನ್ನು ಸಂಪಾದಿಸಿ</string>
+    <string name="edit_entry">ದಾಖಲೆ ನವೀಕರಿಸಿ</string>
     <string name="add_to_book">ಪುಸ್ತಕಕ್ಕೆ ಸೇರಿಸಿ</string>
     <string name="lend">ಸಾಲ ಕೊಟ್ಟದ್ದು</string>
     <string name="borrow">ಸಾಲ ತೆಗೆದುಕೊಂಡದ್ದು</string>
@@ -146,21 +145,21 @@
     <string name="interest_type">ಬಡ್ಡಿ ಪ್ರಕಾರ</string>
     <string name="rate_basis">ದರ ಆಧಾರ</string>
     <string name="duration_type">ಅವಧಿ ಪ್ರಕಾರ (ಚಕ್ರಬಡ್ಡಿ)</string>
-    <string name="principal_amount">ಮೂಲ ಧನದ ಮೊತ್ತ</string>
+    <string name="principal_amount">ಅಸಲು ಮೊತ್ತ</string>
     <string name="enter_valid_number">ಮಾನ್ಯ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ</string>
     <string name="interest_rate_percent">ಬಡ್ಡಿ ದರ (%)</string>
     <string name="pick">ಆರಿಸಿ</string>
     <string name="notes_optional">ಟಿಪ್ಪಣಿಗಳು (ಐಚ್ಛಿಕ)</string>
     
     <!-- Generic/detail/dialog labels (Kannada) -->
-    <string name="entry_details">ನಮೂದಿನ ವಿವರಗಳು</string>
+    <string name="entry_details">ದಾಖಲೆಯ ವಿವರಗಳು</string>
     <string name="name_label">ಹೆಸರು</string>
     <string name="payment_date">ಪಾವತಿ ದಿನಾಂಕ</string>
     <string name="amount">ಮೊತ್ತ</string>
     <string name="interest_till_date">ಇಲ್ಲಿಯವರೆಗೆ ಬಡ್ಡಿ</string>
     <string name="remaining_after_payment">ಪಾವತಿಯ ನಂತರ ಉಳಿದದ್ದು</string>
     <string name="close">ಮುಚ್ಚು</string>
-    <string name="delete_entry">ನಮೂದನ್ನು ಅಳಿಸಿ</string>
-    <string name="delete_entry_confirm">ಈ ನಮೂದನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ? ಇದರ ಪಾವತಿಗಳೂ ಅಳಿಸಲಾಗುತ್ತದೆ. ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂತೆಗೆದುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="delete_entry">ದಾಖಲೆಯನ್ನು ಅಳಿಸಿ</string>
+    <string name="delete_entry_confirm">ಈ ದಾಖಲೆಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ? ಇದರ ಪಾವತಿಗಳೂ ಅಳಿಸಲಾಗುತ್ತದೆ. ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂತೆಗೆದುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ.</string>
     <string name="no_payments_yet">ಇನ್ನೂ ಯಾವುದೇ ಪಾವತಿಗಳಿಲ್ಲ.</string>
 </resources>
