@@ -31,6 +31,9 @@ interface PurchaseDao {
     @Query("SELECT * FROM purchases WHERE supplierId = :supplierId ORDER BY date DESC")
     fun getPurchasesForSupplier(supplierId: Int): Flow<List<Purchase>>
 
+    @Query("SELECT COUNT(*) FROM purchases WHERE supplierId = :supplierId")
+    suspend fun countPurchasesForSupplier(supplierId: Int): Int
+
     @Query("SELECT * FROM purchases WHERE id = :id")
     suspend fun getPurchaseByIdOnce(id: Int): Purchase?
 

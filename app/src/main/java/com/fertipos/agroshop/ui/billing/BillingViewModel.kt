@@ -158,12 +158,12 @@ class BillingViewModel @Inject constructor(
 
     fun submit() {
         val cust = selectedCustomer.value ?: run {
-            status.value = false to "Select a customer"
+            status.value = false to "ERR_SELECT_CUSTOMER"
             return
         }
         val items = draftItems.value
         if (items.isEmpty()) {
-            status.value = false to "Add at least one item"
+            status.value = false to "ERR_ADD_ONE_ITEM"
             return
         }
         status.value = true to null
@@ -188,7 +188,7 @@ class BillingViewModel @Inject constructor(
                     paid = (paidText.value.toDoubleOrNull() ?: 0.0)
                 )
             }
-            status.value = false to result.exceptionOrNull()?.message
+            status.value = false to (result.exceptionOrNull()?.message ?: "")
             result.onSuccess { id ->
                 successId.value = id
                 // reset draft

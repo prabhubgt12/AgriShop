@@ -41,7 +41,7 @@ class BillingRepository @Inject constructor(
                 for ((pid, reqQty) in requiredByProduct) {
                     val prod = productDao.getById(pid) ?: throw IllegalArgumentException("Product $pid not found")
                     if (prod.stockQuantity < reqQty) {
-                        throw IllegalStateException("Insufficient stock for ${prod.name}. Available: ${prod.stockQuantity}, required: $reqQty")
+                        throw IllegalStateException("ERR_INSUFFICIENT_STOCK|${prod.name}|${prod.stockQuantity}|${reqQty}")
                     }
                 }
 
@@ -135,7 +135,7 @@ class BillingRepository @Inject constructor(
                     if (delta > 0) {
                         val prod = productDao.getById(pid) ?: throw IllegalArgumentException("Product $pid not found")
                         if (prod.stockQuantity < delta) {
-                            throw IllegalStateException("Insufficient stock for ${prod.name}. Available: ${prod.stockQuantity}, required extra: ${delta}")
+                            throw IllegalStateException("ERR_INSUFFICIENT_STOCK|${prod.name}|${prod.stockQuantity}|${delta}")
                         }
                     }
                 }

@@ -31,6 +31,9 @@ interface InvoiceDao {
     @Query("SELECT * FROM invoices WHERE customerId = :customerId ORDER BY date DESC")
     fun getInvoicesForCustomer(customerId: Int): Flow<List<Invoice>>
 
+    @Query("SELECT COUNT(*) FROM invoices WHERE customerId = :customerId")
+    suspend fun countInvoicesForCustomer(customerId: Int): Int
+
     @Query("SELECT * FROM invoice_items WHERE invoiceId = :invoiceId")
     fun getItemsForInvoice(invoiceId: Int): Flow<List<InvoiceItem>>
 

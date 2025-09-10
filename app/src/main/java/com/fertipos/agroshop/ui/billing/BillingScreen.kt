@@ -316,9 +316,24 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                     vm.submit()
                 }, enabled = !state.value.loading && state.value.selectedCustomerId != null && state.value.items.isNotEmpty()) { Text(stringResource(R.string.submit_and_print)) }
             }
-            if (state.value.error != null) {
+            if (state.value.error != null && state.value.error!!.isNotBlank()) {
                 Spacer(Modifier.height(4.dp))
-                Text(text = state.value.error ?: "", color = androidx.compose.ui.graphics.Color.Red)
+                val err = state.value.error!!
+                val msg = when {
+                    err == "ERR_SELECT_CUSTOMER" -> stringResource(R.string.err_select_customer)
+                    err == "ERR_ADD_ONE_ITEM" -> stringResource(R.string.err_add_one_item)
+                    err.startsWith("ERR_INSUFFICIENT_STOCK|") -> {
+                        val parts = err.split('|')
+                        if (parts.size >= 4) {
+                            val name = parts[1]
+                            val available = parts[2]
+                            val required = parts[3]
+                            stringResource(R.string.err_insufficient_stock, name, available, required)
+                        } else err
+                    }
+                    else -> err
+                }
+                Text(text = msg, color = androidx.compose.ui.graphics.Color.Red)
             }
         }
     }

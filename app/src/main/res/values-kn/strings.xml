@@ -273,4 +273,17 @@
     <string name="csv_line_total">ಸಾಲಿನ ಒಟ್ಟು</string>
     <string name="csv_subtotal_summary">ಉಪಮೊತ್ತ</string>
     <string name="csv_grand_total">ಒಟ್ಟು ಮೊತ್ತ</string>
+    
+    <!-- UI error messages / info (mapped from codes) -->
+    <string name="err_select_customer">ದಯವಿಟ್ಟು ಗ್ರಾಹಕರನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="err_add_one_item">ಕನಿಷ್ಠ ಒಂದು ಐಟಂ ಸೇರಿಸಿ</string>
+    <string name="err_insufficient_stock">%1$s ಗೆ ಸಾಕಷ್ಟು ಸ್ಟಾಕ್ ಲಭ್ಯವಿಲ್ಲ. ಲಭ್ಯ: %2$s, ಅಗತ್ಯ: %3$s</string>
+    <string name="err_customer_referenced">ಗ್ರಾಹಕನನ್ನು ಅಳಿಸಲಾಗುದಿಲ್ಲ. ಇದು ಬಿಲ್‌ಗಳು ಅಥವಾ ಖರೀದಿಗಳಲ್ಲಿ ಬಳಸಲಾಗಿದೆ.</string>
+    <string name="supplier_locked_info">ಈ ಗ್ರಾಹಕ ಬಿಲ್/ಖರೀದಿಗಳಲ್ಲಿ ಉಲ್ಲೇಖಿತವಾಗಿರುವುದರಿಂದ ಸಪ್ಲೈಯರ್ ಫ್ಲ್ಯಾಗ್ ಲಾಕ್ ಮಾಡಲಾಗಿದೆ.</string>
+
+    <!-- Delete confirmations (history cards) -->
+    <string name="delete_invoice_title">ಸರಕುಪಟ್ಟಿ ಅಳಿಸಬೇಕೇ?</string>
+    <string name="delete_invoice_message">ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂದಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="delete_purchase_title">ಖರೀದಿ ಅಳಿಸಬೇಕೇ?</string>
+    <string name="delete_purchase_message">ನೀವು ಖಚಿತವಾಗಿ #%1$d ಅನ್ನು ಅಳಿಸಲು ಬಯಸುವಿರಾ? ಇದನ್ನು ಹಿಂದಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ.</string>
 </resources>

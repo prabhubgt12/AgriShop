@@ -274,4 +274,17 @@
     <string name="balance_with_amount">बाकी: %1$s</string>
     <string name="close">बंद करें</string>
     <string name="qty_at_price">मात्रा @ मूल्य</string>
+
+    <!-- Localized error/info messages -->
+    <string name="err_select_customer">कृपया ग्राहक चुनें</string>
+    <string name="err_add_one_item">कम से कम एक आइटम जोड़ें</string>
+    <string name="err_insufficient_stock">%1$s के लिए स्टॉक पर्याप्त नहीं है। उपलब्ध: %2$s, आवश्यक: %3$s</string>
+    <string name="err_customer_referenced">ग्राहक को हटाया नहीं जा सकता। यह मौजूदा बिल या खरीद में उपयोग किया गया है।</string>
+    <string name="supplier_locked_info">यह ग्राहक बिल/खरीद में संदर्भित है, इसलिए सप्लायर फ़्लैग लॉक है।</string>
+
+    <!-- Delete confirmations (history cards) -->
+    <string name="delete_invoice_title">इनवॉइस हटाएँ?</string>
+    <string name="delete_invoice_message">यह क्रिया पूर्ववत नहीं की जा सकती।</string>
+    <string name="delete_purchase_title">खरीद हटाएँ?</string>
+    <string name="delete_purchase_message">क्या आप वाकई #%1$d हटाना चाहते हैं? इसे वापस नहीं किया जा सकता।</string>
 </resources>

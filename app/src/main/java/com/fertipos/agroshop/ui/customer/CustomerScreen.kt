@@ -51,6 +51,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import com.fertipos.agroshop.R
 
 @Composable
@@ -58,6 +59,7 @@ fun CustomerScreen() {
     val vm: CustomerViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp)) {
@@ -114,7 +116,11 @@ fun CustomerScreen() {
             val err = state.value.error
             LaunchedEffect(err) {
                 if (err != null) {
-                    snackbarHostState.showSnackbar(err)
+                    val msg = when (err) {
+                        "ERR_CUSTOMER_REFERENCED" -> context.getString(R.string.err_customer_referenced)
+                        else -> err
+                    }
+                    snackbarHostState.showSnackbar(msg)
                     vm.clearError()
                 }
             }
@@ -205,6 +211,11 @@ private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, S
     var phone by remember { mutableStateOf(initial.phone ?: "") }
     var address by remember { mutableStateOf(initial.address ?: "") }
     var isSupplier by remember { mutableStateOf(initial.isSupplier) }
+    val vm: CustomerViewModel = hiltViewModel()
+    var referenced by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(initial.id) {
+        referenced = vm.isReferenced(initial.id)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -224,8 +235,12 @@ private fun EditCustomerDialog(initial: Customer, onConfirm: (String, String?, S
                 OutlinedTextField(value = address, onValueChange = { address = it }, label = { Text(stringResource(R.string.address)) })
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = isSupplier, onCheckedChange = { isSupplier = it })
+                    Checkbox(checked = isSupplier, onCheckedChange = { checked -> if (referenced != true) isSupplier = checked }, enabled = referenced != true)
                     Text(stringResource(R.string.supplier), modifier = Modifier.padding(start = 4.dp))
+                }
+                if (referenced == true) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(text = stringResource(R.string.supplier_locked_info), style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B6B6B))
                 }
             }
         },
