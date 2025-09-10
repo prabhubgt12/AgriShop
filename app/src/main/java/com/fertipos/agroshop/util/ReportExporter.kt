@@ -40,8 +40,10 @@ object ReportExporter {
         grossProfit: Double,
         netAmount: Double
     ): Uri {
-        val outFile = File(context.cacheDir, "pl_${'$'}{System.currentTimeMillis()}.csv")
+        val outFile = File(context.cacheDir, "pl_${System.currentTimeMillis()}.csv")
         FileOutputStream(outFile).use { fos ->
+            // Write UTF-8 BOM to improve Excel compatibility for non-English text
+            fos.write(byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()))
             val lines = mutableListOf<String>()
             lines += listOf(context.getString(R.string.csv_from), context.getString(R.string.csv_to)).joinToString(",") + "\n"
             lines += listOf(
@@ -97,6 +99,8 @@ object ReportExporter {
         var total = 0.0
         var totalQty = 0.0
         FileOutputStream(file).use { fos ->
+            // Write UTF-8 BOM to improve Excel compatibility for non-English text
+            fos.write(byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()))
             fos.write((header.joinToString(",") + "\n").toByteArray(StandardCharsets.UTF_8))
             rows.forEach { r ->
                 total += r.lineTotal
@@ -133,6 +137,8 @@ object ReportExporter {
         var total = 0.0
         var totalQty = 0.0
         FileOutputStream(file).use { fos ->
+            // Write UTF-8 BOM to improve Excel compatibility for non-English text
+            fos.write(byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte()))
             fos.write((header.joinToString(",") + "\n").toByteArray(StandardCharsets.UTF_8))
             rows.forEach { r ->
                 total += r.lineTotal

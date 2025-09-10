@@ -91,7 +91,7 @@
     <string name="edit">ಸಂಪಾದನೆ</string>
     <string name="delete">ಅಳಿಸಿ</string>
     <string name="cancel">ರದ್ದು</string>
-    <string name="subtotal_with_amount">ಉಪಒಟ್ಟು: %1$s</string>
+    <string name="subtotal_with_amount">ಉಪಮೊತ್ತ: %1$s</string>
     <string name="gst_with_amount">ಜಿಎಸ್‌ಟಿ: %1$s</string>
     <string name="total_with_amount">ಒಟ್ಟು: %1$s</string>
 
@@ -145,7 +145,7 @@
     <string name="balance_label">ಬಾಕಿ</string>
     <string name="gross_profit_label">ಒಟ್ಟು ಲಾಭ</string>
     <string name="net_amount_label">ನಿವ್ವಳ ಮೊತ್ತ</string>
-    <string name="subtotal_label">ಉಪಒಟ್ಟು</string>
+    <string name="subtotal_label">ಉಪಮೊತ್ತ</string>
 
     <!-- Product -->
     <string name="products_title">ಉತ್ಪನ್ನಗಳು</string>
@@ -224,7 +224,7 @@
     <string name="pdf_gst_percent">ಜಿಎಸ್‌ಟಿ%</string>
     <string name="pdf_gst_amount">ಜಿಎಸ್‌ಟಿ ಮೊತ್ತ</string>
     <string name="pdf_line_total">ಒಟ್ಟು</string>
-    <string name="pdf_subtotal_with_amount">ಉಪಒಟ್ಟು: %1$s</string>
+    <string name="pdf_subtotal_with_amount">ಉಪಮೊತ್ತ: %1$s</string>
     <string name="pdf_gst_with_amount">ಜಿಎಸ್‌ಟಿ: %1$s</string>
     <string name="pdf_total_with_amount">ಒಟ್ಟು: %1$s</string>
     <string name="pdf_paid_with_amount">ಪಾವತಿ: %1$s</string>
@@ -252,25 +252,25 @@
     <string name="section_purchases">ಖರೀದಿ</string>
     <string name="gross_profit_colon">ಒಟ್ಟು ಲಾಭ: %1$s</string>
     <string name="net_amount_colon">ನಿವ್ವಳ ಮೊತ್ತ: %1$s</string>
-    <string name="csv_from">From</string>
-    <string name="csv_to">To</string>
-    <string name="csv_section">Section</string>
-    <string name="csv_subtotal">Subtotal</string>
-    <string name="csv_gst">GST</string>
-    <string name="csv_total">Total</string>
-    <string name="csv_sales">Sales</string>
-    <string name="csv_purchases">Purchases</string>
-    <string name="csv_metric">Metric</string>
-    <string name="csv_gross_profit_metric">Gross Profit (Sales Subtotal - Purchases Subtotal)</string>
-    <string name="csv_net_amount_metric">Net Amount (Sales Total - Purchases Total)</string>
-    <string name="csv_customer">Customer</string>
-    <string name="csv_invoice_no">Invoice No</string>
-    <string name="csv_date">Date</string>
-    <string name="csv_product">Product</string>
-    <string name="csv_qty">Qty</string>
-    <string name="csv_unit_price">Unit Price</string>
-    <string name="csv_gst_percent">GST%</string>
-    <string name="csv_line_total">Line Total</string>
-    <string name="csv_subtotal_summary">Subtotal</string>
-    <string name="csv_grand_total">Grand Total</string>
+    <string name="csv_from">ಇಂದ</string>
+    <string name="csv_to">ತನಕ</string>
+    <string name="csv_section">ವಿಭಾಗ</string>
+    <string name="csv_subtotal">ಉಪಮೊತ್ತ</string>
+    <string name="csv_gst">ಜಿಎಸ್‌ಟಿ</string>
+    <string name="csv_total">ಒಟ್ಟು</string>
+    <string name="csv_sales">ಮಾರಾಟ</string>
+    <string name="csv_purchases">ಖರೀದಿ</string>
+    <string name="csv_metric">ಮಾಪದಂಡ</string>
+    <string name="csv_gross_profit_metric">ಒಟ್ಟು ಲಾಭ (ಮಾರಾಟ ಉಪಮೊತ್ತ - ಖರೀದಿ ಉಪಮೊತ್ತ)</string>
+    <string name="csv_net_amount_metric">ನಿವ್ವಳ ಮೊತ್ತ (ಮಾರಾಟ ಒಟ್ಟು - ಖರೀದಿ ಒಟ್ಟು)</string>
+    <string name="csv_customer">ಗ್ರಾಹಕ</string>
+    <string name="csv_invoice_no">ಸರಕುಪಟ್ಟಿ ಸಂಖ್ಯೆ</string>
+    <string name="csv_date">ದಿನಾಂಕ</string>
+    <string name="csv_product">ಉತ್ಪನ್ನ</string>
+    <string name="csv_qty">ಪ್ರಮಾಣ</string>
+    <string name="csv_unit_price">ಯುನಿಟ್ ಬೆಲೆ</string>
+    <string name="csv_gst_percent">ಜಿಎಸ್‌ಟಿ%</string>
+    <string name="csv_line_total">ಸಾಲಿನ ಒಟ್ಟು</string>
+    <string name="csv_subtotal_summary">ಉಪಮೊತ್ತ</string>
+    <string name="csv_grand_total">ಒಟ್ಟು ಮೊತ್ತ</string>
 </resources>
