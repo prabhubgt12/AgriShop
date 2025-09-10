@@ -111,7 +111,7 @@
     <string name="view_bills">ಬಿಲ್‌ಗಳು ನೋಡಿ</string>
     <string name="view_purchases">ಖರೀದಿಗಳು ನೋಡಿ</string>
     <string name="your_shop">ನಿಮ್ಮ ಅಂಗಡಿ</string>
-    <string name="reports_home_pl">ಉತ್ಪನ್ನ P &amp; L</string>
+    <string name="reports_home_pl">ಉತ್ಪನ್ನ ಲಾ/ನ</string>
     <string name="reports_home_customer">ಗ್ರಾಹಕ ವರದಿಗಳು</string>
     <string name="reports_back">ಹಿಂದೆ</string>
     <string name="pl_title">ಲಾಭ ಮತ್ತು ನಷ್ಟ</string>
@@ -120,12 +120,12 @@
     <string name="month">ತಿಂಗಳು</string>
     <string name="costing_method">ಖರ್ಚು ವಿಧಾನ</string>
     <string name="method_label">ವಿಧಾನ</string>
-    <string name="compute_pl">P &amp; L ಲೆಕ್ಕಿಸಿ</string>
-    <string name="product_pl_pdf">ಉತ್ಪನ್ನ P &amp; L</string>
-    <string name="share_product_pl_pdf">ಉತ್ಪನ್ನ P &amp; L PDF ಹಂಚಿಕೆ</string>
-    <string name="export_pl_csv">P &amp; L ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
-    <string name="share_pl_pdf">P &amp; L PDF</string>
-    <string name="share_pl_pdf_title">P &amp; L PDF ಹಂಚಿಕೆ</string>
+    <string name="compute_pl">ಲಾ/ನ ಲೆಕ್ಕಿಸಿ</string>
+    <string name="product_pl_pdf">ಉತ್ಪನ್ನ ಲಾ/ನ</string>
+    <string name="share_product_pl_pdf">ಉತ್ಪನ್ನ ಲಾ/ನ PDF</string>
+    <string name="export_pl_csv">ಲಾ/ನ ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
+    <string name="share_pl_pdf">ಲಾ/ನ PDF</string>
+    <string name="share_pl_pdf_title">ಲಾ/ನ PDF ಹಂಚಿಕೆ</string>
     <string name="export_sale_pdf">ಮಾರಾಟ ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
     <string name="export_purchase_pdf">ಖರೀದಿ ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
     <string name="share_sales_pdf">ಮಾರಾಟ PDF ಹಂಚಿಕೆ</string>
