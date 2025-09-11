@@ -194,7 +194,7 @@ fun LedgerAddEditScreen(
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Notes (Optional)") },
+                    label = { Text(stringResource(R.string.notes_optional)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }

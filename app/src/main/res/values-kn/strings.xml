@@ -286,4 +286,5 @@
     <string name="delete_invoice_message">ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂದಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ.</string>
     <string name="delete_purchase_title">ಖರೀದಿ ಅಳಿಸಬೇಕೇ?</string>
     <string name="delete_purchase_message">ನೀವು ಖಚಿತವಾಗಿ #%1$d ಅನ್ನು ಅಳಿಸಲು ಬಯಸುವಿರಾ? ಇದನ್ನು ಹಿಂದಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="err_product_referenced">ಉತ್ಪನ್ನವನ್ನು ಅಳಿಸಲಾಗುವುದಿಲ್ಲ. ಇದು ಇತ್ತೀಚಿನ ಬಿಲ್‌ಗಳು ಅಥವಾ ಖರೀದಿಗಳಲ್ಲಿ ಬಳಸಲಾಗಿದೆ.</string>
 </resources>

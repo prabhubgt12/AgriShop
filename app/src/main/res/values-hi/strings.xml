@@ -287,4 +287,5 @@
     <string name="delete_invoice_message">यह क्रिया पूर्ववत नहीं की जा सकती।</string>
     <string name="delete_purchase_title">खरीद हटाएँ?</string>
     <string name="delete_purchase_message">क्या आप वाकई #%1$d हटाना चाहते हैं? इसे वापस नहीं किया जा सकता।</string>
+    <string name="err_product_referenced">उत्पाद को हटाया नहीं जा सकता। यह मौजूदा बिल या खरीद में उपयोग किया गया है।</string>
 </resources>

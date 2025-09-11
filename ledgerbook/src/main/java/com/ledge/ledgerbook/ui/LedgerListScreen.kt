@@ -497,7 +497,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         }
         CenteredAlertDialog(
             onDismissRequest = { partialForId.value = null },
-            title = { Text("Partial Payment") },
+            title = { Text(stringResource(R.string.partial_payment)) },
             text = {
                 Column(Modifier.fillMaxWidth()) {
                     val showPicker = remember { mutableStateOf(false) }
@@ -505,9 +505,9 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         value = SimpleDateFormat("dd/MM/yyyy").format(Date(partialDateMillis.value)),
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Payment Date") },
+                        label = { Text(stringResource(R.string.payment_date)) },
                         modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = { TextButton(onClick = { showPicker.value = true }) { Text("Pick") } }
+                        trailingIcon = { TextButton(onClick = { showPicker.value = true }) { Text(stringResource(R.string.pick)) } }
                     )
                     if (showPicker.value) {
                         val dpState = rememberDatePickerState(initialSelectedDateMillis = partialDateMillis.value)
@@ -526,20 +526,20 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             // Allow only digits and a decimal point; disallow negatives
                             partialAmount.value = input.filter { ch -> ch.isDigit() || ch == '.' }
                         },
-                        label = { Text("Amount") },
+                        label = { Text(stringResource(R.string.amount)) },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text("Interest till date: ${CurrencyFormatter.formatInr(previewInterest.value)}")
-                    Text("Remaining after payment: ${CurrencyFormatter.formatInr(previewOutstanding.value)}")
+                    Text(stringResource(R.string.interest_till_date) + ": " + CurrencyFormatter.formatInr(previewInterest.value))
+                    Text(stringResource(R.string.remaining_after_payment) + ": " + CurrencyFormatter.formatInr(previewOutstanding.value))
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = partialNote.value,
                         onValueChange = { partialNote.value = it },
-                        label = { Text("Note (optional)") },
+                        label = { Text(stringResource(R.string.notes_optional)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -549,9 +549,9 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     val amt = (partialAmount.value.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0)
                     partialForId.value?.let { vm.applyPartial(it, amt, partialDateMillis.value) }
                     partialForId.value = null
-                }) { Text("Apply") }
+                }) { Text(stringResource(R.string.apply_action)) }
             },
-            dismissButton = { TextButton(onClick = { partialForId.value = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { partialForId.value = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 
@@ -561,10 +561,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         val payments by vm.paymentsForViewing.collectAsState()
         CenteredAlertDialog(
             onDismissRequest = { vm.closePayments() },
-            title = { Text("Payment History") },
+            title = { Text(stringResource(R.string.payment_history)) },
             text = {
                 if (payments.isEmpty()) {
-                    Text("No payments yet.")
+                    Text(stringResource(R.string.no_payments_yet))
                 } else {
                     LazyColumn(Modifier.fillMaxWidth()) {
                         items(payments) { p ->
@@ -579,7 +579,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { vm.closePayments() }) { Text("Close") } }
+            confirmButton = { TextButton(onClick = { vm.closePayments() }) { Text(stringResource(R.string.close)) } }
         )
     }
 
@@ -588,12 +588,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     if (deleteId != null) {
         CenteredAlertDialog(
             onDismissRequest = { confirmDeleteId.value = null },
-            title = { Text("Delete Entry") },
-            text = { Text("Are you sure you want to delete this entry? This will also remove its payments. This action cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_entry)) },
+            text = { Text(stringResource(R.string.delete_entry_confirm)) },
             confirmButton = {
-                TextButton(onClick = { vm.delete(deleteId); confirmDeleteId.value = null }) { Text("Delete") }
+                TextButton(onClick = { vm.delete(deleteId); confirmDeleteId.value = null }) { Text(stringResource(R.string.delete)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDeleteId.value = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { confirmDeleteId.value = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 

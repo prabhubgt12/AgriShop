@@ -86,7 +86,7 @@ class ProductViewModel @Inject constructor(
             try {
                 dao.delete(product)
             } catch (e: Exception) {
-                _error.value = "Cannot delete product. It is referenced by existing bills or purchases."
+                _error.value = "ERR_PRODUCT_REFERENCED"
             }
         }
     }

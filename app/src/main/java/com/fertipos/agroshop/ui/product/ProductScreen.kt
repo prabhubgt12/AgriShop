@@ -64,6 +64,7 @@ import java.text.NumberFormat
 import java.util.Locale
 import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun ProductScreen() {
@@ -72,6 +73,7 @@ fun ProductScreen() {
     val companyVm: CompanyProfileViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val profileState = companyVm.profile.collectAsState()
     val typeOptions = remember(profileState.value.productTypesCsv) {
         profileState.value.productTypesCsv.split(',')
@@ -156,7 +158,11 @@ fun ProductScreen() {
             val err = state.value.error
             LaunchedEffect(err) {
                 if (err != null) {
-                    snackbarHostState.showSnackbar(err)
+                    val msg = when (err) {
+                        "ERR_PRODUCT_REFERENCED" -> context.getString(R.string.err_product_referenced)
+                        else -> err
+                    }
+                    snackbarHostState.showSnackbar(msg)
                     vm.clearError()
                 }
             }

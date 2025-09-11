@@ -300,4 +300,5 @@
     <string name="err_insufficient_stock">Insufficient stock for %1$s. Available: %2$s, required: %3$s</string>
     <string name="err_customer_referenced">Cannot delete customer. It is referenced by existing bills or purchases.</string>
     <string name="supplier_locked_info">Supplier flag is locked because this customer is referenced in bills or purchases.</string>
+    <string name="err_product_referenced">Cannot delete product. It is referenced by existing bills or purchases.</string>
 </resources>
