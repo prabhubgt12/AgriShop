@@ -128,6 +128,7 @@
     <string name="share_purchases_pdf">परचेज पीडीएफ शेयर करें</string>
     <string name="no_sales_in_range">चुनी गई तारीखों में बिक्री नहीं मिली</string>
     <string name="no_purchases_in_range">चुनी गई तारीखों में खरीद नहीं मिली</string>
+    <string name="summary_total_purchase">कुल खरीद</string>
     <string name="customer_title">ग्राहक</string>
     <string name="pick_customer">ग्राहक चुनें</string>
     <string name="select">चुनें</string>
@@ -272,6 +273,11 @@
     <string name="balance_label">बाकी</string>
     <string name="paid_with_amount">भुगतान: %1$s</string>
     <string name="balance_with_amount">बाकी: %1$s</string>
+    <string name="filter_month">माह</string>
+    <string name="filter_quarter">तिमाही</string>
+    <string name="filter_year">वर्ष</string>
+    <string name="summary_total_sale">कुल बिक्री</string>
+    <string name="summary_balance_due">बकाया</string>
     <string name="close">बंद करें</string>
     <string name="qty_at_price">मात्रा @ मूल्य</string>
 

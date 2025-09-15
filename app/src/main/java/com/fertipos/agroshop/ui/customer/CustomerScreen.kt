@@ -53,10 +53,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import com.fertipos.agroshop.R
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
 
 @Composable
 fun CustomerScreen() {
     val vm: CustomerViewModel = hiltViewModel()
+    val navVm: com.fertipos.agroshop.ui.screens.AppNavViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -74,14 +84,13 @@ fun CustomerScreen() {
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
 
-            // Search bar
+            // Search bar (compact)
             var searchQuery by remember { mutableStateOf("") }
-            OutlinedTextField(
+            CompactSearchBar(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(stringResource(R.string.search_by_customer)) }
+                placeholder = stringResource(R.string.search_by_customer),
+                modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
 
@@ -98,7 +107,11 @@ fun CustomerScreen() {
                     CustomerRow(
                         c = c,
                         onUpdate = { updated, n, p, a, isSupp -> vm.update(updated, n, p, a, isSupp) },
-                        onDelete = { vm.delete(c) }
+                        onDelete = { vm.delete(c) },
+                        onViewBills = {
+                            navVm.requestInvoiceHistoryForCustomer(c.id)
+                            navVm.navigateTo(6)
+                        }
                     )
                 }
             }
@@ -129,10 +142,49 @@ fun CustomerScreen() {
 }
 
 @Composable
+private fun CompactSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(12.dp)
+    val focusRequester = remember { FocusRequester() }
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .heightIn(min = 40.dp)
+            .clickable(interactionSource = interaction, indication = null) { focusRequester.requestFocus() }
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(modifier = Modifier.weight(1f)) {
+            if (value.isEmpty()) {
+                Text(placeholder, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+            )
+        }
+    }
+}
+
+@Composable
 private fun CustomerRow(
     c: Customer,
     onUpdate: (Customer, String, String?, String?, Boolean) -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onViewBills: () -> Unit
 ) {
     var showEdit by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -177,6 +229,7 @@ private fun CustomerRow(
                     Box {
                         IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_cd)) }
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(text = { Text(stringResource(R.string.view_bills)) }, onClick = { menuExpanded = false; onViewBills() })
                             DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = { menuExpanded = false; confirmDelete = true })
                         }
                     }

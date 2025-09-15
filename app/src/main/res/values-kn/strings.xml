@@ -121,6 +121,7 @@
     <string name="costing_method">ಖರ್ಚು ವಿಧಾನ</string>
     <string name="method_label">ವಿಧಾನ</string>
     <string name="compute_pl">ಲಾ/ನ ಲೆಕ್ಕಿಸಿ</string>
+    <string name="results_label">ಫಲಿತಾಂಶಗಳು</string>
     <string name="product_pl_pdf">ಉತ್ಪನ್ನ ಲಾ/ನ</string>
     <string name="share_product_pl_pdf">ಉತ್ಪನ್ನ ಲಾ/ನ PDF</string>
     <string name="export_pl_csv">ಲಾ/ನ ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
@@ -132,6 +133,7 @@
     <string name="share_purchases_pdf">ಖರೀದಿ PDF ಹಂಚಿಕೆ</string>
     <string name="no_sales_in_range">ದಿನಾಂಕ ವ್ಯಾಪ್ತಿಯಲ್ಲಿ ಮಾರಾಟ ಕಂಡುಬಂದಿಲ್ಲ</string>
     <string name="no_purchases_in_range">ದಿನಾಂಕ ವ್ಯಾಪ್ತಿಯಲ್ಲಿ ಖರೀದಿ ಕಂಡುಬಂದಿಲ್ಲ</string>
+    <string name="summary_total_purchase">ಒಟ್ಟು ಖರೀದಿ</string>
     <string name="customer_title">ಗ್ರಾಹಕ</string>
     <string name="pick_customer">ಗ್ರಾಹಕ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="select">ಆಯ್ಕೆ</string>
@@ -231,6 +233,11 @@
     <string name="pdf_balance_with_amount">ಬಾಕಿ: %1$s</string>
     <string name="paid_with_amount">ಪಾವತಿ: %1$s</string>
     <string name="balance_with_amount">ಬಾಕಿ: %1$s</string>
+    <string name="filter_month">ತಿಂಗಳು</string>
+    <string name="filter_quarter">ತ್ರೈಮಾಸಿಕ</string>
+    <string name="filter_year">ವರ್ಷ</string>
+    <string name="summary_total_sale">ಒಟ್ಟು ಮಾರಾಟ</string>
+    <string name="summary_balance_due">ಬಾಕಿ ಉಳಿದದ್ದು</string>
     <string name="sales_report_title">ಮಾರಾಟ ವರದಿ</string>
     <string name="purchase_report_title">ಖರೀದಿ ವರದಿ</string>
     <string name="from_colon">ಇಂದ: %1$s</string>

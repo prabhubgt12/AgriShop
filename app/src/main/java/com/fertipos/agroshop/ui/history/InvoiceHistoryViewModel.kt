@@ -42,17 +42,20 @@ class InvoiceHistoryViewModel @Inject constructor(
     private val selectedInvoiceId = MutableStateFlow<Int?>(null)
     private val fromMillis = MutableStateFlow<Long?>(null)
     private val toMillis = MutableStateFlow<Long?>(null)
+    private val customerFilter = MutableStateFlow<Int?>(null)
 
     val listState: StateFlow<List<InvoiceRow>> = combine(
         invoiceDao.getAllInvoices(),
         customerDao.getAll(),
         fromMillis,
-        toMillis
-    ) { invoices, customers, from, to ->
+        toMillis,
+        customerFilter
+    ) { invoices, customers, from, to, custId ->
         val map = customers.associateBy { it.id }
         invoices
             .asSequence()
             .filter { inv -> (from == null || inv.date >= from) && (to == null || inv.date <= to) }
+            .filter { inv -> custId == null || inv.customerId == custId }
             .map { inv -> InvoiceRow(inv, map[inv.customerId]?.name ?: "Unknown") }
             .toList()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -82,6 +85,8 @@ class InvoiceHistoryViewModel @Inject constructor(
         fromMillis.value = from
         toMillis.value = to
     }
+
+    fun setCustomerFilter(customerId: Int?) { customerFilter.value = customerId }
 
     fun deleteInvoice(invoiceId: Int) {
         viewModelScope.launch {

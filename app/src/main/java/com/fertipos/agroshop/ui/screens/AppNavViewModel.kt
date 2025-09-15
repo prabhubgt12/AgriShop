@@ -30,6 +30,10 @@ class AppNavViewModel @Inject constructor() : ViewModel() {
     private val _pendingPurchaseHistoryProductId = MutableStateFlow<Int?>(null)
     val pendingPurchaseHistoryProductId: StateFlow<Int?> = _pendingPurchaseHistoryProductId
 
+    // Optional customer filter for Invoice History screen
+    private val _pendingInvoiceHistoryCustomerId = MutableStateFlow<Int?>(null)
+    val pendingInvoiceHistoryCustomerId: StateFlow<Int?> = _pendingInvoiceHistoryCustomerId
+
     fun navigateTo(index: Int) {
         // Record previous tab before switching
         if (index != _selected.value) {
@@ -52,4 +56,7 @@ class AppNavViewModel @Inject constructor() : ViewModel() {
 
     fun requestPurchaseHistoryForProduct(productId: Int) { _pendingPurchaseHistoryProductId.value = productId }
     fun clearPendingPurchaseHistoryProduct() { _pendingPurchaseHistoryProductId.value = null }
+
+    fun requestInvoiceHistoryForCustomer(customerId: Int) { _pendingInvoiceHistoryCustomerId.value = customerId }
+    fun clearPendingInvoiceHistoryCustomer() { _pendingInvoiceHistoryCustomerId.value = null }
 }

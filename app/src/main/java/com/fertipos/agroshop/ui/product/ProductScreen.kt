@@ -58,7 +58,6 @@ import com.fertipos.agroshop.data.local.entities.Product
 import com.fertipos.agroshop.ui.common.UnitPicker
 import com.fertipos.agroshop.ui.common.TypePicker
 import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreVert
 import java.text.NumberFormat
 import java.util.Locale
@@ -66,6 +65,17 @@ import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
 import androidx.compose.ui.platform.LocalContext
 
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 @Composable
 fun ProductScreen() {
     val vm: ProductViewModel = hiltViewModel()
@@ -73,6 +83,7 @@ fun ProductScreen() {
     val companyVm: CompanyProfileViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
     val context = LocalContext.current
     val profileState = companyVm.profile.collectAsState()
     val typeOptions = remember(profileState.value.productTypesCsv) {
@@ -102,14 +113,13 @@ fun ProductScreen() {
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))
 
-            // Search bar
+            // Search bar (compact)
             var searchQuery by remember { mutableStateOf("") }
-            OutlinedTextField(
+            CompactSearchBar(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(stringResource(R.string.search_by_product)) }
+                placeholder = stringResource(R.string.search_by_product),
+                modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
 
@@ -408,6 +418,44 @@ private fun EditProductDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
+}
+
+@Composable
+private fun CompactSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(12.dp)
+    val focusRequester = remember { FocusRequester() }
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .heightIn(min = 40.dp)
+            .clickable(interactionSource = interaction, indication = null) { focusRequester.requestFocus() }
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(modifier = Modifier.weight(1f)) {
+            if (value.isEmpty()) {
+                Text(placeholder, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+            )
+        }
+    }
 }
 
 @Composable

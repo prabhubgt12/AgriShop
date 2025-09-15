@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Print
 import androidx.compose.material3.AlertDialog
@@ -41,13 +40,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.ArrowForward
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.clickable
 import com.fertipos.agroshop.ui.common.DateField
 import com.fertipos.agroshop.ui.screens.AppNavViewModel
 import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
@@ -56,10 +74,13 @@ import com.fertipos.agroshop.util.CurrencyFormatter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Calendar
 import kotlinx.coroutines.launch
 import androidx.compose.ui.input.pointer.pointerInput
+import android.app.DatePickerDialog
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
@@ -68,10 +89,98 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
 
+private enum class DurationOption { MONTH, QUARTER, YEAR, CUSTOM }
+
+@Composable
+private fun DateChip(value: Long?, placeholder: String, onChange: (Long?) -> Unit, modifier: Modifier = Modifier) {
+    val ctx = LocalContext.current
+    val df = remember { SimpleDateFormat("dd/MM/yy", Locale.getDefault()) }
+    val text = remember(value) { value?.let { df.format(Date(it)) } ?: placeholder }
+    Card(modifier = modifier, onClick = {
+        val cal = Calendar.getInstance().apply {
+            if (value != null) timeInMillis = value
+        }
+        val dlg = DatePickerDialog(
+            ctx,
+            { _, y, m, d ->
+                val set = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, y)
+                    set(Calendar.MONTH, m)
+                    set(Calendar.DAY_OF_MONTH, d)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                onChange(set.timeInMillis)
+            },
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH)
+        )
+        dlg.show()
+    }) {
+        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.DateRange, contentDescription = null)
+            Text(text, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun CompactSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(12.dp)
+    val focusRequester = remember { FocusRequester() }
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .heightIn(min = 40.dp)
+            .clickable(interactionSource = interaction, indication = null) { focusRequester.requestFocus() }
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(modifier = Modifier.weight(1f)) {
+            if (value.isEmpty()) {
+                Text(placeholder, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+            )
+        }
+    }
+}
+
 @Composable
 fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
     val vm: InvoiceHistoryViewModel = hiltViewModel()
     val list by vm.listState.collectAsState()
+    // Apply one-shot customer filter coming from other screens (e.g., Customer page)
+    val pendingCustomer by navVm.pendingInvoiceHistoryCustomerId.collectAsState()
+    var lockedCustomer by remember { mutableStateOf(false) }
+    LaunchedEffect(pendingCustomer) {
+        if (pendingCustomer != null) {
+            lockedCustomer = true
+            vm.setCustomerFilter(pendingCustomer)
+            navVm.clearPendingInvoiceHistoryCustomer()
+        }
+    }
     val profVm: CompanyProfileViewModel = hiltViewModel()
     val profile by profVm.profile.collectAsState()
     val context = LocalContext.current
@@ -112,45 +221,204 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
         }
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 8.dp, vertical = 8.dp)) {
-            var showFilters by remember { mutableStateOf(false) }
-            // Header row: Title + Filters toggle
+            // Header row: Title (filters are always visible, no toggle)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(stringResource(R.string.invoices_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                TextButton(onClick = { showFilters = !showFilters }) { Text(if (showFilters) stringResource(R.string.hide_filters) else stringResource(R.string.filters)) }
             }
 
-            // Search bar
-            var searchQuery by remember { mutableStateOf("") }
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(stringResource(R.string.search_customer_label)) }
-            )
-
-            // Collapsible date filters (hidden by default)
+            // Date filters (always visible)
             var fromMillis by remember { mutableStateOf<Long?>(null) }
             var toMillis by remember { mutableStateOf<Long?>(null) }
-            if (showFilters) {
-                Spacer(Modifier.height(6.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { v -> fromMillis = v }, modifier = Modifier.weight(1f))
-                    DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { v -> toMillis = v }, modifier = Modifier.weight(1f))
+            Spacer(Modifier.height(6.dp))
+            // Compact toolbar: Duration dropdown + From/To date chips
+            var durationExpanded by remember { mutableStateOf(false) }
+            var selectedDuration by remember { mutableStateOf<DurationOption?>(DurationOption.YEAR) }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // Duration button
+                    Card(onClick = { durationExpanded = true }) {
+                        Row(
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp, vertical = 6.dp)
+                                .widthIn(min = 68.dp, max = 80.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = when (selectedDuration) {
+                                    DurationOption.MONTH -> stringResource(R.string.filter_month)
+                                    DurationOption.QUARTER -> stringResource(R.string.filter_quarter)
+                                    DurationOption.YEAR -> stringResource(R.string.filter_year)
+                                    DurationOption.CUSTOM -> "Custom"
+                                    null -> stringResource(R.string.filter_year)
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = null)
+                        }
+                    }
+                    DropdownMenu(expanded = durationExpanded, onDismissRequest = { durationExpanded = false }) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_month)) }, onClick = { selectedDuration = DurationOption.MONTH; durationExpanded = false })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_quarter)) }, onClick = { selectedDuration = DurationOption.QUARTER; durationExpanded = false })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_year)) }, onClick = { selectedDuration = DurationOption.YEAR; durationExpanded = false })
+                        DropdownMenuItem(text = { Text("Custom") }, onClick = { selectedDuration = DurationOption.CUSTOM; durationExpanded = false })
+                    }
+
+                    // Date chips
+                    val ctx = LocalContext.current
+                    DateChip(
+                        value = fromMillis,
+                        placeholder = "01/01/25",
+                        onChange = { fromMillis = it; selectedDuration = DurationOption.CUSTOM; vm.setDateRange(fromMillis, toMillis) },
+                        modifier = Modifier.weight(1f).widthIn(min = 124.dp)
+                    )
+                    Text("TO", style = MaterialTheme.typography.labelSmall)
+                    DateChip(
+                        value = toMillis,
+                        placeholder = "31/12/25",
+                        onChange = { toMillis = it; selectedDuration = DurationOption.CUSTOM; vm.setDateRange(fromMillis, toMillis) },
+                        modifier = Modifier.weight(1f).widthIn(min = 124.dp)
+                    )
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Spacer(Modifier.weight(1f))
-                    TextButton(onClick = { vm.setDateRange(fromMillis, toMillis) }) { Text(stringResource(R.string.apply)) }
-                    TextButton(onClick = { fromMillis = null; toMillis = null; vm.setDateRange(null, null) }) { Text(stringResource(R.string.clear)) }
+            // Auto-apply when duration changes
+            when (selectedDuration) {
+                DurationOption.MONTH -> {
+                    val cal = java.util.Calendar.getInstance()
+                    cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    cal.set(java.util.Calendar.MINUTE, 0)
+                    cal.set(java.util.Calendar.SECOND, 0)
+                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                    val from = cal.timeInMillis
+                    cal.add(java.util.Calendar.MONTH, 1)
+                    cal.add(java.util.Calendar.MILLISECOND, -1)
+                    val to = cal.timeInMillis
+                    if (fromMillis != from || toMillis != to) { fromMillis = from; toMillis = to; vm.setDateRange(from, to) }
                 }
+                DurationOption.QUARTER -> {
+                    val cal = java.util.Calendar.getInstance()
+                    val month = cal.get(java.util.Calendar.MONTH)
+                    val startMonth = month / 3 * 3
+                    cal.set(java.util.Calendar.MONTH, startMonth)
+                    cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    cal.set(java.util.Calendar.MINUTE, 0)
+                    cal.set(java.util.Calendar.SECOND, 0)
+                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                    val from = cal.timeInMillis
+                    cal.add(java.util.Calendar.MONTH, 3)
+                    cal.add(java.util.Calendar.MILLISECOND, -1)
+                    val to = cal.timeInMillis
+                    if (fromMillis != from || toMillis != to) { fromMillis = from; toMillis = to; vm.setDateRange(from, to) }
+                }
+                DurationOption.YEAR -> {
+                    val cal = java.util.Calendar.getInstance()
+                    cal.set(java.util.Calendar.MONTH, 0)
+                    cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    cal.set(java.util.Calendar.MINUTE, 0)
+                    cal.set(java.util.Calendar.SECOND, 0)
+                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                    val from = cal.timeInMillis
+                    cal.add(java.util.Calendar.YEAR, 1)
+                    cal.add(java.util.Calendar.MILLISECOND, -1)
+                    val to = cal.timeInMillis
+                    if (fromMillis != from || toMillis != to) { fromMillis = from; toMillis = to; vm.setDateRange(from, to) }
+                }
+                DurationOption.CUSTOM, null -> { /* handled by DateChip onChange */ }
+            }
+
+            // Search bar (placed below filters) - hidden when locked to a specific customer
+            var searchQuery by remember { mutableStateOf("") }
+            if (!lockedCustomer) {
+                CompactSearchBar(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = stringResource(R.string.search_customer_label),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(Modifier.height(8.dp))
 
-            // Apply search filtering on UI list
-            val filtered = remember(list, searchQuery) {
-                if (searchQuery.isBlank()) list else list.filter { it.customerName.contains(searchQuery, ignoreCase = true) }
+            // Apply search filtering on UI list (do this first so summary matches filtered view)
+            val filtered = remember(list, searchQuery, lockedCustomer) {
+                val base = list
+                if (lockedCustomer) base
+                else if (searchQuery.isBlank()) base
+                else base.filter { it.customerName.contains(searchQuery, ignoreCase = true) }
             }
+
+            // Summary card computed from filtered list
+            val totals = remember(filtered) {
+                val totalSale = filtered.sumOf { it.invoice.total }
+                val balanceDue = filtered.sumOf { (it.invoice.total - it.invoice.paid).coerceAtLeast(0.0) }
+                totalSale to balanceDue
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Card(modifier = Modifier.weight(1f)) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(stringResource(R.string.summary_total_sale), style = MaterialTheme.typography.labelSmall)
+                        Spacer(Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFDFF6DD))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = CurrencyFormatter.formatInr(totals.first),
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF0B6A0B),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+                Card(modifier = Modifier.weight(1f)) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(stringResource(R.string.summary_balance_due), style = MaterialTheme.typography.labelSmall)
+                        Spacer(Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFFDE0E0))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = CurrencyFormatter.formatInr(totals.second),
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFFB00020),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+                // Results card
+                Card(modifier = Modifier.weight(1f)) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(stringResource(R.string.results_label), style = MaterialTheme.typography.labelSmall)
+                        Spacer(Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFFE3F2FD))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = filtered.size.toString(),
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF1565C0),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+
+            // filtered is already computed above so the list and summary stay in sync
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(filtered) { row ->

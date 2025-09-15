@@ -106,9 +106,15 @@
     <string name="delete_invoice_message">This action cannot be undone.</string>
     <string name="paid_with_amount">Paid: %1$s</string>
     <string name="balance_with_amount">Balance: %1$s</string>
+    <string name="filter_month">Month</string>
+    <string name="filter_quarter">Quarter</string>
+    <string name="filter_year">Year</string>
+    <string name="summary_total_sale">Total Sale</string>
+    <string name="summary_balance_due">Balance Due</string>
 
     <!-- Common UI -->
     <string name="back">Back</string>
+    <string name="results_label">Results</string>
     <string name="export">Export</string>
     <string name="share_pdf">Share PDF</string>
     <string name="share_csv">Share CSV</string>
@@ -150,6 +156,7 @@
     <string name="share_purchases_pdf">Share Purchases PDF</string>
     <string name="no_sales_in_range">No sales found in date range</string>
     <string name="no_purchases_in_range">No purchases found in date range</string>
+    <string name="summary_total_purchase">Total Purchase</string>
     <string name="customer_title">Customer</string>
     <string name="pick_customer">Pick customer</string>
     <string name="select">Select</string>

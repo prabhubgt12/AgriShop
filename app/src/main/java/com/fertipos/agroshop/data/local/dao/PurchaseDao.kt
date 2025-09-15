@@ -61,13 +61,14 @@ interface PurchaseDao {
         val supplierName: String?,
         val subtotal: Double,
         val gstAmount: Double,
-        val total: Double
+        val total: Double,
+        val paid: Double
     )
 
     @Query(
         """
         SELECT p.id AS id, p.date AS date, c.name AS supplierName,
-               p.subtotal AS subtotal, p.gstAmount AS gstAmount, p.total AS total
+               p.subtotal AS subtotal, p.gstAmount AS gstAmount, p.total AS total, p.paid AS paid
         FROM purchases p
         LEFT JOIN customers c ON c.id = p.supplierId
         ORDER BY p.date DESC
