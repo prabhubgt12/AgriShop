@@ -15,6 +15,21 @@ class AppNavViewModel @Inject constructor() : ViewModel() {
     private val _previousSelected = MutableStateFlow(0)
     val previousSelected: StateFlow<Int> = _previousSelected
 
+    // Optional one-shot override for system back navigation target (e.g., return to Customer/Product tab
+    // after editing from a History screen).
+    private val _backOverrideTab = MutableStateFlow<Int?>(null)
+    val backOverrideTab: StateFlow<Int?> = _backOverrideTab
+
+    // One-shot flag to tell Invoice History to keep its current customer filter when returning
+    // from Billing (edit flow started from locked customer history).
+    private val _preserveInvoiceHistoryFilterOnReturn = MutableStateFlow(false)
+    val preserveInvoiceHistoryFilterOnReturn: StateFlow<Boolean> = _preserveInvoiceHistoryFilterOnReturn
+
+    // One-shot flag to tell Purchase History to keep its current product filter when returning
+    // from Purchase edit (flow started from product-specific history).
+    private val _preservePurchaseHistoryFilterOnReturn = MutableStateFlow(false)
+    val preservePurchaseHistoryFilterOnReturn: StateFlow<Boolean> = _preservePurchaseHistoryFilterOnReturn
+
     private val _pendingEditInvoiceId = MutableStateFlow<Int?>(null)
     val pendingEditInvoiceId: StateFlow<Int?> = _pendingEditInvoiceId
 
@@ -45,6 +60,16 @@ class AppNavViewModel @Inject constructor() : ViewModel() {
         }
         _selected.value = index
     }
+
+    // Set a one-time back override. Will be consumed by the destination screen BackHandler.
+    fun setBackOverrideTab(index: Int) { _backOverrideTab.value = index }
+    fun clearBackOverrideTab() { _backOverrideTab.value = null }
+
+    fun setPreserveInvoiceHistoryFilterOnReturn() { _preserveInvoiceHistoryFilterOnReturn.value = true }
+    fun clearPreserveInvoiceHistoryFilterOnReturn() { _preserveInvoiceHistoryFilterOnReturn.value = false }
+
+    fun setPreservePurchaseHistoryFilterOnReturn() { _preservePurchaseHistoryFilterOnReturn.value = true }
+    fun clearPreservePurchaseHistoryFilterOnReturn() { _preservePurchaseHistoryFilterOnReturn.value = false }
 
     fun requestEditInvoice(id: Int) { _pendingEditInvoiceId.value = id }
     fun clearPendingEdit() { _pendingEditInvoiceId.value = null }

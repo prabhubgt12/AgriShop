@@ -188,6 +188,8 @@
     <!-- Purchase -->
     <string name="create_purchase">ಖರೀದಿ ರಚಿಸಿ</string>
     <string name="edit_purchase_with_id">ಖರೀದಿ #%1$d ಸಂಪಾದಿಸಿ</string>
+    <string name="toast_purchase_created">ಖರೀದಿ #%1$d ರಚಿಸಲಾಗಿದೆ</string>
+    <string name="toast_purchase_updated">ಖರೀದಿ #%1$d ನವೀಕರಿಸಲಾಗಿದೆ</string>
     <string name="purchases_title">ಖರೀದಿಗಳು</string>
     <string name="purchase_history_title_with_product">ಖರೀದಿ ಇತಿಹಾಸ (ಉತ್ಪನ್ನ #%1$d)</string>
     <string name="new_purchase_cd">ಹೊಸ ಖರೀದಿ</string>

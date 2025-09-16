@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -173,7 +174,19 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
     val list by vm.listState.collectAsState()
     // Apply one-shot customer filter coming from other screens (e.g., Customer page)
     val pendingCustomer by navVm.pendingInvoiceHistoryCustomerId.collectAsState()
+    val preserveFilterOnReturn by navVm.preserveInvoiceHistoryFilterOnReturn.collectAsState()
     var lockedCustomer by remember { mutableStateOf(false) }
+    // Ensure we don't retain previous customer-specific filter when entering normally.
+    // If returning with preserve flag, keep locked state and existing filter.
+    LaunchedEffect(Unit) {
+        if (preserveFilterOnReturn) {
+            lockedCustomer = true
+            navVm.clearPreserveInvoiceHistoryFilterOnReturn()
+        } else if (pendingCustomer == null) {
+            lockedCustomer = false
+            vm.setCustomerFilter(null)
+        }
+    }
     LaunchedEffect(pendingCustomer) {
         if (pendingCustomer != null) {
             lockedCustomer = true
@@ -200,23 +213,33 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
     val margin = 16.dp
     val travelX = (config.screenWidthDp.dp - fabSize - margin * 2)
     val travelY = (config.screenHeightDp.dp - fabSize - margin * 2)
+    val previousTab by navVm.previousSelected.collectAsState()
+
+    // Handle system back: if previous was Billing (3), send to Home (0) to avoid loop. Else, go to previous.
+    BackHandler {
+        val target = if (previousTab == 3) 0 else previousTab
+        navVm.navigateTo(target)
+    }
+
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navVm.navigateTo(3) },
-                modifier = Modifier
-                    .offset(x = fabDx, y = fabDy)
-                    .pointerInput(Unit) {
-                        detectDragGestures(onDrag = { _, dragAmount ->
-                            val dx = with(density) { dragAmount.x.toDp() }
-                            val dy = with(density) { dragAmount.y.toDp() }
-                            // Clamp within [-travel, 0] so FAB cannot go beyond screen bounds
-                            fabDx = (fabDx + dx).coerceIn(-travelX, 0.dp)
-                            fabDy = (fabDy + dy).coerceIn(-travelY, 0.dp)
-                        })
-                    }
-            ) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.new_bill_cd))
+            if (!lockedCustomer) {
+                FloatingActionButton(
+                    onClick = { navVm.navigateTo(3) },
+                    modifier = Modifier
+                        .offset(x = fabDx, y = fabDy)
+                        .pointerInput(Unit) {
+                            detectDragGestures(onDrag = { _, dragAmount ->
+                                val dx = with(density) { dragAmount.x.toDp() }
+                                val dy = with(density) { dragAmount.y.toDp() }
+                                // Clamp within [-travel, 0] so FAB cannot go beyond screen bounds
+                                fabDx = (fabDx + dx).coerceIn(-travelX, 0.dp)
+                                fabDy = (fabDy + dy).coerceIn(-travelY, 0.dp)
+                            })
+                        }
+                ) {
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.new_bill_cd))
+                }
             }
         }
     ) { innerPadding ->
@@ -505,6 +528,12 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
                                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                                         DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
                                             menuExpanded = false
+                                            // If this history is locked to a specific customer (opened from Customer menu),
+                                            // return to Invoice History (tab 6) and keep the filter on back from Billing.
+                                            if (lockedCustomer) {
+                                                navVm.setBackOverrideTab(6)
+                                                navVm.setPreserveInvoiceHistoryFilterOnReturn()
+                                            }
                                             navVm.requestEditInvoice(row.invoice.id)
                                             navVm.navigateTo(3)
                                         })

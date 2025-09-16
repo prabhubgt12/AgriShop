@@ -57,8 +57,9 @@ import androidx.compose.ui.platform.LocalContext
 fun PurchaseScreen(navVm: AppNavViewModel) {
     val vm: PurchaseViewModel = hiltViewModel()
     val state by vm.state.collectAsState()
-    val snackbar = remember { SnackbarHostState() }
+    // Snackbar replaced with Toast to avoid blocking navigation and being hidden by scroll
     val prevTab = navVm.previousSelected.collectAsState()
+    val backOverride = navVm.backOverrideTab.collectAsState()
 
     // Hoisted form state like Billing
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
@@ -79,25 +80,79 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         }
     }
 
-    // Always intercept system back to return to the previous tab (Home or History)
+    // Always intercept system back to return to the intended tab.
     BackHandler(enabled = true) {
-        navVm.navigateTo(prevTab.value)
+        val target = backOverride.value ?: prevTab.value
+        navVm.clearBackOverrideTab()
+        navVm.navigateTo(target)
     }
 
     val context = LocalContext.current
     LaunchedEffect(state.successPurchaseId) {
         val id = state.successPurchaseId
         if (id != null) {
-            snackbar.showSnackbar("#" + id + " " + context.getString(R.string.create_purchase))
+            // Localized and clearly visible toast
+            runCatching {
+                val msg = context.getString(R.string.toast_purchase_created, id)
+                val density = context.resources.displayMetrics.density
+                val pad = (16 * density).toInt()
+                val radius = 16f * density
+                val tv = android.widget.TextView(context).apply {
+                    text = msg
+                    setPadding(pad, pad, pad, pad)
+                    setTextColor(android.graphics.Color.WHITE)
+                    textSize = 14f
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                        cornerRadius = radius
+                        setColor(0xE6000000.toInt()) // 90% opaque black
+                    }
+                }
+                android.widget.Toast(context).apply {
+                    duration = android.widget.Toast.LENGTH_SHORT
+                    view = tv
+                    show()
+                }
+            }
             vm.clearSuccess()
+            // Close the screen immediately: navigate back to intended tab
+            val target = backOverride.value ?: prevTab.value
+            navVm.clearBackOverrideTab()
+            navVm.navigateTo(target)
         }
     }
 
     LaunchedEffect(state.successEditedId) {
         val id = state.successEditedId
         if (id != null) {
-            snackbar.showSnackbar("Purchase #$id updated")
+            // Localized and clearly visible toast
+            runCatching {
+                val msg = context.getString(R.string.toast_purchase_updated, id)
+                val density = context.resources.displayMetrics.density
+                val pad = (16 * density).toInt()
+                val radius = 16f * density
+                val tv = android.widget.TextView(context).apply {
+                    text = msg
+                    setPadding(pad, pad, pad, pad)
+                    setTextColor(android.graphics.Color.WHITE)
+                    textSize = 14f
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                        cornerRadius = radius
+                        setColor(0xE6000000.toInt())
+                    }
+                }
+                android.widget.Toast(context).apply {
+                    duration = android.widget.Toast.LENGTH_SHORT
+                    view = tv
+                    show()
+                }
+            }
             vm.clearSuccess()
+            // Close the screen immediately: navigate back to intended tab
+            val target = backOverride.value ?: prevTab.value
+            navVm.clearBackOverrideTab()
+            navVm.navigateTo(target)
         }
     }
 
@@ -109,9 +164,6 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             .navigationBarsPadding()
     ) {
         item {
-            // Snackbar host
-            SnackbarHost(hostState = snackbar)
-
             // Header
             val header = if (state.editingPurchaseId != null) stringResource(R.string.edit_purchase_with_id, state.editingPurchaseId!!) else stringResource(R.string.create_purchase)
             Text(text = header, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

@@ -71,6 +71,7 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
+import androidx.activity.compose.BackHandler
 import com.fertipos.agroshop.R
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
@@ -157,16 +158,24 @@ private fun DateChipPH(value: Long?, placeholder: String, onChange: (Long?) -> U
 fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
     val vm: PurchaseHistoryViewModel = hiltViewModel()
     val pendingFilter by navVm.pendingPurchaseHistoryProductId.collectAsState()
+    val preserveOnReturn by navVm.preservePurchaseHistoryFilterOnReturn.collectAsState()
+    var lockedProduct by remember { mutableStateOf(false) }
 
-    // Ensure we don't retain previous product-specific filter when entering normally
+    // Ensure we don't retain previous product-specific filter when entering normally.
+    // If returning with preserve flag, keep existing filter.
     LaunchedEffect(Unit) {
-        if (pendingFilter == null) {
+        if (preserveOnReturn) {
+            lockedProduct = true
+            navVm.clearPreservePurchaseHistoryFilterOnReturn()
+        } else if (pendingFilter == null) {
+            lockedProduct = false
             vm.setProductFilter(null)
         }
     }
 
     LaunchedEffect(pendingFilter) {
         if (pendingFilter != null) {
+            lockedProduct = true
             vm.setProductFilter(pendingFilter)
             navVm.clearPendingPurchaseHistoryProduct()
         }
@@ -183,25 +192,35 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
     // Content size; fallback to screen size if not yet measured
     var contentW by remember { mutableStateOf(config.screenWidthDp.dp) }
     var contentH by remember { mutableStateOf(config.screenHeightDp.dp) }
+    val previousTab by navVm.previousSelected.collectAsState()
+
+    // Handle system back: if previous was Purchase (7), send to Home (0) to avoid loop. Else, go to previous.
+    BackHandler {
+        val target = if (previousTab == 7) 0 else previousTab
+        navVm.navigateTo(target)
+    }
+
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navVm.navigateTo(7) },
-                modifier = Modifier
-                    .offset(x = fabDx, y = fabDy)
-                    .pointerInput(Unit) {
-                        detectDragGestures(onDrag = { _, dragAmount ->
-                            val dx = with(density) { dragAmount.x.toDp() }
-                            val dy = with(density) { dragAmount.y.toDp() }
-                            val travelX = (contentW - fabSize - margin * 2).coerceAtLeast(0.dp)
-                            val travelY = (contentH - fabSize - margin * 2).coerceAtLeast(0.dp)
-                            // Relative to bottom-end base: negative offsets up to -travel, 0 is base
-                            fabDx = (fabDx + dx).coerceIn(-travelX, 0.dp)
-                            fabDy = (fabDy + dy).coerceIn(-travelY, 0.dp)
-                        })
-                    }
-            ) {
-                Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.new_purchase_cd))
+            if (!lockedProduct) {
+                FloatingActionButton(
+                    onClick = { navVm.navigateTo(7) },
+                    modifier = Modifier
+                        .offset(x = fabDx, y = fabDy)
+                        .pointerInput(Unit) {
+                            detectDragGestures(onDrag = { _, dragAmount ->
+                                val dx = with(density) { dragAmount.x.toDp() }
+                                val dy = with(density) { dragAmount.y.toDp() }
+                                val travelX = (contentW - fabSize - margin * 2).coerceAtLeast(0.dp)
+                                val travelY = (contentH - fabSize - margin * 2).coerceAtLeast(0.dp)
+                                // Relative to bottom-end base: negative offsets up to -travel, 0 is base
+                                fabDx = (fabDx + dx).coerceIn(-travelX, 0.dp)
+                                fabDy = (fabDy + dy).coerceIn(-travelY, 0.dp)
+                            })
+                        }
+                ) {
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = stringResource(R.string.new_purchase_cd))
+                }
             }
         }
     ) { innerPadding ->
@@ -475,6 +494,9 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                                                 DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
                                                     menuExpanded = false
+                                                    // If this history is filtered by a specific product (opened from Product menu),
+                                                    // ensure back from Purchase returns to Products tab.
+                                                    if (pendingFilter != null) navVm.setBackOverrideTab(2)
                                                     navVm.requestEditPurchase(item.id)
                                                     navVm.navigateTo(7)
                                                 })
@@ -539,7 +561,22 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                         Text(text = item.supplierName ?: stringResource(R.string.unknown_supplier), fontWeight = FontWeight.SemiBold)
                                         Text(text = "#${item.purchaseId}", style = MaterialTheme.typography.labelSmall)
                                         val dateStr = remember(item.date) { dfCard.format(Date(item.date)).uppercase(Locale.getDefault()) }
-                                        Text(text = dateStr, style = MaterialTheme.typography.labelSmall)
+                                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(text = dateStr, style = MaterialTheme.typography.labelSmall)
+                                            // More menu for ProductHistory row to allow Edit
+                                            var menuExpanded by remember { mutableStateOf(false) }
+                                            IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_cd)) }
+                                            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                                                DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
+                                                    menuExpanded = false
+                                                    // Return to Purchase History (tab 8) with filter preserved when coming from Product.
+                                                    navVm.setBackOverrideTab(8)
+                                                    navVm.setPreservePurchaseHistoryFilterOnReturn()
+                                                    navVm.requestEditPurchase(item.purchaseId)
+                                                    navVm.navigateTo(7)
+                                                })
+                                            }
+                                        }
                                     }
                                     Spacer(Modifier.height(6.dp))
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

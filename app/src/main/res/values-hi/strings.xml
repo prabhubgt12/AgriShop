@@ -180,6 +180,8 @@
     <!-- Purchase -->
     <string name="create_purchase">खरीद बनाएं</string>
     <string name="edit_purchase_with_id">खरीद #%1$d संपादित करें</string>
+    <string name="toast_purchase_created">खरीद #%1$d बनाई गई</string>
+    <string name="toast_purchase_updated">खरीद #%1$d अपडेट की गई</string>
     <string name="date">तारीख</string>
     <string name="supplier_label">सप्लायर</string>
     <string name="product_label">उत्पाद</string>

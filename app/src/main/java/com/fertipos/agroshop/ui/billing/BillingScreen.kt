@@ -93,6 +93,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     val context = LocalContext.current
     val currency = remember { CurrencyFormatter.inr }
     val prevTab = navVm.previousSelected.collectAsState()
+    val backOverride = navVm.backOverrideTab.collectAsState()
     // Hoisted pending print data to avoid being lost on recompositions
     data class PendingPrintItem(val product: Product, val quantity: Double, val unitPrice: Double, val gstPercent: Double)
     data class PendingPrintData(
@@ -119,9 +120,11 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         }
     }
 
-    // Always intercept back to return to the previous tab (Home or History)
+    // Always intercept back to return to the intended tab.
     BackHandler(enabled = true) {
-        navVm.navigateTo(prevTab.value)
+        val target = backOverride.value ?: prevTab.value
+        navVm.clearBackOverrideTab()
+        navVm.navigateTo(target)
     }
 
     // On first open (fresh new bill), reset the date to today if not editing and clear any stale error
@@ -431,6 +434,10 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             // Reset triggers to avoid duplicate prints
             pendingPrint = null
             vm.clearSuccess()
+            // Immediately navigate away from Billing so back does not return here.
+            val target = backOverride.value ?: prevTab.value
+            navVm.clearBackOverrideTab()
+            navVm.navigateTo(target)
         }
     }
 }

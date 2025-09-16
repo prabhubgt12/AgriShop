@@ -16,8 +16,8 @@ android {
         applicationId = "com.fertipos.agroshop"
         minSdk = 24
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.0.10"
+        versionCode = 13
+        versionName = "1.0.13"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

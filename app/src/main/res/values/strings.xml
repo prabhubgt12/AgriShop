@@ -208,6 +208,8 @@
     <!-- Purchase Screen -->
     <string name="create_purchase">Create Purchase</string>
     <string name="edit_purchase_with_id">Edit Purchase #%1$d</string>
+    <string name="toast_purchase_created">Purchase #%1$d created</string>
+    <string name="toast_purchase_updated">Purchase #%1$d updated</string>
     <string name="date">Date</string>
     <string name="supplier_label">Supplier</string>
     <string name="product_label">Product</string>
