@@ -91,26 +91,54 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
     LaunchedEffect(state.successPurchaseId) {
         val id = state.successPurchaseId
         if (id != null) {
-            // Localized and clearly visible toast
+            // Localized toast with transparent background, app icon, and compact width (wrap content)
             runCatching {
                 val msg = context.getString(R.string.toast_purchase_created, id)
-                val density = context.resources.displayMetrics.density
-                val pad = (16 * density).toInt()
-                val radius = 16f * density
-                val tv = android.widget.TextView(context).apply {
-                    text = msg
-                    setPadding(pad, pad, pad, pad)
-                    setTextColor(android.graphics.Color.WHITE)
-                    textSize = 14f
+                val dm = context.resources.displayMetrics
+                val density = dm.density
+                val hPad = (16 * density).toInt()
+                val vPad = (12 * density).toInt()
+
+                val container = android.widget.LinearLayout(context).apply {
+                    orientation = android.widget.LinearLayout.HORIZONTAL
+                    setPadding(hPad, vPad, hPad, vPad)
+                    // Semi-transparent black rounded panel (reverted as requested)
                     background = android.graphics.drawable.GradientDrawable().apply {
                         shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-                        cornerRadius = radius
-                        setColor(0xE6000000.toInt()) // 90% opaque black
+                        cornerRadius = 28f * density
+                        setColor(0xB3000000.toInt()) // ~70% opaque black
                     }
+                    // Wider panel (90% of screen width)
+                    layoutParams = android.view.ViewGroup.LayoutParams((dm.widthPixels * 0.9f).toInt(), android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
                 }
+
+                // App icon (24dp)
+                val iconSize = (24 * density).toInt()
+                val iconView = android.widget.ImageView(context).apply {
+                    val iconId = context.applicationInfo.icon
+                    setImageResource(iconId)
+                    val lp = android.widget.LinearLayout.LayoutParams(iconSize, iconSize)
+                    lp.setMargins(0, 0, (8 * density).toInt(), 0)
+                    layoutParams = lp
+                }
+
+                val textView = android.widget.TextView(context).apply {
+                    text = msg
+                    setTextColor(android.graphics.Color.WHITE)
+                    textSize = 15f
+                    // Slight shadow for readability
+                    setShadowLayer(2.5f, 0f, 1.2f, 0x88000000.toInt())
+                    layoutParams = android.widget.LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                }
+
+                container.addView(iconView)
+                container.addView(textView)
+
                 android.widget.Toast(context).apply {
                     duration = android.widget.Toast.LENGTH_SHORT
-                    view = tv
+                    view = container
+                    // Bottom-center with slight vertical offset
+                    setGravity(android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL, 0, (64 * density).toInt())
                     show()
                 }
             }
@@ -125,26 +153,53 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
     LaunchedEffect(state.successEditedId) {
         val id = state.successEditedId
         if (id != null) {
-            // Localized and clearly visible toast
+            // Localized toast with transparent background, app icon, and compact width (wrap content)
             runCatching {
                 val msg = context.getString(R.string.toast_purchase_updated, id)
-                val density = context.resources.displayMetrics.density
-                val pad = (16 * density).toInt()
-                val radius = 16f * density
-                val tv = android.widget.TextView(context).apply {
-                    text = msg
-                    setPadding(pad, pad, pad, pad)
-                    setTextColor(android.graphics.Color.WHITE)
-                    textSize = 14f
+                val dm = context.resources.displayMetrics
+                val density = dm.density
+                val hPad = (16 * density).toInt()
+                val vPad = (12 * density).toInt()
+
+                val container = android.widget.LinearLayout(context).apply {
+                    orientation = android.widget.LinearLayout.HORIZONTAL
+                    setPadding(hPad, vPad, hPad, vPad)
+                    // Semi-transparent black rounded panel (reverted as requested)
                     background = android.graphics.drawable.GradientDrawable().apply {
                         shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-                        cornerRadius = radius
-                        setColor(0xE6000000.toInt())
+                        cornerRadius = 20f * density
+                        setColor(0xB3000000.toInt())
                     }
+                    // Wider panel (90% of screen width)
+                    layoutParams = android.view.ViewGroup.LayoutParams((dm.widthPixels * 0.9f).toInt(), android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
                 }
+
+                val iconSize = (24 * density).toInt()
+                val iconView = android.widget.ImageView(context).apply {
+                    val iconId = context.applicationInfo.icon
+                    setImageResource(iconId)
+                    val lp = android.widget.LinearLayout.LayoutParams(iconSize, iconSize)
+                    lp.setMargins(0, 0, (8 * density).toInt(), 0)
+                    layoutParams = lp
+                }
+
+                val textView = android.widget.TextView(context).apply {
+                    text = msg
+                    setTextColor(android.graphics.Color.WHITE)
+                    textSize = 15f
+                    // Slight shadow for readability
+                    setShadowLayer(2.5f, 0f, 1.2f, 0x88000000.toInt())
+                    layoutParams = android.widget.LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                }
+
+                container.addView(iconView)
+                container.addView(textView)
+
                 android.widget.Toast(context).apply {
                     duration = android.widget.Toast.LENGTH_SHORT
-                    view = tv
+                    view = container
+                    // Bottom-center with slight vertical offset
+                    setGravity(android.view.Gravity.BOTTOM or android.view.Gravity.CENTER_HORIZONTAL, 0, (64 * density).toInt())
                     show()
                 }
             }
