@@ -60,7 +60,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.heightIn
 
 @Composable
