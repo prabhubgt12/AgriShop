@@ -20,7 +20,7 @@ fun AppRoot() {
             composable("home") {
                 HomeScreen(
                     onOpenCashBook = { nav.navigate("accounts") },
-                    onOpenSettings = { /* TODO settings screen */ },
+                    onOpenSettings = { nav.navigate("settings") },
                 )
             }
             composable("accounts") {
@@ -39,6 +39,9 @@ fun AppRoot() {
                 val id = backStack.arguments?.getInt("id") ?: 0
                 val openAdd = backStack.arguments?.getBoolean("add") ?: false
                 AccountDetailScreen(accountId = id, onBack = { nav.popBackStack() }, openAdd = openAdd)
+            }
+            composable("settings") {
+                SettingsScreen(onBack = { nav.popBackStack() })
             }
         }
     }

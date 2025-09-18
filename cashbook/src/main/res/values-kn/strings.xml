@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simple CashBook</string>
+
+    <!-- Home -->
+    <string name="title_dashboard">ಡ್ಯಾಶ್‌ಬೋರ್ಡ್</string>
+    <string name="title_cash_book">ಕ್ಯಾಶ್ ಬುಕ್</string>
+    <string name="settings_title">ಸೆಟ್ಟಿಂಗ್ಸ್</string>
+
+    <!-- Accounts -->
+    <string name="add_account">ಬಳಕೆದಾರರನ್ನು ಸೇರಿಸಿ</string>
+    <string name="account_name">ಬಳಕೆದಾರರ ಹೆಸರು</string>
+    <string name="open_balance">ಓಪನ್ ಬ್ಯಾಲೆನ್ಸ್</string>
+    <string name="save">ಉಳಿಸಿ</string>
+    <string name="cancel">ರದ್ದುಮಾಡಿ</string>
+    <string name="delete">ಅಳಿಸಿ</string>
+    <string name="delete_user">ಬಳಕೆದಾರರನ್ನು ಅಳಿಸಿ</string>
+    <string name="delete_user_confirm">ಈ ಬಳಕೆದಾರ ಮತ್ತು ಅವರ ಎಲ್ಲಾ ದಾಖಲೆಗಳನ್ನು ಅಳಿಸಬೇಕೇ? ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂದಕ್ಕೆ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.</string>
+    <string name="delete_txn_confirm">ಈ ಎಂಟ್ರಿಯನ್ನು ಅಳಿಸಬೇಕೇ?</string>
+    <string name="credit">ಕ್ರೆಡಿಟ್</string>
+    <string name="debit">ಡೆಬಿಟ್</string>
+    <string name="balance">ಬ್ಯಾಲೆನ್ಸ್</string>
+
+    <!-- Detail -->
+    <string name="add_txn">ವಹಿವಾಟು ಸೇರಿಸಿ</string>
+    <string name="add_to_book">ಬುಕ್‌ಗೆ ಸೇರಿಸಿ</string>
+    <string name="date">ದಿನಾಂಕ</string>
+    <string name="pick_date">ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="amount">ಮೊತ್ತ</string>
+    <string name="particular">ವಿವರ</string>
+
+    <!-- Table headers -->
+    <string name="col_date">ದಿನಾಂಕ</string>
+    <string name="col_particular">ವಿವರ</string>
+    <string name="col_credit">ಕ್ರೆಡಿಟ್</string>
+    <string name="col_debit">ಡೆಬಿಟ್</string>
+    <string name="col_balance">ಬ್ಯಾಲೆನ್ಸ್</string>
+
+    <string name="ok">ಸರಿ</string>
+
+    <!-- PDF labels -->
+    <string name="total">ಒಟ್ಟು</string>
+    <string name="label_customer_with_value">ಗ್ರಾಹಕ: %1$s</string>
+    <string name="label_date_with_value">ದಿನಾಂಕ: %1$s</string>
+    <string name="label_total_balance_with_value">ಒಟ್ಟು ಬ್ಯಾಲೆನ್ಸ್: %1$s</string>
+    <string name="pdf_generated_footer">ಈ ವರದಿಯನ್ನು Simple Cash Book ಅಪ್ಲಿಕೇಶನ್ ನಿರ್ಮಿಸಿದೆ</string>
+
+    <!-- Settings -->
+    <string name="gd_connected">Google Drive ಸಂಪರ್ಕವಾಗಿದೆ</string>
+    <string name="gd_not_connected">Google Drive ಸಂಪರ್ಕವಾಗಿಲ್ಲ</string>
+    <string name="sign_in">ಸೈನ್ ಇನ್</string>
+    <string name="sign_out">ಸೈನ್ ಔಟ್ ಮಾಡಲಾಗಿದೆ</string>
+    <string name="sign_in_failed">ಸೈನ್ ಇನ್ ವಿಫಲವಾಗಿದೆ</string>
+
+    <string name="language_title">ಭಾಷೆ</string>
+    <string name="system_option">ಸಿಸ್ಟಮ್</string>
+    <string name="english_label">English</string>
+    <string name="hindi_label">हिन्दी</string>
+    <string name="kannada_label">ಕನ್ನಡ</string>
+    <string name="changes_apply_note">ಬದಲಾವಣೆಗಳು ಪರದೆಯನ್ನು ಮರುಲೋಡ್ ಮಾಡಿದ ನಂತರ ಅನ್ವಯಿಸುತ್ತವೆ</string>
+
+    <string name="theme_title">ಥೀಮ್</string>
+    <string name="light_option">ಲೈಟ್</string>
+    <string name="dark_option">ಡಾರ್ಕ್</string>
+
+    <string name="backup_to_drive">ಡ್ರೈವ್‌ಗೆ ಬ್ಯಾಕಪ್</string>
+    <string name="list_backups">ಬ್ಯಾಕಪ್‌ಗಳ ಪಟ್ಟಿಮಾಡಿ</string>
+    <string name="listed_backups">%1$d ಬ್ಯಾಕಪ್‌ಗಳು ಕಂಡುಬಂದಿವೆ</string>
+    <string name="backup_uploaded">ಬ್ಯಾಕಪ್ ಅಪ್‌ಲೋಡ್ ಆಗಿದೆ</string>
+    <string name="backup_failed">ಬ್ಯಾಕಪ್ ವಿಫಲವಾಗಿದೆ</string>
+    <string name="restore_complete">ರಿಸ್ಟೋರ್ ಸಂಪೂರ್ಣವಾಗಿದೆ. ಅಪ್ ಅನ್ನು ಪುನರಾರಂಭಿಸಿ.</string>
+    <string name="restore_failed">ರಿಸ್ಟೋರ್ ವಿಫಲವಾಗಿದೆ</string>
+    <string name="download_failed">ಡೌನ್‌ಲೋಡ್ ವಿಫಲವಾಗಿದೆ</string>
+    <string name="tap_to_restore">ರಿಸ್ಟೋರ್ ಮಾಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
+
+    <string name="developer_label">ಡೆವಲಪರ್: Ledge Apps</string>
+    <string name="email_label">ಸಹಾಯ: support@ledgeapps.com</string>
+    <string name="app_version_label">ಆವೃತ್ತಿ: %1$s</string>
+</resources>

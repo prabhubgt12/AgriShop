@@ -90,6 +90,17 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.2.1")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+
+    // DataStore for preferences (theme, language)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Google Sign-In and Drive for backup/restore
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("com.google.api-client:google-api-client-android:2.6.0")
+    implementation("com.google.http-client:google-http-client-android:1.43.3")
+    implementation("com.google.http-client:google-http-client-gson:1.43.3")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20230815-2.0.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.50")

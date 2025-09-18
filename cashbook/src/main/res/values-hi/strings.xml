@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simple CashBook</string>
+
+    <!-- Home -->
+    <string name="title_dashboard">डैशबोर्ड</string>
+    <string name="title_cash_book">कैश बुक</string>
+    <string name="settings_title">सेटिंग्स</string>
+
+    <!-- Accounts -->
+    <string name="add_account">उपयोगकर्ता जोड़ें</string>
+    <string name="account_name">उपयोगकर्ता नाम</string>
+    <string name="open_balance">ओपन बैलेंस</string>
+    <string name="save">सेव</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="delete">हटाएँ</string>
+    <string name="delete_user">उपयोगकर्ता हटाएँ</string>
+    <string name="delete_user_confirm">क्या आप इस उपयोगकर्ता और उसके सभी रिकॉर्ड्स को हटाना चाहते हैं? यह क्रिया वापस नहीं की जा सकती।</string>
+    <string name="delete_txn_confirm">क्या इस प्रविष्टि को हटाएँ?</string>
+    <string name="credit">क्रेडिट</string>
+    <string name="debit">डेबिट</string>
+    <string name="balance">बैलेंस</string>
+
+    <!-- Detail -->
+    <string name="add_txn">नया लेन-देन जोड़ें</string>
+    <string name="add_to_book">बुक में जोड़ें</string>
+    <string name="date">तिथि</string>
+    <string name="pick_date">तिथि चुनें</string>
+    <string name="amount">राशि</string>
+    <string name="particular">विवरण</string>
+
+    <!-- Table headers -->
+    <string name="col_date">तिथि</string>
+    <string name="col_particular">विवरण</string>
+    <string name="col_credit">क्रेडिट</string>
+    <string name="col_debit">डेबिट</string>
+    <string name="col_balance">बैलेंस</string>
+
+    <string name="ok">ठीक है</string>
+
+    <!-- PDF labels -->
+    <string name="total">कुल</string>
+    <string name="label_customer_with_value">ग्राहक: %1$s</string>
+    <string name="label_date_with_value">तिथि: %1$s</string>
+    <string name="label_total_balance_with_value">कुल बैलेंस: %1$s</string>
+    <string name="pdf_generated_footer">यह रिपोर्ट Simple Cash Book ऐप द्वारा बनाई गई है</string>
+
+    <!-- Settings -->
+    <string name="gd_connected">Google Drive से जुड़ा</string>
+    <string name="gd_not_connected">Google Drive जुड़ा नहीं है</string>
+    <string name="sign_in">साइन इन</string>
+    <string name="sign_out">साइन आउट किया गया</string>
+    <string name="sign_in_failed">साइन-इन विफल</string>
+
+    <string name="language_title">भाषा</string>
+    <string name="system_option">सिस्टम</string>
+    <string name="english_label">English</string>
+    <string name="hindi_label">हिन्दी</string>
+    <string name="kannada_label">Kannada</string>
+    <string name="changes_apply_note">परिवर्तन स्क्रीन रीलोड के बाद लागू होंगे</string>
+
+    <string name="theme_title">थीम</string>
+    <string name="light_option">लाइट</string>
+    <string name="dark_option">डार्क</string>
+
+    <string name="backup_to_drive">ड्राइव पर बैकअप</string>
+    <string name="list_backups">बैकअप सूची</string>
+    <string name="listed_backups">%1$d बैकअप मिले</string>
+    <string name="backup_uploaded">बैकअप अपलोड हुआ</string>
+    <string name="backup_failed">बैकअप विफल</string>
+    <string name="restore_complete">रिस्टोर पूरा। ऐप को पुनः शुरू करें।</string>
+    <string name="restore_failed">रिस्टोर विफल</string>
+    <string name="download_failed">डाउनलोड विफल</string>
+    <string name="tap_to_restore">रिस्टोर करने के लिए टैप करें</string>
+
+    <string name="developer_label">डेवलपर: Ledge Apps</string>
+    <string name="email_label">समर्थन: support@ledgeapps.com</string>
+    <string name="app_version_label">संस्करण: %1$s</string>
+</resources>
