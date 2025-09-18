@@ -150,6 +150,9 @@
     <string name="interest_rate_percent">ಬಡ್ಡಿ ದರ (%)</string>
     <string name="pick">ಆರಿಸಿ</string>
     <string name="notes_optional">ಟಿಪ್ಪಣಿಗಳು (ಐಚ್ಛಿಕ)</string>
+    <string name="attach">ಚಿತ್ರವನ್ನು ಲಗತ್ತಿಸಿ</string>
+    <string name="image_too_large">ಚಿತ್ರದ ಗಾತ್ರ 1 MB ಕ್ಕಿಂತ ಹೆಚ್ಚು</string>
+    <string name="full_payment">ಪೂರ್ಣ ಪಾವತಿ</string>
     
     <!-- Generic/detail/dialog labels (Kannada) -->
     <string name="entry_details">ದಾಖಲೆಯ ವಿವರಗಳು</string>
@@ -162,4 +165,5 @@
     <string name="delete_entry">ದಾಖಲೆಯನ್ನು ಅಳಿಸಿ</string>
     <string name="delete_entry_confirm">ಈ ದಾಖಲೆಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ? ಇದರ ಪಾವತಿಗಳೂ ಅಳಿಸಲಾಗುತ್ತದೆ. ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂತೆಗೆದುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ.</string>
     <string name="no_payments_yet">ಇನ್ನೂ ಯಾವುದೇ ಪಾವತಿಗಳಿಲ್ಲ.</string>
+    <string name="no_payments_pending">ಯಾವುದೇ ಪಾವತಿಗಳು ಬಾಕಿ ಇಲ್ಲ</string>
 </resources>

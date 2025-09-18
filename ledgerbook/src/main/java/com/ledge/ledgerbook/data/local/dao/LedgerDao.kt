@@ -27,7 +27,7 @@ interface LedgerDao {
     @Query("DELETE FROM ledger_payments WHERE entryId = :entryId")
     suspend fun clearPaymentsFor(entryId: Int)
 
-    @Query("SELECT * FROM ledger_entries ORDER BY fromDate DESC, id DESC")
+    @Query("SELECT * FROM ledger_entries ORDER BY createdAt DESC, id DESC")
     fun getAllEntries(): Flow<List<LedgerEntry>>
 
     @Query("SELECT * FROM ledger_entries WHERE id = :id")
@@ -38,4 +38,10 @@ interface LedgerDao {
 
     @Query("SELECT IFNULL(SUM(amount), 0) FROM ledger_payments WHERE entryId = :entryId")
     suspend fun getPaidTotalFor(entryId: Int): Double
+
+    @Query("SELECT * FROM ledger_payments WHERE entryId = :entryId ORDER BY date DESC, id DESC LIMIT 1")
+    suspend fun getLastPayment(entryId: Int): LedgerPayment?
+
+    @Query("DELETE FROM ledger_payments WHERE id = :paymentId")
+    suspend fun deletePaymentById(paymentId: Int)
 }

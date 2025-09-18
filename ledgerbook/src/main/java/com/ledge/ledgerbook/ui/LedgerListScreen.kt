@@ -30,12 +30,29 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import android.content.Intent
+import android.net.Uri
+import android.provider.OpenableColumns
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import com.ledge.ledgerbook.R
 import com.ledge.ledgerbook.billing.MonetizationViewModel
 import com.ledge.ledgerbook.ads.BannerAd
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import com.ledge.ledgerbook.util.CurrencyFormatter
 import com.ledge.ledgerbook.util.PdfShareUtils
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.core.graphics.drawable.toBitmap
+import coil.compose.rememberAsyncImagePainter
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.math.roundToInt
@@ -105,6 +122,9 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val partialAmount = remember { mutableStateOf("") }
     val partialDateMillis = remember { mutableStateOf(System.currentTimeMillis()) }
     val partialNote = remember { mutableStateOf("") }
+    val partialAttachmentUri = remember { mutableStateOf<Uri?>(null) }
+    val partialFullPayment = remember { mutableStateOf(false) }
+    val editingLatestPayment = remember { mutableStateOf(false) }
     val previewInterest = remember { mutableStateOf(0.0) }
     val previewOutstanding = remember { mutableStateOf(0.0) }
     val detailsForId = remember { mutableStateOf<Int?>(null) }
@@ -326,10 +346,17 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 onHistory = { vm.openPayments(item.id) },
                                 onEdit = { vm.beginEdit(item.id) },
                                 onPartial = {
-                                    partialForId.value = item.id
-                                    partialAmount.value = ""
-                                    partialNote.value = ""
-                                    partialDateMillis.value = System.currentTimeMillis()
+                                    if (item.outstanding <= 0.0) {
+                                        android.widget.Toast.makeText(context, context.getString(R.string.no_payments_pending), android.widget.Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        partialForId.value = item.id
+                                        partialAmount.value = ""
+                                        partialNote.value = ""
+                                        partialAttachmentUri.value = null
+                                        partialFullPayment.value = false
+                                        editingLatestPayment.value = false
+                                        partialDateMillis.value = System.currentTimeMillis()
+                                    }
                                 },
                                 onDelete = { confirmDeleteId.value = item.id },
                                 onShare = { PdfShareUtils.shareEntry(context, item, includePromo = !hasRemoveAds) },
@@ -352,10 +379,17 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         onHistory = { vm.openPayments(item.id) },
                         onEdit = { vm.beginEdit(item.id) },
                         onPartial = {
-                            partialForId.value = item.id
-                            partialAmount.value = ""
-                            partialNote.value = ""
-                            partialDateMillis.value = System.currentTimeMillis()
+                            if (item.outstanding <= 0.0) {
+                                android.widget.Toast.makeText(context, context.getString(R.string.no_payments_pending), android.widget.Toast.LENGTH_SHORT).show()
+                            } else {
+                                partialForId.value = item.id
+                                partialAmount.value = ""
+                                partialNote.value = ""
+                                partialAttachmentUri.value = null
+                                partialFullPayment.value = false
+                                editingLatestPayment.value = false
+                                partialDateMillis.value = System.currentTimeMillis()
+                            }
                         },
                         onDelete = { confirmDeleteId.value = item.id },
                         onShare = { PdfShareUtils.shareEntry(context, item, includePromo = !hasRemoveAds) },
@@ -489,11 +523,57 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val showPartial = partialForId.value != null
     if (showPartial) {
         val entryId = partialForId.value!!
-        LaunchedEffect(entryId, partialDateMillis.value, partialAmount.value) {
+        LaunchedEffect(entryId, partialDateMillis.value, partialAmount.value, partialFullPayment.value) {
             val (accrued, _, outstanding) = vm.computeAt(entryId, partialDateMillis.value)
             previewInterest.value = accrued
-            val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
-            previewOutstanding.value = (outstanding - amt).coerceAtLeast(0.0)
+            if (partialFullPayment.value) {
+                // Auto-fill full outstanding and show remaining as zero
+                partialAmount.value = String.format("%.2f", outstanding)
+                previewOutstanding.value = 0.0
+            } else {
+                val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
+                previewOutstanding.value = (outstanding - amt).coerceAtLeast(0.0)
+            }
+        }
+
+        val ctx = LocalContext.current
+        val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                // Validate < 1MB
+                try {
+                    ctx.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+                        val size = afd.length
+                        if (size in 1..1_000_000) {
+                            // Import into app's files/attachments directory
+                            val dir = File(ctx.filesDir, "attachments").apply { mkdirs() }
+                            val ext = "jpg" // keep simple; source type may vary
+                            val outFile = File(dir, "att_${System.currentTimeMillis()}.$ext")
+                            ctx.contentResolver.openInputStream(uri)?.use { input ->
+                                FileOutputStream(outFile).use { output ->
+                                    input.copyTo(output)
+                                }
+                            }
+                            val fileUri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", outFile)
+                            partialAttachmentUri.value = fileUri
+                        } else if (size <= 0) {
+                            // Fallback: accept
+                            val dir = File(ctx.filesDir, "attachments").apply { mkdirs() }
+                            val outFile = File(dir, "att_${System.currentTimeMillis()}")
+                            ctx.contentResolver.openInputStream(uri)?.use { input ->
+                                FileOutputStream(outFile).use { output ->
+                                    input.copyTo(output)
+                                }
+                            }
+                            val fileUri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", outFile)
+                            partialAttachmentUri.value = fileUri
+                        } else {
+                            android.widget.Toast.makeText(ctx, ctx.getString(R.string.image_too_large), android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (_: Exception) {
+                    partialAttachmentUri.value = null
+                }
+            }
         }
         CenteredAlertDialog(
             onDismissRequest = { partialForId.value = null },
@@ -519,18 +599,25 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             }
                         ) { DatePicker(state = dpState) }
                     }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = partialFullPayment.value, onCheckedChange = { partialFullPayment.value = it })
+                        Text(text = stringResource(R.string.full_payment))
+                    }
 
                     OutlinedTextField(
                         value = partialAmount.value,
                         onValueChange = { input ->
                             // Allow only digits and a decimal point; disallow negatives
-                            partialAmount.value = input.filter { ch -> ch.isDigit() || ch == '.' }
+                            if (!partialFullPayment.value) {
+                                partialAmount.value = input.filter { ch -> ch.isDigit() || ch == '.' }
+                            }
                         },
                         label = { Text(stringResource(R.string.amount)) },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !partialFullPayment.value
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(stringResource(R.string.interest_till_date) + ": " + CurrencyFormatter.formatInr(previewInterest.value))
@@ -542,12 +629,34 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         label = { Text(stringResource(R.string.notes_optional)) },
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(onClick = {
+                            imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }) { Text(stringResource(R.string.attach)) }
+                        Spacer(Modifier.width(8.dp))
+                        val att = partialAttachmentUri.value
+                        if (att != null) {
+                            val painter = rememberAsyncImagePainter(att)
+                            Image(painter = painter, contentDescription = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)), contentScale = ContentScale.Crop)
+                            Spacer(Modifier.width(8.dp))
+                            TextButton(onClick = { partialAttachmentUri.value = null }) { Text(stringResource(R.string.delete)) }
+                        }
+                    }
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
                     val amt = (partialAmount.value.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0)
-                    partialForId.value?.let { vm.applyPartial(it, amt, partialDateMillis.value) }
+                    val attStr = partialAttachmentUri.value?.toString()
+                    val noteStr = partialNote.value.ifBlank { null }
+                    partialForId.value?.let { id ->
+                        if (editingLatestPayment.value) {
+                            vm.editLatestPayment(id, amt, partialDateMillis.value, noteStr, attStr) { vm.openPayments(id) }
+                        } else {
+                            vm.applyPartialWithMeta(id, amt, partialDateMillis.value, noteStr, attStr)
+                        }
+                    }
                     partialForId.value = null
                 }) { Text(stringResource(R.string.apply_action)) }
             },
@@ -557,6 +666,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
 
     // Payment history dialog
     val paymentsEntryId by vm.paymentsEntryId.collectAsState()
+    val selectedPaymentForView = remember { mutableStateOf<com.ledge.ledgerbook.data.local.entities.LedgerPayment?>(null) }
     if (paymentsEntryId != null) {
         val payments by vm.paymentsForViewing.collectAsState()
         CenteredAlertDialog(
@@ -566,13 +676,44 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 if (payments.isEmpty()) {
                     Text(stringResource(R.string.no_payments_yet))
                 } else {
+                    val last = payments.maxWithOrNull(compareBy<com.ledge.ledgerbook.data.local.entities.LedgerPayment>({ it.date }, { it.id }))
                     LazyColumn(Modifier.fillMaxWidth()) {
                         items(payments) { p ->
-                            Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                                Text(CurrencyFormatter.formatInr(p.amount), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                                Text(SimpleDateFormat("dd/MM/yyyy").format(Date(p.date)), style = MaterialTheme.typography.labelSmall)
-                                if (!p.note.isNullOrBlank()) {
-                                    Text(p.note, style = MaterialTheme.typography.bodySmall)
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp)
+                                    .clickable { selectedPaymentForView.value = p },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(CurrencyFormatter.formatInr(p.amount), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                                    Text(SimpleDateFormat("dd/MM/yyyy").format(Date(p.date)), style = MaterialTheme.typography.labelSmall)
+                                    val userNote = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
+                                    if (userNote.isNotBlank()) Text(userNote, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                }
+                                if (last != null && p.id == last.id) {
+                                    var menu by remember { mutableStateOf(false) }
+                                    Box { 
+                                        IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, contentDescription = null) }
+                                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                                            DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
+                                                menu = false
+                                                partialForId.value = paymentsEntryId
+                                                partialAmount.value = String.format("%.2f", p.amount)
+                                                partialDateMillis.value = p.date
+                                                partialNote.value = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
+                                                partialAttachmentUri.value = p.note?.substringAfter("att:")?.let { it.substringBefore('|') }?.let { Uri.parse(it) }
+                                                partialFullPayment.value = false
+                                                editingLatestPayment.value = true
+                                            })
+                                            DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = {
+                                                menu = false
+                                                val id = paymentsEntryId
+                                                if (id != null) vm.deleteLatestPayment(id) { vm.openPayments(id) }
+                                            })
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -580,6 +721,49 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 }
             },
             confirmButton = { TextButton(onClick = { vm.closePayments() }) { Text(stringResource(R.string.close)) } }
+        )
+    }
+
+    // Payment details view dialog when a history row is tapped
+    val viewPayment = selectedPaymentForView.value
+    if (viewPayment != null) {
+        val userNote = ((viewPayment.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
+        val attStr = viewPayment.note?.substringAfter("att:")?.let { it.substringBefore('|') }
+        val attUri = attStr?.let { runCatching { Uri.parse(it) }.getOrNull() }
+        CenteredAlertDialog(
+            onDismissRequest = { selectedPaymentForView.value = null },
+            title = { Text(text = stringResource(R.string.entry_details)) },
+            text = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = stringResource(R.string.amount) + ": " + CurrencyFormatter.formatInr(viewPayment.amount), style = MaterialTheme.typography.bodyLarge)
+                    Text(text = stringResource(R.string.payment_date) + ": " + SimpleDateFormat("dd/MM/yyyy").format(Date(viewPayment.date)), style = MaterialTheme.typography.bodyMedium)
+                    if (userNote.isNotBlank()) {
+                        Text(text = stringResource(R.string.notes_optional) + ":")
+                        Text(text = userNote, style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (attUri != null) {
+                        val painter = rememberAsyncImagePainter(attUri)
+                        Image(
+                            painter = painter,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(140.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                            setDataAndType(attUri, "image/*")
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(intent)
+                                    } catch (_: Exception) { }
+                                },
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { selectedPaymentForView.value = null }) { Text(stringResource(R.string.close)) } }
         )
     }
 

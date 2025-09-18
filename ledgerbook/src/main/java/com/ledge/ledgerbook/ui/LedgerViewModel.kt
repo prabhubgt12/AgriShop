@@ -121,8 +121,24 @@ class LedgerViewModel @Inject constructor(
     // Partial payment helpers
     suspend fun computeAt(entryId: Int, atMillis: Long) = repo.computeAt(entryId, atMillis)
     fun applyPartial(entryId: Int, amount: Double, dateMillis: Long) {
+        viewModelScope.launch(Dispatchers.IO) { repo.applyPartialPayment(entryId, amount, dateMillis) }
+    }
+
+    fun applyPartialWithMeta(entryId: Int, amount: Double, dateMillis: Long, userNote: String?, attachmentUri: String?) {
+        viewModelScope.launch(Dispatchers.IO) { repo.applyPartialWithMeta(entryId, amount, dateMillis, userNote, attachmentUri) }
+    }
+
+    fun deleteLatestPayment(entryId: Int, onDone: (() -> Unit)? = null) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.applyPartialPayment(entryId, amount, dateMillis)
+            repo.deleteLatestPayment(entryId)
+            onDone?.invoke()
+        }
+    }
+
+    fun editLatestPayment(entryId: Int, newAmount: Double, newDateMillis: Long, userNote: String?, attachmentUri: String?, onDone: (() -> Unit)? = null) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.editLatestPayment(entryId, newAmount, newDateMillis, userNote, attachmentUri)
+            onDone?.invoke()
         }
     }
 

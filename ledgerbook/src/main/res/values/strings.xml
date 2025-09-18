@@ -161,5 +161,9 @@
     <string name="delete_entry">Delete Entry</string>
     <string name="delete_entry_confirm">Are you sure you want to delete this entry? This will also remove its payments. This action cannot be undone.</string>
     <string name="no_payments_yet">No payments yet.</string>
+    <string name="no_payments_pending">No payments pending</string>
     <string name="apply_action">Apply</string>
+    <string name="attach">Attach image</string>
+    <string name="image_too_large">Image is larger than 1 MB</string>
+    <string name="full_payment">Full Payment</string>
 </resources>

@@ -114,9 +114,13 @@
     <string name="interest_rate_percent">ब्याज दर (%)</string>
     <string name="pick">चुनें</string>
     <string name="notes_optional">नोट्स (वैकल्पिक)</string>
+    <string name="attach">छवि संलग्न करें</string>
+    <string name="image_too_large">छवि 1 एमबी से बड़ी है</string>
+    <string name="full_payment">पूर्ण भुगतान</string>
 
     <!-- Ledger list menus/labels additions -->
     <string name="total_principal">कुल मूलधन</string>
+    <string name="no_payments_pending">कोई भुगतान लंबित नहीं</string>
     
     <!-- Ledger list menus/labels -->
     <string name="more">अधिक</string>
