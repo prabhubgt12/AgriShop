@@ -39,4 +39,13 @@ class AccountsViewModel @Inject constructor(
     }
 
     fun txns(accountId: Int) = repo.txns(accountId)
+
+    fun deleteAccountDeep(accountId: Int) {
+        viewModelScope.launch {
+            // Delete all transactions then the account itself
+            repo.clear(accountId)
+            val acc = repo.getAccount(accountId)
+            if (acc != null) repo.deleteAccount(acc)
+        }
+    }
 }

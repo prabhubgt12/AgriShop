@@ -32,6 +32,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material.icons.filled.Delete
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +46,7 @@ fun AccountsScreen(
     var accountName by remember { mutableStateOf("") }
     var openBalanceText by remember { mutableStateOf("") }
     val ctx = LocalContext.current
+    var confirmDeleteFor by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(
@@ -108,6 +110,13 @@ fun AccountsScreen(
                                         onClick = {
                                             menuOpen = false
                                             PdfShare.exportAccount(ctx, acc.name, txns)
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.delete_user)) },
+                                        onClick = {
+                                            menuOpen = false
+                                            confirmDeleteFor = acc.id
                                         }
                                     )
                                 }
@@ -230,6 +239,23 @@ fun AccountsScreen(
                     )
                 }
             }
+        )
+    }
+
+    // Confirm delete user dialog
+    val toDelete = confirmDeleteFor
+    if (toDelete != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteFor = null },
+            title = { Text(stringResource(R.string.delete_user)) },
+            text = { Text(stringResource(R.string.delete_user_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.deleteAccountDeep(toDelete)
+                    confirmDeleteFor = null
+                }) { Text(stringResource(R.string.delete)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDeleteFor = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 }

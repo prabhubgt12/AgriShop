@@ -13,6 +13,10 @@
     <string name="open_balance">Open Balance</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="delete_user">Delete User</string>
+    <string name="delete_user_confirm">Delete this user and all their records? This action cannot be undone.</string>
+    <string name="delete_txn_confirm">Delete this entry?</string>
     <string name="credit">Credit</string>
     <string name="debit">Debit</string>
     <string name="balance">Balance</string>

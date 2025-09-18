@@ -18,10 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
 import com.ledge.cashbook.util.Currency
+import com.ledge.cashbook.data.local.entities.CashTxn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +33,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.combinedClickable
 import kotlin.math.roundToInt
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -50,9 +53,27 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var note by remember { mutableStateOf("") }
     var dateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var confirmDeleteTxn by remember { mutableStateOf<CashTxn?>(null) }
 
     LaunchedEffect(openAdd) {
         if (openAdd) showAdd = true
+    }
+
+    // Confirm delete transaction dialog
+    val txnToDelete = confirmDeleteTxn
+    if (txnToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteTxn = null },
+            title = { Text(stringResource(R.string.delete)) },
+            text = { Text(stringResource(R.string.delete_txn_confirm)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.deleteTxn(txnToDelete)
+                    confirmDeleteTxn = null
+                }) { Text(stringResource(R.string.delete)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDeleteTxn = null }) { Text(stringResource(R.string.cancel)) } }
+        )
     }
 
     Scaffold(
@@ -136,6 +157,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         Modifier
                             .fillMaxWidth()
                             .background(rowBg)
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = { confirmDeleteTxn = t }
+                            )
                             .padding(vertical = 8.dp, horizontal = 6.dp), // Added horizontal padding
                         verticalAlignment = Alignment.CenterVertically
                     ) {

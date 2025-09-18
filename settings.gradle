@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 rootProject.name = 'windsurf-project'
 include ':app'
 include ':ledgerbook'
+include ':cashbook'

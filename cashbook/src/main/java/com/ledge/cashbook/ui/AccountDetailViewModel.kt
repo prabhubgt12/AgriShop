@@ -40,4 +40,10 @@ class AccountDetailViewModel @Inject constructor(
             repo.addTxn(id, date, amount, isCredit, note)
         }
     }
+
+    fun deleteTxn(txn: CashTxn) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.deleteTxn(txn)
+        }
+    }
 }
