@@ -72,6 +72,14 @@
     <string name="gd_not_connected">Google Drive: Not Connected</string>
     <string name="sign_in">Sign in</string>
     <string name="sign_out">Sign out</string>
+    <string name="sign_in_failed">Sign-in failed</string>
+    <string name="backup_and_sync">Backup and Sync</string>
+    <string name="backup_uploaded">Backup uploaded</string>
+    <string name="backup_failed">Backup failed</string>
+    <string name="restore_complete">Restore complete. Restart app.</string>
+    <string name="restore_failed">Restore failed</string>
+    <string name="no_backups_found">No backups found</string>
+    <string name="restore">Restore</string>
 
     <!-- Common/Generic -->
     <string name="ok">OK</string>

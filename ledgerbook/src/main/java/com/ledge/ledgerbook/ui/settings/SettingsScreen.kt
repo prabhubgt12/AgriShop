@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.ledgerbook.billing.MonetizationViewModel
@@ -35,9 +36,11 @@ import com.ledge.ledgerbook.R
 fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltViewModel()) {
     val scope = rememberCoroutineScope()
 
-    var signedIn by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
-    var backups by remember { mutableStateOf<List<File>>(emptyList()) }
+    // AgroShop-style state for Drive
+    val snackbarHostState = remember { SnackbarHostState() }
+    var isWorking by remember { mutableStateOf(false) }
+    var signedInState by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? Activity
 
@@ -47,17 +50,24 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
 
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         val act = activity ?: return@rememberLauncherForActivityResult
-        signedIn = DriveClient.handleSignInResult(act, res.data)
-        status = if (signedIn) "Signed in" else (DriveClient.lastError() ?: "Sign-in failed")
+        val ok = DriveClient.handleSignInResult(act, res.data)
+        signedInState = ok && DriveClient.isSignedIn(act)
+        status = if (signedInState) act.getString(R.string.gd_connected) else (DriveClient.lastError() ?: act.getString(R.string.sign_in_failed))
     }
+    // Try silent init like AgroShop
     LaunchedEffect(Unit) {
-        activity?.let { signedIn = DriveClient.tryInitFromLastAccount(it) }
+        val act = activity
+        if (act != null && !signedInState) {
+            val ok = DriveClient.tryInitFromLastAccount(act)
+            if (ok) signedInState = true
+        }
     }
 
     // Handle system back to go to home/list
     BackHandler(enabled = true) { onBack() }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
@@ -69,22 +79,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            item {
-                Text(text = if (signedIn) stringResource(R.string.gd_connected) else stringResource(R.string.gd_not_connected))
-            }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = {
-                        activity?.let { signInLauncher.launch(DriveClient.getSignInIntent(it)) }
-                    }, enabled = !signedIn) { Text(stringResource(R.string.sign_in)) }
-                    Button(onClick = {
-                        val ctx = activity ?: return@Button
-                        DriveClient.signOut(ctx)
-                        signedIn = false
-                        status = context.getString(R.string.sign_out)
-                    }, enabled = signedIn) { Text(stringResource(R.string.sign_out)) }
-                }
-            }
+            // (Sign-in UI moved to bottom with Backup & Restore)
             item { HorizontalDivider() }
             // Language
             item { Text(stringResource(R.string.language_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
@@ -195,47 +190,57 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     )
                 }
             }
+            // Backup & Restore (moved to bottom, simplified like AgroShop)
             item { HorizontalDivider() }
+            item { Text(stringResource(R.string.backup_and_sync), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            // Single toggle Sign in/Sign out with status
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = {
+                        val act = activity ?: return@Button
+                        if (signedInState) {
+                            DriveClient.signOut(act)
+                            signedInState = false
+                            scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.sign_out)) }
+                        } else {
+                            signInLauncher.launch(DriveClient.getSignInIntent(act))
+                        }
+                    }) { Text(if (signedInState) stringResource(R.string.sign_out) else stringResource(R.string.sign_in)) }
+                    Text(if (signedInState) stringResource(R.string.gd_connected) else stringResource(R.string.gd_not_connected))
+                }
+            }
+            // Backup/Restore buttons with progress and snackbar
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Button(enabled = signedInState && !isWorking, onClick = {
                         scope.launch {
                             val ctx = activity ?: return@launch
+                            isWorking = true
                             val bytes = BackupManager.createBackupZip(ctx)
                             val ok = DriveClient.uploadAppData("ledgerbook-backup.zip", bytes)
-                            status = if (ok) "Backup uploaded" else (DriveClient.lastError() ?: "Backup failed")
+                            isWorking = false
+                            val msg = if (ok) context.getString(R.string.backup_uploaded) else (DriveClient.lastError() ?: context.getString(R.string.backup_failed))
+                            snackbarHostState.showSnackbar(msg)
                         }
-                    }, enabled = signedIn) { Text(stringResource(R.string.backup_to_drive)) }
-
-                    Button(onClick = {
+                    }) { Text(stringResource(R.string.backup_to_drive)) }
+                    Button(enabled = signedInState && !isWorking, onClick = {
                         scope.launch {
-                            backups = DriveClient.listBackups()
-                            status = "Found ${backups.size} backups"
+                            val latest = DriveClient.listBackups().firstOrNull()
+                            val msg = if (latest != null) {
+                                val bytes = DriveClient.download(latest.id)
+                                if (bytes != null && activity != null && BackupManager.restoreBackupZip(activity, bytes)) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
+                            } else context.getString(R.string.no_backups_found)
+                            isWorking = false
+                            snackbarHostState.showSnackbar(msg)
                         }
-                    }, enabled = signedIn) { Text(stringResource(R.string.list_backups)) }
-                }
-            }
-            items(backups) { f ->
-                ElevatedCard(onClick = {
-                    scope.launch {
-                        val bytes = DriveClient.download(f.id)
-                        if (bytes != null) {
-                            val ctx = activity
-                            val ok = if (ctx != null) BackupManager.restoreBackupZip(ctx, bytes) else false
-                            status = if (ok) "Restore complete. Restart app." else "Restore failed"
-                        } else status = DriveClient.lastError() ?: "Download failed"
-                    }
-                }) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text(f.name ?: "(no name)")
-                        Text(f.modifiedTime?.toString() ?: "", style = MaterialTheme.typography.labelSmall)
-                        Text(stringResource(R.string.tap_to_restore), style = MaterialTheme.typography.labelSmall)
+                        isWorking = true
+                    }) { Text(stringResource(R.string.restore)) }
+                    if (isWorking) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
                 }
             }
             item {
-                status?.let { Text(it, style = MaterialTheme.typography.labelSmall) }
-                Spacer(Modifier.height(4.dp))
                 // Developer and version info (compact spacing)
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.developer_label), style = MaterialTheme.typography.labelSmall)

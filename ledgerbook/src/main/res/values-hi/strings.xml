@@ -71,6 +71,14 @@
     <string name="gd_not_connected">गूगल ड्राइव: कनेक्टेड नहीं</string>
     <string name="sign_in">साइन इन</string>
     <string name="sign_out">साइन आउट</string>
+    <string name="sign_in_failed">साइन-इन विफल</string>
+    <string name="backup_and_sync">बैकअप और सिंक</string>
+    <string name="backup_uploaded">बैकअप अपलोड हो गया</string>
+    <string name="backup_failed">बैकअप विफल</string>
+    <string name="restore_complete">रीस्टोर पूरा। ऐप पुनः शुरू करें।</string>
+    <string name="restore_failed">रीस्टोर विफल</string>
+    <string name="no_backups_found">कोई बैकअप नहीं मिला</string>
+    <string name="restore">रीस्टोर</string>
 
     <!-- Common/Generic used on Home/Calculator -->
     <string name="ok">ठीक</string>

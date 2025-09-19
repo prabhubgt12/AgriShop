@@ -72,6 +72,14 @@
     <string name="gd_not_connected">ಗೂಗಲ್ ಡ್ರೈವ್: ಕನೆಕ್ಟ್ ಆಗಿಲ್ಲ</string>
     <string name="sign_in">ಸೈನ್ ಇನ್</string>
     <string name="sign_out">ಸೈನ್ ಔಟ್</string>
+    <string name="sign_in_failed">ಸೈನ್-ಇನ್ ವಿಫಲವಾಯಿತು</string>
+    <string name="backup_and_sync">ಬ್ಯಾಕಪ್ ಮತ್ತು ಸಿಂಕ್</string>
+    <string name="backup_uploaded">ಬ್ಯಾಕಪ್ ಅಪ್‌ಲೋಡ್ ಆಯಿತು</string>
+    <string name="backup_failed">ಬ್ಯಾಕಪ್ ವಿಫಲವಾಯಿತು</string>
+    <string name="restore_complete">ಮರುಸ್ಥಾಪನೆ ಪೂರ್ಣ. ಆಪ್ ಮರುಪ್ರಾರಂಭಿಸಿ.</string>
+    <string name="restore_failed">ಮರುಸ್ಥಾಪನೆ ವಿಫಲವಾಯಿತು</string>
+    <string name="no_backups_found">ಯಾವುದೇ ಬ್ಯಾಕಪ್‌ಗಳು ಸಿಕ್ಕಿಲ್ಲ</string>
+    <string name="restore">ಮರುಸ್ಥಾಪಿಸಿ</string>
 
     <!-- Common/Generic -->
     <string name="ok">ಸರಿ</string>

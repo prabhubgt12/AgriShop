@@ -25,10 +25,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.ledge.ledgerbook.data.prefs.LocalePrefs
 import com.ledge.ledgerbook.ui.LedgerApp
 import com.ledge.ledgerbook.ui.theme.LedgerTheme
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
+import com.ledge.ledgerbook.util.LocaleHelper
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -42,12 +45,22 @@ class MainActivity : ComponentActivity() {
 
     private val themeVm: ThemeViewModel by viewModels()
 
+    override fun attachBaseContext(newBase: Context) {
+        // Wrap base context with selected locale (helps Android 11/OEMs)
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Enable edge-to-edge and make bars transparent. Insets will be consumed in Compose.
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
         window.navigationBarColor = Color.TRANSPARENT
+        // SAFETY: Apply stored app locale before first frame (helps Android 11/OEM variants)
+        runBlocking {
+            val tag = LocalePrefs.getAppLocaleTag(applicationContext)
+            LocalePrefs.applyLocale(applicationContext, tag)
+        }
         setContent {
             val mode = themeVm.themeMode.collectAsState().value
             LedgerTheme(themeMode = mode) {
