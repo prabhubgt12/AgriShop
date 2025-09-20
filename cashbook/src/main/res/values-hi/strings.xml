@@ -74,11 +74,17 @@
     <string name="download_failed">डाउनलोड विफल</string>
     <string name="tap_to_restore">रिस्टोर करने के लिए टैप करें</string>
 
-    <string name="developer_label">डेवलपर: Ledge Apps</string>
-    <string name="email_label">समर्थन: support@ledgeapps.com</string>
+    <string name="developer_label">डेवलपर: Simple Andro</string>
+    <string name="email_label">समर्थन: prabhurb@gmail.com</string>
     <string name="app_version_label">संस्करण: %1$s</string>
     
     <!-- Backup & Sync section -->
     <string name="backup_and_sync">बैकअप और सिंक</string>
     <string name="restore">रिस्टोर</string>
+    
+    <!-- Backup/Restore confirmation -->
+    <string name="backup_confirm_title">बैकअप की पुष्टि करें</string>
+    <string name="backup_confirm_message">यह ड्राइव पर बैकअप बनाएगा और उसी नाम वाले मौजूदा बैकअप को ओवरराइट कर सकता है। जारी रखें?</string>
+    <string name="restore_confirm_title">रिस्टोर की पुष्टि करें</string>
+    <string name="restore_confirm_message">यह चयनित बैकअप से आपके वर्तमान डेटा को ओवरराइट कर देगा। जारी रखें?</string>
 </resources>

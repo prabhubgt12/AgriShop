@@ -79,6 +79,16 @@
     <string name="restore_failed">रीस्टोर विफल</string>
     <string name="no_backups_found">कोई बैकअप नहीं मिला</string>
     <string name="restore">रीस्टोर</string>
+    
+    <!-- Backup/Restore confirmation -->
+    <string name="backup_confirm_title">बैकअप की पुष्टि करें</string>
+    <string name="backup_confirm_message">यह ड्राइव पर बैकअप बनाएगा और उसी नाम वाले मौजूदा बैकअप को ओवरराइट कर सकता है। जारी रखें?</string>
+    <string name="restore_confirm_title">रीस्टोर की पुष्टि करें</string>
+    <string name="restore_confirm_message">यह चयनित बैकअप से आपके वर्तमान डेटा को ओवरराइट कर देगा। जारी रखें?</string>
+    
+    <!-- Backup info -->
+    <string name="last_backup_label">अंतिम बैकअप: %1$s</string>
+    <string name="never_label">कभी नहीं</string>
 
     <!-- Common/Generic used on Home/Calculator -->
     <string name="ok">ठीक</string>

@@ -30,6 +30,11 @@ import com.ledge.ledgerbook.data.prefs.LocalePrefs
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.ui.res.stringResource
 import com.ledge.ledgerbook.R
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,6 +46,9 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     val snackbarHostState = remember { SnackbarHostState() }
     var isWorking by remember { mutableStateOf(false) }
     var signedInState by remember { mutableStateOf(false) }
+    var lastBackupDisplay by remember { mutableStateOf<String?>(null) }
+    var showBackupConfirm by remember { mutableStateOf(false) }
+    var showRestoreConfirm by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? Activity
 
@@ -53,13 +61,21 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
         val ok = DriveClient.handleSignInResult(act, res.data)
         signedInState = ok && DriveClient.isSignedIn(act)
         status = if (signedInState) act.getString(R.string.gd_connected) else (DriveClient.lastError() ?: act.getString(R.string.sign_in_failed))
+        if (signedInState) {
+            scope.launch { lastBackupDisplay = fetchLbLastBackupTime() }
+        } else {
+            lastBackupDisplay = null
+        }
     }
     // Try silent init like AgroShop
     LaunchedEffect(Unit) {
         val act = activity
         if (act != null && !signedInState) {
             val ok = DriveClient.tryInitFromLastAccount(act)
-            if (ok) signedInState = true
+            if (ok) {
+                signedInState = true
+                lastBackupDisplay = fetchLbLastBackupTime()
+            }
         }
     }
 
@@ -201,6 +217,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         if (signedInState) {
                             DriveClient.signOut(act)
                             signedInState = false
+                            lastBackupDisplay = null
                             scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.sign_out)) }
                         } else {
                             signInLauncher.launch(DriveClient.getSignInIntent(act))
@@ -209,32 +226,18 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     Text(if (signedInState) stringResource(R.string.gd_connected) else stringResource(R.string.gd_not_connected))
                 }
             }
-            // Backup/Restore buttons with progress and snackbar
+            // Last backup info
+            item {
+                if (signedInState) {
+                    val label = lastBackupDisplay ?: stringResource(R.string.never_label)
+                    Text(text = stringResource(R.string.last_backup_label, label), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            // Backup/Restore buttons with progress, confirm dialogs and snackbar
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Button(enabled = signedInState && !isWorking, onClick = {
-                        scope.launch {
-                            val ctx = activity ?: return@launch
-                            isWorking = true
-                            val bytes = BackupManager.createBackupZip(ctx)
-                            val ok = DriveClient.uploadAppData("ledgerbook-backup.zip", bytes)
-                            isWorking = false
-                            val msg = if (ok) context.getString(R.string.backup_uploaded) else (DriveClient.lastError() ?: context.getString(R.string.backup_failed))
-                            snackbarHostState.showSnackbar(msg)
-                        }
-                    }) { Text(stringResource(R.string.backup_to_drive)) }
-                    Button(enabled = signedInState && !isWorking, onClick = {
-                        scope.launch {
-                            val latest = DriveClient.listBackups().firstOrNull()
-                            val msg = if (latest != null) {
-                                val bytes = DriveClient.download(latest.id)
-                                if (bytes != null && activity != null && BackupManager.restoreBackupZip(activity, bytes)) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
-                            } else context.getString(R.string.no_backups_found)
-                            isWorking = false
-                            snackbarHostState.showSnackbar(msg)
-                        }
-                        isWorking = true
-                    }) { Text(stringResource(R.string.restore)) }
+                    Button(enabled = signedInState && !isWorking, onClick = { showBackupConfirm = true }) { Text(stringResource(R.string.backup_to_drive)) }
+                    Button(enabled = signedInState && !isWorking, onClick = { showRestoreConfirm = true }) { Text(stringResource(R.string.restore)) }
                     if (isWorking) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
@@ -249,6 +252,57 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 }
             }
         }
+        // Backup confirmation dialog
+        if (showBackupConfirm) {
+            AlertDialog(
+                onDismissRequest = { showBackupConfirm = false },
+                title = { Text(stringResource(R.string.backup_confirm_title)) },
+                text = { Text(stringResource(R.string.backup_confirm_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showBackupConfirm = false
+                        scope.launch {
+                            val ctx = activity ?: return@launch
+                            isWorking = true
+                            val bytes = BackupManager.createBackupZip(ctx)
+                            val ok = DriveClient.uploadAppData("ledgerbook-backup.zip", bytes)
+                            isWorking = false
+                            val msg = if (ok) context.getString(R.string.backup_uploaded) else (DriveClient.lastError() ?: context.getString(R.string.backup_failed))
+                            snackbarHostState.showSnackbar(msg)
+                            if (ok) {
+                                lastBackupDisplay = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.systemDefault()).format(Instant.now())
+                            }
+                        }
+                    }) { Text(stringResource(R.string.ok)) }
+                },
+                dismissButton = { TextButton(onClick = { showBackupConfirm = false }) { Text(stringResource(R.string.cancel)) } }
+            )
+        }
+        // Restore confirmation dialog
+        if (showRestoreConfirm) {
+            AlertDialog(
+                onDismissRequest = { showRestoreConfirm = false },
+                title = { Text(stringResource(R.string.restore_confirm_title)) },
+                text = { Text(stringResource(R.string.restore_confirm_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showRestoreConfirm = false
+                        scope.launch {
+                            isWorking = true
+                            val latest = DriveClient.listBackups().firstOrNull()
+                            val msg = if (latest != null) {
+                                val bytes = DriveClient.download(latest.id)
+                                if (bytes != null && activity != null && BackupManager.restoreBackupZip(activity, bytes)) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
+                            } else context.getString(R.string.no_backups_found)
+                            isWorking = false
+                            snackbarHostState.showSnackbar(msg)
+                            lastBackupDisplay = fetchLbLastBackupTime()
+                        }
+                    }) { Text(stringResource(R.string.ok)) }
+                },
+                dismissButton = { TextButton(onClick = { showRestoreConfirm = false }) { Text(stringResource(R.string.cancel)) } }
+            )
+        }
     }
 }
 
@@ -262,6 +316,17 @@ private fun ThemeOptionRow(label: String, selected: Boolean, onSelect: () -> Uni
         Row {
             RadioButton(selected = selected, onClick = onSelect)
         }
+    }
+}
+
+// Helper to fetch latest backup modified time for LedgerBook
+private suspend fun fetchLbLastBackupTime(): String? {
+    return try {
+        val list = DriveClient.listBackups()
+        val latest = list.firstOrNull()
+        latest?.modifiedTime?.toString()
+    } catch (_: Throwable) {
+        null
     }
 }
 

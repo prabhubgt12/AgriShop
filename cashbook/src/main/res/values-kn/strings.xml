@@ -74,11 +74,17 @@
     <string name="download_failed">ಡೌನ್‌ಲೋಡ್ ವಿಫಲವಾಗಿದೆ</string>
     <string name="tap_to_restore">ರಿಸ್ಟೋರ್ ಮಾಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
 
-    <string name="developer_label">ಡೆವಲಪರ್: Ledge Apps</string>
-    <string name="email_label">ಸಹಾಯ: support@ledgeapps.com</string>
+    <string name="developer_label">ಡೆವಲಪರ್: Simple Andro</string>
+    <string name="email_label">ಸಹಾಯ: prabhurb@gmail.com</string>
     <string name="app_version_label">ಆವೃತ್ತಿ: %1$s</string>
     
     <!-- Backup & Sync section -->
     <string name="backup_and_sync">ಬ್ಯಾಕಪ್ ಮತ್ತು ಸಿಂಕ್</string>
     <string name="restore">ಮರುಸ್ಥಾಪಿಸಿ</string>
+    
+    <!-- Backup/Restore confirmation -->
+    <string name="backup_confirm_title">ಬ್ಯಾಕಪ್ ದೃಢೀಕರಿಸಿ</string>
+    <string name="backup_confirm_message">ಇದು ಡ್ರೈವ್‌ನಲ್ಲಿ ಬ್ಯಾಕಪ್ ಅನ್ನು ರಚಿಸುತ್ತದೆ ಮತ್ತು ಅದೇ ಹೆಸರಿನ ಇತರ ಬ್ಯಾಕಪ್‌ಗಳನ್ನು ಅಳಿಸಬಹುದು. ಮುಂದುವರಿಸಬೇಕೆ?</string>
+    <string name="restore_confirm_title">ರಿಸ್ಟೋರ್ ದೃಢೀಕರಿಸಿ</string>
+    <string name="restore_confirm_message">ಇದು ಆಯ್ಕೆ ಮಾಡಿದ ಬ್ಯಾಕಪ್‌ನಿಂದ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಡೇಟಾವನ್ನು ಅಳಿಸಿ ಬರೆಯುತ್ತದೆ. ಮುಂದುವರಿಸಬೇಕೆ?</string>
 </resources>

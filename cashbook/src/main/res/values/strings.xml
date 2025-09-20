@@ -74,8 +74,8 @@
     <string name="download_failed">Download failed</string>
     <string name="tap_to_restore">Tap to restore</string>
 
-    <string name="developer_label">Developer: Ledge Apps</string>
-    <string name="email_label">Support: support@ledgeapps.com</string>
+    <string name="developer_label">Developer: Simple Andro</string>
+    <string name="email_label">Support: prabhurb@gmail.com</string>
     <string name="app_version_label">Version: %1$s</string>
     
     <!-- Device credential prompt -->
@@ -84,4 +84,14 @@
     <!-- Backup & Sync section -->
     <string name="backup_and_sync">Backup and Sync</string>
     <string name="restore">Restore</string>
+    
+    <!-- Backup/Restore confirmation -->
+    <string name="backup_confirm_title">Confirm backup</string>
+    <string name="backup_confirm_message">This will create a backup on Drive and may overwrite existing backups with the same name. Continue?</string>
+    <string name="restore_confirm_title">Confirm restore</string>
+    <string name="restore_confirm_message">This will overwrite your current data with the selected backup. Continue?</string>
+    
+    <!-- Backup info -->
+    <string name="last_backup_label">Last backup: %1$s</string>
+    <string name="never_label">Never</string>
 </resources>

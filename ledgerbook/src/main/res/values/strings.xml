@@ -80,6 +80,14 @@
     <string name="restore_failed">Restore failed</string>
     <string name="no_backups_found">No backups found</string>
     <string name="restore">Restore</string>
+    <!-- Backup/Restore confirmation -->
+    <string name="backup_confirm_title">Confirm backup</string>
+    <string name="backup_confirm_message">This will create a backup on Drive and may overwrite existing backups with the same name. Continue?</string>
+    <string name="restore_confirm_title">Confirm restore</string>
+    <string name="restore_confirm_message">This will overwrite your current data with the selected backup. Continue?</string>
+    <!-- Backup info -->
+    <string name="last_backup_label">Last backup: %1$s</string>
+    <string name="never_label">Never</string>
 
     <!-- Common/Generic -->
     <string name="ok">OK</string>
