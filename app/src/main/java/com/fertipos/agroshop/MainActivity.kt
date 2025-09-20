@@ -39,6 +39,7 @@ import com.fertipos.agroshop.R
 import com.fertipos.agroshop.data.prefs.LocalePrefs
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.fertipos.agroshop.util.LocaleHelper
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -50,11 +51,13 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+    override fun attachBaseContext(newBase: Context) {
+        // Wrap context with selected locale before any UI inflation (Android 11/OEMs)
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Apply persisted locale before composing UI
-        val tag = LocalePrefs.getAppLocale(this)
-        LocalePrefs.applyLocale(this, tag)
         // Edge-to-edge: let Compose handle insets and make system bars transparent
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
