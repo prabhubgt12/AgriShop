@@ -49,7 +49,8 @@
     <string name="gd_connected">Google Drive से जुड़ा</string>
     <string name="gd_not_connected">Google Drive जुड़ा नहीं है</string>
     <string name="sign_in">साइन इन</string>
-    <string name="sign_out">साइन आउट किया गया</string>
+    <string name="sign_out">साइन आउट</string>
+    <string name="sign_out_done">साइन आउट किया गया</string>
     <string name="sign_in_failed">साइन-इन विफल</string>
 
     <string name="language_title">भाषा</string>
@@ -76,4 +77,8 @@
     <string name="developer_label">डेवलपर: Ledge Apps</string>
     <string name="email_label">समर्थन: support@ledgeapps.com</string>
     <string name="app_version_label">संस्करण: %1$s</string>
+    
+    <!-- Backup & Sync section -->
+    <string name="backup_and_sync">बैकअप और सिंक</string>
+    <string name="restore">रिस्टोर</string>
 </resources>

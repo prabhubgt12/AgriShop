@@ -11,13 +11,14 @@ plugins {
 android {
     namespace = "com.fertipos.agroshop"
     compileSdk = 35
+    ndkVersion = "26.1.10909125"
 
     defaultConfig {
         applicationId = "com.fertipos.agroshop"
         minSdk = 24
         targetSdk = 35
-        versionCode = 14
-        versionName = "1.0.14"
+        versionCode = 15
+        versionName = "1.0.15"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -53,7 +54,7 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
-            // Disable test ads in release builds by default
+            // Closed testing: keep test ads enabled in release build
             buildConfigField("boolean", "USE_TEST_ADS", "true")
         }
     }
@@ -64,7 +65,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 
     kotlinOptions {

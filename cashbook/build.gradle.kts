@@ -12,6 +12,7 @@ plugins {
 android {
     namespace = "com.ledge.cashbook"
     compileSdk = 35
+    ndkVersion = "26.1.10909125"
 
     defaultConfig {
         applicationId = "com.ledge.cashbook"
@@ -53,7 +54,7 @@ android {
         compose = true
         buildConfig = true
     }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.10" }
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
     kotlinOptions {
         jvmTarget = "17"
         freeCompilerArgs = freeCompilerArgs + listOf("-Xjvm-default=all")

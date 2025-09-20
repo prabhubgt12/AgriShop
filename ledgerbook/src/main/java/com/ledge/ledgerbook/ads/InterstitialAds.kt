@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import android.graphics.Color
 import com.ledge.ledgerbook.BuildConfig
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -67,14 +66,11 @@ object InterstitialAds {
             preload(activity)
             onDismiss?.invoke(); return
         }
-        // Prepare window so interstitial never sits behind nav overlays:
-        // 1) Disable edge-to-edge; 2) Show system bars; 3) Make nav bar opaque during ad.
+        // Ensure system bars are shown appropriately during ad without changing bar colors
         WindowCompat.setDecorFitsSystemWindows(activity.window, true)
         val controller = WindowInsetsControllerCompat(activity.window, activity.window.decorView)
         controller.show(WindowInsetsCompat.Type.systemBars())
-        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE
-        val prevNavColor = activity.window.navigationBarColor
-        activity.window.navigationBarColor = Color.BLACK
+        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 Log.d("InterstitialAds", "Dismissed")
@@ -82,7 +78,6 @@ object InterstitialAds {
                 lastShownAt = System.currentTimeMillis()
                 // Restore window settings
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
-                activity.window.navigationBarColor = prevNavColor
                 // Preload next for future
                 preload(activity)
                 onDismiss?.invoke()
@@ -92,7 +87,6 @@ object InterstitialAds {
                 interstitial = null
                 // Restore window settings
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
-                activity.window.navigationBarColor = prevNavColor
                 // Try to load a fresh one for next time
                 preload(activity)
                 onDismiss?.invoke()

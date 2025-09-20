@@ -49,7 +49,8 @@
     <string name="gd_connected">Google Drive connected</string>
     <string name="gd_not_connected">Google Drive not connected</string>
     <string name="sign_in">Sign in</string>
-    <string name="sign_out">Signed out</string>
+    <string name="sign_out">Sign out</string>
+    <string name="sign_out_done">Signed out</string>
     <string name="sign_in_failed">Sign-in failed</string>
 
     <string name="language_title">Language</string>
@@ -76,4 +77,11 @@
     <string name="developer_label">Developer: Ledge Apps</string>
     <string name="email_label">Support: support@ledgeapps.com</string>
     <string name="app_version_label">Version: %1$s</string>
+    
+    <!-- Device credential prompt -->
+    <string name="unlock_to_continue">Unlock to continue</string>
+    
+    <!-- Backup & Sync section -->
+    <string name="backup_and_sync">Backup and Sync</string>
+    <string name="restore">Restore</string>
 </resources>
