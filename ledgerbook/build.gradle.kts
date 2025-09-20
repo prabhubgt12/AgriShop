@@ -17,8 +17,8 @@ android {
         applicationId = "com.ledge.ledgerbook"
         minSdk = 24
         targetSdk = 35
-        versionCode = 12
-        versionName = "1.0.12"
+        versionCode = 13
+        versionName = "1.0.13"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -56,7 +56,7 @@ android {
             // Use release signing if configured
             signingConfig = signingConfigs.getByName("release")
             // Disable test ads in release builds by default
-            buildConfigField("boolean", "USE_TEST_ADS", "true")
+            buildConfigField("boolean", "USE_TEST_ADS", "false")
         }
     }
 
