@@ -178,13 +178,23 @@ fun LedgerAddEditScreen(
                 )
 
                 if (showDatePicker) {
-                    val dateState = rememberDatePickerState(initialSelectedDateMillis = fromDate)
-                    CenteredDatePickerDialog(
-                        onDismissRequest = { showDatePicker = false },
-                        onConfirm = {
-                            fromDate = dateState.selectedDateMillis ?: fromDate
-                            showDatePicker = false
+                    val today = System.currentTimeMillis()
+                    val dateState = rememberDatePickerState(
+                        initialSelectedDateMillis = fromDate,
+                        selectableDates = object : SelectableDates {
+                            override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis <= today
                         }
+                    )
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                val selected = dateState.selectedDateMillis ?: fromDate
+                                fromDate = selected.coerceAtMost(today)
+                                showDatePicker = false
+                            }) { Text(stringResource(R.string.ok)) }
+                        },
+                        dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) } }
                     ) {
                         DatePicker(state = dateState)
                     }
@@ -210,7 +220,7 @@ private fun CenteredAlertDialog(
     confirmButton: @Composable () -> Unit,
     dismissButton: (@Composable () -> Unit)? = null
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = true)) {
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
             Column(Modifier.padding(24.dp)) {
                 title?.let {

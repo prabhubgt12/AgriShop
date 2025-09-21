@@ -127,6 +127,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val editingLatestPayment = remember { mutableStateOf(false) }
     val previewInterest = remember { mutableStateOf(0.0) }
     val previewOutstanding = remember { mutableStateOf(0.0) }
+    // Base outstanding at selected date before applying entered amount. Used for validation
+    val baseOutstanding = remember { mutableStateOf(0.0) }
+    // When editing a payment, remember original amount to allow replacing up to outstanding + original
+    val originalEditAmount = remember { mutableStateOf(0.0) }
     val detailsForId = remember { mutableStateOf<Int?>(null) }
     val confirmDeleteId = remember { mutableStateOf<Int?>(null) }
     val context = LocalContext.current
@@ -526,6 +530,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         LaunchedEffect(entryId, partialDateMillis.value, partialAmount.value, partialFullPayment.value) {
             val (accrued, _, outstanding) = vm.computeAt(entryId, partialDateMillis.value)
             previewInterest.value = accrued
+            baseOutstanding.value = outstanding
             if (partialFullPayment.value) {
                 // Auto-fill full outstanding and show remaining as zero
                 partialAmount.value = String.format("%.2f", outstanding)
@@ -590,13 +595,25 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         trailingIcon = { TextButton(onClick = { showPicker.value = true }) { Text(stringResource(R.string.pick)) } }
                     )
                     if (showPicker.value) {
-                        val dpState = rememberDatePickerState(initialSelectedDateMillis = partialDateMillis.value)
-                        CenteredDatePickerDialog(
-                            onDismissRequest = { showPicker.value = false },
-                            onConfirm = {
-                                partialDateMillis.value = dpState.selectedDateMillis ?: partialDateMillis.value
-                                showPicker.value = false
+                        val entryFrom = state.items.firstOrNull { it.id == entryId }?.fromDateMillis ?: 0L
+                        val today = System.currentTimeMillis()
+                        val dpState = rememberDatePickerState(
+                            initialSelectedDateMillis = partialDateMillis.value,
+                            selectableDates = object : SelectableDates {
+                                override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis in entryFrom..today
                             }
+                        )
+                        DatePickerDialog(
+                            onDismissRequest = { showPicker.value = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    val sel = dpState.selectedDateMillis ?: partialDateMillis.value
+                                    val clamped = sel.coerceIn(entryFrom, today)
+                                    partialDateMillis.value = clamped
+                                    showPicker.value = false
+                                }) { Text(stringResource(R.string.ok)) }
+                            },
+                            dismissButton = { TextButton(onClick = { showPicker.value = false }) { Text(stringResource(R.string.cancel)) } }
                         ) { DatePicker(state = dpState) }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -620,8 +637,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         enabled = !partialFullPayment.value
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(stringResource(R.string.interest_till_date) + ": " + CurrencyFormatter.formatInr(previewInterest.value))
-                    Text(stringResource(R.string.remaining_after_payment) + ": " + CurrencyFormatter.formatInr(previewOutstanding.value))
+                    if (!editingLatestPayment.value) {
+                        Text(stringResource(R.string.interest_till_date) + ": " + CurrencyFormatter.formatInr(previewInterest.value))
+                        Text(stringResource(R.string.remaining_after_payment) + ": " + CurrencyFormatter.formatInr(previewOutstanding.value))
+                    }
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = partialNote.value,
@@ -650,11 +669,27 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     val amt = (partialAmount.value.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0)
                     val attStr = partialAttachmentUri.value?.toString()
                     val noteStr = partialNote.value.ifBlank { null }
-                    partialForId.value?.let { id ->
+                    val today = System.currentTimeMillis()
+                    val id = partialForId.value
+                    if (id != null) {
+                        val entry = state.items.firstOrNull { it.id == id }
+                        val from = entry?.fromDateMillis ?: 0L
+                        // Date bounds validation
+                        if (partialDateMillis.value > today || partialDateMillis.value < from) {
+                            android.widget.Toast.makeText(context, context.getString(R.string.pick), android.widget.Toast.LENGTH_SHORT).show()
+                            return@TextButton
+                        }
+                        // Amount validation (<= remaining)
+                        val maxAllowed = if (editingLatestPayment.value) baseOutstanding.value + originalEditAmount.value else baseOutstanding.value
+                        if (!partialFullPayment.value && amt > maxAllowed + 1e-6) {
+                            android.widget.Toast.makeText(context, context.getString(R.string.enter_valid_number), android.widget.Toast.LENGTH_SHORT).show()
+                            return@TextButton
+                        }
                         if (editingLatestPayment.value) {
                             vm.editLatestPayment(id, amt, partialDateMillis.value, noteStr, attStr) { vm.openPayments(id) }
                         } else {
-                            vm.applyPartialWithMeta(id, amt, partialDateMillis.value, noteStr, attStr)
+                            val finalAmt = if (partialFullPayment.value) baseOutstanding.value else amt
+                            vm.applyPartialWithMeta(id, finalAmt, partialDateMillis.value, noteStr, attStr)
                         }
                     }
                     partialForId.value = null
@@ -701,6 +736,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                                 menu = false
                                                 partialForId.value = paymentsEntryId
                                                 partialAmount.value = String.format("%.2f", p.amount)
+                                                originalEditAmount.value = p.amount
                                                 partialDateMillis.value = p.date
                                                 partialNote.value = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
                                                 partialAttachmentUri.value = p.note?.substringAfter("att:")?.let { it.substringBefore('|') }?.let { Uri.parse(it) }

@@ -87,6 +87,10 @@ android {
             excludes += "META-INF/NOTICE.txt"
             excludes += "META-INF/INDEX.LIST"
         }
+        // Ensure native libraries are not extracted (required for 16KB memory page size support on Android 15+)
+        jniLibs {
+            useLegacyPackaging = false
+        }
     }
 }
 
@@ -139,8 +143,8 @@ dependencies {
     implementation("com.google.http-client:google-http-client-gson:1.43.3")
     implementation("com.google.apis:google-api-services-drive:v3-rev20230815-2.0.0")
 
-    // Google Play Billing for IAP
-    implementation("com.android.billingclient:billing-ktx:6.2.1")
+    // Google Play Billing for IAP (Play-compliant, Kotlin 1.9 compatible)
+    implementation("com.android.billingclient:billing-ktx:7.0.0")
 
     // Google Mobile Ads SDK (AdMob)
     implementation("com.google.android.gms:play-services-ads:23.3.0")
