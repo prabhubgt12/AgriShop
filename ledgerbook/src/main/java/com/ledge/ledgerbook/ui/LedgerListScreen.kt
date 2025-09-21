@@ -135,7 +135,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val confirmDeleteId = remember { mutableStateOf<Int?>(null) }
     val context = LocalContext.current
 
-    Scaffold(contentWindowInsets = WindowInsets.systemBars) { padding ->
+    Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize()) {
             // Content list with scrolling header
             LazyColumn(
@@ -770,9 +770,55 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
             onDismissRequest = { selectedPaymentForView.value = null },
             title = { Text(text = stringResource(R.string.entry_details)) },
             text = {
+                // Compute interest and outstanding at the payment date using snapshot from payment metadata when available
+                val entry = remember(state.items, paymentsEntryId) { state.items.firstOrNull { it.id == paymentsEntryId } }
+                // Parse metadata snapshot persisted at payment time: meta:prevPrincipal=..., prevFromDate=...
+                val (metaPrincipal, metaFromDate) = remember(viewPayment.note) {
+                    var p: Double? = null
+                    var d: Long? = null
+                    viewPayment.note?.split('|')?.forEach { token ->
+                        when {
+                            token.startsWith("meta:prevPrincipal=") -> p = token.substringAfter("meta:prevPrincipal=").toDoubleOrNull()
+                            token.startsWith("prevFromDate=") -> d = token.substringAfter("prevFromDate=").toLongOrNull()
+                        }
+                    }
+                    p to d
+                }
+
+                var interestAtDate by remember { mutableStateOf(0.0) }
+                var outstandingAtDate by remember { mutableStateOf(0.0) }
+                LaunchedEffect(paymentsEntryId, viewPayment.date, metaPrincipal, metaFromDate) {
+                    val id = paymentsEntryId
+                    if (id != null) {
+                        val triple = if (metaPrincipal != null && metaFromDate != null) {
+                            vm.computeAtFromSnapshot(id, viewPayment.date, metaPrincipal, metaFromDate)
+                        } else {
+                            vm.computeAt(id, viewPayment.date)
+                        }
+                        interestAtDate = triple.first
+                        outstandingAtDate = triple.third
+                    }
+                }
+
+                val principal = metaPrincipal ?: entry?.principal ?: 0.0
+                val fromDate = metaFromDate ?: entry?.fromDateMillis
+                val sdf = remember { SimpleDateFormat("dd/MM/yyyy") }
+                val totalAmountAtDate = principal + interestAtDate
+                // outstandingAtDate already includes the effect of the current payment
+                val remainingAfter = outstandingAtDate.coerceAtLeast(0.0)
+
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Main summary
                     Text(text = stringResource(R.string.amount) + ": " + CurrencyFormatter.formatInr(viewPayment.amount), style = MaterialTheme.typography.bodyLarge)
-                    Text(text = stringResource(R.string.payment_date) + ": " + SimpleDateFormat("dd/MM/yyyy").format(Date(viewPayment.date)), style = MaterialTheme.typography.bodyMedium)
+                    // Details
+                    if (fromDate != null) {
+                        Text(text = stringResource(R.string.from_date) + ": " + sdf.format(Date(fromDate)), style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Text(text = stringResource(R.string.payment_date) + ": " + sdf.format(Date(viewPayment.date)), style = MaterialTheme.typography.bodyMedium)
+                    Text(text = stringResource(R.string.label_principal_generic) + ": " + CurrencyFormatter.formatInr(principal), style = MaterialTheme.typography.bodyMedium)
+                    Text(text = stringResource(R.string.interest_till_date) + ": " + CurrencyFormatter.formatInr(interestAtDate), style = MaterialTheme.typography.bodyMedium)
+                    Text(text = stringResource(R.string.total_amount) + ": " + CurrencyFormatter.formatInr(totalAmountAtDate), style = MaterialTheme.typography.bodyMedium)
+                    Text(text = stringResource(R.string.remaining_after_payment) + ": " + CurrencyFormatter.formatInr(remainingAfter), style = MaterialTheme.typography.bodyMedium)
                     if (userNote.isNotBlank()) {
                         Text(text = stringResource(R.string.notes_optional) + ":")
                         Text(text = userNote, style = MaterialTheme.typography.bodySmall)

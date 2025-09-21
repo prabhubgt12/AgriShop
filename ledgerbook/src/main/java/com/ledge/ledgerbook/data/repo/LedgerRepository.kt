@@ -61,6 +61,23 @@ class LedgerRepository(
         return Triple(accrued, paid, outstanding)
     }
 
+    suspend fun computeAtFromSnapshot(
+        entryId: Int,
+        atMillis: Long,
+        prevPrincipal: Double,
+        prevFromDate: Long
+    ): Triple<Double, Double, Double> {
+        val entry = dao.getEntryOnce(entryId) ?: return Triple(0.0, 0.0, 0.0)
+        // Reconstruct the historical baseline for computation
+        val snap = entry.copy(principal = prevPrincipal, fromDate = prevFromDate)
+        val payments = dao.getPaymentsFor(entryId)
+            .filter { it.date > prevFromDate && it.date <= atMillis }
+        val accrued = LedgerInterest.accruedInterest(snap, payments, atMillis)
+        val paid = payments.sumOf { it.amount }
+        val outstanding = snap.principal + accrued - paid
+        return Triple(accrued, paid, outstanding)
+    }
+
     suspend fun addPayment(payment: LedgerPayment) = dao.insertPayment(payment)
 
     suspend fun getPaymentsFor(entryId: Int): List<LedgerPayment> = dao.getPaymentsFor(entryId)

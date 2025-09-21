@@ -120,6 +120,8 @@ class LedgerViewModel @Inject constructor(
 
     // Partial payment helpers
     suspend fun computeAt(entryId: Int, atMillis: Long) = repo.computeAt(entryId, atMillis)
+    suspend fun computeAtFromSnapshot(entryId: Int, atMillis: Long, prevPrincipal: Double, prevFromDate: Long) =
+        repo.computeAtFromSnapshot(entryId, atMillis, prevPrincipal, prevFromDate)
     fun applyPartial(entryId: Int, amount: Double, dateMillis: Long) {
         viewModelScope.launch(Dispatchers.IO) { repo.applyPartialPayment(entryId, amount, dateMillis) }
     }
