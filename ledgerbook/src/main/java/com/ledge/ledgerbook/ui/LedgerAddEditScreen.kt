@@ -17,7 +17,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import androidx.compose.ui.res.stringResource
 import com.ledge.ledgerbook.R
- 
+import com.ledge.ledgerbook.util.NumberToWords
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -149,6 +150,13 @@ fun LedgerAddEditScreen(
                         if (principal.isNotEmpty() && !principalValid) Text(stringResource(R.string.enter_valid_number))
                     }
                 )
+                val principalDouble = principal.toDoubleOrNull()
+                if (principalDouble != null) {
+                    Spacer(Modifier.height(4.dp))
+                    val ctx = LocalContext.current
+                    val lang = runCatching { ctx.resources.configuration.locales[0]?.language ?: "en" }.getOrElse { "en" }
+                    Text(NumberToWords.inIndianSystem(principalDouble, lang), style = MaterialTheme.typography.labelSmall)
+                }
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = rateRupees,

@@ -42,6 +42,7 @@ import com.ledge.ledgerbook.ads.BannerAd
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import com.ledge.ledgerbook.util.CurrencyFormatter
 import com.ledge.ledgerbook.util.PdfShareUtils
+import com.ledge.ledgerbook.util.NumberToWords
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -636,6 +637,14 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !partialFullPayment.value
                     )
+                    // Amount in words (Indian system)
+                    val partialDouble = partialAmount.value.toDoubleOrNull()
+                    if (partialDouble != null) {
+                        Spacer(Modifier.height(4.dp))
+                        val ctx = LocalContext.current
+                        val lang = runCatching { ctx.resources.configuration.locales[0]?.language ?: "en" }.getOrElse { "en" }
+                        Text(NumberToWords.inIndianSystem(partialDouble, lang), style = MaterialTheme.typography.labelSmall)
+                    }
                     Spacer(Modifier.height(8.dp))
                     if (!editingLatestPayment.value) {
                         Text(stringResource(R.string.interest_till_date) + ": " + CurrencyFormatter.formatInr(previewInterest.value))
