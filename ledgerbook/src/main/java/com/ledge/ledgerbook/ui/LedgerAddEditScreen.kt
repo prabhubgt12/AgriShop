@@ -18,6 +18,7 @@ import java.util.Date
 import androidx.compose.ui.res.stringResource
 import com.ledge.ledgerbook.R
 import com.ledge.ledgerbook.util.NumberToWords
+import com.ledge.ledgerbook.util.CurrencyFormatter
 import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,8 +37,8 @@ fun LedgerAddEditScreen(
     var period by remember { mutableStateOf(existing?.period ?: "MONTHLY") }
     var compoundPeriod by remember { mutableStateOf(existing?.compoundPeriod ?: "MONTHLY") }
     // Mandatory numeric fields: when adding new, start empty (no default values)
-    var principal by remember { mutableStateOf(if (existing != null) existing.principal.toString() else "") }
-    var rateRupees by remember { mutableStateOf(if (existing != null) existing.rateRupees.toString() else "") }
+    var principal by remember { mutableStateOf(if (existing != null) CurrencyFormatter.formatNumericUpTo2(existing.principal) else "") }
+    var rateRupees by remember { mutableStateOf(if (existing != null) CurrencyFormatter.formatNumericUpTo2(existing.rateRupees) else "") }
     var fromDate by remember { mutableStateOf(existing?.fromDate ?: System.currentTimeMillis()) }
     var notes by remember { mutableStateOf(existing?.notes ?: "") }
 
@@ -152,10 +153,13 @@ fun LedgerAddEditScreen(
                 )
                 val principalDouble = principal.toDoubleOrNull()
                 if (principalDouble != null) {
-                    Spacer(Modifier.height(4.dp))
                     val ctx = LocalContext.current
                     val lang = runCatching { ctx.resources.configuration.locales[0]?.language ?: "en" }.getOrElse { "en" }
-                    Text(NumberToWords.inIndianSystem(principalDouble, lang), style = MaterialTheme.typography.labelSmall)
+                    val words = NumberToWords.inIndianSystem(principalDouble, lang)
+                    if (words.isNotBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(words, style = MaterialTheme.typography.labelSmall)
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(

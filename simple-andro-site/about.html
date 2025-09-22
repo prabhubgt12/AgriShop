@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About • Simple Andro</title>
+  <meta name="description" content="About Simple Andro: we build lightweight, privacy-first Android apps." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica Neue,Arial}</style>
+</head>
+<body>
+  <header class="header">
+    <div class="container nav">
+      <a class="brand" href="./">
+        <img class="brand-logo-img" src="assets/logo.png" alt="Simple Andro logo" />
+        <span>Simple Andro</span>
+      </a>
+      <nav>
+        <a href="./">Home</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero container" style="padding-bottom:8px">
+      <div class="badge"><span class="dot"></span> Our story</div>
+      <h1>About Simple Andro</h1>
+      <p>We are a small, focused team crafting Android apps that feel fast, respect privacy, and deliver real value without distractions. Our products are trusted by thousands of users for daily business needs.</p>
+    </section>
+
+    <section class="section container">
+      <div class="grid" style="grid-template-columns: repeat(3,1fr);">
+        <div class="card">
+          <h3>Our Mission</h3>
+          <p>Build simple and reliable tools for small businesses and individuals. Remove the clutter and keep what matters.</p>
+        </div>
+        <div class="card">
+          <h3>Our Principles</h3>
+          <p>Privacy-first, offline-friendly, low battery/data usage, and intuitive UI that works for everyone.</p>
+        </div>
+        <div class="card">
+          <h3>Support</h3>
+          <p>We listen. Reach us for feedback, feature requests, or issues. We aim to respond within 1–2 business days.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container">
+      <h2>Contact</h2>
+      <div class="card">
+		<p>Prabhakar Reddy</p>
+        <p>Email: <a href="mailto:prabhurb@gmail.com">prabhurb@gmail.com</a></p>
+        <p>Play Store developer page: <a href="#" target="_blank" rel="noopener">Add link</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div>© <span id="year"></span> Simple Andro. All rights reserved.</div>
+      <div>Contact: <a href="mailto:prabhurb@gmail.com">prabhurb@gmail.com</a></div>
+    </div>
+  </footer>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

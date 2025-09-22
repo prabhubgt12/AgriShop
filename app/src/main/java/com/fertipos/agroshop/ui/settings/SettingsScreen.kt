@@ -56,6 +56,11 @@ import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
 import com.fertipos.agroshop.data.prefs.LocalePrefs
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun SettingsScreen() {
@@ -123,6 +128,9 @@ private fun varStatefulForm(
     val snackbarHostState = remember { SnackbarHostState() }
     var isWorking by remember { mutableStateOf(false) }
     val signedIn = remember { mutableStateOf(DriveClient.isSignedIn(context)) }
+    var showBackupConfirm by remember { mutableStateOf(false) }
+    var showRestoreConfirm by remember { mutableStateOf(false) }
+    var lastBackupDisplay by remember { mutableStateOf<String?>(null) }
 
     // Google Sign-In launcher
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
@@ -134,6 +142,14 @@ private fun varStatefulForm(
                 DriveClient.lastError() ?: context.getString(R.string.unknown_error)
             )
             snackbarHostState.showSnackbar(msg)
+            if (signedIn.value) {
+                // Fetch latest backup time
+                val files = DriveClient.listBackups()
+                val ts = files.firstOrNull()?.modifiedTime?.value
+                lastBackupDisplay = ts?.let { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(it)) }
+            } else {
+                lastBackupDisplay = null
+            }
         }
     }
 
@@ -141,12 +157,24 @@ private fun varStatefulForm(
     LaunchedEffect(Unit) {
         if (!signedIn.value) {
             val ok = DriveClient.tryInitFromLastAccount(context)
-            if (ok) signedIn.value = true
+            if (ok) {
+                signedIn.value = true
+                val files = DriveClient.listBackups()
+                val ts = files.firstOrNull()?.modifiedTime?.value
+                lastBackupDisplay = ts?.let { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(it)) }
+            }
+        } else {
+            val files = DriveClient.listBackups()
+            val ts = files.firstOrNull()?.modifiedTime?.value
+            lastBackupDisplay = ts?.let { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(it)) }
         }
     }
 
     Surface(Modifier.fillMaxSize()) {
-        Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { padding ->
+        Scaffold(
+            contentWindowInsets = WindowInsets.safeDrawing,
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        ) { padding ->
         Column(
             Modifier
                 .fillMaxWidth()
@@ -231,13 +259,13 @@ private fun varStatefulForm(
                     "kn" to "ಕನ್ನಡ"
                 )
                 val normTag = tag.lowercase()
-                val current = options.firstOrNull { (t, _) ->
+                val currentOption = options.firstOrNull { (t, _) ->
                     if (t.isBlank()) normTag.isBlank() else normTag == t || normTag.startsWith("$t-")
                 } ?: options.first()
                 androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxWidth(),
-                        value = current.second,
+                        value = currentOption.second,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text(stringResource(R.string.language_title)) }
@@ -376,47 +404,98 @@ private fun varStatefulForm(
             }
             Spacer(Modifier.height(8.dp))
 
-            // Sign in/out row
+            // Backup/Restore row
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Button(
                     enabled = !isWorking,
-                    onClick = {
-                        scope.launch {
-                            isWorking = true
-                            val zip = BackupManager.createBackupZip(context)
-                            val ok = DriveClient.uploadAppData("agroshop_backup.zip", zip)
-                            isWorking = false
-                            val msg = if (ok) context.getString(R.string.backup_uploaded) else context.getString(
-                                R.string.backup_failed_with_error,
-                                DriveClient.lastError() ?: context.getString(R.string.unknown_error)
-                            )
-                            snackbarHostState.showSnackbar(msg)
-                        }
-                    }
+                    onClick = { showBackupConfirm = true }
                 ) { Text(stringResource(R.string.backup_now)) }
 
-                Button(enabled = signedIn.value && !isWorking, onClick = {
-                    scope.launch {
-                        isWorking = true
-                        val files = DriveClient.listBackups()
-                        val latest = files.firstOrNull()
-                        val msg = if (latest != null) {
-                            val bytes = DriveClient.download(latest.id)
-                            if (bytes != null && BackupManager.restoreBackupZip(context, bytes)) context.getString(R.string.restore_complete_restart) else context.getString(
-                                R.string.restore_failed_with_error,
-                                DriveClient.lastError() ?: context.getString(R.string.unknown_error)
-                            )
-                        } else {
-                            context.getString(R.string.no_backups_found)
-                        }
-                        isWorking = false
-                        snackbarHostState.showSnackbar(msg)
-                    }
-                }) { Text(stringResource(R.string.restore)) }
+                Button(enabled = signedIn.value && !isWorking, onClick = { showRestoreConfirm = true }) { Text(stringResource(R.string.restore)) }
 
                 if (isWorking) {
                     CircularProgressIndicator(modifier = Modifier.height(24.dp))
                 }
+            }
+
+            // Last backup info line (small, like LedgerBook)
+            if (signedIn.value) {
+                Spacer(Modifier.height(8.dp))
+                val label = lastBackupDisplay ?: stringResource(R.string.never_label)
+                Text(
+                    text = stringResource(R.string.last_backup_label, label),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            // Developer and version info (compact, like LedgerBook)
+            Spacer(Modifier.height(8.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.developer_info_label), style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.developer_email_label), style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.app_version_label_dev, com.fertipos.agroshop.BuildConfig.VERSION_NAME), style = MaterialTheme.typography.labelSmall)
+            }
+
+            // Confirmation dialogs
+            if (showBackupConfirm) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { showBackupConfirm = false },
+                    title = { Text(stringResource(R.string.backup_confirm_title)) },
+                    text = { Text(stringResource(R.string.backup_confirm_message)) },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(onClick = {
+                            showBackupConfirm = false
+                            scope.launch {
+                                isWorking = true
+                                val zip = BackupManager.createBackupZip(context)
+                                val ok = DriveClient.uploadAppData("agroshop_backup.zip", zip)
+                                isWorking = false
+                                val msg = if (ok) context.getString(R.string.backup_uploaded) else context.getString(
+                                    R.string.backup_failed_with_error,
+                                    DriveClient.lastError() ?: context.getString(R.string.unknown_error)
+                                )
+                                snackbarHostState.showSnackbar(msg)
+                                if (ok) {
+                                    lastBackupDisplay = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+                                }
+                            }
+                        }) { Text(stringResource(R.string.ok)) }
+                    },
+                    dismissButton = { androidx.compose.material3.TextButton(onClick = { showBackupConfirm = false }) { Text(stringResource(R.string.cancel)) } }
+                )
+            }
+
+            if (showRestoreConfirm) {
+                androidx.compose.material3.AlertDialog(
+                    onDismissRequest = { showRestoreConfirm = false },
+                    title = { Text(stringResource(R.string.restore_confirm_title)) },
+                    text = { Text(stringResource(R.string.restore_confirm_message)) },
+                    confirmButton = {
+                        androidx.compose.material3.TextButton(onClick = {
+                            showRestoreConfirm = false
+                            scope.launch {
+                                isWorking = true
+                                val files = DriveClient.listBackups()
+                                val latest = files.firstOrNull()
+                                val msg = if (latest != null) {
+                                    val bytes = DriveClient.download(latest.id)
+                                    if (bytes != null && BackupManager.restoreBackupZip(context, bytes)) context.getString(R.string.restore_complete_restart) else context.getString(
+                                        R.string.restore_failed_with_error,
+                                        DriveClient.lastError() ?: context.getString(R.string.unknown_error)
+                                    )
+                                } else {
+                                    context.getString(R.string.no_backups_found)
+                                }
+                                isWorking = false
+                                snackbarHostState.showSnackbar(msg)
+                                // Refresh last backup time after restore
+                                val refreshed = DriveClient.listBackups().firstOrNull()?.modifiedTime?.value
+                                lastBackupDisplay = refreshed?.let { java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(it)) }
+                            }
+                        }) { Text(stringResource(R.string.ok)) }
+                    },
+                    dismissButton = { androidx.compose.material3.TextButton(onClick = { showRestoreConfirm = false }) { Text(stringResource(R.string.cancel)) } }
+                )
             }
         }
         }

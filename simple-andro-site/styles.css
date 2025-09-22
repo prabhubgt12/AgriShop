@@ -1,0 +1,96 @@
+/* Simple Andro - Website Styles */
+:root {
+  --bg: #0b1020;
+  --card: #121933;
+  --muted: #8ea0c8;
+  --text: #e9eefc;
+  --primary: #4f7cff;
+  --primary-2: #5dd6ff;
+  --accent: #7af0b7;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  color: var(--text);
+  background: radial-gradient(1200px 600px at 80% -10%, rgba(95,214,255,0.12), transparent 50%),
+              radial-gradient(1000px 500px at -10% 10%, rgba(79,124,255,0.12), transparent 50%),
+              radial-gradient(800px 400px at 50% 0%, rgba(122,240,183,0.10), transparent 50%),
+              var(--bg);
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+.header {
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(8px);
+  background: rgba(11,16,32,0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+.brand { display: flex; gap: 10px; align-items: center; text-decoration: none; color: var(--text); }
+.brand-logo { width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); display: grid; place-items: center; font-weight: 800; }
+.brand-logo-img { height: 36px; width: 36px; object-fit: cover; border-radius: 8px; display: block; }
+.brand span { font-weight: 700; letter-spacing: 0.2px; }
+.brand-text { display: inline-flex; align-items: baseline; gap: 2px; font-weight: 800; }
+.brand-text .simp { color: var(--text); }
+.brand-text .andro {
+  background: linear-gradient(135deg, #36c060, #6cf0b6 35%, #5dd6ff 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+/* Stylize the capital A with a subtle circuit underline */
+.brand-text .andro .A {
+  position: relative; display: inline-block;
+  /* Override gradient to ensure strong contrast on dark BG */
+  color: var(--text);
+  background: none; -webkit-background-clip: initial; background-clip: initial;
+  text-shadow: 0 0 6px rgba(95,214,255,0.35);
+}
+.brand-text .andro .A::after {
+  content: ""; position: absolute; left: 6%; right: 6%; bottom: -2px; height: 2px;
+  background: radial-gradient(6px 4px at 0 50%, rgba(95,214,255,0.0), rgba(95,214,255,0.6)),
+              linear-gradient(90deg, rgba(95,214,255,0.0), rgba(95,214,255,0.9), rgba(95,214,255,0.0));
+  border-radius: 2px; opacity: 0.9;
+}
+.nav a { color: var(--text); text-decoration: none; margin-left: 18px; opacity: 0.9; }
+.nav a:hover { opacity: 1; }
+
+.hero { padding: 54px 0 26px; text-align: center; position: relative; z-index: 0; }
+.hero-row { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
+.hero .logo-hero { width: 96px; height: 96px; object-fit: cover; border-radius: 999px; box-shadow: 0 0 20px rgba(95,214,255,0.35); display: block; }
+.badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,0.14); color: var(--muted); padding: 8px 12px; border-radius: 999px; }
+.badge .dot { width: 8px; height: 8px; border-radius: 999px; background: linear-gradient(135deg, var(--primary), var(--primary-2)); box-shadow: 0 0 8px rgba(95,214,255,0.6); }
+.hero h1 { margin: 14px auto 10px; font-size: clamp(28px, 6vw, 44px); line-height: 1.1; letter-spacing: -0.3px; }
+.hero p { margin: 0 auto; max-width: 680px; color: var(--muted); font-size: 16px; }
+.cta-row { margin-top: 22px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; text-decoration: none; color: white; font-weight: 600; border: 1px solid rgba(255,255,255,0.14); }
+.btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-2)); border: none; }
+.btn-ghost { background: rgba(255,255,255,0.04); }
+.btn svg { width: 18px; height: 18px; }
+
+.section { padding: 28px 0 54px; position: relative; z-index: 2; }
+#apps { position: relative; z-index: 2; }
+.apps-section {
+  background: var(--bg); /* solid mask to prevent underlying gradient band */
+}
+.section h2 { text-align: center; margin: 8px 0 24px; font-size: 22px; color: var(--muted); font-weight: 600; letter-spacing: 0.3px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+.card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 12px;
+  position: relative; z-index: 3;
+}
+.card .thumb { height: 160px; border-radius: 10px; background: radial-gradient(200px 120px at 20% 10%, rgba(79,124,255,0.18), transparent 50%), radial-gradient(220px 140px at 80% 20%, rgba(95,214,255,0.18), transparent 50%), rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+.card .thumb-img { width: 100%; height: 160px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); display: block; }
+.card h3 { margin: 0; font-size: 18px; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+.card .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.chip { font-size: 12px; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); color: var(--muted); }
+.card .row { display: flex; gap: 10px; margin-top: 6px; }
+
+.footer { padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.06); color: var(--muted); text-align: center; }
+.footer a { color: var(--text); }

@@ -89,6 +89,8 @@ import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 
 private enum class DurationOption { MONTH, QUARTER, YEAR, CUSTOM }
 
@@ -222,6 +224,7 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         floatingActionButton = {
             if (!lockedCustomer) {
                 FloatingActionButton(

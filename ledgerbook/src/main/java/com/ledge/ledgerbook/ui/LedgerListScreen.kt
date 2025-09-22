@@ -534,7 +534,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
             baseOutstanding.value = outstanding
             if (partialFullPayment.value) {
                 // Auto-fill full outstanding and show remaining as zero
-                partialAmount.value = String.format("%.2f", outstanding)
+                partialAmount.value = CurrencyFormatter.formatNumericUpTo2(outstanding)
                 previewOutstanding.value = 0.0
             } else {
                 val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
@@ -640,10 +640,13 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     // Amount in words (Indian system)
                     val partialDouble = partialAmount.value.toDoubleOrNull()
                     if (partialDouble != null) {
-                        Spacer(Modifier.height(4.dp))
                         val ctx = LocalContext.current
                         val lang = runCatching { ctx.resources.configuration.locales[0]?.language ?: "en" }.getOrElse { "en" }
-                        Text(NumberToWords.inIndianSystem(partialDouble, lang), style = MaterialTheme.typography.labelSmall)
+                        val words = NumberToWords.inIndianSystem(partialDouble, lang)
+                        if (words.isNotBlank()) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(words, style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                     Spacer(Modifier.height(8.dp))
                     if (!editingLatestPayment.value) {
@@ -744,7 +747,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                             DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
                                                 menu = false
                                                 partialForId.value = paymentsEntryId
-                                                partialAmount.value = String.format("%.2f", p.amount)
+                                                partialAmount.value = CurrencyFormatter.formatNumericUpTo2(p.amount)
                                                 originalEditAmount.value = p.amount
                                                 partialDateMillis.value = p.date
                                                 partialNote.value = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')

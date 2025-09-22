@@ -72,22 +72,31 @@ object NumberToWords {
 
     // Indian numbering system groups: Crore, Lakh, Thousand, Hundred, Rest
     fun inIndianSystem(amount: Double, lang: String? = null): String {
-        val lp = packFor(lang)
-        val totalPaise = floor(amount * 100.0 + 0.5).toLong()
-        val rupees = totalPaise / 100
-        val paise = (totalPaise % 100).toInt()
+        return try {
+            val lp = packFor(lang)
+            val totalPaise = floor(amount * 100.0 + 0.5).toLong()
+            val rupees = totalPaise / 100
+            val paise = (totalPaise % 100).toInt()
 
-        if (rupees == 0L && paise == 0) return "${lp.zero} ${lp.rupees}"
+            // Safety limits: only support up to 999 crores (fits current word units)
+            // 1 crore = 10,000,000; 1000 crores = 10,000,000,000
+            val maxSupportedRupees = 10_000_000_000L - 1
+            if (rupees < 0L || rupees > maxSupportedRupees) return ""
 
-        val words = StringBuilder()
-        if (rupees > 0) {
-            words.append(convertRupees(rupees, lp)).append(" ${lp.rupees}")
+            if (rupees == 0L && paise == 0) return "${lp.zero} ${lp.rupees}"
+
+            val words = StringBuilder()
+            if (rupees > 0) {
+                words.append(convertRupees(rupees, lp)).append(" ${lp.rupees}")
+            }
+            if (paise > 0) {
+                if (words.isNotEmpty()) words.append(" ${lp.andWord} ")
+                words.append(convertTwoDigits(paise, lp)).append(" ${lp.paise}")
+            }
+            words.toString()
+        } catch (_: Throwable) {
+            ""
         }
-        if (paise > 0) {
-            if (words.isNotEmpty()) words.append(" ${lp.andWord} ")
-            words.append(convertTwoDigits(paise, lp)).append(" ${lp.paise}")
-        }
-        return words.toString()
     }
 
     private fun convertRupees(n: Long, lp: LangPack): String {

@@ -8,6 +8,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
@@ -49,8 +50,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Enable edge-to-edge without deprecated color APIs (Android 15 compatible)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Enable edge-to-edge using Activity KTX helper (Android 15 compatible)
+        enableEdgeToEdge()
         setContent {
             val mode = themeVm.themeMode.collectAsState().value
             LedgerTheme(themeMode = mode) {

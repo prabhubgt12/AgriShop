@@ -68,6 +68,24 @@
     <string name="restore_complete_restart">ರಿಸ್ಟೋರ್ ಪೂರ್ಣ (ಅ್ಯಾಪ್ ಮರುಪ್ರಾರಂಭಿಸಿ)</string>
     <string name="restore_failed_with_error">ರಿಸ್ಟೋರ್ ವಿಫಲ: %1$s</string>
 
+    <!-- Backup/Restore confirmation (match LedgerBook text) -->
+    <string name="backup_confirm_title">ಬ್ಯಾಕಪ್ ದೃಢೀಕರಿಸಿ</string>
+    <string name="backup_confirm_message">ಇದು ಡ್ರೈವ್‌ನಲ್ಲಿ ಬ್ಯಾಕಪ್ ಅನ್ನು ರಚಿಸುತ್ತದೆ ಮತ್ತು ಅದೇ ಹೆಸರಿನ ಇತರ ಬ್ಯಾಕಪ್‌ಗಳನ್ನು ಅಳಿಸಬಹುದು. ಮುಂದುವರಿಸಬೇಕೆ?</string>
+    <string name="restore_confirm_title">ರಿಸ್ಟೋರ್ ದೃಢೀಕರಿಸಿ</string>
+    <string name="restore_confirm_message">ಇದು ಆಯ್ಕೆ ಮಾಡಿದ ಬ್ಯಾಕಪ್‌ನಿಂದ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಡೇಟಾವನ್ನು ಅಳಿಸಿ ಬರೆಯುತ್ತದೆ. ಮುಂದುವರಿಸಬೇಕೆ?</string>
+
+    <!-- Backup info (match LedgerBook) -->
+    <string name="last_backup_label">ಕೊನೆಯ ಬ್ಯಾಕಪ್: %1$s</string>
+    <string name="never_label">ಎಂದಿಗೂ ಇಲ್ಲ</string>
+
+    <!-- Developer/version info -->
+    <string name="developer_info_label">ಡೆವಲಪರ್: SimpleAndro</string>
+    <string name="developer_email_label">ಇಮೇಲ್: prabhurb@gmail.com</string>
+    <string name="app_version_label_dev">ಆ್ಯಪ್ ಆವೃತ್ತಿ: %1$s</string>
+
+    <!-- Common -->
+    <string name="ok">ಸರಿ</string>
+
     <!-- Common UI -->
     <string name="back">ಹಿಂದೆ</string>
     <string name="export">ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>

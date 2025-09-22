@@ -73,6 +73,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import com.fertipos.agroshop.R
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -201,6 +203,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         floatingActionButton = {
             if (!lockedProduct) {
                 FloatingActionButton(

@@ -67,6 +67,24 @@
     <string name="restore_complete_restart">Restore complete (restart app)</string>
     <string name="restore_failed_with_error">Restore failed: %1$s</string>
 
+    <!-- Backup/Restore confirmation (match LedgerBook text exactly) -->
+    <string name="backup_confirm_title">Confirm backup</string>
+    <string name="backup_confirm_message">This will create a backup on Drive and may overwrite existing backups with the same name. Continue?</string>
+    <string name="restore_confirm_title">Confirm restore</string>
+    <string name="restore_confirm_message">This will overwrite your current data with the selected backup. Continue?</string>
+
+    <!-- Backup info (match LedgerBook) -->
+    <string name="last_backup_label">Last backup: %1$s</string>
+    <string name="never_label">Never</string>
+
+    <!-- Developer/version info (match LedgerBook text, different keys to avoid conflicts) -->
+    <string name="developer_info_label">Developer: SimpleAndro</string>
+    <string name="developer_email_label">Email: prabhurb@gmail.com</string>
+    <string name="app_version_label_dev">App version: %1$s</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+
     <!-- Purchase History -->
     <string name="new_purchase_cd">New Purchase</string>
     <string name="purchases_title">Purchases</string>

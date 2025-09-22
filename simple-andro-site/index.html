@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple Andro • Simple Khata • Simple Shop • Simple CashBook</title>
+  <meta name="description" content="Simple Andro builds lightweight, privacy-first Android apps: Simple Khata, Simple Shop, and Simple CashBook." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica Neue,Arial}</style>
+</head>
+<body>
+  <header class="header">
+    <div class="container nav">
+      <a class="brand" href="./">
+        <img class="brand-logo-img" src="assets/logo.png" alt="Simple Andro logo" />
+        <span class="brand-text"><span class="simp">Simple</span><span class="andro"><span class="A">A</span>ndro</span></span>
+      </a>
+      <nav>
+        <a href="./">Home</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero container">
+      <div class="hero-row">
+        <img class="logo-hero" src="assets/logo.png" alt="Simple Andro" />
+        <div class="badge"><span class="dot"></span> Made in India • Privacy-first • Lightweight</div>
+      </div>
+      <h1>Simple, reliable Android apps for everyday business</h1>
+      <p>We build thoughtfully designed tools that work offline, respect your privacy, and stay fast on any device. Choose from our suite: Simple Khata, Simple Shop, and Simple CashBook.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#apps">Explore Apps</a>
+        <a class="btn btn-ghost" href="about.html">About us</a>
+      </div>
+    </section>
+
+    <section id="apps" class="section container apps-section">
+      <h2>Our Apps</h2>
+      <div class="grid">
+        <!-- Simple Khata -->
+        <article class="card">
+          <picture class="thumb">
+            <source type="image/webp" srcset="assets/Simple-Khata.webp" />
+            <img class="thumb-img" src="assets/Simple-Khata.png" alt="Simple Khata app screenshot" loading="lazy" />
+          </picture>
+          <h3>Simple Khata</h3>
+          <p>Ledger and credit book app to track customer balances, payments, and due reminders. Built for speed and clarity.</p>
+          <div class="chips">
+            <span class="chip">Offline-first</span>
+            <span class="chip">Secure backups</span>
+            <span class="chip">PDF/Share</span>
+          </div>
+          <div class="row">
+            <a class="btn btn-primary" href="#" target="_blank" rel="noopener">View on Play Store</a>
+            <a class="btn btn-ghost" href="#" target="_blank" rel="noopener">Learn more</a>
+          </div>
+        </article>
+
+        <!-- Simple Shop -->
+        <article class="card">
+          <picture class="thumb">
+            <source type="image/webp" srcset="assets/Simple-Shop.webp" />
+            <img class="thumb-img" src="assets/Simple-Shop.png" alt="Simple Shop app screenshot" loading="lazy" />
+          </picture>
+          <h3>Simple Shop</h3>
+          <p>Point-of-sale and inventory management for small stores. Quick billing, stock tracking, and invoice history.</p>
+          <div class="chips">
+            <span class="chip">Fast billing</span>
+            <span class="chip">Inventory</span>
+            <span class="chip">GST-ready</span>
+          </div>
+          <div class="row">
+            <a class="btn btn-primary" href="#" target="_blank" rel="noopener">View on Play Store</a>
+            <a class="btn btn-ghost" href="#" target="_blank" rel="noopener">Learn more</a>
+          </div>
+        </article>
+
+        <!-- Simple CashBook -->
+        <article class="card">
+          <picture class="thumb">
+            <source type="image/webp" srcset="assets/Simple-CashBook.webp" />
+            <img class="thumb-img" src="assets/Simple-CashBook.png" alt="Simple CashBook app screenshot" loading="lazy" />
+          </picture>
+          <h3>Simple CashBook</h3>
+          <p>Daily income/expense tracker with powerful search and PDF exports. Ideal for personal and small business finances.</p>
+          <div class="chips">
+            <span class="chip">Daily ledger</span>
+            <span class="chip">Reports</span>
+            <span class="chip">Multi-language</span>
+          </div>
+          <div class="row">
+            <a class="btn btn-primary" href="#" target="_blank" rel="noopener">View on Play Store</a>
+            <a class="btn btn-ghost" href="#" target="_blank" rel="noopener">Learn more</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section container">
+      <h2>Why Simple Andro?</h2>
+      <div class="grid" style="grid-template-columns: repeat(3,1fr);">
+        <div class="card">
+          <h3>Lightweight</h3>
+          <p>Small install size, fast startup, and buttery-smooth UI even on low-end devices.</p>
+        </div>
+        <div class="card">
+          <h3>Privacy-first</h3>
+          <p>Your data stays with you. Back up locally or to your own cloud. No tracking, no ads in premium.</p>
+        </div>
+        <div class="card">
+          <h3>Made for India</h3>
+          <p>Indian numbering system, regional languages, and features tuned for local workflows.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div>© <span id="year"></span> Simple Andro. All rights reserved.</div>
+      <div>Contact: <a href="mailto:support@simpleandro.com">support@simpleandro.com</a></div>
+    </div>
+  </footer>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
