@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -33,6 +34,8 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.filled.Delete
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ledge.cashbook.ads.BannerAd
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +44,8 @@ fun AccountsScreen(
     onAddToBook: (Int) -> Unit = {}
     , vm: AccountsViewModel = hiltViewModel()
 ) {
+    val adsVm: AdsViewModel = hiltViewModel()
+    val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = false)
     val accounts by vm.accounts.collectAsState()
     var showAdd by remember { mutableStateOf(false) }
     var accountName by remember { mutableStateOf("") }
@@ -165,6 +170,10 @@ fun AccountsScreen(
                     }
                 }
                 }
+                // Bottom spacer so banner doesn't cover list content
+                if (!hasRemoveAds) {
+                    item { Spacer(Modifier.height(84.dp)) }
+                }
             }
 
             // Draggable FAB overlay (mirrors LedgerBook)
@@ -185,6 +194,11 @@ fun AccountsScreen(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.navigationBars)
             ) {
+                if (!hasRemoveAds) {
+                    BannerAd(modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth())
+                }
                 FloatingActionButton(
                     onClick = { showAdd = true },
                     modifier = Modifier

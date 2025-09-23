@@ -64,6 +64,13 @@
     <string name="light_option">Light</string>
     <string name="dark_option">Dark</string>
 
+    <!-- Premium / Monetization -->
+    <string name="premium_title">Premium</string>
+    <string name="ads_removed">Ads are removed on this device</string>
+    <string name="ads_enabled_msg">Ads enabled. Purchase to remove permanently.</string>
+    <string name="remove_ads">Remove ads</string>
+    <string name="restore_purchase">Restore Purchase</string>
+
     <string name="backup_to_drive">Backup to Drive</string>
     <string name="list_backups">List Backups</string>
     <string name="listed_backups">Found %1$d backups</string>

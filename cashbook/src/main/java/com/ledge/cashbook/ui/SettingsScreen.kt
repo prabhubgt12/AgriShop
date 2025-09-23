@@ -34,6 +34,7 @@ import androidx.compose.material3.TextButton
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.ledge.cashbook.billing.MonetizationViewModel
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,6 +50,10 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     var lastBackupDisplay by remember { mutableStateOf<String?>(null) }
     var showBackupConfirm by remember { mutableStateOf(false) }
     var showRestoreConfirm by remember { mutableStateOf(false) }
+
+    // Monetization: remove ads purchase state
+    val monetizationVM: MonetizationViewModel = hiltViewModel()
+    val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState(initial = false)
 
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         val act = activity ?: return@rememberLauncherForActivityResult
@@ -138,6 +143,27 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         }
                     }
                     Text(text = stringResource(R.string.changes_apply_note), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            item { HorizontalDivider() }
+
+            // Premium
+            item { Text(stringResource(R.string.premium_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(if (hasRemoveAds) stringResource(R.string.ads_removed) else stringResource(R.string.ads_enabled_msg))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(onClick = {
+                            val act = activity ?: return@Button
+                            scope.launch {
+                                val started = monetizationVM.purchaseRemoveAds(act)
+                                if (!started) {
+                                    snackbarHostState.showSnackbar("Preparing purchase, please try again in a moment")
+                                }
+                            }
+                        }, enabled = !hasRemoveAds) { Text(stringResource(R.string.remove_ads)) }
+                        OutlinedButton(onClick = { monetizationVM.restore() }) { Text(stringResource(R.string.restore_purchase)) }
+                    }
                 }
             }
             item { HorizontalDivider() }
