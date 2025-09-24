@@ -200,13 +200,63 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 // Restore spacing between summary and final amount
                 Spacer(Modifier.height(10.dp))
                 val isPositive = state.finalAmount >= 0
-                OverviewCard(
-                    title = stringResource(R.string.final_amount),
-                    value = formatInrNoDecimals(state.finalAmount),
-                    modifier = Modifier.fillMaxWidth(),
-                    container = if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0),
-                    content = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                )
+                // Final Amount card with reminder chips
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(stringResource(R.string.final_amount), style = MaterialTheme.typography.labelMedium)
+                        Spacer(Modifier.height(4.dp))
+                        // Row: amount pill on the left, reminder chips on the right
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0))
+                                    .padding(vertical = 6.dp, horizontal = 8.dp)
+                            ) {
+                                Text(
+                                    formatInrNoDecimals(state.finalAmount),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                                )
+                            }
+
+                            // Compute global due counts
+                            val msPerDay = 86_400_000L
+                            val now = System.currentTimeMillis()
+                            val overdueCount = remember(state.items) {
+                                state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= 365 }
+                            }
+                            val dueSoonCount = remember(state.items) {
+                                state.items.count { val d = (((now - it.fromDateMillis) / msPerDay).toInt()); d in 335..364 }
+                            }
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                if (overdueCount > 0) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text("Overdue", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB00020))
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color(0xFFFDE0E0))
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) { Text(overdueCount.toString(), color = Color(0xFFB00020), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
+                                    }
+                                }
+                                if (dueSoonCount > 0) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text("Due soon", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8C6D1F))
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color(0xFFFFF3E0))
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) { Text(dueSoonCount.toString(), color = Color(0xFF8C6D1F), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 Spacer(Modifier.height(10.dp))
                 // Banner Ad (only when ads are not removed) - below Final Amount card
                 if (!hasRemoveAds) {
