@@ -13,18 +13,26 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Dialog
@@ -113,8 +121,14 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     // Monetization flag
     val monetizationVM: MonetizationViewModel = hiltViewModel()
     val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState()
+    // Search state and filtered items
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val filteredItems = remember(state.items, searchQuery) {
+        if (searchQuery.isBlank()) state.items
+        else state.items.filter { it.name.contains(searchQuery, ignoreCase = true) }
+    }
     // Precompute groups in composable scope (cannot call remember inside LazyListScope)
-    val groups = remember(state.items) { state.items.groupBy { it.name } }
+    val groups = remember(filteredItems) { filteredItems.groupBy { it.name } }
     val sortedGroups = remember(groups) { groups.entries.sortedBy { it.key.lowercase() } }
 
     // Dialog-local states
@@ -159,76 +173,110 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         modifier = Modifier.weight(1f)
                     )
                 }
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(2.dp))
             }
             item {
-                // Overview cards row 1
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OverviewCard(
-                        title = stringResource(R.string.total_lend),
-                        value = formatInrNoDecimals(state.totalLend),
-                        modifier = Modifier.weight(1f),
-                        container = Color(0xFFDFF6DD),
-                        content = Color(0xFF0B6A0B)
-                    )
-                    OverviewCard(
-                        title = stringResource(R.string.lend_interest),
-                        value = formatInrNoDecimals(state.totalLendInterest),
-                        modifier = Modifier.weight(1f),
-                        container = Color(0xFFDFF6DD),
-                        content = Color(0xFF0B6A0B)
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                // Overview cards row 2
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OverviewCard(
-                        title = stringResource(R.string.total_borrow),
-                        value = formatInrNoDecimals(state.totalBorrow),
-                        modifier = Modifier.weight(1f),
-                        container = Color(0xFFFFE2E0),
-                        content = Color(0xFF9A0007)
-                    )
-                    OverviewCard(
-                        title = stringResource(R.string.borrow_interest),
-                        value = formatInrNoDecimals(state.totalBorrowInterest),
-                        modifier = Modifier.weight(1f),
-                        container = Color(0xFFFFE2E0),
-                        content = Color(0xFF9A0007)
-                    )
-                }
-                // Restore spacing between summary and final amount
-                Spacer(Modifier.height(10.dp))
-                val isPositive = state.finalAmount >= 0
-                // Final Amount card with reminder chips
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(12.dp)) {
-                        Text(stringResource(R.string.final_amount), style = MaterialTheme.typography.labelMedium)
-                        Spacer(Modifier.height(4.dp))
-                        // Row: amount pill on the left, reminder chips on the right
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                // Compact single overview card with 2x2 grid + Final Amount row
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+                        // Grid: two rows, two columns
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.total_lend), style = MaterialTheme.typography.labelSmall)
+                                Spacer(Modifier.height(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFDFF6DD))
+                                        .padding(vertical = 4.dp, horizontal = 6.dp)
+                                ) { Text(formatInrNoDecimals(state.totalLend), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
+                            }
+                            // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
                             Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0))
-                                    .padding(vertical = 6.dp, horizontal = 8.dp)
-                            ) {
-                                Text(
-                                    formatInrNoDecimals(state.finalAmount),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                                )
+                                Modifier
+                                    .width(1.dp)
+                                    .fillMaxHeight()
+                                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.lend_interest), style = MaterialTheme.typography.labelSmall)
+                                Spacer(Modifier.height(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFDFF6DD))
+                                        .padding(vertical = 4.dp, horizontal = 6.dp)
+                                ) { Text(formatInrNoDecimals(state.totalLendInterest), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.total_borrow), style = MaterialTheme.typography.labelSmall)
+                                Spacer(Modifier.height(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFFFE2E0))
+                                        .padding(vertical = 4.dp, horizontal = 6.dp)
+                                ) { Text(formatInrNoDecimals(state.totalBorrow), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
+                            }
+                            // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
+                            Box(
+                                Modifier
+                                    .width(1.dp)
+                                    .fillMaxHeight()
+                                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.borrow_interest), style = MaterialTheme.typography.labelSmall)
+                                Spacer(Modifier.height(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFFFFE2E0))
+                                        .padding(vertical = 4.dp, horizontal = 6.dp)
+                                ) { Text(formatInrNoDecimals(state.totalBorrowInterest), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
+                            }
+                        }
+
+                        Spacer(Modifier.height(6.dp))
+
+                        // Final Amount row with reminder chips on the same row
+                        val isPositive = state.finalAmount >= 0
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.final_amount), style = MaterialTheme.typography.labelSmall)
+                                Spacer(Modifier.height(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0))
+                                        .padding(vertical = 6.dp, horizontal = 8.dp)
+                                ) {
+                                    Text(
+                                        formatInrNoDecimals(state.finalAmount),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
 
-                            // Compute global due counts
                             val msPerDay = 86_400_000L
                             val now = System.currentTimeMillis()
-                            val overdueCount = remember(state.items) {
-                                state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= 365 }
-                            }
-                            val dueSoonCount = remember(state.items) {
-                                state.items.count { val d = (((now - it.fromDateMillis) / msPerDay).toInt()); d in 335..364 }
-                            }
+                            val overdueCount = remember(state.items) { state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= 365 } }
+                            val dueSoonCount = remember(state.items) { state.items.count { val d = (((now - it.fromDateMillis) / msPerDay).toInt()); d in 335..364 } }
 
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 if (overdueCount > 0) {
@@ -257,12 +305,25 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
-                // Banner Ad (only when ads are not removed) - below Final Amount card
+
+                // Banner Ad (only when ads are not removed) - below the overview card
                 if (!hasRemoveAds) {
+                    Spacer(Modifier.height(6.dp))
                     BannerAd(modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(6.dp))
+                } else {
+                    // Minimal gap before search when no ad is shown
+                    Spacer(Modifier.height(4.dp))
                 }
+            }
+            // Search bar below summary card
+            item {
+                CompactSearchBar(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = "Search with name",
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             if (groupingEnabled) {
@@ -1007,6 +1068,45 @@ private fun LabelValue(label: String, value: String, modifier: Modifier = Modifi
         Text(label, style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.height(2.dp))
         Text(value, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun CompactSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(12.dp)
+    val interaction = remember { MutableInteractionSource() }
+    val focusRequester = remember { FocusRequester() }
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .heightIn(min = 40.dp)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Outlined.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(Modifier.weight(1f)) {
+            if (value.isBlank()) {
+                Text(placeholder, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurface),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
+            )
+        }
     }
 }
 
