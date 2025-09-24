@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
@@ -238,6 +239,35 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             .height(IntrinsicSize.Min)
                             .padding(12.dp)
                     ) {
+                        // Thin status strip (amber = due soon, red = overdue), followed by existing purple parent bar
+                        val msPerDay = 86_400_000L
+                        val now = System.currentTimeMillis()
+                        val daysSince: (LedgerItemVM) -> Int = { (((now - it.fromDateMillis) / msPerDay).toInt()).coerceAtLeast(0) }
+                        val (overdueCount, dueSoonCount) = run {
+                            var od = 0
+                            var ds = 0
+                            itemsForUser.forEach { item ->
+                                val d = daysSince(item)
+                                when {
+                                    d >= 365 -> od++
+                                    d in 335..364 -> ds++
+                                }
+                            }
+                            od to ds
+                        }
+                        val parentStatusColor = when {
+                            overdueCount > 0 -> Color(0xFFEF5350) // red 400/500
+                            dueSoonCount > 0 -> Color(0xFFFFB300) // amber 600
+                            else -> Color.Transparent
+                        }
+                        Box(
+                            Modifier
+                                .width(2.dp)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(parentStatusColor)
+                        )
+                        Spacer(Modifier.width(4.dp))
                         Box(
                             Modifier
                                 .width(4.dp)
@@ -249,6 +279,25 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         Column(Modifier.weight(1f)) {
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                                 Text(name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                                // Parent status chip with counts (Overdue preferred over Due soon)
+                                if (overdueCount > 0 || dueSoonCount > 0) {
+                                    val chipBg = if (overdueCount > 0) Color(0xFFFDE0E0) else Color(0xFFFFF3E0)
+                                    val chipFg = if (overdueCount > 0) Color(0xFFB00020) else Color(0xFF8C6D1F)
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(chipBg)
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = if (overdueCount > 0) "Overdue ($overdueCount)" else "Due soon ($dueSoonCount)",
+                                            color = chipFg,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                    Spacer(Modifier.width(8.dp))
+                                }
                                 Icon(
                                     imageVector = if (expanded.value) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                                     contentDescription = if (expanded.value) "Collapse" else "Expand"
@@ -1135,7 +1184,32 @@ private fun LedgerRow(
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     LabelValue(label = stringResource(R.string.from_date), value = vm.dateStr, modifier = Modifier.weight(1f))
-                    LabelValue(label = stringResource(R.string.total_time), value = totalTime, modifier = Modifier.weight(1f))
+                    // Right column: total time with small colored status dot (due soon / overdue)
+                    val statusColor = when {
+                        daysTotal >= 365 -> Color(0xFFEF5350) // red
+                        daysTotal in 335..364 -> Color(0xFFFFB300) // amber
+                        else -> null
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.total_time), style = MaterialTheme.typography.labelSmall)
+                        Spacer(Modifier.height(2.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            statusColor?.let {
+                                Box(
+                                    Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(it)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                            }
+                            Text(
+                                totalTime,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (statusColor == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
