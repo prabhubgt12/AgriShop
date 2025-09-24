@@ -179,78 +179,86 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 // Compact single overview card with 2x2 grid + Final Amount row
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
-                        // Grid: two rows, two columns
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Min),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.total_lend), style = MaterialTheme.typography.labelSmall)
-                                Spacer(Modifier.height(2.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFDFF6DD))
-                                        .padding(vertical = 4.dp, horizontal = 6.dp)
-                                ) { Text(formatInrNoDecimals(state.totalLend), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
-                            }
-                            // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
-                            Box(
+                        // Conditionally show Lend and Borrow rows
+                        val showLendRow = kotlin.math.abs(state.totalLend) >= 1e-6
+                        val showBorrowRow = kotlin.math.abs(state.totalBorrow) >= 1e-6
+
+                        if (showLendRow) {
+                            Row(
                                 Modifier
-                                    .width(1.dp)
-                                    .fillMaxHeight()
-                                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                            )
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.lend_interest), style = MaterialTheme.typography.labelSmall)
-                                Spacer(Modifier.height(2.dp))
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Min),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.total_lend), style = MaterialTheme.typography.labelSmall)
+                                    Spacer(Modifier.height(2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFFDFF6DD))
+                                            .padding(vertical = 4.dp, horizontal = 6.dp)
+                                    ) { Text(formatInrNoDecimals(state.totalLend), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
+                                }
+                                // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
                                 Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFDFF6DD))
-                                        .padding(vertical = 4.dp, horizontal = 6.dp)
-                                ) { Text(formatInrNoDecimals(state.totalLendInterest), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
-                            }
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Min),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.total_borrow), style = MaterialTheme.typography.labelSmall)
-                                Spacer(Modifier.height(2.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFFFE2E0))
-                                        .padding(vertical = 4.dp, horizontal = 6.dp)
-                                ) { Text(formatInrNoDecimals(state.totalBorrow), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
-                            }
-                            // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
-                            Box(
-                                Modifier
-                                    .width(1.dp)
-                                    .fillMaxHeight()
-                                    .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                            )
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.borrow_interest), style = MaterialTheme.typography.labelSmall)
-                                Spacer(Modifier.height(2.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFFFFE2E0))
-                                        .padding(vertical = 4.dp, horizontal = 6.dp)
-                                ) { Text(formatInrNoDecimals(state.totalBorrowInterest), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
+                                    Modifier
+                                        .width(1.dp)
+                                        .fillMaxHeight()
+                                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                                )
+                                Column(Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.lend_interest), style = MaterialTheme.typography.labelSmall)
+                                    Spacer(Modifier.height(2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFFDFF6DD))
+                                            .padding(vertical = 4.dp, horizontal = 6.dp)
+                                    ) { Text(formatInrNoDecimals(state.totalLendInterest), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
+                                }
                             }
                         }
 
-                        Spacer(Modifier.height(6.dp))
+                        if (showBorrowRow) {
+                            if (showLendRow) Spacer(Modifier.height(6.dp))
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Min),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.total_borrow), style = MaterialTheme.typography.labelSmall)
+                                    Spacer(Modifier.height(2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFFFFE2E0))
+                                            .padding(vertical = 4.dp, horizontal = 6.dp)
+                                    ) { Text(formatInrNoDecimals(state.totalBorrow), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
+                                }
+                                // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
+                                Box(
+                                    Modifier
+                                        .width(1.dp)
+                                        .fillMaxHeight()
+                                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                                )
+                                Column(Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.borrow_interest), style = MaterialTheme.typography.labelSmall)
+                                    Spacer(Modifier.height(2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFFFFE2E0))
+                                            .padding(vertical = 4.dp, horizontal = 6.dp)
+                                    ) { Text(formatInrNoDecimals(state.totalBorrowInterest), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
+                                }
+                            }
+                        }
+
+                        if (showLendRow || showBorrowRow) Spacer(Modifier.height(6.dp))
 
                         // Final Amount row with reminder chips on the same row
                         val isPositive = state.finalAmount >= 0
@@ -279,27 +287,24 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             val dueSoonCount = remember(state.items) { state.items.count { val d = (((now - it.fromDateMillis) / msPerDay).toInt()); d in 335..364 } }
 
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                if (overdueCount > 0) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Text("Overdue", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB00020))
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(Color(0xFFFDE0E0))
-                                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                                        ) { Text(overdueCount.toString(), color = Color(0xFFB00020), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
-                                    }
+                                // Always show both chips with their counts (including zero)
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text("Overdue", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB00020))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFFFDE0E0))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) { Text(overdueCount.toString(), color = Color(0xFFB00020), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
                                 }
-                                if (dueSoonCount > 0) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Text("Due soon", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8C6D1F))
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(Color(0xFFFFF3E0))
-                                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                                        ) { Text(dueSoonCount.toString(), color = Color(0xFF8C6D1F), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
-                                    }
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text("Due soon", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8C6D1F))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color(0xFFFFF3E0))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) { Text(dueSoonCount.toString(), color = Color(0xFF8C6D1F), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
                                 }
                             }
                         }
