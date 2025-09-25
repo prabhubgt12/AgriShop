@@ -14,6 +14,9 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,6 +29,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -355,7 +359,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
                     Row(
@@ -1064,9 +1068,20 @@ private fun OverviewCard(
 }
 
 @Composable
-private fun LabelValue(label: String, value: String, modifier: Modifier = Modifier) {
+private fun LabelValue(label: String, value: String, modifier: Modifier = Modifier, leadingIcon: ImageVector? = null) {
     Column(modifier = modifier) {
-        Text(label, style = MaterialTheme.typography.labelSmall)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (leadingIcon != null) {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(label, style = MaterialTheme.typography.labelSmall)
+        }
         Spacer(Modifier.height(2.dp))
         Text(value, style = MaterialTheme.typography.bodyMedium)
     }
@@ -1198,6 +1213,7 @@ private fun LedgerRow(
     val ctx = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -1294,7 +1310,12 @@ private fun LedgerRow(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    LabelValue(label = stringResource(R.string.label_principal_generic), value = formatInrNoDecimals(vm.principal), modifier = Modifier.weight(1f))
+                    LabelValue(
+                        label = stringResource(R.string.label_principal_generic),
+                        value = formatInrNoDecimals(vm.principal),
+                        modifier = Modifier.weight(1f),
+                        leadingIcon = Icons.Outlined.Payments
+                    )
                     Box(Modifier.weight(1f)) {
                         val basisLabel = when (vm.rateBasis.uppercase()) {
                             "MONTHLY" -> stringResource(R.string.monthly)
@@ -1334,7 +1355,7 @@ private fun LedgerRow(
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabelValue(label = stringResource(R.string.from_date), value = vm.dateStr, modifier = Modifier.weight(1f))
+                    LabelValue(label = stringResource(R.string.from_date), value = vm.dateStr, modifier = Modifier.weight(1f), leadingIcon = Icons.Outlined.Event)
                     // Right column: total time with small colored status dot (due soon / overdue)
                     val statusColor = when {
                         daysTotal >= 365 -> Color(0xFFEF5350) // red
@@ -1342,7 +1363,16 @@ private fun LedgerRow(
                         else -> null
                     }
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.total_time), style = MaterialTheme.typography.labelSmall)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.AccessTime,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(stringResource(R.string.total_time), style = MaterialTheme.typography.labelSmall)
+                        }
                         Spacer(Modifier.height(2.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             statusColor?.let {
