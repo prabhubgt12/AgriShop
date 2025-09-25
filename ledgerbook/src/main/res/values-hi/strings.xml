@@ -56,6 +56,11 @@
     <string name="group_by_customer">ग्राहक के अनुसार समूहित करें</string>
     <string name="group_by_desc">मूल (पेरेंट) के साथ चाइल्ड लेनदेन को विस्तार योग्य रूप में दिखाएँ।</string>
     <string name="theme_title">थीम</string>
+    <!-- Reminders section -->
+    <string name="reminders_title">रिमाइंडर्स</string>
+    <string name="overdue_days_label">विलंबित (दिनों के बाद)</string>
+    <string name="due_soon_window_days_label">जल्द देय विंडो (दिन)</string>
+    <string name="due_soon_hint">"जल्द देय" ओवरड्यू से पहले के अंतिम N दिनों को दिखाता है।</string>
     <string name="system_option">सिस्टम</string>
     <string name="english_label">English</string>
     <string name="hindi_label">हिन्दी</string>
@@ -135,6 +140,7 @@
     <string name="attach">छवि संलग्न करें</string>
     <string name="image_too_large">छवि 1 एमबी से बड़ी है</string>
     <string name="full_payment">पूर्ण भुगतान</string>
+    <string name="apply_action">लागू करें</string>
 
     <!-- Ledger list menus/labels additions -->
     <string name="total_principal">कुल मूलधन</string>
@@ -158,4 +164,11 @@
     <string name="total_borrow">कुल उधार (लिया)</string>
     <string name="borrow_interest">लिए गए उधार का ब्याज</string>
     <string name="final_amount">अंतिम राशि</string>
+    <!-- Reminder chips labels -->
+    <string name="overdue_label">विलंबित</string>
+    <string name="due_soon_label">शीघ्र देय</string>
+    <string name="overdue_with_count">विलंबित %1$d</string>
+    <string name="due_soon_with_count">शीघ्र देय %1$d</string>
+    <string name="overdue_with_count_paren">विलंबित (%1$d)</string>
+    <string name="due_soon_with_count_paren">शीघ्र देय (%1$d)</string>
 </resources>

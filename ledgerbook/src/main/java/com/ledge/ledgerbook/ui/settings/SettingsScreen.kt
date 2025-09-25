@@ -157,6 +157,39 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     )
                 }
             }
+            // Reminder thresholds
+            item {
+                val overdue by themeViewModel.overdueDays.collectAsState()
+                val window by themeViewModel.dueSoonWindowDays.collectAsState()
+                var overdueText by remember(overdue) { mutableStateOf(overdue.toString()) }
+                var windowText by remember(window) { mutableStateOf(window.toString()) }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.reminders_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    OutlinedTextField(
+                        value = overdueText,
+                        onValueChange = { v ->
+                            val f = v.filter { it.isDigit() }
+                            overdueText = f
+                            f.toIntOrNull()?.let { d -> themeViewModel.setOverdueDays(d.coerceIn(1, 2000)) }
+                        },
+                        label = { Text(stringResource(R.string.overdue_days_label)) },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = windowText,
+                        onValueChange = { v ->
+                            val f = v.filter { it.isDigit() }
+                            windowText = f
+                            f.toIntOrNull()?.let { d -> themeViewModel.setDueSoonWindowDays(d.coerceIn(1, 365)) }
+                        },
+                        label = { Text(stringResource(R.string.due_soon_window_days_label)) },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(stringResource(R.string.due_soon_hint), style = MaterialTheme.typography.labelSmall)
+                }
+            }
             item { HorizontalDivider() }
             // Premium
             item { Text(stringResource(R.string.premium_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }

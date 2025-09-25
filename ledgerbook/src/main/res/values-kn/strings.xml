@@ -56,6 +56,11 @@
     <string name="group_by_customer">ಗ್ರಾಹಕ ಆಧಾರಿತ ಗುಂಪು</string>
     <string name="group_by_desc">ಪೇರಂಟ್ ಮತ್ತು ಚೈಲ್ಡ್ ವ್ಯವಹಾರಗಳನ್ನು ವಿಸ್ತರಣೆಯೊಂದಿಗೆ ತೋರಿಸಿ.</string>
     <string name="theme_title">ಥೀಮ್</string>
+    <!-- Reminders section -->
+    <string name="reminders_title">ರಿಮೈಂಡರ್‌ಗಳು</string>
+    <string name="overdue_days_label">ವಿಳಂಬ (ದಿನಗಳ ನಂತರ)</string>
+    <string name="due_soon_window_days_label">ಶೀಘ್ರದಲ್ಲೇ ಬಾಕಿ ವಿಂಡೋ (ದಿನ)</string>
+    <string name="due_soon_hint">"ಶೀಘ್ರದಲ್ಲೇ ಬಾಕಿ" ಎಂದರೆ ವಿಳಂಬದ ಮೊದಲು ಇರುವ ಕೊನೆಯ N ದಿನಗಳು.</string>
     <string name="system_option">ಸಿಸ್ಟಮ್</string>
     <string name="english_label">English</string>
     <string name="hindi_label">हिन्दी</string>
@@ -149,6 +154,13 @@
     <string name="total_borrow">ಒಟ್ಟು ಸಾಲ (ತೆಗೆದುಕೊಂಡದ್ದು)</string>
     <string name="borrow_interest">ತೆಗೆದುಕೊಂಡ ಸಾಲದ ಬಡ್ಡಿ</string>
     <string name="final_amount">ಅಂತಿಮ ಮೊತ್ತ</string>
+    <!-- Reminder chips labels -->
+    <string name="overdue_label">ವಿಳಂಬವಾಗಿದೆ</string>
+    <string name="due_soon_label">ಶೀಘ್ರದಲ್ಲೇ ಬಾಕಿ</string>
+    <string name="overdue_with_count">ವಿಳಂಬವಾಗಿದೆ %1$d</string>
+    <string name="due_soon_with_count">ಶೀಘ್ರದಲ್ಲೇ ಬಾಕಿ %1$d</string>
+    <string name="overdue_with_count_paren">ವಿಳಂಬವಾಗಿದೆ (%1$d)</string>
+    <string name="due_soon_with_count_paren">ಶೀಘ್ರದಲ್ಲೇ ಬಾಕಿ (%1$d)</string>
 
     <!-- Add/Edit Dialog -->
     <string name="update">ನವೀಕರಿಸಿ</string>
@@ -171,6 +183,7 @@
     <string name="attach">ಚಿತ್ರವನ್ನು ಲಗತ್ತಿಸಿ</string>
     <string name="image_too_large">ಚಿತ್ರದ ಗಾತ್ರ 1 MB ಕ್ಕಿಂತ ಹೆಚ್ಚು</string>
     <string name="full_payment">ಪೂರ್ಣ ಪಾವತಿ</string>
+    <string name="apply_action">ಅನ್ವಯಿಸು</string>
     
     <!-- Generic/detail/dialog labels (Kannada) -->
     <string name="entry_details">ದಾಖಲೆಯ ವಿವರಗಳು</string>

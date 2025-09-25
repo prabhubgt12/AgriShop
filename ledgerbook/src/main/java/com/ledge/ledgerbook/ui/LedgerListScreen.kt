@@ -131,6 +131,9 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         if (searchQuery.isBlank()) state.items
         else state.items.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
+    // Thresholds from settings
+    val overdueDays by themeViewModel.overdueDays.collectAsState()
+    val dueSoonWindow by themeViewModel.dueSoonWindowDays.collectAsState()
     // Precompute groups in composable scope (cannot call remember inside LazyListScope)
     val groups = remember(filteredItems) { filteredItems.groupBy { it.name } }
     val sortedGroups = remember(groups) { groups.entries.sortedBy { it.key.lowercase() } }
@@ -287,8 +290,14 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
 
                             val msPerDay = 86_400_000L
                             val now = System.currentTimeMillis()
-                            val overdueCount = remember(state.items) { state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= 365 } }
-                            val dueSoonCount = remember(state.items) { state.items.count { val d = (((now - it.fromDateMillis) / msPerDay).toInt()); d in 335..364 } }
+                            val od = overdueDays.coerceAtLeast(1)
+                            val win = dueSoonWindow.coerceAtLeast(1)
+                            val dueFrom = (od - win).coerceAtLeast(0)
+                            val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
+                            val dueSoonCount = state.items.count {
+                                val d = (((now - it.fromDateMillis) / msPerDay).toInt())
+                                d in dueFrom until od
+                            }
 
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                                 // Overdue chip (label inside)
@@ -299,7 +308,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                         .padding(horizontal = 6.dp, vertical = 3.dp)
                                 ) {
                                     Text(
-                                        text = "Overdue $overdueCount",
+                                        text = stringResource(R.string.overdue_with_count, overdueCount),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = Color(0xFFB00020),
                                         fontWeight = FontWeight.SemiBold
@@ -313,7 +322,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                         .padding(horizontal = 6.dp, vertical = 3.dp)
                                 ) {
                                     Text(
-                                        text = "Due soon $dueSoonCount",
+                                        text = stringResource(R.string.due_soon_with_count, dueSoonCount),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = Color(0xFF8C6D1F),
                                         fontWeight = FontWeight.SemiBold
@@ -373,16 +382,19 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         val now = System.currentTimeMillis()
                         val daysSince: (LedgerItemVM) -> Int = { (((now - it.fromDateMillis) / msPerDay).toInt()).coerceAtLeast(0) }
                         val (overdueCount, dueSoonCount) = run {
-                            var od = 0
-                            var ds = 0
+                            val odThresh = overdueDays.coerceAtLeast(1)
+                            val win = dueSoonWindow.coerceAtLeast(1)
+                            val from = (odThresh - win).coerceAtLeast(0)
+                            var odC = 0
+                            var dsC = 0
                             itemsForUser.forEach { item ->
                                 val d = daysSince(item)
                                 when {
-                                    d >= 365 -> od++
-                                    d in 335..364 -> ds++
+                                    d >= odThresh -> odC++
+                                    d in from until odThresh -> dsC++
                                 }
                             }
-                            od to ds
+                            odC to dsC
                         }
                         Box(
                             Modifier
@@ -406,7 +418,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                             .padding(horizontal = 8.dp, vertical = 4.dp)
                                     ) {
                                         Text(
-                                            text = if (overdueCount > 0) "Overdue ($overdueCount)" else "Due soon ($dueSoonCount)",
+                                            text = if (overdueCount > 0)
+                                                stringResource(R.string.overdue_with_count_paren, overdueCount)
+                                            else
+                                                stringResource(R.string.due_soon_with_count_paren, dueSoonCount),
                                             color = chipFg,
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.SemiBold
@@ -483,7 +498,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(12.dp))
                                             .background(chipBg)
-                                            .padding(vertical = 4.dp, horizontal = 6.dp)
+                                            .padding(vertical = 2.dp, horizontal = 4.dp)
                                     ) {
                                         Text(
                                             formatInrNoDecimals(netTotal),
@@ -1249,14 +1264,18 @@ private fun LedgerRow(
                                 "BORROW" -> stringResource(R.string.borrow)
                                 else -> toCamel(vm.type)
                             }
-                            AssistChip(
-                                onClick = {},
-                                label = { Text(typeLabel, style = MaterialTheme.typography.labelSmall) },
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = chipBg,
-                                    labelColor = chipFg
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(chipBg)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = typeLabel,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = chipFg
                                 )
-                            )
+                            }
                         }
                         Spacer(Modifier.weight(1f))
                         Box {
@@ -1357,9 +1376,15 @@ private fun LedgerRow(
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     LabelValue(label = stringResource(R.string.from_date), value = vm.dateStr, modifier = Modifier.weight(1f), leadingIcon = Icons.Outlined.Event)
                     // Right column: total time with small colored status dot (due soon / overdue)
+                    // Status dot colors: thresholds from settings
+                    val themeVM: ThemeViewModel = hiltViewModel()
+                    val odChild by themeVM.overdueDays.collectAsState()
+                    val winChild by themeVM.dueSoonWindowDays.collectAsState()
+                    val odT = odChild.coerceAtLeast(1)
+                    val fromT = (odT - winChild.coerceAtLeast(1)).coerceAtLeast(0)
                     val statusColor = when {
-                        daysTotal >= 365 -> Color(0xFFEF5350) // red
-                        daysTotal in 335..364 -> Color(0xFFFFB300) // amber
+                        daysTotal >= odT -> Color(0xFFEF5350) // red
+                        daysTotal in fromT until odT -> Color(0xFFFFB300) // amber
                         else -> null
                     }
                     Column(Modifier.weight(1f)) {

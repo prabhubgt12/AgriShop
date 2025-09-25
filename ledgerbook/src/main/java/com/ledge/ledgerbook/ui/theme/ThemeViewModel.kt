@@ -30,11 +30,26 @@ class ThemeViewModel @Inject constructor(
     val groupingEnabled: StateFlow<Boolean> = prefs.groupingEnabledFlow(true)
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+    // Reminder thresholds (days)
+    val overdueDays: StateFlow<Int> = prefs.overdueDaysFlow(365)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 365)
+
+    val dueSoonWindowDays: StateFlow<Int> = prefs.dueSoonWindowDaysFlow(30)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 30)
+
     fun setThemeMode(mode: Int) {
         viewModelScope.launch { prefs.setThemeMode(mode) }
     }
 
     fun setGroupingEnabled(enabled: Boolean) {
         viewModelScope.launch { prefs.setGroupingEnabled(enabled) }
+    }
+
+    fun setOverdueDays(days: Int) {
+        viewModelScope.launch { prefs.setOverdueDays(days) }
+    }
+
+    fun setDueSoonWindowDays(days: Int) {
+        viewModelScope.launch { prefs.setDueSoonWindowDays(days) }
     }
 }
