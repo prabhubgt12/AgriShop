@@ -195,10 +195,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Spacer(Modifier.height(2.dp))
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(12.dp))
                                             .background(Color(0xFFDFF6DD))
-                                            .padding(vertical = 4.dp, horizontal = 6.dp)
-                                    ) { Text(formatInrNoDecimals(state.totalLend), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
+                                            .padding(vertical = 3.dp, horizontal = 6.dp)
+                                    ) { Text(formatInrNoDecimals(state.totalLend), style = MaterialTheme.typography.labelSmall, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
                                 }
                                 // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
                                 Box(
@@ -212,10 +212,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Spacer(Modifier.height(2.dp))
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(12.dp))
                                             .background(Color(0xFFDFF6DD))
-                                            .padding(vertical = 4.dp, horizontal = 6.dp)
-                                    ) { Text(formatInrNoDecimals(state.totalLendInterest), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
+                                            .padding(vertical = 3.dp, horizontal = 6.dp)
+                                    ) { Text(formatInrNoDecimals(state.totalLendInterest), style = MaterialTheme.typography.labelSmall, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
                                 }
                             }
                         }
@@ -233,10 +233,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Spacer(Modifier.height(2.dp))
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(12.dp))
                                             .background(Color(0xFFFFE2E0))
-                                            .padding(vertical = 4.dp, horizontal = 6.dp)
-                                    ) { Text(formatInrNoDecimals(state.totalBorrow), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
+                                            .padding(vertical = 3.dp, horizontal = 6.dp)
+                                    ) { Text(formatInrNoDecimals(state.totalBorrow), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
                                 }
                                 // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
                                 Box(
@@ -250,10 +250,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Spacer(Modifier.height(2.dp))
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(12.dp))
                                             .background(Color(0xFFFFE2E0))
-                                            .padding(vertical = 4.dp, horizontal = 6.dp)
-                                    ) { Text(formatInrNoDecimals(state.totalBorrowInterest), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
+                                            .padding(vertical = 3.dp, horizontal = 6.dp)
+                                    ) { Text(formatInrNoDecimals(state.totalBorrowInterest), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
                                 }
                             }
                         }
@@ -268,7 +268,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 Spacer(Modifier.height(2.dp))
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .clip(RoundedCornerShape(12.dp))
                                         .background(if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0))
                                         .padding(vertical = 6.dp, horizontal = 8.dp)
                                 ) {
@@ -292,7 +292,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(Color(0xFFFDE0E0))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        .padding(horizontal = 6.dp, vertical = 3.dp)
                                 ) {
                                     Text(
                                         text = "Overdue $overdueCount",
@@ -306,7 +306,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(Color(0xFFFFF3E0))
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        .padding(horizontal = 6.dp, vertical = 3.dp)
                                 ) {
                                     Text(
                                         text = "Due soon $dueSoonCount",
@@ -364,7 +364,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             .height(IntrinsicSize.Min)
                             .padding(12.dp)
                     ) {
-                        // Thin status strip (amber = due soon, red = overdue), followed by existing purple parent bar
+                        // Parent row leading accents
                         val msPerDay = 86_400_000L
                         val now = System.currentTimeMillis()
                         val daysSince: (LedgerItemVM) -> Int = { (((now - it.fromDateMillis) / msPerDay).toInt()).coerceAtLeast(0) }
@@ -380,19 +380,6 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             }
                             od to ds
                         }
-                        val parentStatusColor = when {
-                            overdueCount > 0 -> Color(0xFFEF5350) // red 400/500
-                            dueSoonCount > 0 -> Color(0xFFFFB300) // amber 600
-                            else -> Color.Transparent
-                        }
-                        Box(
-                            Modifier
-                                .width(2.dp)
-                                .fillMaxHeight()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(parentStatusColor)
-                        )
-                        Spacer(Modifier.width(4.dp))
                         Box(
                             Modifier
                                 .width(4.dp)
@@ -410,7 +397,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     val chipFg = if (overdueCount > 0) Color(0xFFB00020) else Color(0xFF8C6D1F)
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(12.dp))
                                             .background(chipBg)
                                             .padding(horizontal = 8.dp, vertical = 4.dp)
                                     ) {
@@ -490,7 +477,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Spacer(Modifier.height(2.dp))
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(12.dp))
                                             .background(chipBg)
                                             .padding(vertical = 4.dp, horizontal = 6.dp)
                                     ) {
@@ -1386,7 +1373,7 @@ private fun LedgerRow(
                         Spacer(Modifier.height(2.dp))
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(chipBg2)
                                 .padding(vertical = 4.dp, horizontal = 6.dp)
                         ) {
