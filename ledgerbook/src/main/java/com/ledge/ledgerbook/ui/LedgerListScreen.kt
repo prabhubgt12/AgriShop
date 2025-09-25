@@ -286,25 +286,34 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             val overdueCount = remember(state.items) { state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= 365 } }
                             val dueSoonCount = remember(state.items) { state.items.count { val d = (((now - it.fromDateMillis) / msPerDay).toInt()); d in 335..364 } }
 
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                // Always show both chips with their counts (including zero)
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text("Overdue", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB00020))
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(Color(0xFFFDE0E0))
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    ) { Text(overdueCount.toString(), color = Color(0xFFB00020), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                // Overdue chip (label inside)
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFFFDE0E0))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Overdue $overdueCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFFB00020),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
                                 }
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text("Due soon", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8C6D1F))
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(Color(0xFFFFF3E0))
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    ) { Text(dueSoonCount.toString(), color = Color(0xFF8C6D1F), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold) }
+                                // Due soon chip (label inside)
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFFFFF3E0))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Due soon $dueSoonCount",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF8C6D1F),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
                                 }
                             }
                         }
