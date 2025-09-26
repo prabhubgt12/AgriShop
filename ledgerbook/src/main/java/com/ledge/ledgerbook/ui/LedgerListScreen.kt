@@ -27,12 +27,16 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
@@ -189,156 +193,152 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 Spacer(Modifier.height(2.dp))
             }
             item {
-                // Compact single overview card with 2x2 grid + Final Amount row
-                val neutralContainer = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = neutralContainer),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
-                        // Conditionally show Lend and Borrow rows
-                        val showLendRow = kotlin.math.abs(state.totalLend) >= 1e-6
-                        val showBorrowRow = kotlin.math.abs(state.totalBorrow) >= 1e-6
+                // Old design: three separate summary cards
+                val container = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
 
-                        if (showLendRow) {
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(IntrinsicSize.Min),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            // Lend card
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = container),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Column(Modifier.weight(1f)) {
+                                Column(Modifier.padding(12.dp)) {
                                     Text(stringResource(R.string.total_lend), style = MaterialTheme.typography.labelSmall)
-                                    Spacer(Modifier.height(2.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFDFF6DD))
-                                            .padding(vertical = 3.dp, horizontal = 6.dp)
-                                    ) { Text(formatInrNoDecimals(state.totalLend), style = MaterialTheme.typography.labelSmall, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
-                                }
-                                // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
-                                Box(
-                                    Modifier
-                                        .width(1.dp)
-                                        .fillMaxHeight()
-                                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                                )
-                                Column(Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.lend_interest), style = MaterialTheme.typography.labelSmall)
-                                    Spacer(Modifier.height(2.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFDFF6DD))
-                                            .padding(vertical = 3.dp, horizontal = 6.dp)
-                                    ) { Text(formatInrNoDecimals(state.totalLendInterest), style = MaterialTheme.typography.labelSmall, color = Color(0xFF0B6A0B), fontWeight = FontWeight.SemiBold) }
+                                    Spacer(Modifier.height(6.dp))
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFDFF6DD)),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Box(Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
+                                            Text(
+                                                formatInrNoDecimals(state.totalLend),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = Color(0xFF0B6A0B),
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = buildAnnotatedString {
+                                            append(stringResource(R.string.label_interest) + ": ")
+                                            withStyle(SpanStyle(color = Color(0xFF66BB6A), fontWeight = FontWeight.Bold)) {
+                                                append(formatInrNoDecimals(state.totalLendInterest))
+                                            }
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
                                 }
                             }
-                        }
-
-                        if (showBorrowRow) {
-                            if (showLendRow) Spacer(Modifier.height(6.dp))
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(IntrinsicSize.Min),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            // Borrow card
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = container),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Column(Modifier.weight(1f)) {
+                                Column(Modifier.padding(12.dp)) {
                                     Text(stringResource(R.string.total_borrow), style = MaterialTheme.typography.labelSmall)
-                                    Spacer(Modifier.height(2.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFFFE2E0))
-                                            .padding(vertical = 3.dp, horizontal = 6.dp)
-                                    ) { Text(formatInrNoDecimals(state.totalBorrow), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
-                                }
-                                // Vertical divider between Lend and Borrow columns (lightened for dark theme visibility)
-                                Box(
-                                    Modifier
-                                        .width(1.dp)
-                                        .fillMaxHeight()
-                                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                                )
-                                Column(Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.borrow_interest), style = MaterialTheme.typography.labelSmall)
-                                    Spacer(Modifier.height(2.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFFFE2E0))
-                                            .padding(vertical = 3.dp, horizontal = 6.dp)
-                                    ) { Text(formatInrNoDecimals(state.totalBorrowInterest), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9A0007), fontWeight = FontWeight.SemiBold) }
+                                    Spacer(Modifier.height(6.dp))
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE2E0)),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Box(Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
+                                            Text(
+                                                formatInrNoDecimals(state.totalBorrow),
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = Color(0xFF9A0007),
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = buildAnnotatedString {
+                                            append(stringResource(R.string.label_interest) + ": ")
+                                            withStyle(SpanStyle(color = Color(0xFFEF5350), fontWeight = FontWeight.Bold)) {
+                                                append(formatInrNoDecimals(state.totalBorrowInterest))
+                                            }
+                                        },
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
                                 }
                             }
-                        }
+                    }
 
-                        if (showLendRow || showBorrowRow) Spacer(Modifier.height(6.dp))
-
-                        // Final Amount row with reminder chips centered to amount chip
-                        val isPositive = state.finalAmount >= 0
-                        val msPerDay = 86_400_000L
-                        val now = System.currentTimeMillis()
-                        val od = overdueDays.coerceAtLeast(1)
-                        val win = dueSoonWindow.coerceAtLeast(1)
-                        val dueFrom = (od - win).coerceAtLeast(0)
-                        val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
-                        val dueSoonCount = state.items.count {
-                            val d = (((now - it.fromDateMillis) / msPerDay).toInt())
-                            d in dueFrom until od
-                        }
-                        Column(Modifier.fillMaxWidth()) {
+                    // Final Amount card
+                    val isPositive = state.finalAmount >= 0
+                    val msPerDay = 86_400_000L
+                    val now = System.currentTimeMillis()
+                    val od = overdueDays.coerceAtLeast(1)
+                    val win = dueSoonWindow.coerceAtLeast(1)
+                    val dueFrom = (od - win).coerceAtLeast(0)
+                    val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
+                    val dueSoonCount = state.items.count {
+                        val d = (((now - it.fromDateMillis) / msPerDay).toInt())
+                        d in dueFrom until od
+                    }
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = container),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(12.dp)) {
                             Text(stringResource(R.string.final_amount), style = MaterialTheme.typography.labelSmall)
-                            Spacer(Modifier.height(2.dp))
+                            Spacer(Modifier.height(6.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Amount chip
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0))
-                                        .padding(vertical = 6.dp, horizontal = 8.dp)
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Text(
-                                        formatInrNoDecimals(state.finalAmount),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007),
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                // Chips aligned center vertically with amount chip
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFFDE0E0))
-                                            .padding(horizontal = 6.dp, vertical = 3.dp)
-                                    ) {
+                                    Box(Modifier.padding(vertical = 6.dp, horizontal = 10.dp)) {
                                         Text(
-                                            text = stringResource(R.string.overdue_with_count, overdueCount),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color(0xFFB00020),
-                                            fontWeight = FontWeight.SemiBold
+                                            formatInrNoDecimals(state.finalAmount),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007),
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFFFFF3E0))
-                                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                                }
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFDE0E0)),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                        shape = RoundedCornerShape(12.dp)
                                     ) {
-                                        Text(
-                                            text = stringResource(R.string.due_soon_with_count, dueSoonCount),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color(0xFF8C6D1F),
-                                            fontWeight = FontWeight.SemiBold
-                                        )
+                                        Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                            Text(
+                                                text = stringResource(R.string.overdue_with_count, overdueCount),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color(0xFFB00020),
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
+                                    }
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                            Text(
+                                                text = stringResource(R.string.due_soon_with_count, dueSoonCount),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = Color(0xFF8C6D1F),
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -346,13 +346,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     }
                 }
 
-                // Banner Ad (only when ads are not removed) - below the overview card
+                // Banner Ad (only when ads are not removed) - below the summary cards
                 if (!hasRemoveAds) {
                     Spacer(Modifier.height(6.dp))
                     BannerAd(modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(6.dp))
                 } else {
-                    // Minimal gap before search when no ad is shown
                     Spacer(Modifier.height(4.dp))
                 }
             }

@@ -157,10 +157,10 @@
     <!-- Reminder chips labels -->
     <string name="overdue_label">ವಿಳಂಬವಾಗಿದೆ</string>
     <string name="due_soon_label">ಶೀಘ್ರದಲ್ಲೇ ಬಾಕಿ</string>
-    <string name="overdue_with_count">ವಿಳಂಬವಾಗಿದೆ %1$d</string>
-    <string name="due_soon_with_count">ಶೀಘ್ರದಲ್ಲೇ ಬಾಕಿ %1$d</string>
-    <string name="overdue_with_count_paren">ವಿಳಂಬವಾಗಿದೆ (%1$d)</string>
-    <string name="due_soon_with_count_paren">ಶೀಘ್ರದಲ್ಲೇ ಬಾಕಿ (%1$d)</string>
+    <string name="overdue_with_count">ವಿಳಂಬ %1$d</string>
+    <string name="due_soon_with_count">ಶೀಘ್ರ ಬಾಕಿ %1$d</string>
+    <string name="overdue_with_count_paren">ವಿಳಂಬ (%1$d)</string>
+    <string name="due_soon_with_count_paren">ಶೀಘ್ರ ಬಾಕಿ (%1$d)</string>
 
     <!-- Add/Edit Dialog -->
     <string name="update">ನವೀಕರಿಸಿ</string>
