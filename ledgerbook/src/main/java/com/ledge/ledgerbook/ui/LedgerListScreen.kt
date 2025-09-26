@@ -122,6 +122,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val state by vm.state.collectAsState()
     // Settings flag
     val groupingEnabled by themeViewModel.groupingEnabled.collectAsState()
+    val themeMode by themeViewModel.themeMode.collectAsState()
+    val isDarkActive = when (themeMode) {
+        ThemeViewModel.MODE_DARK -> true
+        ThemeViewModel.MODE_LIGHT -> false
+        else -> androidx.compose.foundation.isSystemInDarkTheme()
+    }
     // Monetization flag
     val monetizationVM: MonetizationViewModel = hiltViewModel()
     val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState()
@@ -184,7 +190,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
             }
             item {
                 // Compact single overview card with 2x2 grid + Final Amount row
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                val neutralContainer = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = neutralContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
                     Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
                         // Conditionally show Lend and Borrow rows
                         val showLendRow = kotlin.math.abs(state.totalLend) >= 1e-6
@@ -363,15 +374,15 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 val expanded = rememberSaveable(name) { mutableStateOf(false) }
 
                 // Parent card with totals
+                val neutralParent = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { expanded.value = !expanded.value },
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = neutralParent
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Row(
                         Modifier
