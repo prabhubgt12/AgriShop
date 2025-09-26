@@ -267,12 +267,27 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
 
                         if (showLendRow || showBorrowRow) Spacer(Modifier.height(6.dp))
 
-                        // Final Amount row with reminder chips on the same row
+                        // Final Amount row with reminder chips centered to amount chip
                         val isPositive = state.finalAmount >= 0
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.final_amount), style = MaterialTheme.typography.labelSmall)
-                                Spacer(Modifier.height(2.dp))
+                        val msPerDay = 86_400_000L
+                        val now = System.currentTimeMillis()
+                        val od = overdueDays.coerceAtLeast(1)
+                        val win = dueSoonWindow.coerceAtLeast(1)
+                        val dueFrom = (od - win).coerceAtLeast(0)
+                        val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
+                        val dueSoonCount = state.items.count {
+                            val d = (((now - it.fromDateMillis) / msPerDay).toInt())
+                            d in dueFrom until od
+                        }
+                        Column(Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.final_amount), style = MaterialTheme.typography.labelSmall)
+                            Spacer(Modifier.height(2.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Amount chip
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(12.dp))
@@ -286,47 +301,34 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-                            }
-
-                            val msPerDay = 86_400_000L
-                            val now = System.currentTimeMillis()
-                            val od = overdueDays.coerceAtLeast(1)
-                            val win = dueSoonWindow.coerceAtLeast(1)
-                            val dueFrom = (od - win).coerceAtLeast(0)
-                            val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
-                            val dueSoonCount = state.items.count {
-                                val d = (((now - it.fromDateMillis) / msPerDay).toInt())
-                                d in dueFrom until od
-                            }
-
-                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                // Overdue chip (label inside)
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFFDE0E0))
-                                        .padding(horizontal = 6.dp, vertical = 3.dp)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.overdue_with_count, overdueCount),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Color(0xFFB00020),
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                                // Due soon chip (label inside)
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFFFF3E0))
-                                        .padding(horizontal = 6.dp, vertical = 3.dp)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.due_soon_with_count, dueSoonCount),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Color(0xFF8C6D1F),
-                                        fontWeight = FontWeight.SemiBold
-                                    )
+                                // Chips aligned center vertically with amount chip
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Color(0xFFFDE0E0))
+                                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.overdue_with_count, overdueCount),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color(0xFFB00020),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(Color(0xFFFFF3E0))
+                                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.due_soon_with_count, dueSoonCount),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color(0xFF8C6D1F),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
                                 }
                             }
                         }
