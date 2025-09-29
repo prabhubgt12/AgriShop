@@ -160,11 +160,15 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
             TileData(stringResource(com.fertipos.agroshop.R.string.purchases_title), Icons.Filled.ReceiptLong) { onNavigateToTab(7) },
             TileData(stringResource(com.fertipos.agroshop.R.string.view_bills), Icons.Filled.History) {
                 val act = (context as? android.app.Activity)
-                if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(6) } else onNavigateToTab(6)
+                if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act, onDismiss = { onNavigateToTab(6) }) else onNavigateToTab(6)
             },
             TileData(stringResource(com.fertipos.agroshop.R.string.view_purchases), Icons.Filled.History) {
                 val act = (context as? android.app.Activity)
-                if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act) { onNavigateToTab(8) } else onNavigateToTab(8)
+                if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(
+                    activity = act,
+                    onDismiss = { onNavigateToTab(8) },
+                    unitOverride = "ca-app-pub-2556604347710668/8432413656"
+                ) else onNavigateToTab(8)
             },
             // Interest Book tile removed (maintained as separate child app)
             TileData(stringResource(com.fertipos.agroshop.R.string.reports_title), Icons.Filled.BarChart) { onNavigateToTab(4) },

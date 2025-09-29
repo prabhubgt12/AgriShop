@@ -22,12 +22,14 @@ object InterstitialAds {
     @Volatile private var isLoading: Boolean = false
     @Volatile private var lastShownAt: Long = 0L
     private const val MIN_INTERVAL_MS: Long = 2 * 60 * 1000 // 2 minutes
+    @Volatile private var currentUnit: String = PROD_UNIT
 
-    fun preload(context: Context) {
+    fun preload(context: Context, unitOverride: String? = null) {
         if (isLoading || interstitial != null) return
         isLoading = true
         val request = AdRequest.Builder().build()
-        val unit = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else PROD_UNIT
+        val unit = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else (unitOverride ?: PROD_UNIT)
+        currentUnit = unit
         InterstitialAd.load(
             context,
             unit,
@@ -47,16 +49,24 @@ object InterstitialAds {
         )
     }
 
-    fun showIfAvailable(activity: Activity, onDismiss: (() -> Unit)? = null) {
+    fun showIfAvailable(activity: Activity, onDismiss: (() -> Unit)? = null, unitOverride: String? = null) {
         val now = System.currentTimeMillis()
         if (now - lastShownAt < MIN_INTERVAL_MS) {
             Log.d("InterstitialAds", "Throttled: lastShownAt=$lastShownAt now=$now")
             onDismiss?.invoke(); return
         }
+        val desiredUnit = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else (unitOverride ?: PROD_UNIT)
         val ad = interstitial
         if (ad == null) {
-            Log.d("InterstitialAds", "No interstitial ready; triggering preload and continuing")
-            preload(activity.applicationContext)
+            Log.d("InterstitialAds", "No interstitial ready; triggering preload for unit=" + desiredUnit + " and continuing")
+            preload(activity.applicationContext, desiredUnit)
+            onDismiss?.invoke(); return
+        }
+        // If cached ad belongs to a different unit (and not in test mode), reload for desired unit
+        if (!BuildConfig.USE_TEST_ADS && desiredUnit != currentUnit) {
+            Log.d("InterstitialAds", "Cached interstitial unit differs. Reloading for unit=" + desiredUnit)
+            interstitial = null
+            preload(activity.applicationContext, desiredUnit)
             onDismiss?.invoke(); return
         }
         // Temporarily disable edge-to-edge and ensure system bars are visible during ad

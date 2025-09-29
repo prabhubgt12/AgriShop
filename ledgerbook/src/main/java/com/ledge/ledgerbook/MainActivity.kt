@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.ledge.ledgerbook.ui.LedgerApp
@@ -63,11 +64,13 @@ class MainActivity : ComponentActivity() {
                         controller.isAppearanceLightStatusBars = !isDark
                         controller.isAppearanceLightNavigationBars = !isDark
                     }
-                    var unlocked by remember { mutableStateOf(false) }
+                    var unlocked by rememberSaveable { mutableStateOf(false) }
 
-                    LaunchedEffect(Unit) {
-                        onUnlock = { unlocked = true }
-                        requestUnlockOrGrant()
+                    LaunchedEffect(unlocked) {
+                        if (!unlocked) {
+                            onUnlock = { unlocked = true }
+                            requestUnlockOrGrant()
+                        }
                     }
 
                     if (unlocked) {

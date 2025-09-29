@@ -376,8 +376,10 @@ fun HomeScreen(
         }
 
         if (!hasRemoveAds) {
-            BannerAd(modifier = Modifier
-                .fillMaxWidth())
+            BannerAd(
+                modifier = Modifier.fillMaxWidth(),
+                adUnitId = "ca-app-pub-2556604347710668/1187622105"
+            )
         }
 
         // Interest Calculator Card

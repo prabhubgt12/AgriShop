@@ -17,8 +17,8 @@ android {
         applicationId = "com.fertipos.agroshop"
         minSdk = 24
         targetSdk = 35
-        versionCode = 17
-        versionName = "1.0.17"
+        versionCode = 18
+        versionName = "1.0.18"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -55,7 +55,7 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
             // Closed testing: keep test ads enabled in release build
-            buildConfigField("boolean", "USE_TEST_ADS", "true")
+            buildConfigField("boolean", "USE_TEST_ADS", "false")
         }
     }
 
@@ -84,6 +84,13 @@ android {
             excludes += "META-INF/LICENSE.txt"
             excludes += "META-INF/NOTICE.txt"
             excludes += "META-INF/INDEX.LIST"
+        }
+    }
+
+    // Keep all locales in base to support in-app language change after Play delivery
+    bundle {
+        language {
+            enableSplit = false
         }
     }
 }

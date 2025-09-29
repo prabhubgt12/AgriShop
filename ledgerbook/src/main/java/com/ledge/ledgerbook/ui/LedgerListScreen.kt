@@ -194,7 +194,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
             }
             item {
                 // Old design: three separate summary cards
-                val container = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
+                val container = MaterialTheme.colorScheme.surfaceVariant
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -373,7 +373,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 val expanded = rememberSaveable(name) { mutableStateOf(false) }
 
                 // Parent card with totals
-                val neutralParent = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
+                val neutralParent = MaterialTheme.colorScheme.surfaceVariant
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1240,7 +1240,6 @@ private fun LedgerRow(
     val ctx = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(

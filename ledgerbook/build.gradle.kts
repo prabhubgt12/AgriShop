@@ -18,8 +18,8 @@ android {
         applicationId = "com.ledge.ledgerbook"
         minSdk = 24
         targetSdk = 35
-        versionCode = 17
-        versionName = "1.0.17"
+        versionCode = 19
+        versionName = "1.0.19"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -90,6 +90,13 @@ android {
         // Ensure native libraries are not extracted (required for 16KB memory page size support on Android 15+)
         jniLibs {
             useLegacyPackaging = false
+        }
+    }
+
+    // Keep all locales in base to support in-app language change after Play Store delivery
+    bundle {
+        language {
+            enableSplit = false
         }
     }
 }
