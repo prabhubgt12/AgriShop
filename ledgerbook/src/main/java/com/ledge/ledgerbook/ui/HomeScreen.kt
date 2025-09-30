@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -61,7 +62,8 @@ private fun CenteredAlertDialog(
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 tonalElevation = 6.dp,
-                color = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHighest,
+                color = ComposeColor(0xFF121212),
+                contentColor = ComposeColor.White,
                 modifier = Modifier
                     .wrapContentWidth()
                     .wrapContentHeight()
@@ -117,7 +119,8 @@ private fun WheelDatePickerDialog(
     val maxDay = remember(year, month) { YearMonth.of(year, month).lengthOfMonth() }
     if (day > maxDay) day = maxDay
 
-    val onSurfaceColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    // Dialog background is always dark; ensure high-contrast text
+    val onSurfaceColor = ComposeColor.White.toArgb()
     val dividerColor = MaterialTheme.colorScheme.outline.toArgb()
 
     CenteredAlertDialog(
@@ -147,11 +150,17 @@ private fun WheelDatePickerDialog(
                             try {
                                 val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             } catch (_: Exception) {}
+                            val states = arrayOf(
+                                intArrayOf(android.R.attr.state_pressed),
+                                intArrayOf(android.R.attr.state_focused),
+                                intArrayOf(android.R.attr.state_activated),
+                                intArrayOf(android.R.attr.state_selected),
+                                intArrayOf()
+                            )
+                            val colors = intArrayOf(onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor)
                             for (i in 0 until childCount) {
                                 val c = getChildAt(i)
-                                if (c is EditText) {
-                                    c.setTextColor(onSurfaceColor)
-                                }
+                                if (c is EditText) c.setTextColor(ColorStateList(states, colors))
                             }
                             invalidate()
                         }
@@ -179,6 +188,15 @@ private fun WheelDatePickerDialog(
                                 c.isFocusableInTouchMode = false
                                 c.isClickable = false
                                 c.isLongClickable = false
+                                val states = arrayOf(
+                                    intArrayOf(android.R.attr.state_pressed),
+                                    intArrayOf(android.R.attr.state_focused),
+                                    intArrayOf(android.R.attr.state_activated),
+                                    intArrayOf(android.R.attr.state_selected),
+                                    intArrayOf()
+                                )
+                                val colors = intArrayOf(onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor)
+                                c.setTextColor(ColorStateList(states, colors))
                             }
                         }
                         invalidate()
@@ -197,15 +215,29 @@ private fun WheelDatePickerDialog(
                         minValue = 1
                         maxValue = 12
                         value = month
-                        setFormatter { String.format("%02d", it) }
+                        // Use month short names to render as DD Mon YYYY
+                        val monthNames = arrayOf(
+                            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                        )
+                        displayedValues = null // reset before changing
+                        displayedValues = monthNames
                         setOnValueChangedListener { _, _, newVal ->
                             month = newVal
                             try {
                                 val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             } catch (_: Exception) {}
+                            val states = arrayOf(
+                                intArrayOf(android.R.attr.state_pressed),
+                                intArrayOf(android.R.attr.state_focused),
+                                intArrayOf(android.R.attr.state_activated),
+                                intArrayOf(android.R.attr.state_selected),
+                                intArrayOf()
+                            )
+                            val colors = intArrayOf(onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor)
                             for (i in 0 until childCount) {
                                 val c = getChildAt(i)
-                                if (c is EditText) c.setTextColor(onSurfaceColor)
+                                if (c is EditText) c.setTextColor(ColorStateList(states, colors))
                             }
                             invalidate()
                         }
