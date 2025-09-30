@@ -62,7 +62,8 @@ object LedgerInterest {
             }
             Period.YEARLY -> when (rateBasis) {
                 Period.YEARLY -> ratePercent / 100.0
-                Period.MONTHLY -> (1.0 + (ratePercent / 100.0)).pow(12.0) - 1.0
+                // Use NOMINAL annual rate when basis is monthly: 12 * monthlyRate
+                Period.MONTHLY -> 12.0 * (ratePercent / 100.0)
             }
         }
         val compounded = principal * (1 + r).pow(periods)

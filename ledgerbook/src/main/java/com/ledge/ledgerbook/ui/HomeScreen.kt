@@ -23,14 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.ledgerbook.ads.BannerAd
 import com.ledge.ledgerbook.ads.InterstitialAds
 import com.ledge.ledgerbook.billing.MonetizationViewModel
-import androidx.compose.ui.platform.LocalContext
 import android.app.Activity
-import java.time.LocalDate
-import java.time.Period
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
-import kotlin.math.pow
 import android.widget.NumberPicker
 import android.widget.EditText
 import android.graphics.drawable.ColorDrawable
@@ -38,6 +31,14 @@ import android.util.TypedValue
 import android.graphics.Color
 import android.view.View
 import android.view.MotionEvent
+import androidx.compose.ui.platform.LocalContext
+import java.time.LocalDate
+import java.time.Period
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.util.Locale
+import kotlin.math.pow
 import android.content.res.ColorStateList
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -132,6 +133,7 @@ private fun WheelDatePickerDialog(
         text = {
             Box(contentAlignment = Alignment.Center) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // Day
                     AndroidView(
                         modifier = Modifier
                             .width(60.dp)
@@ -142,25 +144,18 @@ private fun WheelDatePickerDialog(
                         setBackgroundColor(Color.TRANSPARENT)
                         wrapSelectorWheel = true
                         overScrollMode = View.OVER_SCROLL_NEVER
-                        minValue = 1900
-                        maxValue = 2100
-                        value = year
+                        minValue = 1
+                        maxValue = maxDay
+                        value = day.coerceAtMost(maxDay)
+                        setFormatter { String.format("%02d", it) }
                         setOnValueChangedListener { _, _, newVal ->
-                            year = newVal
+                            day = newVal
                             try {
                                 val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             } catch (_: Exception) {}
-                            val states = arrayOf(
-                                intArrayOf(android.R.attr.state_pressed),
-                                intArrayOf(android.R.attr.state_focused),
-                                intArrayOf(android.R.attr.state_activated),
-                                intArrayOf(android.R.attr.state_selected),
-                                intArrayOf()
-                            )
-                            val colors = intArrayOf(onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor)
                             for (i in 0 until childCount) {
                                 val c = getChildAt(i)
-                                if (c is EditText) c.setTextColor(ColorStateList(states, colors))
+                                if (c is EditText) c.setTextColor(onSurfaceColor)
                             }
                             invalidate()
                         }
@@ -171,6 +166,7 @@ private fun WheelDatePickerDialog(
                             val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
                         } catch (_: Exception) {}
                         setOnScrollListener { _, _ ->
+                            isActivated = false; isPressed = false
                             try {
                                 val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             } catch (_: Exception) {}
@@ -201,7 +197,8 @@ private fun WheelDatePickerDialog(
                         }
                         invalidate()
                     } }
-                    )
+                )
+                // Month
                 AndroidView(
                     modifier = Modifier
                         .width(60.dp)
@@ -271,6 +268,7 @@ private fun WheelDatePickerDialog(
                         invalidate()
                     } }
                 )
+                // Year
                 AndroidView(
                     modifier = Modifier
                         .width(60.dp)
@@ -281,12 +279,11 @@ private fun WheelDatePickerDialog(
                         setBackgroundColor(Color.TRANSPARENT)
                         wrapSelectorWheel = true
                         overScrollMode = View.OVER_SCROLL_NEVER
-                        minValue = 1
-                        maxValue = maxDay
-                        value = day.coerceAtMost(maxDay)
-                        setFormatter { String.format("%02d", it) }
+                        minValue = 1900
+                        maxValue = 2100
+                        value = year
                         setOnValueChangedListener { _, _, newVal ->
-                            day = newVal
+                            year = newVal
                             try {
                                 val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             } catch (_: Exception) {}
@@ -303,7 +300,6 @@ private fun WheelDatePickerDialog(
                             val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
                         } catch (_: Exception) {}
                         setOnScrollListener { _, _ ->
-                            isActivated = false; isPressed = false
                             try {
                                 val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             } catch (_: Exception) {}
@@ -317,20 +313,15 @@ private fun WheelDatePickerDialog(
                                 c.setBackgroundColor(Color.TRANSPARENT)
                                 c.isCursorVisible = false
                                 c.highlightColor = Color.TRANSPARENT
-                                val states = arrayOf(
-                                    intArrayOf(android.R.attr.state_pressed),
-                                    intArrayOf(android.R.attr.state_focused),
-                                    intArrayOf(android.R.attr.state_activated),
-                                    intArrayOf(android.R.attr.state_selected),
-                                    intArrayOf()
-                                )
-                                val colors = intArrayOf(onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor)
-                                c.setTextColor(ColorStateList(states, colors))
+                                c.isFocusable = false
+                                c.isFocusableInTouchMode = false
+                                c.isClickable = false
+                                c.isLongClickable = false
                             }
                         }
                         invalidate()
                     } },
-                    update = { picker -> picker.maxValue = YearMonth.of(year, month).lengthOfMonth() }
+                    update = { /* no-op for Year */ }
                 )
                 }
             }
@@ -486,12 +477,13 @@ private fun InterestCalculatorCard() {
     var resultInterest by remember { mutableStateOf("") }
     var resultTotal by remember { mutableStateOf("") }
 
-    val df = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val df = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ENGLISH)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
+ 
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -737,13 +729,17 @@ private fun InterestCalculatorCard() {
                         p * rateM * totalMonths
                     } else {
                         if (compoundType == CompoundType.Monthly) {
+                            // Monthly compounding using entered monthly rate
                             p * ((1 + rateM).pow(totalMonths) - 1)
                         } else {
+                            // Yearly compounding: use NOMINAL annual rate from monthly input
+                            // Example: 2%/mo => 24%/yr; 2 years on 1000 => 1000 * ((1+0.24)^2 - 1) ≈ 537.60
                             val yearsFraction = totalMonths / 12.0
-                            val rateY = (1 + rateM).pow(12.0) - 1
-                            p * ((1 + rateY).pow(yearsFraction) - 1)
+                            val nominalRateY = 12.0 * rateM
+                            p * ((1 + nominalRateY).pow(yearsFraction) - 1)
                         }
                     }
+
                     val total = p + interest
 
                     resultDuration = "${years}y ${months}m ${days}d"

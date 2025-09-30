@@ -171,12 +171,12 @@
     <string name="name_required">Name is required</string>
     <string name="interest_type">Interest Type</string>
     <string name="rate_basis">Rate Basis</string>
-    <string name="duration_type">Duration Type</string>
+    <string name="duration_type">Compound Duration</string>
     <string name="principal_amount">Principal Amount</string>
     <string name="enter_valid_number">Enter a valid number</string>
     <string name="interest_rate_percent">Interest Rate (%)</string>
     <string name="pick">Pick</string>
-    <string name="notes_optional">Notes (Optional)</string>
+    <string name="notes_optional">Notes</string>
     
     <!-- Generic/detail/dialog labels -->
     <string name="entry_details">Entry Details</string>
