@@ -45,6 +45,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.stringResource
 import com.ledge.ledgerbook.R
+import com.ledge.ledgerbook.util.NumberToWords
 
 // Compound type for interest calculation
 enum class CompoundType { Monthly, Yearly }
@@ -520,6 +521,19 @@ private fun InterestCalculatorCard() {
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                         keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
                     )
+                )
+            }
+            // Principal in words (localized, Indian numbering)
+            val localeTag = LocalContext.current.resources.configuration.locales[0]?.toLanguageTag()
+            val principalWords = remember(principal, localeTag) {
+                val amt = principal.toDoubleOrNull() ?: 0.0
+                NumberToWords.inIndianSystem(amt, localeTag)
+            }
+            if (principal.isNotBlank() && principalWords.isNotBlank()) {
+                Text(
+                    text = principalWords,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
