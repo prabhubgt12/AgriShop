@@ -32,6 +32,7 @@ import android.graphics.Color
 import android.view.View
 import android.view.MotionEvent
 import androidx.compose.ui.platform.LocalContext
+import android.view.ContextThemeWrapper
 import java.time.LocalDate
 import java.time.Period
 import java.time.YearMonth
@@ -58,14 +59,16 @@ private fun CenteredAlertDialog(
     text: @Composable (() -> Unit)? = null,
     confirmButton: @Composable () -> Unit,
     dismissButton: (@Composable () -> Unit)? = null,
+    containerColor: ComposeColor = ComposeColor(0xFF3A3A3A),
+    contentColor: ComposeColor = ComposeColor.White,
 ) {
     BasicAlertDialog(onDismissRequest = onDismissRequest) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Surface(
                 shape = MaterialTheme.shapes.medium,
                 tonalElevation = 6.dp,
-                color = ComposeColor(0xFF121212),
-                contentColor = ComposeColor.White,
+                color = containerColor,
+                contentColor = contentColor,
                 modifier = Modifier
                     .wrapContentWidth()
                     .wrapContentHeight()
@@ -121,9 +124,37 @@ private fun WheelDatePickerDialog(
     val maxDay = remember(year, month) { YearMonth.of(year, month).lengthOfMonth() }
     if (day > maxDay) day = maxDay
 
-    // Dialog background is always dark; ensure high-contrast text
-    val onSurfaceColor = ComposeColor.White.toArgb()
-    val dividerColor = MaterialTheme.colorScheme.outline.toArgb()
+    // Theme-oriented colors (Material3), with OEM-safe text enforcement kept below
+    val isDark = isSystemInDarkTheme()
+    val dialogBgColor = MaterialTheme.colorScheme.surface
+    val contentComposeColor = MaterialTheme.colorScheme.onSurface
+    val onSurfaceColor = contentComposeColor.toArgb()
+    // Dividers: semi-white in dark, darker semi-black in light so it doesn't look white
+    val dividerColor = if (isDark) ComposeColor(0x66FFFFFF).toArgb() else ComposeColor(0x66000000).toArgb()
+    // Theme wrapper per mode to stop OEM tinting the NumberPicker text
+    val themedCtx = ContextThemeWrapper(
+        LocalContext.current,
+        if (isDark) android.R.style.ThemeOverlay_Material_Dark else android.R.style.ThemeOverlay_Material_Light
+    )
+
+    fun stylePicker(np: NumberPicker) {
+        try {
+            val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true
+            val paint = p.get(np) as android.graphics.Paint
+            paint.color = onSurfaceColor
+        } catch (_: Exception) {}
+        try {
+            val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true
+            m.invoke(np, onSurfaceColor)
+        } catch (_: Exception) {}
+        // Also iterate children
+        for (i in 0 until np.childCount) {
+            val c = np.getChildAt(i)
+            if (c is EditText) c.setTextColor(onSurfaceColor)
+        }
+        np.invalidate()
+    }
+    
 
     CenteredAlertDialog(
         onDismissRequest = onDismiss,
@@ -131,6 +162,8 @@ private fun WheelDatePickerDialog(
             TextButton(onClick = { onConfirm(LocalDate.of(year, month, day)) }) { Text(stringResource(R.string.ok)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+        containerColor = dialogBgColor,
+        contentColor = contentComposeColor,
         text = {
             Box(contentAlignment = Alignment.Center) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -139,7 +172,7 @@ private fun WheelDatePickerDialog(
                         modifier = Modifier
                             .width(60.dp)
                             .height(120.dp),
-                        factory = { ctx -> NumberPicker(ctx).apply {
+                        factory = { _ -> NumberPicker(themedCtx).apply {
                         descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
                         setFadingEdgeLength(0)
                         setBackgroundColor(Color.TRANSPARENT)
@@ -149,16 +182,11 @@ private fun WheelDatePickerDialog(
                         maxValue = maxDay
                         value = day.coerceAtMost(maxDay)
                         setFormatter { String.format("%02d", it) }
+                        // Ensure initial styling after layout
+                        post { stylePicker(this) }
                         setOnValueChangedListener { _, _, newVal ->
                             day = newVal
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            for (i in 0 until childCount) {
-                                val c = getChildAt(i)
-                                if (c is EditText) c.setTextColor(onSurfaceColor)
-                            }
-                            invalidate()
+                            stylePicker(this)
                         }
                         try {
                             val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
@@ -168,10 +196,7 @@ private fun WheelDatePickerDialog(
                         } catch (_: Exception) {}
                         setOnScrollListener { _, _ ->
                             isActivated = false; isPressed = false
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            invalidate()
+                            stylePicker(this)
                         }
                         for (i in 0 until childCount) {
                             val c = getChildAt(i)
@@ -204,7 +229,7 @@ private fun WheelDatePickerDialog(
                     modifier = Modifier
                         .width(60.dp)
                         .height(120.dp),
-                    factory = { ctx -> NumberPicker(ctx).apply {
+                    factory = { _ -> NumberPicker(themedCtx).apply {
                         descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
                         setFadingEdgeLength(0)
                         setBackgroundColor(Color.TRANSPARENT)
@@ -220,37 +245,22 @@ private fun WheelDatePickerDialog(
                         )
                         displayedValues = null // reset before changing
                         displayedValues = monthNames
-                        setOnValueChangedListener { _, _, newVal ->
-                            month = newVal
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            val states = arrayOf(
-                                intArrayOf(android.R.attr.state_pressed),
-                                intArrayOf(android.R.attr.state_focused),
-                                intArrayOf(android.R.attr.state_activated),
-                                intArrayOf(android.R.attr.state_selected),
-                                intArrayOf()
-                            )
-                            val colors = intArrayOf(onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor, onSurfaceColor)
-                            for (i in 0 until childCount) {
-                                val c = getChildAt(i)
-                                if (c is EditText) c.setTextColor(ColorStateList(states, colors))
-                            }
-                            invalidate()
-                        }
+                        // Ensure initial styling after layout
+                        post { stylePicker(this) }
+                        // Align Month divider with Day/Year
                         try {
                             val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
                             val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
                             val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
                         } catch (_: Exception) {}
+                        setOnValueChangedListener { _, _, newVal ->
+                            month = newVal
+                            stylePicker(this)
+                        }
                         setOnScrollListener { _, _ ->
                             isActivated = false; isPressed = false
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            invalidate()
+                            stylePicker(this)
                         }
                         for (i in 0 until childCount) {
                             val c = getChildAt(i)
@@ -274,7 +284,7 @@ private fun WheelDatePickerDialog(
                     modifier = Modifier
                         .width(60.dp)
                         .height(120.dp),
-                    factory = { ctx -> NumberPicker(ctx).apply {
+                    factory = { _ -> NumberPicker(themedCtx).apply {
                         descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
                         setFadingEdgeLength(0)
                         setBackgroundColor(Color.TRANSPARENT)
@@ -283,16 +293,11 @@ private fun WheelDatePickerDialog(
                         minValue = 1900
                         maxValue = 2100
                         value = year
+                        // Ensure initial styling after layout
+                        post { stylePicker(this) }
                         setOnValueChangedListener { _, _, newVal ->
                             year = newVal
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            for (i in 0 until childCount) {
-                                val c = getChildAt(i)
-                                if (c is EditText) c.setTextColor(onSurfaceColor)
-                            }
-                            invalidate()
+                            stylePicker(this)
                         }
                         try {
                             val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
@@ -301,10 +306,7 @@ private fun WheelDatePickerDialog(
                             val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
                         } catch (_: Exception) {}
                         setOnScrollListener { _, _ ->
-                            try {
-                                val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
-                            } catch (_: Exception) {}
-                            invalidate()
+                            stylePicker(this)
                         }
                         for (i in 0 until childCount) {
                             val c = getChildAt(i)
