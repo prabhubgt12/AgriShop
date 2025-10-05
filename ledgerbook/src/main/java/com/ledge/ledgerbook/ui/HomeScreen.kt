@@ -131,8 +131,9 @@ private fun WheelDatePickerDialog(
     val dialogBgColor = MaterialTheme.colorScheme.surface
     val contentComposeColor = MaterialTheme.colorScheme.onSurface
     val onSurfaceColor = contentComposeColor.toArgb()
-    // Dividers: semi-white in dark, darker semi-black in light so it doesn't look white
-    val dividerColor = if (isDark) ComposeColor(0x66FFFFFF).toArgb() else ComposeColor(0x66000000).toArgb()
+    // Divider from theme onSurface with alpha for better contrast across OEMs
+    val dividerCompose = contentComposeColor.copy(alpha = if (isDark) 0.54f else 0.38f)
+    val dividerColor = dividerCompose.toArgb()
     // Theme wrapper per mode to stop OEM tinting the NumberPicker text
     val themedCtx = ContextThemeWrapper(
         LocalContext.current,
@@ -185,14 +186,19 @@ private fun WheelDatePickerDialog(
                         value = day.coerceAtMost(maxDay)
                         setFormatter { String.format("%02d", it) }
                         // Ensure initial styling after layout
-                        post { stylePicker(this) }
+                        post {
+                            stylePicker(this)
+                            try {
+                                val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
+                                val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 2)
+                                invalidate()
+                            } catch (_: Exception) {}
+                        }
                         setOnValueChangedListener { _, _, newVal ->
                             day = newVal
                             stylePicker(this)
                         }
                         try {
-                            val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
-                            val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
                             val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
                         } catch (_: Exception) {}
@@ -248,11 +254,16 @@ private fun WheelDatePickerDialog(
                         displayedValues = null // reset before changing
                         displayedValues = monthNames
                         // Ensure initial styling after layout
-                        post { stylePicker(this) }
-                        // Align Month divider with Day/Year
+                        post {
+                            stylePicker(this)
+                            try {
+                                val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
+                                val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 2)
+                                invalidate()
+                            } catch (_: Exception) {}
+                        }
+                        // Align Month divider with Day/Year and enforce text color
                         try {
-                            val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
-                            val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
                             val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
                         } catch (_: Exception) {}
@@ -296,14 +307,19 @@ private fun WheelDatePickerDialog(
                         maxValue = 2100
                         value = year
                         // Ensure initial styling after layout
-                        post { stylePicker(this) }
+                        post {
+                            stylePicker(this)
+                            try {
+                                val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
+                                val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 2)
+                                invalidate()
+                            } catch (_: Exception) {}
+                        }
                         setOnValueChangedListener { _, _, newVal ->
                             year = newVal
                             stylePicker(this)
                         }
                         try {
-                            val f = NumberPicker::class.java.getDeclaredField("mSelectionDivider"); f.isAccessible = true; f.set(this, ColorDrawable(dividerColor))
-                            val h = NumberPicker::class.java.getDeclaredField("mSelectionDividerHeight"); h.isAccessible = true; h.setInt(this, 1)
                             val p = NumberPicker::class.java.getDeclaredField("mSelectorWheelPaint"); p.isAccessible = true; val paint = p.get(this) as android.graphics.Paint; paint.color = onSurfaceColor
                             val m = NumberPicker::class.java.getDeclaredMethod("setTextColor", Int::class.javaPrimitiveType); m.isAccessible = true; m.invoke(this, onSurfaceColor)
                         } catch (_: Exception) {}
