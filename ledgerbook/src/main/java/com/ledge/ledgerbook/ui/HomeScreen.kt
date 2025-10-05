@@ -47,6 +47,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.stringResource
 import com.ledge.ledgerbook.R
 import com.ledge.ledgerbook.util.NumberToWords
+import com.ledge.ledgerbook.util.CurrencyFormatter
+import com.ledge.ledgerbook.ui.settings.CurrencyViewModel
 
 // Compound type for interest calculation
 enum class CompoundType { Monthly, Yearly }
@@ -480,6 +482,15 @@ private fun InterestCalculatorCard() {
     var resultInterest by remember { mutableStateOf("") }
     var resultTotal by remember { mutableStateOf("") }
 
+    // Currency settings for immediate reflect in calculator
+    val currencyVM: CurrencyViewModel = hiltViewModel()
+    val currencyCode by currencyVM.currencyCode.collectAsState()
+    val showCurrencySymbol by currencyVM.showSymbol.collectAsState()
+    LaunchedEffect(currencyCode, showCurrencySymbol) {
+        CurrencyFormatter.setConfig(currencyCode, showCurrencySymbol)
+    }
+    fun fmtNo(v: Double): String = CurrencyFormatter.formatNoDecimals(v, currencyCode, showCurrencySymbol)
+
     val df = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ENGLISH)
 
     Card(
@@ -759,10 +770,10 @@ private fun InterestCalculatorCard() {
                     val total = p + interest
 
                     resultDuration = "${years}y ${months}m ${days}d"
-                    resultPrincipal = "%.2f".format(p)
+                    resultPrincipal = fmtNo(p)
                     resultRate = "%.2f%%/mo".format(rM)
-                    resultInterest = "%.2f".format(interest)
-                    resultTotal = "%.2f".format(total)
+                    resultInterest = fmtNo(interest)
+                    resultTotal = fmtNo(total)
                 }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.calculate)) }
             }
 

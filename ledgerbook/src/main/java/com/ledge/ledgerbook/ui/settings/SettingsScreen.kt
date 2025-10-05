@@ -22,6 +22,7 @@ import com.ledge.ledgerbook.data.backup.BackupManager
 import com.ledge.ledgerbook.data.backup.DriveClient
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import kotlinx.coroutines.launch
+import com.ledge.ledgerbook.ui.settings.CurrencyViewModel
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.compose.foundation.selection.selectable
@@ -155,6 +156,55 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         text = stringResource(R.string.changes_apply_note),
                         style = MaterialTheme.typography.labelSmall
                     )
+                }
+            }
+            // Currency
+            item { Text(stringResource(R.string.currency_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                val currencyVM: CurrencyViewModel = hiltViewModel()
+                val currentCode by currencyVM.currencyCode.collectAsState()
+                val showSymbol by currencyVM.showSymbol.collectAsState()
+                var expanded by remember { mutableStateOf(false) }
+
+                val options = listOf(
+                    "INR" to stringResource(R.string.inr_label),
+                    "USD" to stringResource(R.string.usd_label),
+                    "EUR" to stringResource(R.string.eur_label),
+                    "GBP" to stringResource(R.string.gbp_label),
+                )
+                val current = options.firstOrNull { it.first == currentCode } ?: options.first()
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+                        OutlinedTextField(
+                            modifier = Modifier.menuAnchor().fillMaxWidth(),
+                            value = current.second,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.currency_label)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
+                        )
+                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            options.forEach { (code, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        expanded = false
+                                        scope.launch { currencyVM.setCurrencyCode(code) }
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.show_currency_symbol))
+                        Switch(checked = showSymbol, onCheckedChange = { on -> scope.launch { currencyVM.setShowSymbol(on) } })
+                    }
                 }
             }
             // Reminder thresholds

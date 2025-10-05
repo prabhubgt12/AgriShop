@@ -64,7 +64,7 @@ object PdfShareUtils {
             else -> item.type?.let { toCamel(it) } ?: ""
         }
         summaryLine(context.getString(R.string.label_type), typeValue)
-        summaryLine(context.getString(R.string.label_principal), CurrencyFormatter.formatInr(item.principal))
+        summaryLine(context.getString(R.string.label_principal), CurrencyFormatter.format(item.principal))
         // Localized rate basis (MONTHLY/YEARLY)
         val basisValue = when (item.rateBasis?.uppercase()) {
             "MONTHLY" -> context.getString(R.string.monthly)
@@ -73,8 +73,8 @@ object PdfShareUtils {
         }
         summaryLine(context.getString(R.string.label_rate), "${item.rate}% $basisValue")
         summaryLine(context.getString(R.string.label_from), item.dateStr)
-        summaryLine(context.getString(R.string.label_interest), CurrencyFormatter.formatInr(item.accrued))
-        summaryLine(context.getString(R.string.label_total), CurrencyFormatter.formatInr(item.total))
+        summaryLine(context.getString(R.string.label_interest), CurrencyFormatter.format(item.accrued))
+        summaryLine(context.getString(R.string.label_total), CurrencyFormatter.format(item.total))
         y += 8f
         if (includePromo) {
             // Footer note with app link for free users
@@ -126,9 +126,9 @@ object PdfShareUtils {
         lineL(context.getString(R.string.label_customer_with_value, name), header)
         lineL(context.getString(R.string.label_date_with_value, dateFmt.format(Date())))
         y += 6f
-        lineL(context.getString(R.string.label_total_lend_with_value, CurrencyFormatter.formatInr(lendTotal)))
-        lineL(context.getString(R.string.label_total_borrow_with_value, CurrencyFormatter.formatInr(borrowTotal)))
-        lineL(context.getString(R.string.label_net_with_value, CurrencyFormatter.formatInr(net)), header)
+        lineL(context.getString(R.string.label_total_lend_with_value, CurrencyFormatter.format(lendTotal)))
+        lineL(context.getString(R.string.label_total_borrow_with_value, CurrencyFormatter.format(borrowTotal)))
+        lineL(context.getString(R.string.label_net_with_value, CurrencyFormatter.format(net)), header)
         // Extra spacing before table sections
         y += 12f
 
@@ -183,10 +183,10 @@ object PdfShareUtils {
                 }
                 val values = listOf(
                     r.dateStr,
-                    CurrencyFormatter.formatInr(r.principal),
+                    CurrencyFormatter.format(r.principal),
                     "${r.rate}% $rowBasis",
-                    CurrencyFormatter.formatInr(r.accrued),
-                    CurrencyFormatter.formatInr(r.total),
+                    CurrencyFormatter.format(r.accrued),
+                    CurrencyFormatter.format(r.total),
                 )
                 for (i in cols.indices) {
                     val cellWidth = cols[i].width
@@ -219,10 +219,10 @@ object PdfShareUtils {
             x = startX
             val subtotalValues = listOf(
                 context.getString(R.string.label_subtotal), // under Date column as label
-                CurrencyFormatter.formatInr(principalValue),
+                CurrencyFormatter.format(principalValue),
                 "", // Rate column left blank
-                CurrencyFormatter.formatInr(interestValue),
-                CurrencyFormatter.formatInr(totalValue)
+                CurrencyFormatter.format(interestValue),
+                CurrencyFormatter.format(totalValue)
             )
             for (i in cols.indices) {
                 val cellWidth = cols[i].width

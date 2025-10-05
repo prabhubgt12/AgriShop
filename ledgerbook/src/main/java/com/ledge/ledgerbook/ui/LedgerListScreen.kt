@@ -72,17 +72,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.graphics.drawable.toBitmap
 import coil.compose.rememberAsyncImagePainter
 import java.text.SimpleDateFormat
+import com.ledge.ledgerbook.ui.settings.CurrencyViewModel
 import java.util.Date
 import kotlin.math.roundToInt
 
 typealias LedgerItemVM = LedgerViewModel.LedgerItemVM
 
-// Helper to display INR without fractional digits for parent summary
-private fun formatInrNoDecimals(value: Double): String {
-    val full = CurrencyFormatter.formatInr(value)
-    // Strip any decimal portion like .00 or .50; keep sign and currency symbol/grouping
-    return full.replace(Regex("\\.[0-9]+"), "")
-}
+// Helper removed: we now bind formatting to current currency state explicitly
 
 // Normalize labels like "BORROW"/"LEND", "MONTHLY"/"YEARLY", "SIMPLE"/"COMPOUND" to Camel case
 private fun toCamel(label: String?): String {
@@ -92,7 +88,11 @@ private fun toCamel(label: String?): String {
 }
 
 // Build a human-readable plain text for an entry, optionally with promo
-private fun buildShareText(ctx: android.content.Context, vm: LedgerItemVM, includePromo: Boolean): String {
+private fun buildShareText(
+    ctx: android.content.Context,
+    vm: LedgerItemVM,
+    includePromo: Boolean
+): String {
     val sdf = java.text.SimpleDateFormat("dd/MM/yyyy")
     val typeLabel = when (vm.type.uppercase()) {
         "LEND" -> ctx.getString(R.string.lend)
@@ -108,11 +108,11 @@ private fun buildShareText(ctx: android.content.Context, vm: LedgerItemVM, inclu
         appendLine(ctx.getString(R.string.ledger_entry_title))
         appendLine(ctx.getString(R.string.label_name_with_value, vm.name))
         appendLine(ctx.getString(R.string.label_type_with_value, typeLabel))
-        appendLine(ctx.getString(R.string.label_principal_with_value, CurrencyFormatter.formatInr(vm.principal)))
+        appendLine(ctx.getString(R.string.label_principal_with_value, CurrencyFormatter.format(vm.principal)))
         appendLine(ctx.getString(R.string.label_rate_with_value, vm.rate.toString(), basisLabel))
         appendLine(ctx.getString(R.string.label_from_with_value, sdf.format(java.util.Date(vm.fromDateMillis))))
-        appendLine(ctx.getString(R.string.label_interest_till_now_with_value, CurrencyFormatter.formatInr(vm.accrued)))
-        appendLine(ctx.getString(R.string.label_total_with_value, CurrencyFormatter.formatInr(vm.total)))
+        appendLine(ctx.getString(R.string.label_interest_till_now_with_value, CurrencyFormatter.format(vm.accrued)))
+        appendLine(ctx.getString(R.string.label_total_with_value, CurrencyFormatter.format(vm.total)))
         if (includePromo) {
             appendLine()
             append(ctx.getString(R.string.generated_by_footer_with_link, "https://play.google.com/store/apps/details?id=com.ledge.ledgerbook"))
@@ -135,6 +135,16 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     // Monetization flag
     val monetizationVM: MonetizationViewModel = hiltViewModel()
     val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState()
+    // Currency settings
+    val currencyVM: CurrencyViewModel = hiltViewModel()
+    val currencyCode by currencyVM.currencyCode.collectAsState()
+    val showCurrencySymbol by currencyVM.showSymbol.collectAsState()
+    LaunchedEffect(currencyCode, showCurrencySymbol) {
+        CurrencyFormatter.setConfig(currencyCode, showCurrencySymbol)
+    }
+    // Local helpers to format with the current settings on the very first frame
+    fun fmt(v: Double): String = CurrencyFormatter.format(v, currencyCode, showCurrencySymbol)
+    fun fmtNo(v: Double): String = CurrencyFormatter.formatNoDecimals(v, currencyCode, showCurrencySymbol)
     // Search state and filtered items
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val filteredItems = remember(state.items, searchQuery) {
@@ -214,7 +224,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     ) {
                                         Box(Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
                                             Text(
-                                                formatInrNoDecimals(state.totalLend),
+                                                fmtNo(state.totalLend),
                                                 style = MaterialTheme.typography.titleSmall,
                                                 color = Color(0xFF0B6A0B),
                                                 fontWeight = FontWeight.Bold
@@ -226,7 +236,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                         text = buildAnnotatedString {
                                             append(stringResource(R.string.label_interest) + ": ")
                                             withStyle(SpanStyle(color = Color(0xFF66BB6A), fontWeight = FontWeight.Bold)) {
-                                                append(formatInrNoDecimals(state.totalLendInterest))
+                                                append(fmtNo(state.totalLendInterest))
                                             }
                                         },
                                         style = MaterialTheme.typography.labelSmall,
@@ -250,7 +260,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     ) {
                                         Box(Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
                                             Text(
-                                                formatInrNoDecimals(state.totalBorrow),
+                                                fmtNo(state.totalBorrow),
                                                 style = MaterialTheme.typography.titleSmall,
                                                 color = Color(0xFF9A0007),
                                                 fontWeight = FontWeight.Bold
@@ -262,7 +272,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                         text = buildAnnotatedString {
                                             append(stringResource(R.string.label_interest) + ": ")
                                             withStyle(SpanStyle(color = Color(0xFFEF5350), fontWeight = FontWeight.Bold)) {
-                                                append(formatInrNoDecimals(state.totalBorrowInterest))
+                                                append(fmtNo(state.totalBorrowInterest))
                                             }
                                         },
                                         style = MaterialTheme.typography.labelSmall,
@@ -304,7 +314,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 ) {
                                     Box(Modifier.padding(vertical = 6.dp, horizontal = 10.dp)) {
                                         Text(
-                                            formatInrNoDecimals(state.finalAmount),
+                                            fmtNo(state.finalAmount),
                                             style = MaterialTheme.typography.titleMedium,
                                             color = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007),
                                             fontWeight = FontWeight.Bold
@@ -491,12 +501,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 LabelValue(
                                     label = stringResource(R.string.total_principal),
-                                    value = formatInrNoDecimals(netPrincipal),
+                                    value = fmtNo(netPrincipal),
                                     modifier = Modifier.weight(1f)
                                 )
                                 LabelValue(
                                     label = stringResource(R.string.total_interest),
-                                    value = formatInrNoDecimals(netInterest),
+                                    value = fmtNo(netInterest),
                                     modifier = Modifier.weight(1f)
                                 )
                                 // Total chip (compact)
@@ -513,7 +523,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                             .padding(vertical = 2.dp, horizontal = 4.dp)
                                     ) {
                                         Text(
-                                            formatInrNoDecimals(netTotal),
+                                            fmtNo(netTotal),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
                                             color = chipFg
@@ -1342,7 +1352,7 @@ private fun LedgerRow(
                 ) {
                     LabelValue(
                         label = stringResource(R.string.label_principal_generic),
-                        value = formatInrNoDecimals(vm.principal),
+                        value = CurrencyFormatter.formatNoDecimals(vm.principal),
                         modifier = Modifier.weight(1f),
                         leadingIcon = Icons.Outlined.Payments
                     )
@@ -1430,7 +1440,7 @@ private fun LedgerRow(
                 }
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabelValue(label = stringResource(R.string.label_interest), value = formatInrNoDecimals(vm.accrued), modifier = Modifier.weight(1f))
+                    LabelValue(label = stringResource(R.string.label_interest), value = CurrencyFormatter.formatNoDecimals(vm.accrued), modifier = Modifier.weight(1f))
                     val isLendChip = vm.type == "LEND"
                     val chipBg2 = if (isLendChip) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
                     val chipFg2 = if (isLendChip) Color(0xFF0B6A0B) else Color(0xFF9A0007)
@@ -1444,7 +1454,7 @@ private fun LedgerRow(
                                 .padding(vertical = 4.dp, horizontal = 6.dp)
                         ) {
                             Text(
-                                formatInrNoDecimals(vm.total),
+                                CurrencyFormatter.formatNoDecimals(vm.total),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = chipFg2

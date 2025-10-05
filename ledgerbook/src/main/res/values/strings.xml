@@ -62,6 +62,14 @@
     <string name="kannada_label">ಕನ್ನಡ</string>
     <string name="light_option">Light</string>
     <string name="dark_option">Dark</string>
+    <!-- Currency settings -->
+    <string name="currency_title">Currency</string>
+    <string name="currency_label">Currency</string>
+    <string name="show_currency_symbol">Show currency symbol</string>
+    <string name="inr_label">Indian Rupee (INR)</string>
+    <string name="usd_label">US Dollar (USD)</string>
+    <string name="eur_label">Euro (EUR)</string>
+    <string name="gbp_label">Pound Sterling (GBP)</string>
     <!-- Reminder thresholds settings -->
     <string name="reminders_title">Reminders</string>
     <string name="overdue_days_label">Overdue after (days)</string>
