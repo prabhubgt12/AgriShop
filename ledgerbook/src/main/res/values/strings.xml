@@ -185,6 +185,12 @@
     <string name="interest_rate_percent">Interest Rate (%)</string>
     <string name="pick">Pick</string>
     <string name="notes_optional">Notes</string>
+    <!-- New labels -->
+    <string name="phone_optional">Phone (optional)</string>
+    <string name="payment_amount">Payment Amount</string>
+    <string name="user_label">User</string>
+    <string name="payments_title">Payments</string>
+    <string name="add_payment">Add Payment</string>
     
     <!-- Generic/detail/dialog labels -->
     <string name="entry_details">Entry Details</string>

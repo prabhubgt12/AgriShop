@@ -41,6 +41,15 @@ fun LedgerAddEditScreen(
     var rateRupees by remember { mutableStateOf(if (existing != null) CurrencyFormatter.formatNumericUpTo2(existing.rateRupees) else "") }
     var fromDate by remember { mutableStateOf(existing?.fromDate ?: System.currentTimeMillis()) }
     var notes by remember { mutableStateOf(existing?.notes ?: "") }
+    // Optional phone number (digits only). We try to prefill from notes if it contains a 'Phone:' line.
+    var phone by remember {
+        mutableStateOf(run {
+            val n = existing?.notes ?: ""
+            // naive extract: look for a line starting with 'Phone:' and take digits
+            val line = n.lineSequence().firstOrNull { it.trim().startsWith("Phone:", ignoreCase = true) }
+            line?.filter { it.isDigit() } ?: ""
+        })
+    }
 
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -54,6 +63,19 @@ fun LedgerAddEditScreen(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
+                // Merge phone (if provided) into notes as the first line
+                val phoneDigits = phone.filter { it.isDigit() }
+                val mergedNotes = buildString {
+                    if (phoneDigits.isNotBlank()) {
+                        append("Phone: ")
+                        append(phoneDigits)
+                    }
+                    val base = notes.trim()
+                    if (base.isNotEmpty()) {
+                        if (isNotEmpty()) append('\n')
+                        append(base)
+                    }
+                }.ifBlank { null }
                 val entry = LedgerEntry(
                     id = existing?.id ?: 0,
                     type = type,
@@ -64,7 +86,7 @@ fun LedgerAddEditScreen(
                     compoundPeriod = compoundPeriod,
                     rateRupees = (rateRupees.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0),
                     fromDate = fromDate,
-                    notes = notes.ifBlank { null }
+                    notes = mergedNotes
                 )
                 onSave(entry)
             }, enabled = formValid) { Text(if (isEdit) stringResource(R.string.update) else stringResource(R.string.save)) }
@@ -101,6 +123,15 @@ fun LedgerAddEditScreen(
                     supportingText = {
                         if (!nameValid && name.isNotEmpty()) Text(stringResource(R.string.name_required))
                     }
+                )
+                Spacer(Modifier.height(8.dp))
+                // Phone number (optional, digits only)
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { input -> phone = input.filter { it.isDigit() } },
+                    label = { Text(stringResource(R.string.phone_optional)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 Spacer(Modifier.height(8.dp))
 

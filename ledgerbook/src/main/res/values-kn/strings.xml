@@ -180,6 +180,12 @@
     <string name="interest_rate_percent">ಬಡ್ಡಿ ದರ (%)</string>
     <string name="pick">ಆರಿಸಿ</string>
     <string name="notes_optional">ಟಿಪ್ಪಣಿಗಳು</string>
+    <!-- New labels -->
+    <string name="phone_optional">ಫೋನ್ (ಐಚ್ಛಿಕ)</string>
+    <string name="payment_amount">ಪಾವತಿ ಮೊತ್ತ</string>
+    <string name="user_label">ಬಳಕೆದಾರ</string>
+    <string name="payments_title">ಪಾವತಿಗಳು</string>
+    <string name="add_payment">ಪಾವತಿ ಸೇರಿಸಿ</string>
     <string name="attach">ಚಿತ್ರವನ್ನು ಲಗತ್ತಿಸಿ</string>
     <string name="image_too_large">ಚಿತ್ರದ ಗಾತ್ರ 1 MB ಕ್ಕಿಂತ ಹೆಚ್ಚು</string>
     <string name="full_payment">ಪೂರ್ಣ ಪಾವತಿ</string>
