@@ -46,4 +46,10 @@ class AccountDetailViewModel @Inject constructor(
             repo.deleteTxn(txn)
         }
     }
+
+    fun updateTxn(updated: CashTxn) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.updateTxn(updated)
+        }
+    }
 }

@@ -54,9 +54,100 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var dateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var confirmDeleteTxn by remember { mutableStateOf<CashTxn?>(null) }
+    // Long-press actions and edit states
+    var actionTxn by remember { mutableStateOf<CashTxn?>(null) }
+    var editTxn by remember { mutableStateOf<CashTxn?>(null) }
+    var editIsCredit by remember { mutableStateOf(true) }
+    var editAmount by remember { mutableStateOf("") }
+    var editNote by remember { mutableStateOf("") }
+    var editDateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    var showEditDatePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(openAdd) {
         if (openAdd) showAdd = true
+    }
+
+    // Long-press actions dialog (Edit/Delete)
+    val pendingAction = actionTxn
+    if (pendingAction != null) {
+        AlertDialog(
+            onDismissRequest = { actionTxn = null },
+            title = { Text(stringResource(R.string.select_action)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    // Start edit with prefilled fields
+                    editTxn = pendingAction
+                    editIsCredit = pendingAction.isCredit
+                    editAmount = pendingAction.amount.toString()
+                    editNote = pendingAction.note ?: ""
+                    editDateMillis = pendingAction.date
+                    actionTxn = null
+                }) { Text(stringResource(R.string.edit)) }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { confirmDeleteTxn = pendingAction; actionTxn = null }) { Text(stringResource(R.string.delete)) }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = { actionTxn = null }) { Text(stringResource(R.string.cancel)) }
+                }
+            }
+        )
+    }
+
+    // Edit transaction dialog
+    val toEdit = editTxn
+    if (toEdit != null) {
+        AlertDialog(
+            onDismissRequest = { editTxn = null },
+            confirmButton = {
+                TextButton(onClick = {
+                    val amt = editAmount.toDoubleOrNull() ?: 0.0
+                    val updated = toEdit.copy(
+                        date = editDateMillis,
+                        amount = amt,
+                        isCredit = editIsCredit,
+                        note = editNote.ifBlank { null }
+                    )
+                    vm.updateTxn(updated)
+                    editTxn = null
+                }) { Text(stringResource(R.string.update)) }
+            },
+            dismissButton = { TextButton(onClick = { editTxn = null }) { Text(stringResource(R.string.cancel)) } },
+            title = { Text(stringResource(R.string.edit)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FilterChip(selected = editIsCredit, onClick = { editIsCredit = true }, label = { Text(stringResource(R.string.credit)) })
+                        FilterChip(selected = !editIsCredit, onClick = { editIsCredit = false }, label = { Text(stringResource(R.string.debit)) })
+                    }
+                    OutlinedTextField(
+                        value = SimpleDateFormat("dd/MM/yy").format(Date(editDateMillis)),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.date)) },
+                        trailingIcon = {
+                            IconButton(onClick = { showEditDatePicker = true }) { Icon(Icons.Default.DateRange, contentDescription = "Pick date") }
+                        }
+                    )
+                    OutlinedTextField(value = editAmount, onValueChange = { input -> editAmount = input.filter { it.isDigit() || it == '.' } }, label = { Text(stringResource(R.string.amount)) })
+                    OutlinedTextField(value = editNote, onValueChange = { editNote = it }, label = { Text(stringResource(R.string.particular)) })
+                }
+            }
+        )
+
+        if (showEditDatePicker) {
+            val state = rememberDatePickerState(initialSelectedDateMillis = editDateMillis)
+            DatePickerDialog(
+                onDismissRequest = { showEditDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        editDateMillis = state.selectedDateMillis ?: editDateMillis
+                        showEditDatePicker = false
+                    }) { Text(stringResource(R.string.ok)) }
+                },
+                dismissButton = { TextButton(onClick = { showEditDatePicker = false }) { Text(stringResource(R.string.cancel)) } }
+            ) { DatePicker(state = state) }
+        }
     }
 
     // Confirm delete transaction dialog
@@ -159,7 +250,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             .background(rowBg)
                             .combinedClickable(
                                 onClick = {},
-                                onLongClick = { confirmDeleteTxn = t }
+                                onLongClick = { actionTxn = t }
                             )
                             .padding(vertical = 8.dp, horizontal = 6.dp), // Added horizontal padding
                         verticalAlignment = Alignment.CenterVertically

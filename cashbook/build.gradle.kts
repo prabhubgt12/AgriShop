@@ -52,7 +52,7 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
             // Closed testing: keep test ads enabled in release build (change to false for production)
-            buildConfigField("boolean", "USE_TEST_ADS", "true")
+            buildConfigField("boolean", "USE_TEST_ADS", "false")
         }
     }
 

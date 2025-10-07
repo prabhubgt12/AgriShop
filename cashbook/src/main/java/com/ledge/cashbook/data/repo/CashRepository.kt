@@ -19,6 +19,7 @@ class CashRepository(
     suspend fun addTxn(accountId: Int, date: Long, amount: Double, isCredit: Boolean, note: String?) =
         dao.insertTxn(CashTxn(accountId = accountId, date = date, amount = amount, isCredit = isCredit, note = note))
     suspend fun deleteTxn(txn: CashTxn) = dao.deleteTxn(txn)
+    suspend fun updateTxn(txn: CashTxn) = dao.updateTxn(txn)
     suspend fun clear(accountId: Int) = dao.clearTxns(accountId)
 
     suspend fun creditSum(accountId: Int): Double = dao.creditSum(accountId)

@@ -30,6 +30,9 @@ interface CashDao {
     @Delete
     suspend fun deleteTxn(txn: CashTxn)
 
+    @Update
+    suspend fun updateTxn(txn: CashTxn)
+
     @Query("DELETE FROM cash_txns WHERE accountId = :accountId")
     suspend fun clearTxns(accountId: Int)
 
