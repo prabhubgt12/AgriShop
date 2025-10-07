@@ -29,7 +29,8 @@ class LedgerViewModel @Inject constructor(
         val rate: Double,
         val rateBasis: String,
         val fromDateMillis: Long,
-        val dateStr: String
+        val dateStr: String,
+        val phone: String?
     )
 
     data class LedgerState(
@@ -45,6 +46,11 @@ class LedgerViewModel @Inject constructor(
         .map { list ->
             val items = list.map { ewc ->
                 val e = ewc.entry
+                val phoneDigits = run {
+                    val n = e.notes ?: ""
+                    val line = n.lineSequence().firstOrNull { it.trim().startsWith("Phone:", ignoreCase = true) }
+                    line?.filter { it.isDigit() }
+                }
                 LedgerItemVM(
                     id = e.id,
                     type = e.type.uppercase(),
@@ -57,7 +63,8 @@ class LedgerViewModel @Inject constructor(
                     rate = e.rateRupees,
                     rateBasis = (e.period ?: "MONTHLY").uppercase(),
                     fromDateMillis = e.fromDate,
-                    dateStr = java.text.SimpleDateFormat("dd/MM/yyyy").format(java.util.Date(e.fromDate))
+                    dateStr = java.text.SimpleDateFormat("dd/MM/yyyy").format(java.util.Date(e.fromDate)),
+                    phone = phoneDigits
                 )
             }
             val totalLend = items.filter { it.type == "LEND" }.sumOf { it.principal }

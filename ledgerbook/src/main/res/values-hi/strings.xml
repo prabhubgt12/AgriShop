@@ -137,12 +137,14 @@
     <string name="interest_rate_percent">ब्याज दर (%)</string>
     <string name="pick">चुनें</string>
     <string name="notes_optional">नोट्स</string>
+    <string name="phone">फ़ोन</string>
     <!-- New labels -->
     <string name="phone_optional">फ़ोन (वैकल्पिक)</string>
     <string name="payment_amount">भुगतान राशि</string>
     <string name="user_label">उपयोगकर्ता</string>
     <string name="payments_title">भुगतान</string>
     <string name="add_payment">भुगतान जोड़ें</string>
+    <string name="call_user">कॉल करें</string>
     <string name="attach">छवि संलग्न करें</string>
     <string name="image_too_large">छवि 1 एमबी से बड़ी है</string>
     <string name="full_payment">पूर्ण भुगतान</string>

@@ -476,7 +476,24 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                             tint = MaterialTheme.colorScheme.onSurface
                                         )
                                     }
-                                    DropdownMenu(expanded = parentMenuOpen.value, onDismissRequest = { parentMenuOpen.value = false }) {
+                                    DropdownMenu(
+                                        expanded = parentMenuOpen.value,
+                                        onDismissRequest = { parentMenuOpen.value = false }
+                                    ) {
+                                        // Call User (parent): use first available phone among children
+                                        val firstPhone = remember(itemsForUser) { itemsForUser.firstOrNull { !it.phone.isNullOrBlank() }?.phone }
+                                        if (!firstPhone.isNullOrBlank()) {
+                                            DropdownMenuItem(
+                                                text = { Text(stringResource(R.string.call_user)) },
+                                                onClick = {
+                                                    parentMenuOpen.value = false
+                                                    try {
+                                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + firstPhone))
+                                                        context.startActivity(intent)
+                                                    } catch (_: Exception) {}
+                                                }
+                                            )
+                                        }
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.share_receipt)) },
                                             onClick = {
@@ -730,6 +747,26 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         LabelValue(label = stringResource(R.string.interest_rate_percent), value = "${e.rateRupees}%")
                         Spacer(Modifier.height(8.dp))
                         LabelValue(label = stringResource(R.string.from_date), value = SimpleDateFormat("dd/MM/yyyy").format(Date(e.fromDate)))
+                        // Extract phone from notes (line starting with 'Phone:') and show as tappable
+                        val phoneDigits = remember(e.notes) {
+                            val n = e.notes ?: ""
+                            val line = n.lineSequence().firstOrNull { it.trim().startsWith("Phone:", ignoreCase = true) }
+                            line?.filter { it.isDigit() } ?: ""
+                        }
+                        if (phoneDigits.isNotBlank()) {
+                            Spacer(Modifier.height(8.dp))
+                            val ctxPhone = LocalContext.current
+                            LabelValue(
+                                label = stringResource(R.string.phone),
+                                value = phoneDigits,
+                                modifier = Modifier.clickable {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phoneDigits))
+                                        ctxPhone.startActivity(intent)
+                                    } catch (_: Exception) {}
+                                }
+                            )
+                        }
                         if (!e.notes.isNullOrBlank()) {
                             Spacer(Modifier.height(8.dp))
                             LabelValue(label = stringResource(R.string.notes_optional), value = e.notes)
@@ -1505,7 +1542,19 @@ private fun LedgerRow(
                                     tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
-                            DropdownMenu(expanded = openMenu.value, onDismissRequest = { openMenu.value = false }) {
+                            DropdownMenu(
+                                expanded = openMenu.value,
+                                onDismissRequest = { openMenu.value = false }
+                            ) {
+                                if (showName && !vm.phone.isNullOrBlank()) {
+                                    DropdownMenuItem(text = { Text(stringResource(R.string.call_user)) }, onClick = {
+                                        openMenu.value = false
+                                        try {
+                                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + vm.phone))
+                                            ctx.startActivity(intent)
+                                        } catch (_: Exception) {}
+                                    })
+                                }
                                 DropdownMenuItem(text = { Text(stringResource(R.string.share_receipt)) }, onClick = { openMenu.value = false; onShare() })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = {
                                     openMenu.value = false
@@ -1572,7 +1621,19 @@ private fun LedgerRow(
                                     )
                                 }
                             }
-                            DropdownMenu(expanded = openMenu.value, onDismissRequest = { openMenu.value = false }) {
+                            DropdownMenu(
+                                expanded = openMenu.value,
+                                onDismissRequest = { openMenu.value = false }
+                            ) {
+                                if (showName && !vm.phone.isNullOrBlank()) {
+                                    DropdownMenuItem(text = { Text(stringResource(R.string.call_user)) }, onClick = {
+							openMenu.value = false
+                                        try {
+                                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + vm.phone))
+                                            ctx.startActivity(intent)
+                                        } catch (_: Exception) {}
+                                    })
+                                }
                                 DropdownMenuItem(text = { Text(stringResource(R.string.share_receipt)) }, onClick = { openMenu.value = false; onShare() })
                                 DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = {
                                     openMenu.value = false
