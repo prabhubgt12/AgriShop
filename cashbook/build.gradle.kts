@@ -18,8 +18,8 @@ android {
         applicationId = "com.ledge.cashbook"
         minSdk = 24
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.0.1"
+        versionCode = 7
+        versionName = "1.0.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -65,12 +65,21 @@ android {
         jvmTarget = "17"
         freeCompilerArgs = freeCompilerArgs + listOf("-Xjvm-default=all")
     }
-    packaging.resources {
-        excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        excludes += "META-INF/DEPENDENCIES"
-        excludes += "META-INF/NOTICE"
-        excludes += "META-INF/LICENSE*"
-        excludes += "META-INF/INDEX.LIST"
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/LICENSE*"
+            excludes += "META-INF/INDEX.LIST"
+        }
+        // Ensure native libraries are not extracted (required for 16KB page size compliance on Android 15+)
+        jniLibs { useLegacyPackaging = false }
+    }
+
+    // Keep all locales in base to support in-app language change after Play delivery
+    bundle {
+        language { enableSplit = false }
     }
 }
 
