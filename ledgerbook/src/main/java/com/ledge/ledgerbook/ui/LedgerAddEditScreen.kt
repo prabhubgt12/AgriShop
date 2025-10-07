@@ -20,6 +20,19 @@ import com.ledge.ledgerbook.R
 import com.ledge.ledgerbook.util.NumberToWords
 import com.ledge.ledgerbook.util.CurrencyFormatter
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.rememberAsyncImagePainter
+import androidx.core.content.FileProvider
+import android.net.Uri
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +54,16 @@ fun LedgerAddEditScreen(
     var rateRupees by remember { mutableStateOf(if (existing != null) CurrencyFormatter.formatNumericUpTo2(existing.rateRupees) else "") }
     var fromDate by remember { mutableStateOf(existing?.fromDate ?: System.currentTimeMillis()) }
     var notes by remember { mutableStateOf(existing?.notes ?: "") }
+    // Parse existing attachment from notes (att: <uri>)
+    val existingAtt: Uri? = remember(existing) {
+        existing?.notes
+            ?.lineSequence()
+            ?.firstOrNull { it.trim().startsWith("att:") }
+            ?.substringAfter("att:")
+            ?.trim()
+            ?.let { runCatching { Uri.parse(it) }.getOrNull() }
+    }
+    var attachmentUri by remember { mutableStateOf<Uri?>(existingAtt) }
     // Optional phone number (digits only). We try to prefill from notes if it contains a 'Phone:' line.
     var phone by remember {
         mutableStateOf(run {
@@ -66,9 +89,13 @@ fun LedgerAddEditScreen(
                 // Merge phone (if provided) into notes as the first line
                 val phoneDigits = phone.filter { it.isDigit() }
                 val mergedNotes = buildString {
+                    // First, persist attachment if present
+                    attachmentUri?.toString()?.let {
+                        append("att: "); append(it)
+                    }
                     if (phoneDigits.isNotBlank()) {
-                        append("Phone: ")
-                        append(phoneDigits)
+                        if (isNotEmpty()) append('\n')
+                        append("Phone: "); append(phoneDigits)
                     }
                     val base = notes.trim()
                     if (base.isNotEmpty()) {
@@ -250,6 +277,59 @@ fun LedgerAddEditScreen(
                     label = { Text(stringResource(R.string.notes_optional)) },
                     modifier = Modifier.fillMaxWidth()
                 )
+                // Attachment row (like Partial Payment)
+                Spacer(Modifier.height(8.dp))
+                val ctx = LocalContext.current
+                val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                    if (uri != null) {
+                        try {
+                            ctx.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+                                val size = afd.length
+                                val dir = File(ctx.filesDir, "attachments").apply { mkdirs() }
+                                if (size in 1..1_000_000) {
+                                    val outFile = File(dir, "att_${'$'}{System.currentTimeMillis()}.jpg")
+                                    ctx.contentResolver.openInputStream(uri)?.use { input ->
+                                        FileOutputStream(outFile).use { output -> input.copyTo(output) }
+                                    }
+                                    attachmentUri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", outFile)
+                                } else if (size <= 0) {
+                                    val outFile = File(dir, "att_${'$'}{System.currentTimeMillis()}")
+                                    ctx.contentResolver.openInputStream(uri)?.use { input ->
+                                        FileOutputStream(outFile).use { output -> input.copyTo(output) }
+                                    }
+                                    attachmentUri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", outFile)
+                                } else {
+                                    android.widget.Toast.makeText(ctx, ctx.getString(R.string.image_too_large), android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } catch (_: Exception) {
+                            attachmentUri = null
+                        }
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text(stringResource(R.string.attach)) }
+                    Spacer(Modifier.width(8.dp))
+                    attachmentUri?.let { att ->
+                        val painter = rememberAsyncImagePainter(att)
+                        Image(
+                            painter = painter,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)).clickable {
+                                try {
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                                        setDataAndType(att, "image/*")
+                                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    ctx.startActivity(intent)
+                                } catch (_: Exception) {}
+                            },
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = { attachmentUri = null }) { Text(stringResource(R.string.delete)) }
+                    }
+                }
             }
         }
     )

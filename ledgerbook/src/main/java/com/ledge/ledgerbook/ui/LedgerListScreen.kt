@@ -768,8 +768,48 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             )
                         }
                         if (!e.notes.isNullOrBlank()) {
+                            val filteredNotes = remember(e.notes) {
+                                e.notes
+                                    ?.lineSequence()
+                                    ?.filterNot { it.trim().startsWith("att:") }
+                                    ?.joinToString("\n")
+                                    ?: ""
+                            }
+                            if (filteredNotes.isNotBlank()) {
+                                Spacer(Modifier.height(8.dp))
+                                LabelValue(label = stringResource(R.string.notes_optional), value = filteredNotes)
+                            }
+                        }
+                        // Show attachment preview if att: <uri> exists
+                        val attUri = remember(e.notes) {
+                            e.notes
+                                ?.lineSequence()
+                                ?.firstOrNull { it.trim().startsWith("att:") }
+                                ?.substringAfter("att:")
+                                ?.trim()
+                                ?.let { runCatching { Uri.parse(it) }.getOrNull() }
+                        }
+                        if (attUri != null) {
                             Spacer(Modifier.height(8.dp))
-                            LabelValue(label = stringResource(R.string.notes_optional), value = e.notes)
+                            val painter = rememberAsyncImagePainter(attUri)
+                            Image(
+                                painter = painter,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(160.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        try {
+                                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                setDataAndType(attUri, "image/*")
+                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                            }
+                                            context.startActivity(intent)
+                                        } catch (_: Exception) {}
+                                    },
+                                contentScale = ContentScale.Crop
+                            )
                         }
                     }
                 },
