@@ -35,11 +35,15 @@
     <!-- Table headers -->
     <string name="col_date">Date</string>
     <string name="col_particular">Particular</string>
+    <string name="col_date_particular">Date / Particular</string>
     <string name="col_credit">Credit</string>
     <string name="col_debit">Debit</string>
     <string name="col_balance">Balance</string>
 
     <string name="ok">OK</string>
+    <string name="total_credit">Total Credit</string>
+    <string name="total_debit">Total Debit</string>
+    <string name="export_to_pdf">Export to PDF</string>
     
     <!-- PDF labels -->
     <string name="total">Total</string>

@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Actions / dialogs -->
+    <string name="select_action">क्रिया चुनें</string>
+    <string name="edit">संपादित करें</string>
+    <string name="update">अपडेट करें</string>
+
+    <!-- Totals footer -->
+    <string name="total_credit">कुल जमा</string>
+    <string name="total_debit">कुल निकासी</string>
+    <string name="export_to_pdf">पीडीएफ में निर्यात</string>
+
     <string name="app_name">Simple CashBook</string>
 
     <!-- Home -->
@@ -17,8 +27,8 @@
     <string name="delete_user">उपयोगकर्ता हटाएँ</string>
     <string name="delete_user_confirm">क्या आप इस उपयोगकर्ता और उसके सभी रिकॉर्ड्स को हटाना चाहते हैं? यह क्रिया वापस नहीं की जा सकती।</string>
     <string name="delete_txn_confirm">क्या इस प्रविष्टि को हटाएँ?</string>
-    <string name="credit">क्रेडिट</string>
-    <string name="debit">डेबिट</string>
+    <string name="credit">जमा</string>
+    <string name="debit">निकासी</string>
     <string name="balance">बैलेंस</string>
 
     <!-- Detail -->
@@ -32,8 +42,9 @@
     <!-- Table headers -->
     <string name="col_date">तिथि</string>
     <string name="col_particular">विवरण</string>
-    <string name="col_credit">क्रेडिट</string>
-    <string name="col_debit">डेबिट</string>
+    <string name="col_date_particular">तिथि / विवरण</string>
+    <string name="col_credit">जमा</string>
+    <string name="col_debit">निकासी</string>
     <string name="col_balance">बैलेंस</string>
 
     <string name="ok">ठीक है</string>

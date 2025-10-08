@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Actions / dialogs -->
+    <string name="select_action">ಕ್ರಿಯೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="edit">ಬದಲಿಸಿ</string>
+    <string name="update">ನವೀಕರಿಸಿ</string>
+
+    <!-- Totals footer -->
+    <string name="total_credit">ಒಟ್ಟು ಜಮಾ</string>
+    <string name="total_debit">ಒಟ್ಟು ಖರ್ಚು</string>
+
     <string name="app_name">Simple CashBook</string>
 
     <!-- Home -->
@@ -17,8 +26,8 @@
     <string name="delete_user">ಬಳಕೆದಾರರನ್ನು ಅಳಿಸಿ</string>
     <string name="delete_user_confirm">ಈ ಬಳಕೆದಾರ ಮತ್ತು ಅವರ ಎಲ್ಲಾ ದಾಖಲೆಗಳನ್ನು ಅಳಿಸಬೇಕೇ? ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂದಕ್ಕೆ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.</string>
     <string name="delete_txn_confirm">ಈ ಎಂಟ್ರಿಯನ್ನು ಅಳಿಸಬೇಕೇ?</string>
-    <string name="credit">ಕ್ರೆಡಿಟ್</string>
-    <string name="debit">ಡೆಬಿಟ್</string>
+    <string name="credit">ಜಮಾ</string>
+    <string name="debit">ಖರ್ಚು</string>
     <string name="balance">ಬ್ಯಾಲೆನ್ಸ್</string>
 
     <!-- Detail -->
@@ -32,11 +41,13 @@
     <!-- Table headers -->
     <string name="col_date">ದಿನಾಂಕ</string>
     <string name="col_particular">ವಿವರ</string>
-    <string name="col_credit">ಕ್ರೆಡಿಟ್</string>
-    <string name="col_debit">ಡೆಬಿಟ್</string>
+    <string name="col_date_particular">ದಿನಾಂಕ / ವಿವರ</string>
+    <string name="col_credit">ಜಮಾ</string>
+    <string name="col_debit">ಖರ್ಚು</string>
     <string name="col_balance">ಬ್ಯಾಲೆನ್ಸ್</string>
 
     <string name="ok">ಸರಿ</string>
+    <string name="export_to_pdf">PDF ಗೆ ರಫ್ತು ಮಾಡಿ</string>
 
     <!-- PDF labels -->
     <string name="total">ಒಟ್ಟು</string>

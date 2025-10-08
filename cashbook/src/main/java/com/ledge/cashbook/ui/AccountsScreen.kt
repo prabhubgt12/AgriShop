@@ -111,7 +111,7 @@ fun AccountsScreen(
                                         onClick = { menuOpen = false; onAddToBook(acc.id) }
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("Export to PDF") },
+                                        text = { Text(stringResource(R.string.export_to_pdf)) },
                                         onClick = {
                                             menuOpen = false
                                             PdfShare.exportAccount(ctx, acc.name, txns)

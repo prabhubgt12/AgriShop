@@ -7,6 +7,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.draw.scale
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +27,7 @@ import com.ledge.cashbook.util.Currency
 import com.ledge.cashbook.data.local.entities.CashTxn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
@@ -30,7 +37,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.combinedClickable
@@ -87,7 +97,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             dismissButton = {
                 Row {
                     TextButton(onClick = { confirmDeleteTxn = pendingAction; actionTxn = null }) { Text(stringResource(R.string.delete)) }
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(6.dp))
                     TextButton(onClick = { actionTxn = null }) { Text(stringResource(R.string.cancel)) }
                 }
             }
@@ -97,20 +107,26 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Edit transaction dialog
     val toEdit = editTxn
     if (toEdit != null) {
+        val editAmountValid = remember(editAmount) { editAmount.toDoubleOrNull()?.let { it > 0 } == true }
+        val editNoteValid = remember(editNote) { editNote.isNotBlank() }
         AlertDialog(
             onDismissRequest = { editTxn = null },
             confirmButton = {
-                TextButton(onClick = {
-                    val amt = editAmount.toDoubleOrNull() ?: 0.0
-                    val updated = toEdit.copy(
-                        date = editDateMillis,
-                        amount = amt,
-                        isCredit = editIsCredit,
-                        note = editNote.ifBlank { null }
-                    )
-                    vm.updateTxn(updated)
-                    editTxn = null
-                }) { Text(stringResource(R.string.update)) }
+                TextButton(
+                    enabled = editAmountValid && editNoteValid,
+                    onClick = {
+                        val amt = editAmount.toDoubleOrNull() ?: 0.0
+                        if (amt <= 0 || editNote.isBlank()) return@TextButton
+                        val updated = toEdit.copy(
+                            date = editDateMillis,
+                            amount = amt,
+                            isCredit = editIsCredit,
+                            note = editNote
+                        )
+                        vm.updateTxn(updated)
+                        editTxn = null
+                    }
+                ) { Text(stringResource(R.string.update)) }
             },
             dismissButton = { TextButton(onClick = { editTxn = null }) { Text(stringResource(R.string.cancel)) } },
             title = { Text(stringResource(R.string.edit)) },
@@ -129,8 +145,16 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             IconButton(onClick = { showEditDatePicker = true }) { Icon(Icons.Default.DateRange, contentDescription = "Pick date") }
                         }
                     )
-                    OutlinedTextField(value = editAmount, onValueChange = { input -> editAmount = input.filter { it.isDigit() || it == '.' } }, label = { Text(stringResource(R.string.amount)) })
-                    OutlinedTextField(value = editNote, onValueChange = { editNote = it }, label = { Text(stringResource(R.string.particular)) })
+                    OutlinedTextField(
+                        value = editAmount,
+                        onValueChange = { input -> editAmount = input.filter { it.isDigit() || it == '.' } },
+                        label = { Text(stringResource(R.string.amount)) }
+                    )
+                    OutlinedTextField(
+                        value = editNote,
+                        onValueChange = { editNote = it },
+                        label = { Text(stringResource(R.string.particular)) }
+                    )
                 }
             }
         )
@@ -192,18 +216,18 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                 )
             )
         },
-        contentWindowInsets = WindowInsets.systemBars
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top)
     ) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize()) {
             Column(
                 Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(bottom = 8.dp) // Adjusted padding here
+                    // Removed extra bottom padding so footer sits flush with nav bar
             ) {
             // Column weights for alignment
-            val wDate = 0.9f
-            val wPart = 1.3f
+            // Combine Date + Particular into a single wider column keeping the same total width (0.9 + 1.3 = 2.2)
+            val wDatePart = 2.2f
             val wAmt = 1.0f
             val headerBg = MaterialTheme.colorScheme.surfaceVariant
 
@@ -215,6 +239,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     r
                 }
             }
+            // Totals for credit and debit
+            val totalCredit = remember(txns) { txns.filter { it.isCredit }.sumOf { it.amount } }
+            val totalDebit = remember(txns) { txns.filter { !it.isCredit }.sumOf { it.amount } }
 
             LazyColumn(
                 modifier = Modifier
@@ -229,8 +256,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             .padding(vertical = 8.dp, horizontal = 6.dp), // Added vertical padding
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(stringResource(R.string.col_date), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wDate))
-                        Text(stringResource(R.string.col_particular), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wPart))
+                        Text(stringResource(R.string.col_date_particular), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wDatePart))
                         Text(stringResource(R.string.col_credit), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
                         Text(stringResource(R.string.col_debit), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
                         Text(stringResource(R.string.col_balance), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
@@ -255,8 +281,18 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             .padding(vertical = 8.dp, horizontal = 6.dp), // Added horizontal padding
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(SimpleDateFormat("dd/MM/yy").format(Date(t.date)), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wDate))
-                        Text(t.note ?: "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wPart))
+                        Column(modifier = Modifier.weight(wDatePart)) {
+                            Text(
+                                SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                t.note ?: "-",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                         Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
                         Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
                         Text(Currency.inr(run), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
@@ -264,57 +300,114 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     HorizontalDivider()
                 }
             }
-            }
-            
-            // Draggable FAB overlay (same pattern as LedgerBook)
-            val density = LocalDensity.current
-            val fabSize = 56.dp
-            val edge = 16.dp
-            val topInsetPx = with(density) { WindowInsets.statusBars.getTop(this).toFloat() }
-            val bottomInsetPx = with(density) { WindowInsets.navigationBars.getBottom(this).toFloat() }
-            val maxX = with(density) { (this@BoxWithConstraints.maxWidth - fabSize - edge).toPx() }
-            val maxY = with(density) { (this@BoxWithConstraints.maxHeight - fabSize - edge).toPx() } - bottomInsetPx
-            val minX = with(density) { edge.toPx() }
-            val minY = topInsetPx + with(density) { edge.toPx() }
-            var offsetX by remember(this@BoxWithConstraints.maxWidth, this@BoxWithConstraints.maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf(maxX.coerceAtLeast(minX)) }
-            var offsetY by remember(this@BoxWithConstraints.maxWidth, this@BoxWithConstraints.maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf(maxY.coerceAtLeast(minY)) }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.navigationBars)
+            // Divider above footer for separation
+            HorizontalDivider()
+            // Sticky totals footer (outside list)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+                    .padding(vertical = 6.dp, horizontal = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                FloatingActionButton(
-                    onClick = { showAdd = true },
-                    modifier = Modifier
-                        .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-                                offsetX = (offsetX + dragAmount.x).coerceIn(minX, maxX)
-                                offsetY = (offsetY + dragAmount.y).coerceIn(minY, maxY)
-                            }
-                        }
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
+                // Total Credit
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.total_credit),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        Currency.inr(totalCredit),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF0B6A0B)
+                    )
                 }
+                // Total Debit
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.total_debit),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        Currency.inr(totalDebit),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF9A0007)
+                    )
+                }
+                // Quick add mini FABs aligned to the right
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    val haptic = LocalHapticFeedback.current
+                    val creditIs = remember { MutableInteractionSource() }
+                    val creditPressed by creditIs.collectIsPressedAsState()
+                    val creditScale by animateFloatAsState(targetValue = if (creditPressed) 0.92f else 1f, label = "creditScale")
+
+                    SmallFloatingActionButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            isCredit = true
+                            showAdd = true
+                        },
+                        containerColor = Color(0xFF0B6A0B),
+                        interactionSource = creditIs,
+                        modifier = Modifier.scale(creditScale)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.credit))
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+                    val debitIs = remember { MutableInteractionSource() }
+                    val debitPressed by debitIs.collectIsPressedAsState()
+                    val debitScale by animateFloatAsState(targetValue = if (debitPressed) 0.92f else 1f, label = "debitScale")
+
+                    SmallFloatingActionButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            isCredit = false
+                            showAdd = true
+                        },
+                        containerColor = Color(0xFF9A0007),
+                        interactionSource = debitIs,
+                        modifier = Modifier.scale(debitScale)
+                    ) {
+                        Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.debit))
+                    }
+                }
+            }
             }
         }
     }
 
     if (showAdd) {
+        val amountValid = remember(amount) { amount.toDoubleOrNull()?.let { it > 0 } == true }
+        val noteValid = remember(note) { note.isNotBlank() }
         AlertDialog(
             onDismissRequest = { showAdd = false },
             confirmButton = {
-                TextButton(onClick = {
-                    val amt = amount.toDoubleOrNull() ?: 0.0
-                    vm.addTxn(dateMillis, amt, isCredit, note.ifBlank { null })
-                    showAdd = false
-                    isCredit = true
-                    amount = ""
-                    note = ""
-                    dateMillis = System.currentTimeMillis()
-                }) { Text(stringResource(R.string.save)) }
+                TextButton(
+                    enabled = amountValid && noteValid,
+                    onClick = {
+                        val amt = amount.toDoubleOrNull() ?: 0.0
+                        if (amt <= 0 || note.isBlank()) return@TextButton
+                        vm.addTxn(dateMillis, amt, isCredit, note)
+                        showAdd = false
+                        isCredit = true
+                        amount = ""
+                        note = ""
+                        dateMillis = System.currentTimeMillis()
+                    }
+                ) { Text(stringResource(R.string.save)) }
             },
             dismissButton = { TextButton(onClick = { showAdd = false }) { Text(stringResource(R.string.cancel)) } },
             title = { Text(stringResource(R.string.add_to_book)) },
@@ -335,8 +428,16 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             }
                         }
                     )
-                    OutlinedTextField(value = amount, onValueChange = { input -> amount = input.filter { it.isDigit() || it == '.' } }, label = { Text(stringResource(R.string.amount)) })
-                    OutlinedTextField(value = note, onValueChange = { note = it }, label = { Text(stringResource(R.string.particular)) })
+                    OutlinedTextField(
+                        value = amount,
+                        onValueChange = { input -> amount = input.filter { it.isDigit() || it == '.' } },
+                        label = { Text(stringResource(R.string.amount)) }
+                    )
+                    OutlinedTextField(
+                        value = note,
+                        onValueChange = { note = it },
+                        label = { Text(stringResource(R.string.particular)) }
+                    )
                 }
             }
         )
