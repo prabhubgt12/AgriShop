@@ -49,6 +49,13 @@
     <string name="ok">ಸರಿ</string>
     <string name="export_to_pdf">PDF ಗೆ ರಫ್ತು ಮಾಡಿ</string>
 
+    <!-- Filters -->
+    <string name="filter_today">ಇಂದು</string>
+    <string name="filter_last_7_days">ಕಳೆದ 7 ದಿನಗಳು</string>
+    <string name="filter_this_month">ಈ ತಿಂಗಳು</string>
+    <string name="filter_all">ಎಲ್ಲಾ</string>
+    <string name="filter_custom_range">ಕಸ್ಟಮ್ ಅವಧಿ…</string>
+
     <!-- PDF labels -->
     <string name="total">ಒಟ್ಟು</string>
     <string name="label_customer_with_value">ಗ್ರಾಹಕ: %1$s</string>

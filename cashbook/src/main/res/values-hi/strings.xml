@@ -10,6 +10,13 @@
     <string name="total_debit">कुल निकासी</string>
     <string name="export_to_pdf">पीडीएफ में निर्यात</string>
 
+    <!-- Filters -->
+    <string name="filter_today">आज</string>
+    <string name="filter_last_7_days">पिछले 7 दिन</string>
+    <string name="filter_this_month">इस महीने</string>
+    <string name="filter_all">सभी</string>
+    <string name="filter_custom_range">कस्टम अवधि…</string>
+
     <string name="app_name">Simple CashBook</string>
 
     <!-- Home -->

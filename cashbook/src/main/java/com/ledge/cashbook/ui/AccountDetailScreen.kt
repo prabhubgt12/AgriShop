@@ -30,11 +30,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -72,6 +74,12 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var editNote by remember { mutableStateOf("") }
     var editDateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var showEditDatePicker by remember { mutableStateOf(false) }
+    // Filter state
+    var filterMenuOpen by remember { mutableStateOf(false) }
+    var filterStart by remember { mutableStateOf<Long?>(null) }
+    var filterEnd by remember { mutableStateOf<Long?>(null) }
+    var showStartPicker by remember { mutableStateOf(false) }
+    var showEndPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(openAdd) {
         if (openAdd) showAdd = true
@@ -174,6 +182,45 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
         }
     }
 
+    // Custom range pickers
+    if (showStartPicker) {
+        val state = rememberDatePickerState(initialSelectedDateMillis = filterStart ?: System.currentTimeMillis())
+        DatePickerDialog(
+            onDismissRequest = { showStartPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    filterStart = state.selectedDateMillis
+                    showStartPicker = false
+                    showEndPicker = true
+                }) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = { TextButton(onClick = { showStartPicker = false }) { Text(stringResource(R.string.cancel)) } }
+        ) { DatePicker(state = state) }
+    }
+    if (showEndPicker) {
+        val state = rememberDatePickerState(initialSelectedDateMillis = filterEnd ?: System.currentTimeMillis())
+        DatePickerDialog(
+            onDismissRequest = { showEndPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    // normalize end to end-of-day
+                    val sel = state.selectedDateMillis
+                    if (sel != null) {
+                        val cal = java.util.Calendar.getInstance()
+                        cal.timeInMillis = sel
+                        cal.set(java.util.Calendar.HOUR_OF_DAY, 23)
+                        cal.set(java.util.Calendar.MINUTE, 59)
+                        cal.set(java.util.Calendar.SECOND, 59)
+                        cal.set(java.util.Calendar.MILLISECOND, 999)
+                        filterEnd = cal.timeInMillis
+                    }
+                    showEndPicker = false
+                }) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = { TextButton(onClick = { showEndPicker = false }) { Text(stringResource(R.string.cancel)) } }
+        ) { DatePicker(state = state) }
+    }
+
     // Confirm delete transaction dialog
     val txnToDelete = confirmDeleteTxn
     if (txnToDelete != null) {
@@ -194,7 +241,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(name) },
+                title = {
+                    Text(
+                        name,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
                 },
@@ -204,9 +258,66 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
                     AssistChip(
                         onClick = {},
-                        label = { Text(stringResource(R.string.balance) + ": " + Currency.inr(balance)) },
+                        label = {
+                            val labelText = stringResource(R.string.balance) + ": "
+                            val amtText = Currency.inr(balance)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(labelText, style = MaterialTheme.typography.labelSmall)
+                                Text(amtText, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            }
+                        },
                         colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg)
                     )
+                    // Date filter button
+                    IconButton(onClick = { filterMenuOpen = true }) {
+                        Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                    }
+                    DropdownMenu(expanded = filterMenuOpen, onDismissRequest = { filterMenuOpen = false }) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
+                            filterMenuOpen = false
+                            val now = java.util.Calendar.getInstance()
+                            now.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                            now.set(java.util.Calendar.MINUTE, 0)
+                            now.set(java.util.Calendar.SECOND, 0)
+                            now.set(java.util.Calendar.MILLISECOND, 0)
+                            filterStart = now.timeInMillis
+                            filterEnd = filterStart!! + 24L*60*60*1000 - 1
+                        })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_last_7_days)) }, onClick = {
+                            filterMenuOpen = false
+                            val cal = java.util.Calendar.getInstance()
+                            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                            cal.set(java.util.Calendar.MINUTE, 0)
+                            cal.set(java.util.Calendar.SECOND, 0)
+                            cal.set(java.util.Calendar.MILLISECOND, 0)
+                            filterEnd = cal.timeInMillis + 24L*60*60*1000 - 1
+                            cal.add(java.util.Calendar.DAY_OF_YEAR, -6)
+                            filterStart = cal.timeInMillis
+                        })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_this_month)) }, onClick = {
+                            filterMenuOpen = false
+                            val cal = java.util.Calendar.getInstance()
+                            cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                            cal.set(java.util.Calendar.MINUTE, 0)
+                            cal.set(java.util.Calendar.SECOND, 0)
+                            cal.set(java.util.Calendar.MILLISECOND, 0)
+                            filterStart = cal.timeInMillis
+                            cal.add(java.util.Calendar.MONTH, 1)
+                            cal.add(java.util.Calendar.MILLISECOND, -1)
+                            filterEnd = cal.timeInMillis
+                        })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = {
+                            filterMenuOpen = false
+                            filterStart = null
+                            filterEnd = null
+                        })
+                        Divider()
+                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_custom_range)) }, onClick = {
+                            filterMenuOpen = false
+                            showStartPicker = true
+                        })
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -231,17 +342,25 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             val wAmt = 1.0f
             val headerBg = MaterialTheme.colorScheme.surfaceVariant
 
-            // Precompute running balances to avoid mutating state during list iteration
-            val runningBalances = remember(txns) {
+            // Apply date filter to transactions
+            val filteredTxns = remember(txns, filterStart, filterEnd) {
+                txns.filter { t ->
+                    val sOk = filterStart?.let { t.date >= it } ?: true
+                    val eOk = filterEnd?.let { t.date <= it } ?: true
+                    sOk && eOk
+                }
+            }
+            // Precompute running balances on filtered list
+            val runningBalances = remember(filteredTxns) {
                 var r = 0.0
-                txns.map { t ->
+                filteredTxns.map { t ->
                     r += if (t.isCredit) t.amount else -t.amount
                     r
                 }
             }
             // Totals for credit and debit
-            val totalCredit = remember(txns) { txns.filter { it.isCredit }.sumOf { it.amount } }
-            val totalDebit = remember(txns) { txns.filter { !it.isCredit }.sumOf { it.amount } }
+            val totalCredit = remember(filteredTxns) { filteredTxns.filter { it.isCredit }.sumOf { it.amount } }
+            val totalDebit = remember(filteredTxns) { filteredTxns.filter { !it.isCredit }.sumOf { it.amount } }
 
             LazyColumn(
                 modifier = Modifier
@@ -263,7 +382,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     }
                     HorizontalDivider()
                 }
-                itemsIndexed(txns) { index, t ->
+                itemsIndexed(filteredTxns) { index, t ->
                     val run = runningBalances.getOrNull(index) ?: 0.0
                     // Theme-aware subtle backgrounds per row by type
                     val dark = androidx.compose.foundation.isSystemInDarkTheme()
