@@ -17,6 +17,9 @@ interface CashDao {
     @Delete
     suspend fun deleteAccount(account: CashAccount)
 
+    @Update
+    suspend fun updateAccount(account: CashAccount)
+
     @Query("SELECT * FROM cash_accounts WHERE id = :id")
     suspend fun getAccount(id: Int): CashAccount?
 

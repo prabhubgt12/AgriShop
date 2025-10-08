@@ -52,6 +52,8 @@ fun AccountsScreen(
     var openBalanceText by remember { mutableStateOf("") }
     val ctx = LocalContext.current
     var confirmDeleteFor by remember { mutableStateOf<Int?>(null) }
+    var renameFor by remember { mutableStateOf<Int?>(null) }
+    var renameText by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(
@@ -109,6 +111,14 @@ fun AccountsScreen(
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.add_to_book)) },
                                         onClick = { menuOpen = false; onAddToBook(acc.id) }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.edit)) },
+                                        onClick = {
+                                            menuOpen = false
+                                            renameFor = acc.id
+                                            renameText = acc.name
+                                        }
                                     )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.export_to_pdf)) },
@@ -175,6 +185,34 @@ fun AccountsScreen(
                     item { Spacer(Modifier.height(84.dp)) }
                 }
             }
+
+    // Rename account dialog
+    val toRename = renameFor
+    if (toRename != null) {
+        AlertDialog(
+            onDismissRequest = { renameFor = null },
+            confirmButton = {
+                TextButton(onClick = {
+                    val name = renameText.trim()
+                    if (name.isNotEmpty()) vm.renameAccount(toRename, name)
+                    renameFor = null
+                }) { Text(stringResource(R.string.update)) }
+            },
+            dismissButton = { TextButton(onClick = { renameFor = null }) { Text(stringResource(R.string.cancel)) } },
+            title = { Text(stringResource(R.string.edit)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = renameText,
+                        onValueChange = { renameText = it },
+                        label = { Text(stringResource(R.string.account_name)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
+    }
 
             // Draggable FAB overlay (mirrors LedgerBook)
             val density = LocalDensity.current

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.ui.text.font.FontWeight
@@ -240,92 +241,124 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        name,
-                        style = MaterialTheme.typography.titleSmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            name,
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
+                    },
+                    actions = {
+                        val pos = balance >= 0
+                        val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
+                        val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                        AssistChip(
+                            onClick = {},
+                            label = {
+                                val labelText = stringResource(R.string.balance) + ": "
+                                val amtText = Currency.inr(balance)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(labelText, style = MaterialTheme.typography.labelSmall)
+                                    Text(amtText, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                }
+                            },
+                            colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg)
+                        )
+                        // Date filter button (no badge/tint)
+                        IconButton(onClick = { filterMenuOpen = true }) {
+                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
+                        }
+                        DropdownMenu(expanded = filterMenuOpen, onDismissRequest = { filterMenuOpen = false }) {
+                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
+                                filterMenuOpen = false
+                                val now = java.util.Calendar.getInstance()
+                                now.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                                now.set(java.util.Calendar.MINUTE, 0)
+                                now.set(java.util.Calendar.SECOND, 0)
+                                now.set(java.util.Calendar.MILLISECOND, 0)
+                                filterStart = now.timeInMillis
+                                filterEnd = filterStart!! + 24L*60*60*1000 - 1
+                            })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_last_7_days)) }, onClick = {
+                                filterMenuOpen = false
+                                val cal = java.util.Calendar.getInstance()
+                                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                                cal.set(java.util.Calendar.MINUTE, 0)
+                                cal.set(java.util.Calendar.SECOND, 0)
+                                cal.set(java.util.Calendar.MILLISECOND, 0)
+                                filterEnd = cal.timeInMillis + 24L*60*60*1000 - 1
+                                cal.add(java.util.Calendar.DAY_OF_YEAR, -6)
+                                filterStart = cal.timeInMillis
+                            })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_this_month)) }, onClick = {
+                                filterMenuOpen = false
+                                val cal = java.util.Calendar.getInstance()
+                                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                                cal.set(java.util.Calendar.MINUTE, 0)
+                                cal.set(java.util.Calendar.SECOND, 0)
+                                cal.set(java.util.Calendar.MILLISECOND, 0)
+                                filterStart = cal.timeInMillis
+                                cal.add(java.util.Calendar.MONTH, 1)
+                                cal.add(java.util.Calendar.MILLISECOND, -1)
+                                filterEnd = cal.timeInMillis
+                            })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = {
+                                filterMenuOpen = false
+                                filterStart = null
+                                filterEnd = null
+                            })
+                            Divider()
+                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_custom_range)) }, onClick = {
+                                filterMenuOpen = false
+                                showStartPicker = true
+                            })
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
-                },
-                actions = {
-                    val pos = balance >= 0
-                    val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
-                    val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                    AssistChip(
-                        onClick = {},
-                        label = {
-                            val labelText = stringResource(R.string.balance) + ": "
-                            val amtText = Currency.inr(balance)
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(labelText, style = MaterialTheme.typography.labelSmall)
-                                Text(amtText, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                            }
-                        },
-                        colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg)
-                    )
-                    // Date filter button
-                    IconButton(onClick = { filterMenuOpen = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filter")
-                    }
-                    DropdownMenu(expanded = filterMenuOpen, onDismissRequest = { filterMenuOpen = false }) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
-                            filterMenuOpen = false
-                            val now = java.util.Calendar.getInstance()
-                            now.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                            now.set(java.util.Calendar.MINUTE, 0)
-                            now.set(java.util.Calendar.SECOND, 0)
-                            now.set(java.util.Calendar.MILLISECOND, 0)
-                            filterStart = now.timeInMillis
-                            filterEnd = filterStart!! + 24L*60*60*1000 - 1
-                        })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_last_7_days)) }, onClick = {
-                            filterMenuOpen = false
-                            val cal = java.util.Calendar.getInstance()
-                            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                            cal.set(java.util.Calendar.MINUTE, 0)
-                            cal.set(java.util.Calendar.SECOND, 0)
-                            cal.set(java.util.Calendar.MILLISECOND, 0)
-                            filterEnd = cal.timeInMillis + 24L*60*60*1000 - 1
-                            cal.add(java.util.Calendar.DAY_OF_YEAR, -6)
-                            filterStart = cal.timeInMillis
-                        })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_this_month)) }, onClick = {
-                            filterMenuOpen = false
-                            val cal = java.util.Calendar.getInstance()
-                            cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
-                            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                            cal.set(java.util.Calendar.MINUTE, 0)
-                            cal.set(java.util.Calendar.SECOND, 0)
-                            cal.set(java.util.Calendar.MILLISECOND, 0)
-                            filterStart = cal.timeInMillis
-                            cal.add(java.util.Calendar.MONTH, 1)
-                            cal.add(java.util.Calendar.MILLISECOND, -1)
-                            filterEnd = cal.timeInMillis
-                        })
-                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = {
-                            filterMenuOpen = false
-                            filterStart = null
-                            filterEnd = null
-                        })
-                        Divider()
-                        DropdownMenuItem(text = { Text(stringResource(R.string.filter_custom_range)) }, onClick = {
-                            filterMenuOpen = false
-                            showStartPicker = true
-                        })
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
-            )
+
+                val isFiltered = filterStart != null || filterEnd != null
+                if (isFiltered) {
+                    val fmt = remember { SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault()) }
+                    val startStr = filterStart?.let { fmt.format(Date(it)) }
+                    val endStr = filterEnd?.let { fmt.format(Date(it)) }
+                    Surface(color = MaterialTheme.colorScheme.primary) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = when {
+                                    startStr != null && endStr != null -> "$startStr - $endStr"
+                                    startStr != null -> startStr
+                                    endStr != null -> endStr
+                                    else -> ""
+                                },
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = { filterStart = null; filterEnd = null }) {
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel), tint = MaterialTheme.colorScheme.onPrimary)
+                            }
+                        }
+                    }
+                }
+            }
         },
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top)
     ) { padding ->

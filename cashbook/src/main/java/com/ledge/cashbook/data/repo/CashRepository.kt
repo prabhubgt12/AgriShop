@@ -14,6 +14,10 @@ class CashRepository(
     suspend fun addAccount(name: String): Int = dao.insertAccount(CashAccount(name = name.trim())).toInt()
     suspend fun deleteAccount(acc: CashAccount) = dao.deleteAccount(acc)
     suspend fun getAccount(id: Int) = dao.getAccount(id)
+    suspend fun updateAccountName(id: Int, newName: String) {
+        val acc = dao.getAccount(id)
+        if (acc != null) dao.updateAccount(acc.copy(name = newName.trim()))
+    }
 
     fun txns(accountId: Int): Flow<List<CashTxn>> = dao.txns(accountId)
     suspend fun addTxn(accountId: Int, date: Long, amount: Double, isCredit: Boolean, note: String?) =

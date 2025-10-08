@@ -48,4 +48,10 @@ class AccountsViewModel @Inject constructor(
             if (acc != null) repo.deleteAccount(acc)
         }
     }
+
+    fun renameAccount(accountId: Int, newName: String) {
+        viewModelScope.launch {
+            repo.updateAccountName(accountId, newName)
+        }
+    }
 }
