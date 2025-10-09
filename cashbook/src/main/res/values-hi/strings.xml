@@ -62,6 +62,8 @@
     <string name="label_date_with_value">तिथि: %1$s</string>
     <string name="label_total_balance_with_value">कुल बैलेंस: %1$s</string>
     <string name="pdf_generated_footer">यह रिपोर्ट Simple Cash Book ऐप द्वारा बनाई गई है</string>
+    <string name="from_label">से: %1$s</string>
+    <string name="to_label">तक: %1$s</string>
 
     <!-- Settings -->
     <string name="gd_connected">Google Drive से जुड़ा</string>

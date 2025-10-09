@@ -62,6 +62,8 @@
     <string name="label_date_with_value">ದಿನಾಂಕ: %1$s</string>
     <string name="label_total_balance_with_value">ಒಟ್ಟು ಬ್ಯಾಲೆನ್ಸ್: %1$s</string>
     <string name="pdf_generated_footer">ಈ ವರದಿಯನ್ನು Simple Cash Book ಅಪ್ಲಿಕೇಶನ್ ನಿರ್ಮಿಸಿದೆ</string>
+    <string name="from_label">ಇಂದ: %1$s</string>
+    <string name="to_label">ತನಕ: %1$s</string>
 
     <!-- Settings -->
     <string name="gd_connected">Google Drive ಸಂಪರ್ಕವಾಗಿದೆ</string>

@@ -21,7 +21,13 @@ object PdfShare {
     private const val MARGIN = 36 // half inch
     private const val COL_GAP = 12f
 
-    fun exportAccount(context: Context, accountName: String, txns: List<CashTxn>) {
+    fun exportAccount(
+        context: Context,
+        accountName: String,
+        txns: List<CashTxn>,
+        startMillis: Long? = null,
+        endMillis: Long? = null
+    ) {
         val doc = PdfDocument()
         var pageNumber = 1
         var page = doc.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pageNumber).create())
@@ -48,6 +54,14 @@ object PdfShare {
         lineL(context.getString(R.string.title_cash_book), title, 24f)
         lineL(context.getString(R.string.label_customer_with_value, accountName), header)
         lineL(context.getString(R.string.label_date_with_value, SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())), text)
+        // Optional date range (localized From / To on one line)
+        if (startMillis != null || endMillis != null) {
+            val fmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+            val parts = mutableListOf<String>()
+            startMillis?.let { parts.add(context.getString(R.string.from_label, fmt.format(Date(it)))) }
+            endMillis?.let { parts.add(context.getString(R.string.to_label, fmt.format(Date(it)))) }
+            if (parts.isNotEmpty()) lineL(parts.joinToString(separator = "    "), text)
+        }
 
         // Calculate totals here and print Total Balance
         val totalCredit = txns.filter { it.isCredit }.sumOf { it.amount }

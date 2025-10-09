@@ -30,11 +30,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,9 +50,11 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.platform.LocalContext
 import kotlin.math.roundToInt
 import java.text.SimpleDateFormat
 import java.util.Date
+import com.ledge.cashbook.util.PdfShare
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -81,6 +86,21 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var filterEnd by remember { mutableStateOf<Long?>(null) }
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
+
+    // Derived filter state and filtered transactions for reuse across top bar, list and footer
+    val isFiltered = remember(filterStart, filterEnd) { filterStart != null || filterEnd != null }
+    val filteredTxns = remember(txns, filterStart, filterEnd) {
+        txns.filter { t ->
+            val sOk = filterStart?.let { t.date >= it } ?: true
+            val eOk = filterEnd?.let { t.date <= it } ?: true
+            sOk && eOk
+        }
+    }
+    val filteredBalance = remember(filteredTxns) {
+        val credit = filteredTxns.filter { it.isCredit }.sumOf { it.amount }
+        val debit = filteredTxns.filter { !it.isCredit }.sumOf { it.amount }
+        credit - debit
+    }
 
     LaunchedEffect(openAdd) {
         if (openAdd) showAdd = true
@@ -255,26 +275,42 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
                     },
                     actions = {
-                        val pos = balance >= 0
+                        val displayBal = if (isFiltered) filteredBalance else balance
+                        val pos = displayBal >= 0
                         val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
                         val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                        AssistChip(
-                            onClick = {},
-                            label = {
-                                val labelText = stringResource(R.string.balance) + ": "
-                                val amtText = Currency.inr(balance)
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(labelText, style = MaterialTheme.typography.labelSmall)
-                                    Text(amtText, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                                }
-                            },
-                            colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(chipBg)
+                                .padding(vertical = 2.dp, horizontal = 6.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = stringResource(R.string.balance) + ": ",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = chipFg
+                                )
+                                Text(
+                                    text = Currency.inr(displayBal),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = chipFg
+                                )
+                            }
+                        }
                         // Date filter button (no badge/tint)
                         IconButton(onClick = { filterMenuOpen = true }) {
                             Icon(Icons.Default.FilterList, contentDescription = "Filter")
                         }
                         DropdownMenu(expanded = filterMenuOpen, onDismissRequest = { filterMenuOpen = false }) {
+                            val ctxMenu = LocalContext.current
+                            DropdownMenuItem(text = { Text(stringResource(R.string.export_to_pdf)) }, onClick = {
+                                filterMenuOpen = false
+                                val list = if (isFiltered) filteredTxns else txns
+                                PdfShare.exportAccount(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd)
+                            })
+                            Divider()
                             DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
                                 filterMenuOpen = false
                                 val now = java.util.Calendar.getInstance()
@@ -329,11 +365,11 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     )
                 )
 
-                val isFiltered = filterStart != null || filterEnd != null
                 if (isFiltered) {
                     val fmt = remember { SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault()) }
                     val startStr = filterStart?.let { fmt.format(Date(it)) }
                     val endStr = filterEnd?.let { fmt.format(Date(it)) }
+                    val ctxBar = LocalContext.current
                     Surface(color = MaterialTheme.colorScheme.primary) {
                         Row(
                             Modifier
@@ -352,6 +388,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.weight(1f)
                             )
+                            // Export filtered list to PDF (second row)
+                            IconButton(onClick = { PdfShare.exportAccount(ctxBar, name, filteredTxns, startMillis = filterStart, endMillis = filterEnd) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.PictureAsPdf,
+                                    contentDescription = stringResource(R.string.export_to_pdf),
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
                             IconButton(onClick = { filterStart = null; filterEnd = null }) {
                                 Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel), tint = MaterialTheme.colorScheme.onPrimary)
                             }
@@ -375,14 +419,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             val wAmt = 1.0f
             val headerBg = MaterialTheme.colorScheme.surfaceVariant
 
-            // Apply date filter to transactions
-            val filteredTxns = remember(txns, filterStart, filterEnd) {
-                txns.filter { t ->
-                    val sOk = filterStart?.let { t.date >= it } ?: true
-                    val eOk = filterEnd?.let { t.date <= it } ?: true
-                    sOk && eOk
-                }
-            }
+            // filteredTxns already computed above to be shared with top bar and totals
             // Precompute running balances on filtered list
             val runningBalances = remember(filteredTxns) {
                 var r = 0.0
@@ -405,7 +442,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         Modifier
                             .fillMaxWidth()
                             .background(headerBg)
-                            .padding(vertical = 8.dp, horizontal = 6.dp), // Added vertical padding
+                            .padding(vertical = 6.dp, horizontal = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(stringResource(R.string.col_date_particular), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wDatePart))
@@ -430,7 +467,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 onClick = {},
                                 onLongClick = { actionTxn = t }
                             )
-                            .padding(vertical = 8.dp, horizontal = 6.dp), // Added horizontal padding
+                            .padding(vertical = 6.dp, horizontal = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(wDatePart)) {
