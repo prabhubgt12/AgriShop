@@ -605,8 +605,8 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 }
             }
             } else {
-                // Flat list (original child cards only)
-                items(state.items, key = { it.id }) { item ->
+                // Flat list (original child cards only) — honor search filter
+                items(filteredItems, key = { it.id }) { item ->
                     LedgerRow(
                         vm = item,
                         onClick = {
