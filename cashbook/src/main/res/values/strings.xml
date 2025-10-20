@@ -54,6 +54,11 @@
     <string name="from_label">From: %1$s</string>
     <string name="to_label">To: %1$s</string>
 
+    <!-- Image labels -->
+    <string name="attachment">Image</string>
+    <string name="add_attachment">Add image</string>
+    <string name="attachment_added">Image selected</string>
+
     <!-- Filters -->
     <string name="filter_today">Today</string>
     <string name="filter_last_7_days">Last 7 days</string>
@@ -117,4 +122,12 @@
     <!-- Backup info -->
     <string name="last_backup_label">Last backup: %1$s</string>
     <string name="never_label">Never</string>
+
+    <!-- Categories -->
+    <string name="category">Category</string>
+    <string name="select_category">Select category</string>
+    <string name="uncategorized">Uncategorized</string>
+    <string name="show_category_field">Show category field</string>
+    <string name="categories_csv">Categories (comma-separated)</string>
+    <string name="category_split">Expense Overview</string>
 </resources>

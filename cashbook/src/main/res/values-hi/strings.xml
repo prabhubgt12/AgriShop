@@ -62,8 +62,22 @@
     <string name="label_date_with_value">तिथि: %1$s</string>
     <string name="label_total_balance_with_value">कुल बैलेंस: %1$s</string>
     <string name="pdf_generated_footer">यह रिपोर्ट Simple Cash Book ऐप द्वारा बनाई गई है</string>
+    <string name="never_label">कभी नहीं</string>
+
+    <!-- Categories -->
+    <string name="category">श्रेणी</string>
+    <string name="select_category">श्रेणी चुनें</string>
+    <string name="uncategorized">बिना श्रेणी</string>
+    <string name="show_category_field">श्रेणी फ़ील्ड दिखाएं</string>
+    <string name="categories_csv">श्रेणियाँ (कॉमा से अलग)</string>
+    <string name="category_split">खर्च का सारांश</string>
     <string name="from_label">से: %1$s</string>
     <string name="to_label">तक: %1$s</string>
+
+    <!-- Image labels -->
+    <string name="attachment">छवि</string>
+    <string name="add_attachment">छवि जोड़ें</string>
+    <string name="attachment_added">छवि चयनित</string>
 
     <!-- Settings -->
     <string name="gd_connected">Google Drive से जुड़ा</string>

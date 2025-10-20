@@ -7,12 +7,19 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,6 +61,33 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     // Monetization: remove ads purchase state
     val monetizationVM: MonetizationViewModel = hiltViewModel()
     val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState(initial = false)
+    // Category settings
+    val settingsVM: SettingsViewModel = hiltViewModel()
+    val showCategory by settingsVM.showCategory.collectAsState(initial = false)
+    val categoriesCsvRaw by settingsVM.categoriesCsv.collectAsState(initial = "")
+    var categoriesCsvLocal by remember(categoriesCsvRaw) { mutableStateOf(categoriesCsvRaw) }
+    var csvFocused by remember { mutableStateOf(false) }
+    val parsedCategories by remember(categoriesCsvLocal) {
+        mutableStateOf(
+            categoriesCsvLocal
+                .replace('\r', '\n')
+                .replace('\uFF0C', ',')
+                .replace('\u060C', ',')
+                .replace('\u061B', ';')
+                .let { Regex("[,;\n]+").split(it) }
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+        )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            if (categoriesCsvLocal != categoriesCsvRaw) {
+                settingsVM.setCategoriesCsv(categoriesCsvLocal)
+            }
+        }
+    }
 
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         val act = activity ?: return@rememberLauncherForActivityResult
@@ -73,7 +107,12 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
         }
     }
 
-    BackHandler(enabled = true) { onBack() }
+    BackHandler(enabled = true) {
+        if (categoriesCsvLocal != categoriesCsvRaw) {
+            settingsVM.setCategoriesCsv(categoriesCsvLocal)
+        }
+        onBack()
+    }
 
     Scaffold(topBar = {
         TopAppBar(title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) })
@@ -143,6 +182,47 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         }
                     }
                     Text(text = stringResource(R.string.changes_apply_note), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            item { HorizontalDivider() }
+
+            // Categories settings
+            item { Text(stringResource(R.string.category), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.show_category_field))
+                        Switch(checked = showCategory, onCheckedChange = { settingsVM.setShowCategory(it) })
+                    }
+                    OutlinedTextField(
+                        value = categoriesCsvLocal,
+                        onValueChange = { categoriesCsvLocal = it },
+                        label = { Text(stringResource(R.string.categories_csv)) },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { f ->
+                                val now = f.isFocused
+                                if (csvFocused && !now) {
+                                    if (categoriesCsvLocal != categoriesCsvRaw) {
+                                        settingsVM.setCategoriesCsv(categoriesCsvLocal)
+                                    }
+                                }
+                                csvFocused = now
+                            },
+                        enabled = showCategory
+                    )
+                    if (showCategory) {
+                        if (parsedCategories.isEmpty()) {
+                            Text(text = "No categories parsed", style = MaterialTheme.typography.labelSmall)
+                        } else {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                items(parsedCategories.size) { i ->
+                                    AssistChip(onClick = {}, label = { Text(parsedCategories[i]) })
+                                }
+                            }
+                        }
+                    }
                 }
             }
             item { HorizontalDivider() }

@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
 import com.ledge.cashbook.util.Currency
@@ -36,18 +37,14 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
+import androidx.compose.runtime.CompositionLocalProvider
  
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.combinedClickable
@@ -56,6 +53,26 @@ import kotlin.math.roundToInt
 import java.text.SimpleDateFormat
 import java.util.Date
 import com.ledge.cashbook.util.PdfShare
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import coil.compose.AsyncImage
+import androidx.compose.material.icons.filled.Attachment
+import androidx.compose.foundation.clickable
+import android.net.Uri
+import android.graphics.BitmapFactory
+import java.io.File
+import java.io.FileOutputStream
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Offset
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -65,12 +82,16 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     val name by vm.accountName.collectAsState()
     val txns by vm.txns.collectAsState()
     val balance by vm.balance.collectAsState()
+    val ctx = LocalContext.current
+    
 
     var showAdd by remember { mutableStateOf(false) }
     var isCredit by remember { mutableStateOf(true) }
     var amount by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var dateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    var addAttachmentUri by remember { mutableStateOf<String?>(null) }
+    var addCategory by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
     var confirmDeleteTxn by remember { mutableStateOf<CashTxn?>(null) }
     // Long-press actions and edit states
@@ -80,6 +101,8 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var editAmount by remember { mutableStateOf("") }
     var editNote by remember { mutableStateOf("") }
     var editDateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    var editAttachmentUri by remember { mutableStateOf<String?>(null) }
+    var editCategory by remember { mutableStateOf("") }
     var showEditDatePicker by remember { mutableStateOf(false) }
     // Filter state
     var filterMenuOpen by remember { mutableStateOf(false) }
@@ -97,6 +120,58 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             sOk && eOk
         }
     }
+    // Image preview dialog state and in-app preview (reduced height)
+    var previewUri by remember { mutableStateOf<String?>(null) }
+    val config = LocalConfiguration.current
+    val maxPreviewHeight = (config.screenHeightDp * 0.6f).dp
+    val toPreview = previewUri
+    if (toPreview != null) {
+        AlertDialog(
+            onDismissRequest = { previewUri = null },
+            confirmButton = { TextButton(onClick = { previewUri = null }) { Text(stringResource(R.string.ok)) } },
+            title = { Text(stringResource(R.string.attachment)) },
+            text = {
+                val bmp = remember(toPreview) {
+                    try {
+                        if (toPreview.startsWith("content:")) {
+                            ctx.contentResolver.openInputStream(Uri.parse(toPreview))?.use { BitmapFactory.decodeStream(it) }
+                        } else {
+                            BitmapFactory.decodeFile(toPreview)
+                        }
+                    } catch (e: Exception) { null }
+                }
+                if (bmp != null) {
+                    var scale by remember(toPreview) { mutableStateOf(1f) }
+                    var offset by remember(toPreview) { mutableStateOf(Offset.Zero) }
+                    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+                        val newScale = (scale * zoomChange).coerceIn(1f, 5f)
+                        // Adjust pan sensitivity by scale
+                        val pan = if (newScale > 1f) panChange else Offset.Zero
+                        scale = newScale
+                        offset += pan
+                    }
+                    Image(
+                        bitmap = bmp.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = maxPreviewHeight)
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offset.x,
+                                translationY = offset.y
+                            )
+                            .transformable(transformState),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Text("Failed to load image.")
+                }
+            }
+        )
+    }
+    
     val filteredBalance = remember(filteredTxns) {
         val credit = filteredTxns.filter { it.isCredit }.sumOf { it.amount }
         val debit = filteredTxns.filter { !it.isCredit }.sumOf { it.amount }
@@ -105,6 +180,38 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
 
     LaunchedEffect(openAdd) {
         if (openAdd) showAdd = true
+    }
+
+    // Settings for category dropdown
+    val settingsVM: SettingsViewModel = hiltViewModel()
+    val showCategory by settingsVM.showCategory.collectAsState(initial = false)
+    val categoriesCsv by settingsVM.categoriesCsv.collectAsState(initial = "")
+    val categories = remember(categoriesCsv) {
+        val normalized = categoriesCsv
+            .replace('\r', '\n')
+            .replace('\uFF0C', ',') // fullwidth comma
+            .replace('\u060C', ',') // arabic comma
+            .replace('\u061B', ';') // arabic semicolon
+        Regex("[,;\n]+")
+            .split(normalized)
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+    }
+
+    // Helper to copy the picked image into app-private storage and keep only our own file path
+    fun copyPickedToApp(uri: Uri): String? {
+        return try {
+            val input = ctx.contentResolver.openInputStream(uri) ?: return null
+            val dir = File(ctx.filesDir, "attachments").apply { mkdirs() }
+            val ext = "jpg"
+            val outFile = File(dir, "att_${System.currentTimeMillis()}.$ext")
+            FileOutputStream(outFile).use { out ->
+                input.copyTo(out)
+            }
+            input.close()
+            outFile.absolutePath
+        } catch (e: Exception) { null }
     }
 
     // Long-press actions dialog (Edit/Delete)
@@ -121,6 +228,8 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     editAmount = pendingAction.amount.toString()
                     editNote = pendingAction.note ?: ""
                     editDateMillis = pendingAction.date
+                    editAttachmentUri = pendingAction.attachmentUri
+                    editCategory = pendingAction.category ?: ""
                     actionTxn = null
                 }) { Text(stringResource(R.string.edit)) }
             },
@@ -151,7 +260,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             date = editDateMillis,
                             amount = amt,
                             isCredit = editIsCredit,
-                            note = editNote
+                            note = editNote,
+                            attachmentUri = editAttachmentUri,
+                            category = editCategory.ifBlank { null }
                         )
                         vm.updateTxn(updated)
                         editTxn = null
@@ -185,6 +296,58 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         onValueChange = { editNote = it },
                         label = { Text(stringResource(R.string.particular)) }
                     )
+                    if (showCategory) {
+                        var expanded by remember { mutableStateOf(false) }
+                        Box {
+                            OutlinedTextField(
+                                value = if (editCategory.isBlank()) stringResource(R.string.select_category) else editCategory,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text(stringResource(R.string.category)) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { expanded = true },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        modifier = Modifier.clickable { expanded = !expanded }
+                                    )
+                                }
+                            )
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.uncategorized)) }, onClick = { editCategory = ""; expanded = false })
+                                categories.forEach { cat ->
+                                    DropdownMenuItem(text = { Text(cat) }, onClick = { editCategory = cat; expanded = false })
+                                }
+                            }
+                        }
+                    }
+                    val pickEditImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                        editAttachmentUri = uri?.let { copyPickedToApp(it) }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { pickEditImageLauncher.launch("image/*") }) {
+                            Icon(Icons.Filled.Attachment, contentDescription = null)
+                            Spacer(Modifier.width(6.dp))
+                            Text(text = stringResource(id = R.string.add_attachment))
+                        }
+                        if (editAttachmentUri != null) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                AsyncImage(
+                                    model = File(editAttachmentUri!!),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(6.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                IconButton(onClick = { editAttachmentUri = null }) {
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.cancel))
+                                }
+                            }
+                        }
+                    }
                 }
             }
         )
@@ -477,12 +640,34 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             .padding(vertical = 6.dp, horizontal = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(wDatePart)) {
-                            Text(
-                                SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Column(
+                            modifier = Modifier
+                                .weight(wDatePart)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (t.attachmentUri != null) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                                        IconButton(
+                                            onClick = {
+                                                previewUri = t.attachmentUri
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Attachment,
+                                                contentDescription = "View attachment",
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                             Text(
                                 t.note ?: "-",
                                 style = MaterialTheme.typography.bodySmall,
@@ -588,6 +773,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     if (showAdd) {
         val amountValid = remember(amount) { amount.toDoubleOrNull()?.let { it > 0 } == true }
         val noteValid = remember(note) { note.isNotBlank() }
+        val pickImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            addAttachmentUri = uri?.let { copyPickedToApp(it) }
+        }
         AlertDialog(
             onDismissRequest = { showAdd = false },
             confirmButton = {
@@ -596,12 +784,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     onClick = {
                         val amt = amount.toDoubleOrNull() ?: 0.0
                         if (amt <= 0 || note.isBlank()) return@TextButton
-                        vm.addTxn(dateMillis, amt, isCredit, note)
+                        vm.addTxn(dateMillis, amt, isCredit, note, addAttachmentUri, addCategory.ifBlank { null })
                         showAdd = false
                         isCredit = true
                         amount = ""
                         note = ""
                         dateMillis = System.currentTimeMillis()
+                        addAttachmentUri = null
+                        addCategory = ""
                     }
                 ) { Text(stringResource(R.string.save)) }
             },
@@ -634,6 +824,55 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         onValueChange = { note = it },
                         label = { Text(stringResource(R.string.particular)) }
                     )
+                    if (showCategory) {
+                        var expanded by remember { mutableStateOf(false) }
+                        Box {
+                            OutlinedTextField(
+                                value = if (addCategory.isBlank()) stringResource(R.string.select_category) else addCategory,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text(stringResource(R.string.category)) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { expanded = true },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        modifier = Modifier.clickable { expanded = !expanded }
+                                    )
+                                }
+                            )
+                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.uncategorized)) }, onClick = { addCategory = ""; expanded = false })
+                                categories.forEach { cat ->
+                                    DropdownMenuItem(text = { Text(cat) }, onClick = { addCategory = cat; expanded = false })
+                                }
+                            }
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { pickImageLauncher.launch("image/*") }) {
+                            Icon(Icons.Filled.Attachment, contentDescription = null)
+                            Spacer(Modifier.width(6.dp))
+                            Text(text = stringResource(id = R.string.add_attachment))
+                        }
+                        if (addAttachmentUri != null) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                AsyncImage(
+                                    model = File(addAttachmentUri!!),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(6.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                IconButton(onClick = { addAttachmentUri = null }) {
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.cancel))
+                                }
+                            }
+                        }
+                    }
                 }
             }
         )

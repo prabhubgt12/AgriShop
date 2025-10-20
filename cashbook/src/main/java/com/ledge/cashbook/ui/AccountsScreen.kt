@@ -21,6 +21,11 @@ import com.ledge.cashbook.R
 import com.ledge.cashbook.util.Currency
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.DrawStyle
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
@@ -54,6 +59,7 @@ fun AccountsScreen(
     var confirmDeleteFor by remember { mutableStateOf<Int?>(null) }
     var renameFor by remember { mutableStateOf<Int?>(null) }
     var renameText by remember { mutableStateOf("") }
+    var chartFor by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(
@@ -134,6 +140,13 @@ fun AccountsScreen(
                                             confirmDeleteFor = acc.id
                                         }
                                     )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.category_split)) },
+                                        onClick = {
+                                            menuOpen = false
+                                            chartFor = acc.id
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -158,8 +171,8 @@ fun AccountsScreen(
                             Column(Modifier.weight(1.4f)) {
                                 Text(stringResource(R.string.balance), style = MaterialTheme.typography.labelSmall)
                                 val pos = balance >= 0
-                                val chipBg = if (pos) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer
-                                val chipFg = if (pos) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer
+                                val chipBg = if (pos) Color(0xFFDFF6DD) else MaterialTheme.colorScheme.errorContainer
+                                val chipFg = if (pos) Color(0xFF0B6A0B) else MaterialTheme.colorScheme.onErrorContainer
                                 Box(
                                     modifier = Modifier
                                         .defaultMinSize(minWidth = 112.dp)
@@ -185,6 +198,98 @@ fun AccountsScreen(
                     item { Spacer(Modifier.height(84.dp)) }
                 }
             }
+
+    // Category split dialog (outside LazyColumn scope)
+    val openChartFor = chartFor
+    if (openChartFor != null) {
+        val txns by remember(openChartFor) { vm.txns(openChartFor) }.collectAsState(initial = emptyList())
+        val groups = remember(txns) {
+            txns.filter { !it.isCredit }.groupBy { it.category?.takeIf { s -> s.isNotBlank() } ?: "" }
+                .mapValues { (_, list) -> list.sumOf { it.amount } }
+        }
+        val total = remember(groups) { groups.values.sum() }
+        AlertDialog(
+            onDismissRequest = { chartFor = null },
+            title = { Text(stringResource(R.string.category_split)) },
+            confirmButton = { TextButton(onClick = { chartFor = null }) { Text(stringResource(R.string.ok)) } },
+            text = {
+                if (groups.isEmpty() || total <= 0.0) {
+                    Text(text = stringResource(R.string.total_debit) + ": 0")
+                } else {
+                    val entries = groups.toList().sortedByDescending { it.second }
+                    // High-contrast, theme-independent palette (works on light/dark)
+                    val colors = listOf(
+                        Color(0xFF6366F1), // indigo
+                        Color(0xFFF59E0B), // amber
+                        Color(0xFF10B981), // emerald
+                        Color(0xFFEF4444), // red
+                        Color(0xFF3B82F6), // blue
+                        Color(0xFFEC4899), // pink
+                        Color(0xFF8B5CF6), // violet
+                        Color(0xFF14B8A6), // teal
+                        Color(0xFFA3E635), // lime
+                        Color(0xFF06B6D4)  // cyan
+                    )
+                    val sliceColors = entries.mapIndexed { i, _ -> colors[i % colors.size] }
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Pie chart
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            val chartSize = 220.dp
+                            val surfaceColor = MaterialTheme.colorScheme.surface
+                            Canvas(modifier = Modifier.size(chartSize)) {
+                                var startAngle = -90f
+                                val gap = 1.5f // degrees between slices for visual separation
+                                entries.forEachIndexed { idx, (_, amt) ->
+                                    val rawSweep = (amt / total).toFloat() * 360f
+                                    val sweep = (rawSweep - gap).coerceAtLeast(0f)
+                                    drawArc(
+                                        color = sliceColors[idx],
+                                        startAngle = startAngle + gap / 2f,
+                                        sweepAngle = sweep,
+                                        useCenter = true,
+                                        style = Fill
+                                    )
+                                    startAngle += rawSweep
+                                }
+                                // Donut hole
+                                val holeRadius = kotlin.math.min(this.size.width, this.size.height) * 0.45f
+                                drawCircle(
+                                    color = surfaceColor,
+                                    radius = holeRadius
+                                )
+                            }
+                            // Optional center label
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(text = String.format("%.0f", total), style = MaterialTheme.typography.titleMedium)
+                                Text(text = stringResource(R.string.total_debit), style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                        // Legend
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            entries.forEachIndexed { idx, (cat, amt) ->
+                                val pct = (amt / total * 100).toFloat()
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .clip(RoundedCornerShape(2.dp))
+                                                .background(sliceColors[idx])
+                                        )
+                                        Text(if (cat.isBlank()) stringResource(R.string.uncategorized) else cat, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    }
+                                    Text(
+                                        text = "${Currency.inr(amt)} (${String.format("%.0f%%", pct)})",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    }
 
     // Rename account dialog
     val toRename = renameFor

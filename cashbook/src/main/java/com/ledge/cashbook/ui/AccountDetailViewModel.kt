@@ -34,10 +34,10 @@ class AccountDetailViewModel @Inject constructor(
 
     fun load(id: Int) { _accountId.value = id }
 
-    fun addTxn(date: Long, amount: Double, isCredit: Boolean, note: String?) {
+    fun addTxn(date: Long, amount: Double, isCredit: Boolean, note: String?, attachmentUri: String?, category: String?) {
         val id = _accountId.value ?: return
         viewModelScope.launch(Dispatchers.IO) {
-            repo.addTxn(id, date, amount, isCredit, note)
+            repo.addTxn(id, date, amount, isCredit, note, attachmentUri, category)
         }
     }
 

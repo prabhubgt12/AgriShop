@@ -20,8 +20,8 @@ class CashRepository(
     }
 
     fun txns(accountId: Int): Flow<List<CashTxn>> = dao.txns(accountId)
-    suspend fun addTxn(accountId: Int, date: Long, amount: Double, isCredit: Boolean, note: String?) =
-        dao.insertTxn(CashTxn(accountId = accountId, date = date, amount = amount, isCredit = isCredit, note = note))
+    suspend fun addTxn(accountId: Int, date: Long, amount: Double, isCredit: Boolean, note: String?, attachmentUri: String?, category: String?) =
+        dao.insertTxn(CashTxn(accountId = accountId, date = date, amount = amount, isCredit = isCredit, note = note, attachmentUri = attachmentUri, category = category))
     suspend fun deleteTxn(txn: CashTxn) = dao.deleteTxn(txn)
     suspend fun updateTxn(txn: CashTxn) = dao.updateTxn(txn)
     suspend fun clear(accountId: Int) = dao.clearTxns(accountId)

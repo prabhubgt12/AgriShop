@@ -65,6 +65,11 @@
     <string name="from_label">ಇಂದ: %1$s</string>
     <string name="to_label">ತನಕ: %1$s</string>
 
+    <!-- Image labels -->
+    <string name="attachment">ಚಿತ್ರ</string>
+    <string name="add_attachment">ಚಿತ್ರ ಸೇರಿಸಿ</string>
+    <string name="attachment_added">ಚಿತ್ರ ಆಯ್ಕೆಯಾಗಿದೆ</string>
+
     <!-- Settings -->
     <string name="gd_connected">Google Drive ಸಂಪರ್ಕವಾಗಿದೆ</string>
     <string name="gd_not_connected">Google Drive ಸಂಪರ್ಕವಾಗಿಲ್ಲ</string>
@@ -107,4 +112,12 @@
     <string name="backup_confirm_message">ಇದು ಡ್ರೈವ್‌ನಲ್ಲಿ ಬ್ಯಾಕಪ್ ಅನ್ನು ರಚಿಸುತ್ತದೆ ಮತ್ತು ಅದೇ ಹೆಸರಿನ ಇತರ ಬ್ಯಾಕಪ್‌ಗಳನ್ನು ಅಳಿಸಬಹುದು. ಮುಂದುವರಿಸಬೇಕೆ?</string>
     <string name="restore_confirm_title">ರಿಸ್ಟೋರ್ ದೃಢೀಕರಿಸಿ</string>
     <string name="restore_confirm_message">ಇದು ಆಯ್ಕೆ ಮಾಡಿದ ಬ್ಯಾಕಪ್‌ನಿಂದ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಡೇಟಾವನ್ನು ಅಳಿಸಿ ಬರೆಯುತ್ತದೆ. ಮುಂದುವರಿಸಬೇಕೆ?</string>
+    
+    <!-- Categories -->
+    <string name="category">ವರ್ಗ</string>
+    <string name="select_category">ವರ್ಗ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="uncategorized">ವರ್ಗೀಕರಿಸದ</string>
+    <string name="show_category_field">ವರ್ಗ ಕ್ಷೇತ್ರವನ್ನು ತೋರಿಸಿ</string>
+    <string name="categories_csv">ವರ್ಗಗಳು (ಕಾಮಾ ಪ್ರತ್ಯೇಕ)</string>
+    <string name="category_split">ಖರ್ಚಿನ ವಿವರ</string>
 </resources>

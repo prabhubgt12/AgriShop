@@ -10,5 +10,7 @@ data class CashTxn(
     val date: Long,
     val amount: Double,
     val isCredit: Boolean,
-    val note: String? = null
+    val note: String? = null,
+    val attachmentUri: String? = null,
+    val category: String? = null
 )

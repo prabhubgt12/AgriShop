@@ -32,7 +32,9 @@ class AccountsViewModel @Inject constructor(
                     date = System.currentTimeMillis(),
                     amount = ob,
                     isCredit = true,
-                    note = "Opening Balance"
+                    note = "Opening Balance",
+                    attachmentUri = null,
+                    category = null
                 )
             }
         }

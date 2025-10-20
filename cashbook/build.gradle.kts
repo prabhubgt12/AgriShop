@@ -18,8 +18,8 @@ android {
         applicationId = "com.ledge.cashbook"
         minSdk = 24
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.0.5"
+        versionCode = 12
+        versionName = "1.0.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -107,6 +107,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.appcompat:appcompat:1.7.0")
+    // Coil for image loading in Compose
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     // DataStore for preferences (theme, language)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
