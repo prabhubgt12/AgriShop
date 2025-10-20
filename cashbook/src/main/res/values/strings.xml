@@ -130,4 +130,7 @@
     <string name="show_category_field">Show category field</string>
     <string name="categories_csv">Categories (comma-separated)</string>
     <string name="category_split">Expense Overview</string>
+    <string name="move">Move to</string>
+    <string name="move_to_account">Move to account</string>
+    <string name="no_other_accounts">No other accounts available</string>
 </resources>

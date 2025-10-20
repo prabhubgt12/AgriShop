@@ -104,6 +104,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var editAttachmentUri by remember { mutableStateOf<String?>(null) }
     var editCategory by remember { mutableStateOf("") }
     var showEditDatePicker by remember { mutableStateOf(false) }
+    var moveFor by remember { mutableStateOf<CashTxn?>(null) }
+    // Load all accounts for move action (placed before usage)
+    val accountsVM: AccountsViewModel = hiltViewModel()
+    val allAccounts by accountsVM.accounts.collectAsState()
     // Filter state
     var filterMenuOpen by remember { mutableStateOf(false) }
     var filterStart by remember { mutableStateOf<Long?>(null) }
@@ -171,7 +175,37 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             }
         )
     }
-    
+
+    // Move transaction dialog (after accounts are loaded)
+    val toMove = moveFor
+    if (toMove != null) {
+        val options = allAccounts.filter { it.id != toMove.accountId }
+        AlertDialog(
+            onDismissRequest = { moveFor = null },
+            title = { Text(text = stringResource(R.string.move_to_account)) },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { moveFor = null }) { Text(stringResource(R.string.cancel)) } },
+            text = {
+                if (options.isEmpty()) {
+                    Text(stringResource(R.string.no_other_accounts))
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        options.forEach { acc ->
+                            OutlinedButton(onClick = {
+                                val updated = toMove.copy(accountId = acc.id)
+                                vm.updateTxn(updated)
+                                moveFor = null
+                            }, modifier = Modifier.fillMaxWidth()) {
+                                Text(acc.name)
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    // Move transaction dialog (defined later, after accounts list is loaded)
     val filteredBalance = remember(filteredTxns) {
         val credit = filteredTxns.filter { it.isCredit }.sumOf { it.amount }
         val debit = filteredTxns.filter { !it.isCredit }.sumOf { it.amount }
@@ -199,6 +233,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             .distinct()
     }
 
+
     // Helper to copy the picked image into app-private storage and keep only our own file path
     fun copyPickedToApp(uri: Uri): String? {
         return try {
@@ -220,24 +255,22 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
         AlertDialog(
             onDismissRequest = { actionTxn = null },
             title = { Text(stringResource(R.string.select_action)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    // Start edit with prefilled fields
-                    editTxn = pendingAction
-                    editIsCredit = pendingAction.isCredit
-                    editAmount = pendingAction.amount.toString()
-                    editNote = pendingAction.note ?: ""
-                    editDateMillis = pendingAction.date
-                    editAttachmentUri = pendingAction.attachmentUri
-                    editCategory = pendingAction.category ?: ""
-                    actionTxn = null
-                }) { Text(stringResource(R.string.edit)) }
-            },
+            confirmButton = {},
             dismissButton = {
-                Row {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    TextButton(onClick = {
+                        // Start edit with prefilled fields
+                        editTxn = pendingAction
+                        editIsCredit = pendingAction.isCredit
+                        editAmount = pendingAction.amount.toString()
+                        editNote = pendingAction.note ?: ""
+                        editDateMillis = pendingAction.date
+                        editAttachmentUri = pendingAction.attachmentUri
+                        editCategory = pendingAction.category ?: ""
+                        actionTxn = null
+                    }) { Text(stringResource(R.string.edit)) }
                     TextButton(onClick = { confirmDeleteTxn = pendingAction; actionTxn = null }) { Text(stringResource(R.string.delete)) }
-                    Spacer(Modifier.width(6.dp))
-                    TextButton(onClick = { actionTxn = null }) { Text(stringResource(R.string.cancel)) }
+                    TextButton(onClick = { moveFor = pendingAction; actionTxn = null }) { Text(stringResource(R.string.move)) }
                 }
             }
         )

@@ -71,6 +71,9 @@
     <string name="show_category_field">श्रेणी फ़ील्ड दिखाएं</string>
     <string name="categories_csv">श्रेणियाँ (कॉमा से अलग)</string>
     <string name="category_split">खर्च का सारांश</string>
+    <string name="move">खाता बदलें</string>
+    <string name="move_to_account">खाता बदलें</string>
+    <string name="no_other_accounts">अन्य कोई खाता उपलब्ध नहीं</string>
     <string name="from_label">से: %1$s</string>
     <string name="to_label">तक: %1$s</string>
 
