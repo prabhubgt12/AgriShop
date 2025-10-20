@@ -25,14 +25,14 @@
     <string name="settings_title">सेटिंग्स</string>
 
     <!-- Accounts -->
-    <string name="add_account">उपयोगकर्ता जोड़ें</string>
-    <string name="account_name">उपयोगकर्ता नाम</string>
+    <string name="add_account">खाता जोड़ें</string>
+    <string name="account_name">खाते का नाम</string>
     <string name="open_balance">ओपन बैलेंस</string>
     <string name="save">सेव</string>
     <string name="cancel">रद्द करें</string>
     <string name="delete">हटाएँ</string>
-    <string name="delete_user">उपयोगकर्ता हटाएँ</string>
-    <string name="delete_user_confirm">क्या आप इस उपयोगकर्ता और उसके सभी रिकॉर्ड्स को हटाना चाहते हैं? यह क्रिया वापस नहीं की जा सकती।</string>
+    <string name="delete_user">खाता हटाएँ</string>
+    <string name="delete_user_confirm">क्या आप इस खाते और इसके सभी रिकॉर्ड्स को हटाना चाहते हैं? यह क्रिया वापस नहीं की जा सकती।</string>
     <string name="delete_txn_confirm">क्या इस प्रविष्टि को हटाएँ?</string>
     <string name="credit">जमा</string>
     <string name="debit">निकासी</string>
@@ -58,7 +58,7 @@
 
     <!-- PDF labels -->
     <string name="total">कुल</string>
-    <string name="label_customer_with_value">ग्राहक: %1$s</string>
+    <string name="label_customer_with_value">खाता: %1$s</string>
     <string name="label_date_with_value">तिथि: %1$s</string>
     <string name="label_total_balance_with_value">कुल बैलेंस: %1$s</string>
     <string name="pdf_generated_footer">यह रिपोर्ट Simple Cash Book ऐप द्वारा बनाई गई है</string>
@@ -67,6 +67,7 @@
     <!-- Categories -->
     <string name="category">श्रेणी</string>
     <string name="select_category">श्रेणी चुनें</string>
+    <string name="select_account_label">खाता चुनें</string>
     <string name="uncategorized">बिना श्रेणी</string>
     <string name="show_category_field">श्रेणी फ़ील्ड दिखाएं</string>
     <string name="categories_csv">श्रेणियाँ (कॉमा से अलग)</string>
@@ -74,6 +75,9 @@
     <string name="move">खाता बदलें</string>
     <string name="move_to_account">खाता बदलें</string>
     <string name="no_other_accounts">अन्य कोई खाता उपलब्ध नहीं</string>
+    <string name="confirm_move_title">स्थानांतरण की पुष्टि</string>
+    <string name="confirm_move_single">क्या आप इस प्रविष्टि को "%1$s" में स्थानांतरित करना चाहते हैं?</string>
+    <string name="confirm_move_bulk">क्या आप %1$d प्रविष्टियाँ "%2$s" में स्थानांतरित करना चाहते हैं?</string>
     <string name="from_label">से: %1$s</string>
     <string name="to_label">तक: %1$s</string>
 

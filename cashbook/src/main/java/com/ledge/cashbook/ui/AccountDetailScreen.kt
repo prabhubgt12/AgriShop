@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
 import com.ledge.cashbook.util.Currency
 import com.ledge.cashbook.data.local.entities.CashTxn
+import com.ledge.cashbook.data.local.entities.CashAccount
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
@@ -33,6 +34,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,6 +76,13 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -105,6 +115,12 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var editCategory by remember { mutableStateOf("") }
     var showEditDatePicker by remember { mutableStateOf(false) }
     var moveFor by remember { mutableStateOf<CashTxn?>(null) }
+    var moveBulk by remember { mutableStateOf(false) }
+    // Explicit selection mode toggle for bulk actions
+    var selectionMode by remember { mutableStateOf(false) }
+    // Pending confirmations
+    var confirmMoveSingle by remember { mutableStateOf<Pair<CashTxn, CashAccount>?>(null) }
+    var confirmMoveBulk by remember { mutableStateOf<CashAccount?>(null) }
     // Load all accounts for move action (placed before usage)
     val accountsVM: AccountsViewModel = hiltViewModel()
     val allAccounts by accountsVM.accounts.collectAsState()
@@ -124,6 +140,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             sOk && eOk
         }
     }
+    // Observe bulk selection from VM
+    val selectedIds by vm.selection.collectAsState()
+    val inSelectionMode = selectionMode || selectedIds.isNotEmpty()
+
     // Image preview dialog state and in-app preview (reduced height)
     var previewUri by remember { mutableStateOf<String?>(null) }
     val config = LocalConfiguration.current
@@ -176,32 +196,132 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
         )
     }
 
-    // Move transaction dialog (after accounts are loaded)
-    val toMove = moveFor
-    if (toMove != null) {
-        val options = allAccounts.filter { it.id != toMove.accountId }
+    // Bulk move dialog (account picker)
+    if (moveBulk) {
+        val options = allAccounts.filter { it.id != accountId }
+        var bulkSelected by remember { mutableStateOf<CashAccount?>(null) }
+        var bulkExpanded by remember { mutableStateOf(false) }
         AlertDialog(
-            onDismissRequest = { moveFor = null },
+            onDismissRequest = { moveBulk = false },
             title = { Text(text = stringResource(R.string.move_to_account)) },
-            confirmButton = {},
-            dismissButton = { TextButton(onClick = { moveFor = null }) { Text(stringResource(R.string.cancel)) } },
+            confirmButton = {
+                TextButton(onClick = {
+                    bulkSelected?.let { acc ->
+                        confirmMoveBulk = acc
+                        moveBulk = false
+                    }
+                }, enabled = bulkSelected != null) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = { TextButton(onClick = { moveBulk = false }) { Text(stringResource(R.string.cancel)) } },
             text = {
                 if (options.isEmpty()) {
                     Text(stringResource(R.string.no_other_accounts))
                 } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        options.forEach { acc ->
-                            OutlinedButton(onClick = {
-                                val updated = toMove.copy(accountId = acc.id)
-                                vm.updateTxn(updated)
-                                moveFor = null
-                            }, modifier = Modifier.fillMaxWidth()) {
-                                Text(acc.name)
+                    ExposedDropdownMenuBox(expanded = bulkExpanded, onExpandedChange = { bulkExpanded = !bulkExpanded }) {
+                        OutlinedTextField(
+                            value = bulkSelected?.name ?: stringResource(R.string.select_account_label),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.move_to_account)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = bulkExpanded) },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(expanded = bulkExpanded, onDismissRequest = { bulkExpanded = false }) {
+                            options.forEach { acc ->
+                                DropdownMenuItem(text = { Text(acc.name) }, onClick = {
+                                    bulkSelected = acc
+                                    bulkExpanded = false
+                                })
                             }
                         }
                     }
                 }
             }
+        )
+    }
+
+    // Move transaction dialog (account picker for single)
+    val toMove = moveFor
+    if (toMove != null) {
+        val options = allAccounts.filter { it.id != toMove.accountId }
+        var singleSelected by remember { mutableStateOf<CashAccount?>(null) }
+        var singleExpanded by remember { mutableStateOf(false) }
+        AlertDialog(
+            onDismissRequest = { moveFor = null },
+            title = { Text(text = stringResource(R.string.move_to_account)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    singleSelected?.let { acc ->
+                        confirmMoveSingle = toMove to acc
+                        moveFor = null
+                    }
+                }, enabled = singleSelected != null) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = { TextButton(onClick = { moveFor = null }) { Text(stringResource(R.string.cancel)) } },
+            text = {
+                if (options.isEmpty()) {
+                    Text(stringResource(R.string.no_other_accounts))
+                } else {
+                    ExposedDropdownMenuBox(expanded = singleExpanded, onExpandedChange = { singleExpanded = !singleExpanded }) {
+                        OutlinedTextField(
+                            value = singleSelected?.name ?: stringResource(R.string.select_account_label),
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.move_to_account)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = singleExpanded) },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(expanded = singleExpanded, onDismissRequest = { singleExpanded = false }) {
+                            options.forEach { acc ->
+                                DropdownMenuItem(text = { Text(acc.name) }, onClick = {
+                                    singleSelected = acc
+                                    singleExpanded = false
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    // Confirm single move
+    val pendingSingle = confirmMoveSingle
+    if (pendingSingle != null) {
+        val (txn, acc) = pendingSingle
+        AlertDialog(
+            onDismissRequest = { confirmMoveSingle = null },
+            title = { Text(stringResource(R.string.confirm_move_title)) },
+            text = { Text(String.format(stringResource(R.string.confirm_move_single), acc.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.updateTxn(txn.copy(accountId = acc.id))
+                    confirmMoveSingle = null
+                }) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmMoveSingle = null }) { Text(stringResource(R.string.cancel)) } }
+        )
+    }
+
+    // Confirm bulk move
+    val pendingBulk = confirmMoveBulk
+    if (pendingBulk != null) {
+        val count = selectedIds.size
+        AlertDialog(
+            onDismissRequest = { confirmMoveBulk = null },
+            title = { Text(stringResource(R.string.confirm_move_title)) },
+            text = { Text(String.format(stringResource(R.string.confirm_move_bulk), count, pendingBulk.name)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.moveSelected(pendingBulk.id)
+                    confirmMoveBulk = null
+                }) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmMoveBulk = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 
@@ -305,7 +425,12 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             dismissButton = { TextButton(onClick = { editTxn = null }) { Text(stringResource(R.string.cancel)) } },
             title = { Text(stringResource(R.string.edit)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .windowInsetsPadding(WindowInsets.ime)
+                ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         FilterChip(selected = editIsCredit, onClick = { editIsCredit = true }, label = { Text(stringResource(R.string.credit)) })
                         FilterChip(selected = !editIsCredit, onClick = { editIsCredit = false }, label = { Text(stringResource(R.string.debit)) })
@@ -322,7 +447,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     OutlinedTextField(
                         value = editAmount,
                         onValueChange = { input -> editAmount = input.filter { it.isDigit() || it == '.' } },
-                        label = { Text(stringResource(R.string.amount)) }
+                        label = { Text(stringResource(R.string.amount)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true
                     )
                     OutlinedTextField(
                         value = editNote,
@@ -461,97 +588,130 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             Column {
                 TopAppBar(
                     title = {
-                        Text(
-                            name,
-                            style = MaterialTheme.typography.titleSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        if (inSelectionMode) {
+                            Text(
+                                text = "${selectedIds.size} selected",
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        } else {
+                            Text(
+                                name,
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
                     },
                     actions = {
-                        val displayBal = if (isFiltered) filteredBalance else balance
-                        val pos = displayBal >= 0
-                        val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
-                        val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(chipBg)
-                                .padding(vertical = 2.dp, horizontal = 6.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = stringResource(R.string.balance) + ": ",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = chipFg
-                                )
-                                Text(
-                                    text = Currency.inr(displayBal),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = chipFg
-                                )
+                        if (inSelectionMode) {
+                            CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                                IconButton(
+                                    onClick = { if (selectedIds.isNotEmpty()) moveBulk = true },
+                                    enabled = selectedIds.isNotEmpty(),
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.move), modifier = Modifier.size(20.dp))
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                IconButton(
+                                    onClick = { vm.clearSelection(); selectionMode = false },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel), modifier = Modifier.size(20.dp))
+                                }
                             }
-                        }
-                        // Date filter button (no badge/tint)
-                        IconButton(onClick = { filterMenuOpen = true }) {
-                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
-                        }
-                        DropdownMenu(expanded = filterMenuOpen, onDismissRequest = { filterMenuOpen = false }) {
-                            val ctxMenu = LocalContext.current
-                            DropdownMenuItem(text = { Text(stringResource(R.string.export_to_pdf)) }, onClick = {
-                                filterMenuOpen = false
-                                val list = if (isFiltered) filteredTxns else txns
-                                PdfShare.exportAccount(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd)
-                            })
-                            Divider()
-                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
-                                filterMenuOpen = false
-                                val now = java.util.Calendar.getInstance()
-                                now.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                                now.set(java.util.Calendar.MINUTE, 0)
-                                now.set(java.util.Calendar.SECOND, 0)
-                                now.set(java.util.Calendar.MILLISECOND, 0)
-                                filterStart = now.timeInMillis
-                                filterEnd = filterStart!! + 24L*60*60*1000 - 1
-                            })
-                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_last_7_days)) }, onClick = {
-                                filterMenuOpen = false
-                                val cal = java.util.Calendar.getInstance()
-                                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                                cal.set(java.util.Calendar.MINUTE, 0)
-                                cal.set(java.util.Calendar.SECOND, 0)
-                                cal.set(java.util.Calendar.MILLISECOND, 0)
-                                filterEnd = cal.timeInMillis + 24L*60*60*1000 - 1
-                                cal.add(java.util.Calendar.DAY_OF_YEAR, -6)
-                                filterStart = cal.timeInMillis
-                            })
-                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_this_month)) }, onClick = {
-                                filterMenuOpen = false
-                                val cal = java.util.Calendar.getInstance()
-                                cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
-                                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-                                cal.set(java.util.Calendar.MINUTE, 0)
-                                cal.set(java.util.Calendar.SECOND, 0)
-                                cal.set(java.util.Calendar.MILLISECOND, 0)
-                                filterStart = cal.timeInMillis
-                                cal.add(java.util.Calendar.MONTH, 1)
-                                cal.add(java.util.Calendar.MILLISECOND, -1)
-                                filterEnd = cal.timeInMillis
-                            })
-                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = {
-                                filterMenuOpen = false
-                                filterStart = null
-                                filterEnd = null
-                            })
-                            Divider()
-                            DropdownMenuItem(text = { Text(stringResource(R.string.filter_custom_range)) }, onClick = {
-                                filterMenuOpen = false
-                                showStartPicker = true
-                            })
+                        } else {
+                            val displayBal = if (isFiltered) filteredBalance else balance
+                            val pos = displayBal >= 0
+                            val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
+                            val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(chipBg)
+                                    .padding(vertical = 1.dp, horizontal = 4.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = stringResource(R.string.balance) + ": ",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = chipFg
+                                    )
+                                    Text(
+                                        text = Currency.inr(displayBal),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = chipFg
+                                    )
+                                }
+                            }
+                            // Date filter button (no badge/tint)
+                            CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                                IconButton(onClick = { filterMenuOpen = true }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Default.FilterList, contentDescription = "Filter", modifier = Modifier.size(20.dp))
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                // Enter bulk selection mode
+                                IconButton(onClick = { selectionMode = true }, modifier = Modifier.size(24.dp)) {
+                                    Icon(Icons.Filled.SelectAll, contentDescription = "Select", modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            DropdownMenu(expanded = filterMenuOpen, onDismissRequest = { filterMenuOpen = false }) {
+                                val ctxMenu = LocalContext.current
+                                DropdownMenuItem(text = { Text(stringResource(R.string.export_to_pdf)) }, onClick = {
+                                    filterMenuOpen = false
+                                    val list = if (isFiltered) filteredTxns else txns
+                                    PdfShare.exportAccount(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd)
+                                })
+                                Divider()
+                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
+                                    filterMenuOpen = false
+                                    val now = java.util.Calendar.getInstance()
+                                    now.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                                    now.set(java.util.Calendar.MINUTE, 0)
+                                    now.set(java.util.Calendar.SECOND, 0)
+                                    now.set(java.util.Calendar.MILLISECOND, 0)
+                                    filterStart = now.timeInMillis
+                                    filterEnd = filterStart!! + 24L*60*60*1000 - 1
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_last_7_days)) }, onClick = {
+                                    filterMenuOpen = false
+                                    val cal = java.util.Calendar.getInstance()
+                                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                                    cal.set(java.util.Calendar.MINUTE, 0)
+                                    cal.set(java.util.Calendar.SECOND, 0)
+                                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                                    filterEnd = cal.timeInMillis + 24L*60*60*1000 - 1
+                                    cal.add(java.util.Calendar.DAY_OF_YEAR, -6)
+                                    filterStart = cal.timeInMillis
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_this_month)) }, onClick = {
+                                    filterMenuOpen = false
+                                    val cal = java.util.Calendar.getInstance()
+                                    cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                                    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                                    cal.set(java.util.Calendar.MINUTE, 0)
+                                    cal.set(java.util.Calendar.SECOND, 0)
+                                    cal.set(java.util.Calendar.MILLISECOND, 0)
+                                    filterStart = cal.timeInMillis
+                                    cal.add(java.util.Calendar.MONTH, 1)
+                                    cal.add(java.util.Calendar.MILLISECOND, -1)
+                                    filterEnd = cal.timeInMillis
+                                })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = {
+                                    filterMenuOpen = false
+                                    filterStart = null
+                                    filterEnd = null
+                                })
+                                Divider()
+                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_custom_range)) }, onClick = {
+                                    filterMenuOpen = false
+                                    showStartPicker = true
+                                })
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -667,12 +827,20 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             .fillMaxWidth()
                             .background(rowBg)
                             .combinedClickable(
-                                onClick = {},
-                                onLongClick = { actionTxn = t }
+                                onClick = {
+                                    if (inSelectionMode) vm.toggleSelection(t.id) else Unit
+                                },
+                                onLongClick = {
+                                    if (inSelectionMode) vm.toggleSelection(t.id) else actionTxn = t
+                                }
                             )
                             .padding(vertical = 6.dp, horizontal = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        if (inSelectionMode) {
+                            Checkbox(checked = t.id in selectedIds, onCheckedChange = { vm.toggleSelection(t.id) })
+                            Spacer(Modifier.width(6.dp))
+                        }
                         Column(
                             modifier = Modifier
                                 .weight(wDatePart)
@@ -850,7 +1018,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     OutlinedTextField(
                         value = amount,
                         onValueChange = { input -> amount = input.filter { it.isDigit() || it == '.' } },
-                        label = { Text(stringResource(R.string.amount)) }
+                        label = { Text(stringResource(R.string.amount)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true
                     )
                     OutlinedTextField(
                         value = note,

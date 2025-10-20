@@ -25,6 +25,7 @@ class CashRepository(
     suspend fun deleteTxn(txn: CashTxn) = dao.deleteTxn(txn)
     suspend fun updateTxn(txn: CashTxn) = dao.updateTxn(txn)
     suspend fun clear(accountId: Int) = dao.clearTxns(accountId)
+    suspend fun moveTxns(ids: List<Int>, to: Int) = dao.moveTxns(ids, to)
 
     suspend fun creditSum(accountId: Int): Double = dao.creditSum(accountId)
     suspend fun debitSum(accountId: Int): Double = dao.debitSum(accountId)

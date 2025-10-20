@@ -39,6 +39,9 @@ interface CashDao {
     @Query("DELETE FROM cash_txns WHERE accountId = :accountId")
     suspend fun clearTxns(accountId: Int)
 
+    @Query("UPDATE cash_txns SET accountId = :to WHERE id IN (:ids)")
+    suspend fun moveTxns(ids: List<Int>, to: Int)
+
     @Query("SELECT IFNULL(SUM(CASE WHEN isCredit THEN amount ELSE 0 END), 0) FROM cash_txns WHERE accountId = :accountId")
     suspend fun creditSum(accountId: Int): Double
 

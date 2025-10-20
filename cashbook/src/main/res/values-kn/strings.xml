@@ -17,14 +17,14 @@
     <string name="settings_title">ಸೆಟ್ಟಿಂಗ್ಸ್</string>
 
     <!-- Accounts -->
-    <string name="add_account">ಬಳಕೆದಾರರನ್ನು ಸೇರಿಸಿ</string>
-    <string name="account_name">ಬಳಕೆದಾರರ ಹೆಸರು</string>
+    <string name="add_account">ಖಾತೆ ಸೇರಿಸಿ</string>
+    <string name="account_name">ಖಾತೆ ಹೆಸರು</string>
     <string name="open_balance">ಓಪನ್ ಬ್ಯಾಲೆನ್ಸ್</string>
     <string name="save">ಉಳಿಸಿ</string>
     <string name="cancel">ರದ್ದುಮಾಡಿ</string>
     <string name="delete">ಅಳಿಸಿ</string>
-    <string name="delete_user">ಬಳಕೆದಾರರನ್ನು ಅಳಿಸಿ</string>
-    <string name="delete_user_confirm">ಈ ಬಳಕೆದಾರ ಮತ್ತು ಅವರ ಎಲ್ಲಾ ದಾಖಲೆಗಳನ್ನು ಅಳಿಸಬೇಕೇ? ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂದಕ್ಕೆ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.</string>
+    <string name="delete_user">ಖಾತೆಯನ್ನು ಅಳಿಸಿ</string>
+    <string name="delete_user_confirm">ಈ ಖಾತೆ ಮತ್ತು ಅದರ ಎಲ್ಲಾ ದಾಖಲೆಗಳನ್ನು ಅಳಿಸಬೇಕೇ? ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂದಕ್ಕೆ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.</string>
     <string name="delete_txn_confirm">ಈ ಎಂಟ್ರಿಯನ್ನು ಅಳಿಸಬೇಕೇ?</string>
     <string name="credit">ಜಮಾ</string>
     <string name="debit">ಖರ್ಚು</string>
@@ -58,7 +58,7 @@
 
     <!-- PDF labels -->
     <string name="total">ಒಟ್ಟು</string>
-    <string name="label_customer_with_value">ಗ್ರಾಹಕ: %1$s</string>
+    <string name="label_customer_with_value">ಖಾತೆ: %1$s</string>
     <string name="label_date_with_value">ದಿನಾಂಕ: %1$s</string>
     <string name="label_total_balance_with_value">ಒಟ್ಟು ಬ್ಯಾಲೆನ್ಸ್: %1$s</string>
     <string name="pdf_generated_footer">ಈ ವರದಿಯನ್ನು Simple Cash Book ಅಪ್ಲಿಕೇಶನ್ ನಿರ್ಮಿಸಿದೆ</string>
@@ -116,11 +116,15 @@
     <!-- Categories -->
     <string name="category">ವರ್ಗ</string>
     <string name="select_category">ವರ್ಗ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="select_account_label">ಖಾತೆ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="uncategorized">ವರ್ಗೀಕರಿಸದ</string>
-    <string name="show_category_field">ವರ್ಗ ಕ್ಷೇತ್ರವನ್ನು ತೋರಿಸಿ</string>
+    <string name="show_category_field">ವರ್ಗ ತೋರಿಸಿ</string>
     <string name="categories_csv">ವರ್ಗಗಳು (ಕಾಮಾ ಪ್ರತ್ಯೇಕ)</string>
     <string name="category_split">ಖರ್ಚಿನ ವಿವರ</string>
     <string name="move">ಖಾತೆ ಬದಲಿಸಿ</string>
     <string name="move_to_account">ಖಾತೆ ಬದಲಿಸಿ</string>
     <string name="no_other_accounts">ಇತರ ಖಾತೆಗಳು ಲಭ್ಯವಿಲ್ಲ</string>
+    <string name="confirm_move_title">ಸ್ಥಳಾಂತರವನ್ನು ದೃಢೀಕರಿಸಿ</string>
+    <string name="confirm_move_single">ಈ ವಹಿವಾಟನ್ನು "%1$s" ಗೆ ಸ್ಥಳಾಂತರಿಸಬೇಕೇ?</string>
+    <string name="confirm_move_bulk">%1$d ವಹಿವಾಟುಗಳನ್ನು "%2$s" ಗೆ ಸ್ಥಳಾಂತರಿಸಬೇಕೇ?</string>
 </resources>

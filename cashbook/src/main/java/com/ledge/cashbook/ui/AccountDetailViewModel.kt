@@ -52,4 +52,26 @@ class AccountDetailViewModel @Inject constructor(
             repo.updateTxn(updated)
         }
     }
+
+    // Selection state for bulk actions
+    private val _selection = MutableStateFlow<Set<Int>>(emptySet())
+    val selection: StateFlow<Set<Int>> = _selection.asStateFlow()
+
+    fun toggleSelection(id: Int) {
+        _selection.update { cur -> if (id in cur) cur - id else cur + id }
+    }
+
+    fun clearSelection() { _selection.value = emptySet() }
+
+    fun selectAll(list: List<CashTxn>) { _selection.value = list.map { it.id }.toSet() }
+
+    fun moveSelected(toAccountId: Int) {
+        val ids = _selection.value.toList()
+        if (ids.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.moveTxns(ids, toAccountId)
+            // Clear selection after move
+            _selection.value = emptySet()
+        }
+    }
 }
