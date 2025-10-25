@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -56,6 +57,7 @@ import kotlin.math.roundToInt
 import java.text.SimpleDateFormat
 import java.util.Date
 import com.ledge.cashbook.util.PdfShare
+import com.ledge.cashbook.util.ExcelShare
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
@@ -666,6 +668,11 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     val list = if (isFiltered) filteredTxns else txns
                                     PdfShare.exportAccount(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd)
                                 })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.export_to_excel)) }, onClick = {
+                                    filterMenuOpen = false
+                                    val list = if (isFiltered) filteredTxns else txns
+                                    ExcelShare.exportAccountXlsx(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd, showCategory = showCategory)
+                                })
                                 Divider()
                                 DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
                                     filterMenuOpen = false
@@ -745,11 +752,19 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.weight(1f)
                             )
-                            // Export filtered list to PDF (second row)
+                            // Export filtered list to PDF/Excel (second row)
                             IconButton(onClick = { PdfShare.exportAccount(ctxBar, name, filteredTxns, startMillis = filterStart, endMillis = filterEnd) }) {
                                 Icon(
                                     imageVector = Icons.Filled.PictureAsPdf,
                                     contentDescription = stringResource(R.string.export_to_pdf),
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            IconButton(onClick = { ExcelShare.exportAccountXlsx(ctxBar, name, filteredTxns, startMillis = filterStart, endMillis = filterEnd, showCategory = showCategory) }) {
+                                Icon(
+                                    imageVector = Icons.Filled.TableView,
+                                    contentDescription = stringResource(R.string.export_to_excel),
                                     tint = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.size(24.dp)
                                 )

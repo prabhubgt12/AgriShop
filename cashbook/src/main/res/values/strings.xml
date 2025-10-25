@@ -44,6 +44,7 @@
     <string name="total_credit">Total Credit</string>
     <string name="total_debit">Total Debit</string>
     <string name="export_to_pdf">Export to PDF</string>
+    <string name="export_to_excel">Export to Excel</string>
     
     <!-- PDF labels -->
     <string name="total">Total</string>

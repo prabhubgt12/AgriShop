@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.Box
 import com.ledge.cashbook.util.PdfShare
+import com.ledge.cashbook.util.ExcelShare
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -52,6 +53,8 @@ fun AccountsScreen(
     val adsVm: AdsViewModel = hiltViewModel()
     val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = false)
     val accounts by vm.accounts.collectAsState()
+    val settingsVM: SettingsViewModel = hiltViewModel()
+    val showCategory by settingsVM.showCategory.collectAsState(initial = false)
     var showAdd by remember { mutableStateOf(false) }
     var accountName by remember { mutableStateOf("") }
     var openBalanceText by remember { mutableStateOf("") }
@@ -131,6 +134,13 @@ fun AccountsScreen(
                                         onClick = {
                                             menuOpen = false
                                             PdfShare.exportAccount(ctx, acc.name, txns)
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.export_to_excel)) },
+                                        onClick = {
+                                            menuOpen = false
+                                            ExcelShare.exportAccountXlsx(ctx, acc.name, txns, showCategory = showCategory)
                                         }
                                     )
                                     DropdownMenuItem(
