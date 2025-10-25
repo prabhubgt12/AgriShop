@@ -771,7 +771,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             val filteredNotes = remember(e.notes) {
                                 e.notes
                                     ?.lineSequence()
-                                    ?.filterNot { it.trim().startsWith("att:") }
+                                    ?.filterNot {
+                                        val t = it.trim()
+                                        t.startsWith("att:") || t.startsWith("Phone:", ignoreCase = true)
+                                    }
                                     ?.joinToString("\n")
                                     ?: ""
                             }

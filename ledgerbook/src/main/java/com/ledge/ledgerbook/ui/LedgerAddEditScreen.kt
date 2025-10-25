@@ -54,7 +54,19 @@ fun LedgerAddEditScreen(
     var principal by remember { mutableStateOf(if (existing != null) CurrencyFormatter.formatNumericUpTo2(existing.principal) else "") }
     var rateRupees by remember { mutableStateOf(if (existing != null) CurrencyFormatter.formatNumericUpTo2(existing.rateRupees) else "") }
     var fromDate by remember { mutableStateOf(existing?.fromDate ?: System.currentTimeMillis()) }
-    var notes by remember { mutableStateOf(existing?.notes ?: "") }
+    var notes by remember {
+        mutableStateOf(
+            run {
+                val raw = existing?.notes ?: ""
+                raw.lineSequence()
+                    .filterNot { line ->
+                        val t = line.trim()
+                        t.startsWith("att:", ignoreCase = true) || t.startsWith("Phone:", ignoreCase = true)
+                    }
+                    .joinToString("\n").trim()
+            }
+        )
+    }
     // Parse existing attachment from notes (att: <uri>)
     val existingAtt: Uri? = remember(existing) {
         existing?.notes
@@ -65,11 +77,10 @@ fun LedgerAddEditScreen(
             ?.let { runCatching { Uri.parse(it) }.getOrNull() }
     }
     var attachmentUri by remember { mutableStateOf<Uri?>(existingAtt) }
-    // Optional phone number (digits only). We try to prefill from notes if it contains a 'Phone:' line.
+    // Optional phone number (digits only). Prefill from existing notes Phone: line if present.
     var phone by remember {
         mutableStateOf(run {
             val n = existing?.notes ?: ""
-            // naive extract: look for a line starting with 'Phone:' and take digits
             val line = n.lineSequence().firstOrNull { it.trim().startsWith("Phone:", ignoreCase = true) }
             line?.filter { it.isDigit() } ?: ""
         })
@@ -87,10 +98,9 @@ fun LedgerAddEditScreen(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                // Merge phone (if provided) into notes as the first line
+                // Build notes as: att: <uri> (if any), Phone: <digits> (if any), then user's notes (without previous meta)
                 val phoneDigits = phone.filter { it.isDigit() }
                 val mergedNotes = buildString {
-                    // First, persist attachment if present
                     attachmentUri?.toString()?.let {
                         append("att: "); append(it)
                     }
