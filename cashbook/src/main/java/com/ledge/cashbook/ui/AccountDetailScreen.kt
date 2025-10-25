@@ -460,24 +460,18 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     )
                     if (showCategory) {
                         var expanded by remember { mutableStateOf(false) }
-                        Box {
+                        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                             OutlinedTextField(
                                 value = if (editCategory.isBlank()) stringResource(R.string.select_category) else editCategory,
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text(stringResource(R.string.category)) },
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { expanded = true },
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = null,
-                                        modifier = Modifier.clickable { expanded = !expanded }
-                                    )
-                                }
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
                             )
-                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                                 DropdownMenuItem(text = { Text(stringResource(R.string.uncategorized)) }, onClick = { editCategory = ""; expanded = false })
                                 categories.forEach { cat ->
                                     DropdownMenuItem(text = { Text(cat) }, onClick = { editCategory = cat; expanded = false })
@@ -1044,24 +1038,18 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     )
                     if (showCategory) {
                         var expanded by remember { mutableStateOf(false) }
-                        Box {
+                        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                             OutlinedTextField(
                                 value = if (addCategory.isBlank()) stringResource(R.string.select_category) else addCategory,
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text(stringResource(R.string.category)) },
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { expanded = true },
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = null,
-                                        modifier = Modifier.clickable { expanded = !expanded }
-                                    )
-                                }
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
                             )
-                            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                                 DropdownMenuItem(text = { Text(stringResource(R.string.uncategorized)) }, onClick = { addCategory = ""; expanded = false })
                                 categories.forEach { cat ->
                                     DropdownMenuItem(text = { Text(cat) }, onClick = { addCategory = cat; expanded = false })

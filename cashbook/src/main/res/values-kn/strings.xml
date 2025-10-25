@@ -48,6 +48,7 @@
 
     <string name="ok">ಸರಿ</string>
     <string name="export_to_pdf">PDF ಗೆ ರಫ್ತು ಮಾಡಿ</string>
+    <string name="export_to_excel">ಎಕ್ಸೆಲ್ ಗೆ ರಫ್ತು ಮಾಡಿ</string>
 
     <!-- Filters -->
     <string name="filter_today">ಇಂದು</string>

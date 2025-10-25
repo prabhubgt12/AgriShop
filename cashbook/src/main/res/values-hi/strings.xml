@@ -9,6 +9,7 @@
     <string name="total_credit">कुल जमा</string>
     <string name="total_debit">कुल निकासी</string>
     <string name="export_to_pdf">पीडीएफ में निर्यात</string>
+    <string name="export_to_excel">एक्सेल में निर्यात</string>
 
     <!-- Filters -->
     <string name="filter_today">आज</string>
