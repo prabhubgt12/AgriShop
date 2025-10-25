@@ -32,7 +32,7 @@ class ThemePreferences @Inject constructor(
         context.ledgerDataStore.edit { it[Keys.THEME_MODE] = mode }
     }
 
-    fun groupingEnabledFlow(default: Boolean = true): Flow<Boolean> =
+    fun groupingEnabledFlow(default: Boolean = false): Flow<Boolean> =
         context.ledgerDataStore.data.map { prefs -> prefs[Keys.GROUPING_ENABLED] ?: default }
 
     suspend fun setGroupingEnabled(enabled: Boolean) {

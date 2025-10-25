@@ -27,8 +27,8 @@ class ThemeViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, MODE_SYSTEM)
 
     // Feature flags
-    val groupingEnabled: StateFlow<Boolean> = prefs.groupingEnabledFlow(true)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val groupingEnabled: StateFlow<Boolean> = prefs.groupingEnabledFlow(false)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // Reminder thresholds (days)
     val overdueDays: StateFlow<Int> = prefs.overdueDaysFlow(365)
