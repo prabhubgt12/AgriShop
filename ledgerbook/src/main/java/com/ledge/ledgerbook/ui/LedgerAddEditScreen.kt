@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import com.ledge.ledgerbook.data.local.entities.LedgerEntry
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -131,12 +132,24 @@ fun LedgerAddEditScreen(
                     FilterChip(
                         selected = type.equals("LEND", true),
                         onClick = { type = "LEND" },
-                        label = { Text(stringResource(R.string.lend)) }
+                        label = { Text(stringResource(R.string.lend)) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFFDFF6DD),
+                            selectedLabelColor = Color(0xFF0B6A0B),
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                     FilterChip(
                         selected = type.equals("BORROW", true),
                         onClick = { type = "BORROW" },
-                        label = { Text(stringResource(R.string.borrow)) }
+                        label = { Text(stringResource(R.string.borrow)) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Color(0xFFFFE2E0),
+                            selectedLabelColor = Color(0xFF9A0007),
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 }
                 Spacer(Modifier.height(12.dp))
@@ -180,8 +193,16 @@ fun LedgerAddEditScreen(
                 Text(stringResource(R.string.rate_basis), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.height(4.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FilterChip(selected = period == "MONTHLY", onClick = { period = "MONTHLY" }, label = { Text(stringResource(R.string.monthly)) })
-                    FilterChip(selected = period == "YEARLY", onClick = { period = "YEARLY" }, label = { Text(stringResource(R.string.yearly)) })
+                    FilterChip(
+                        selected = period == "MONTHLY",
+                        onClick = { period = "MONTHLY" },
+                        label = { Text(stringResource(R.string.monthly)) }
+                    )
+                    FilterChip(
+                        selected = period == "YEARLY",
+                        onClick = { period = "YEARLY" },
+                        label = { Text(stringResource(R.string.yearly)) }
+                    )
                 }
 
                 if (interestType.equals("COMPOUND", true)) {
@@ -189,8 +210,16 @@ fun LedgerAddEditScreen(
                     Text(stringResource(R.string.duration_type), style = MaterialTheme.typography.labelMedium)
                     Spacer(Modifier.height(4.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        FilterChip(selected = compoundPeriod == "MONTHLY", onClick = { compoundPeriod = "MONTHLY" }, label = { Text(stringResource(R.string.monthly)) })
-                        FilterChip(selected = compoundPeriod == "YEARLY", onClick = { compoundPeriod = "YEARLY" }, label = { Text(stringResource(R.string.yearly)) })
+                        FilterChip(
+                            selected = compoundPeriod == "MONTHLY",
+                            onClick = { compoundPeriod = "MONTHLY" },
+                            label = { Text(stringResource(R.string.monthly)) }
+                        )
+                        FilterChip(
+                            selected = compoundPeriod == "YEARLY",
+                            onClick = { compoundPeriod = "YEARLY" },
+                            label = { Text(stringResource(R.string.yearly)) }
+                        )
                     }
                 }
 

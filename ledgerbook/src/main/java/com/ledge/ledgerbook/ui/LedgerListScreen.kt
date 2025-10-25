@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 package com.ledge.ledgerbook.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
@@ -189,7 +189,21 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     // Payment dialog tab: 0 = Add Payment, 1 = View Transactions
     val paymentsTab = rememberSaveable { mutableStateOf(1) }
 
-    Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { padding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(stringResource(R.string.title_khata_book)) },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
+    ) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize()) {
             // Content list with scrolling header
             LazyColumn(
@@ -199,20 +213,6 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.title_khata_book),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Spacer(Modifier.height(2.dp))
-            }
             item {
                 // Old design: three separate summary cards
                 val container = MaterialTheme.colorScheme.surfaceVariant
