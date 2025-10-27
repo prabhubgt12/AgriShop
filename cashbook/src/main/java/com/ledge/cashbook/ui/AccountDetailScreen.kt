@@ -39,6 +39,8 @@ import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
@@ -741,22 +743,34 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             }
                             DropdownMenu(expanded = filterMenuOpen, onDismissRequest = { filterMenuOpen = false }) {
                                 val ctxMenu = LocalContext.current
-                                DropdownMenuItem(text = { Text(stringResource(R.string.export_to_pdf)) }, onClick = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.export_to_pdf)) },
+                                    leadingIcon = { Icon(Icons.Default.PictureAsPdf, contentDescription = null) },
+                                    onClick = {
                                     filterMenuOpen = false
                                     val list = if (isFiltered) filteredTxns else txns
                                     PdfShare.exportAccount(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd)
                                 })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.export_to_excel)) }, onClick = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.export_to_excel)) },
+                                    leadingIcon = { Icon(Icons.Default.TableView, contentDescription = null) },
+                                    onClick = {
                                     filterMenuOpen = false
                                     val list = if (isFiltered) filteredTxns else txns
                                     ExcelShare.exportAccountXlsx(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd, showCategory = showCategory)
                                 })
-                                DropdownMenuItem(text = { Text("Expense overview") }, onClick = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.category_split)) },
+                                    leadingIcon = { Icon(Icons.Default.PieChart, contentDescription = null) },
+                                    onClick = {
                                     filterMenuOpen = false
                                     showExpenseChart = true
                                 })
                                 Divider()
-                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.filter_today)) },
+                                    leadingIcon = { Icon(Icons.Default.Today, contentDescription = null) },
+                                    onClick = {
                                     filterMenuOpen = false
                                     val now = java.util.Calendar.getInstance()
                                     now.set(java.util.Calendar.HOUR_OF_DAY, 0)
@@ -766,7 +780,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     filterStart = now.timeInMillis
                                     filterEnd = filterStart!! + 24L*60*60*1000 - 1
                                 })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_last_7_days)) }, onClick = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.filter_last_7_days)) },
+                                    leadingIcon = { Text("7d", style = LocalTextStyle.current.copy(fontWeight = FontWeight.Bold)) },
+                                    onClick = {
                                     filterMenuOpen = false
                                     val cal = java.util.Calendar.getInstance()
                                     cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
@@ -777,7 +794,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     cal.add(java.util.Calendar.DAY_OF_YEAR, -6)
                                     filterStart = cal.timeInMillis
                                 })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_this_month)) }, onClick = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.filter_this_month)) },
+                                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                                    onClick = {
                                     filterMenuOpen = false
                                     val cal = java.util.Calendar.getInstance()
                                     cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
@@ -790,13 +810,19 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     cal.add(java.util.Calendar.MILLISECOND, -1)
                                     filterEnd = cal.timeInMillis
                                 })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_all)) }, onClick = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.filter_all)) },
+                                    leadingIcon = { Icon(Icons.Default.SelectAll, contentDescription = null) },
+                                    onClick = {
                                     filterMenuOpen = false
                                     filterStart = null
                                     filterEnd = null
                                 })
                                 Divider()
-                                DropdownMenuItem(text = { Text(stringResource(R.string.filter_custom_range)) }, onClick = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.filter_custom_range)) },
+                                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                                    onClick = {
                                     filterMenuOpen = false
                                     showStartPicker = true
                                 })
