@@ -58,6 +58,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import com.ledge.cashbook.util.PdfShare
 import com.ledge.cashbook.util.ExcelShare
+import com.ledge.cashbook.ads.BannerAd
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
@@ -78,6 +79,9 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.rememberScrollState
@@ -85,6 +89,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -145,6 +150,12 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Observe bulk selection from VM
     val selectedIds by vm.selection.collectAsState()
     val inSelectionMode = selectionMode || selectedIds.isNotEmpty()
+    // Ads state
+    val adsVm: AdsViewModel = hiltViewModel()
+    val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = false)
+    var bannerLoaded by remember { mutableStateOf(false) }
+    // Expense overview chart state
+    var showExpenseChart by remember { mutableStateOf(false) }
 
     // Image preview dialog state and in-app preview (reduced height)
     var previewUri by remember { mutableStateOf<String?>(null) }
@@ -194,6 +205,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                 } else {
                     Text("Failed to load image.")
                 }
+            // Extra space below summary so it's fully visible above the banner
+            if (!hasRemoveAds) {
+                Spacer(Modifier.height(84.dp))
+            }
             }
         )
     }
@@ -538,6 +553,75 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             dismissButton = { TextButton(onClick = { showStartPicker = false }) { Text(stringResource(R.string.cancel)) } }
         ) { DatePicker(state = state) }
     }
+    // Expense overview dialog - pie chart of filtered debit totals (expenses) by category
+    if (showExpenseChart) {
+        val expenses = remember(filteredTxns) {
+            filteredTxns.filter { !it.isCredit && it.amount > 0 }
+        }
+        val byCategory = remember(expenses) {
+            expenses.groupBy { (it.category ?: "Uncategorized").trim().ifEmpty { "Uncategorized" } }
+                .mapValues { entry -> entry.value.sumOf { it.amount } }
+                .toList()
+                .sortedByDescending { it.second }
+        }
+        val total = byCategory.sumOf { it.second }.coerceAtLeast(0.0)
+        val palette = listOf(
+            Color(0xFFEF5350), Color(0xFFAB47BC), Color(0xFF5C6BC0), Color(0xFF29B6F6),
+            Color(0xFF26A69A), Color(0xFF66BB6A), Color(0xFFFFCA28), Color(0xFFFFA726), Color(0xFF8D6E63)
+        )
+        AlertDialog(
+            onDismissRequest = { showExpenseChart = false },
+            confirmButton = { TextButton(onClick = { showExpenseChart = false }) { Text(stringResource(R.string.ok)) } },
+            title = { Text("Expense overview") },
+            text = {
+                if (total <= 0.0) {
+                    Text("No expenses in the selected range.")
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Pie chart
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            val chartSize = 220.dp
+                            Canvas(modifier = Modifier.size(chartSize)) {
+                                var startAngle = -90f
+                                byCategory.forEachIndexed { idx, (cat, value) ->
+                                    val sweep = ((value / total) * 360.0).toFloat()
+                                    drawArc(
+                                        color = palette[idx % palette.size],
+                                        startAngle = startAngle,
+                                        sweepAngle = sweep,
+                                        useCenter = true,
+                                        style = Fill,
+                                        size = Size(this.size.minDimension, this.size.minDimension),
+                                        topLeft = androidx.compose.ui.geometry.Offset(
+                                            (this.size.width - this.size.minDimension) / 2f,
+                                            (this.size.height - this.size.minDimension) / 2f
+                                        )
+                                    )
+                                    startAngle += sweep
+                                }
+                            }
+                        }
+                        // Legend
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            byCategory.forEachIndexed { idx, (cat, value) ->
+                                val pct = (value / total * 100).toFloat()
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        Modifier.size(12.dp).background(palette[idx % palette.size], RoundedCornerShape(2.dp))
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = "$cat - ${String.format(java.util.Locale.getDefault(), "%.1f", pct)}% (${Currency.inr(value)})",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+    }
     if (showEndPicker) {
         val state = rememberDatePickerState(initialSelectedDateMillis = filterEnd ?: System.currentTimeMillis())
         DatePickerDialog(
@@ -666,6 +750,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     filterMenuOpen = false
                                     val list = if (isFiltered) filteredTxns else txns
                                     ExcelShare.exportAccountXlsx(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd, showCategory = showCategory)
+                                })
+                                DropdownMenuItem(text = { Text("Expense overview") }, onClick = {
+                                    filterMenuOpen = false
+                                    showExpenseChart = true
                                 })
                                 Divider()
                                 DropdownMenuItem(text = { Text(stringResource(R.string.filter_today)) }, onClick = {
@@ -976,10 +1064,40 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     }
                 }
             }
+            // Reserve space below summary only after ad loads and ads not removed
+            if (!hasRemoveAds && bannerLoaded) {
+                Spacer(Modifier.height(60.dp))
+            }
+            }
+            // Bottom banner overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+            ) {
+                if (!hasRemoveAds) {
+                    BannerAd(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth(),
+                        adUnitId = "ca-app-pub-2556604347710668/8804283822",
+                        onLoadState = { ok -> bannerLoaded = ok }
+                    )
+                }
             }
         }
     }
 
+    // Reset add dialog inputs whenever the dialog is opened
+    LaunchedEffect(showAdd) {
+        if (showAdd) {
+            amount = ""
+            note = ""
+            dateMillis = System.currentTimeMillis()
+            addAttachmentUri = null
+            addCategory = ""
+        }
+    }
     if (showAdd) {
         val amountValid = remember(amount) { amount.toDoubleOrNull()?.let { it > 0 } == true }
         val noteValid = remember(note) { note.isNotBlank() }
@@ -987,7 +1105,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             addAttachmentUri = uri?.let { copyPickedToApp(it) }
         }
         AlertDialog(
-            onDismissRequest = { showAdd = false },
+            onDismissRequest = {
+                showAdd = false
+                amount = ""
+                note = ""
+                dateMillis = System.currentTimeMillis()
+                addAttachmentUri = null
+                addCategory = ""
+            },
             confirmButton = {
                 TextButton(
                     enabled = amountValid && noteValid,
@@ -1005,10 +1130,21 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     }
                 ) { Text(stringResource(R.string.save)) }
             },
-            dismissButton = { TextButton(onClick = { showAdd = false }) { Text(stringResource(R.string.cancel)) } },
+            dismissButton = {
+                TextButton(onClick = {
+                    showAdd = false
+                    amount = ""
+                    note = ""
+                    dateMillis = System.currentTimeMillis()
+                    addAttachmentUri = null
+                    addCategory = ""
+                }) { Text(stringResource(R.string.cancel)) }
+            },
             title = { Text(stringResource(R.string.add_to_book)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         FilterChip(selected = isCredit, onClick = { isCredit = true }, label = { Text(stringResource(R.string.credit)) })
                         FilterChip(selected = !isCredit, onClick = { isCredit = false }, label = { Text(stringResource(R.string.debit)) })
