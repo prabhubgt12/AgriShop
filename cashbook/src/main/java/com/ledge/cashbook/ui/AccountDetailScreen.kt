@@ -58,7 +58,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import com.ledge.cashbook.util.PdfShare
 import com.ledge.cashbook.util.ExcelShare
-import com.ledge.cashbook.ads.BannerAd
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
@@ -86,7 +85,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -147,10 +145,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Observe bulk selection from VM
     val selectedIds by vm.selection.collectAsState()
     val inSelectionMode = selectionMode || selectedIds.isNotEmpty()
-    // Ads state same as AccountsScreen
-    val adsVm: AdsViewModel = hiltViewModel()
-    val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = false)
-    var bannerLoaded by remember { mutableStateOf(false) }
 
     // Image preview dialog state and in-app preview (reduced height)
     var previewUri by remember { mutableStateOf<String?>(null) }
@@ -200,10 +194,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                 } else {
                     Text("Failed to load image.")
                 }
-            // Extra space below summary so it's fully visible above the banner
-            if (!hasRemoveAds) {
-                Spacer(Modifier.height(84.dp))
-            }
             }
         )
     }
@@ -439,7 +429,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             text = {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.verticalScroll(rememberScrollState())
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .windowInsetsPadding(WindowInsets.ime)
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         FilterChip(selected = editIsCredit, onClick = { editIsCredit = true }, label = { Text(stringResource(R.string.credit)) })
@@ -574,7 +566,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     val txnToDelete = confirmDeleteTxn
     if (txnToDelete != null) {
         AlertDialog(
-            modifier = Modifier.imePadding(),
             onDismissRequest = { confirmDeleteTxn = null },
             title = { Text(stringResource(R.string.delete)) },
             text = { Text(stringResource(R.string.delete_txn_confirm)) },
@@ -899,10 +890,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     }
                     HorizontalDivider()
                 }
-                // Bottom spacer reserved only after ad loads and ads not removed
-                if (!hasRemoveAds && bannerLoaded) {
-                    item { Spacer(Modifier.height(60.dp)) }
-                }
             }
             // Divider above footer for separation
             HorizontalDivider()
@@ -989,26 +976,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     }
                 }
             }
-            // Reserve space below summary only after ad loads and ads not removed
-            if (!hasRemoveAds && bannerLoaded) {
-                Spacer(Modifier.height(60.dp))
-            }
-            }
-            // Bottom banner overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-            ) {
-                if (!hasRemoveAds) {
-                    BannerAd(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth(),
-                        adUnitId = "ca-app-pub-2556604347710668/8804283822",
-                        onLoadState = { ok -> bannerLoaded = ok }
-                    )
-                }
             }
         }
     }
@@ -1020,7 +987,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             addAttachmentUri = uri?.let { copyPickedToApp(it) }
         }
         AlertDialog(
-            modifier = Modifier.imePadding(),
             onDismissRequest = { showAdd = false },
             confirmButton = {
                 TextButton(
@@ -1042,10 +1008,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             dismissButton = { TextButton(onClick = { showAdd = false }) { Text(stringResource(R.string.cancel)) } },
             title = { Text(stringResource(R.string.add_to_book)) },
             text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.verticalScroll(rememberScrollState())
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         FilterChip(selected = isCredit, onClick = { isCredit = true }, label = { Text(stringResource(R.string.credit)) })
                         FilterChip(selected = !isCredit, onClick = { isCredit = false }, label = { Text(stringResource(R.string.debit)) })

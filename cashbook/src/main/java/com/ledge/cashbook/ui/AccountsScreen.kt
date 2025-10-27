@@ -16,16 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
 import com.ledge.cashbook.util.Currency
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -390,12 +386,7 @@ fun AccountsScreen(
             dismissButton = { TextButton(onClick = { showAdd = false }) { Text(stringResource(R.string.cancel)) } },
             title = { Text(stringResource(R.string.add_account)) },
             text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier
-                        .verticalScroll(rememberScrollState())
-                        .windowInsetsPadding(WindowInsets.ime)
-                ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
                         value = accountName,
                         onValueChange = { accountName = it },
@@ -410,7 +401,6 @@ fun AccountsScreen(
                             openBalanceText = input.filter { it.isDigit() || it == '.' || it == ',' }
                         },
                         label = { Text(stringResource(R.string.open_balance)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )

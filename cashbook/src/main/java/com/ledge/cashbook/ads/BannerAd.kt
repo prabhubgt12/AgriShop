@@ -3,7 +3,7 @@ package com.ledge.cashbook.ads
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -38,34 +38,32 @@ fun BannerAd(
             )
         }
     }
-
-    // Load on enter and destroy on dispose so navigation back/forward always refreshes the banner
-    DisposableEffect(adView, unit) {
-        adView.adListener = object : AdListener() {
-            override fun onAdLoaded() {
-                Log.d("BannerAd", "Ad loaded")
-                adView.visibility = View.VISIBLE
-                onLoadState(true)
-            }
-            override fun onAdFailedToLoad(error: LoadAdError) {
-                Log.e("BannerAd", "Failed code=${error.code} ${error.message}")
-                adView.visibility = View.GONE
-                onLoadState(false)
-            }
-        }
-        adView.loadAd(AdRequest.Builder().build())
-        onDispose {
-            try {
-                // Assign a no-op listener instead of null to satisfy non-null type
-                adView.adListener = object : AdListener() {}
-                adView.destroy()
-            } catch (_: Throwable) {}
-        }
-    }
+    val listenerAttached = remember(unit) { mutableStateOf(false) }
 
     AndroidView(
         modifier = modifier,
-        factory = { adView },
+        factory = {
+            adView.apply {
+                if (!listenerAttached.value) {
+                    adListener = object : AdListener() {
+                        override fun onAdLoaded() {
+                            Log.d("BannerAd", "Ad loaded")
+                            visibility = View.VISIBLE
+                            onLoadState(true)
+                        }
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            Log.e("BannerAd", "Failed code=${error.code} ${error.message}")
+                            visibility = View.GONE
+                            onLoadState(false)
+                        }
+                    }
+                    listenerAttached.value = true
+                }
+                if (visibility != View.VISIBLE) {
+                    loadAd(AdRequest.Builder().build())
+                }
+            }
+        },
         update = { }
     )
 }
