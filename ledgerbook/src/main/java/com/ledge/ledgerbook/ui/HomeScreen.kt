@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -355,6 +357,7 @@ private fun WheelDatePickerDialog(
 fun HomeScreen(
     onOpenLedger: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenEmi: () -> Unit,
     onRequestLogout: () -> Unit
 ) {
     // Back from home should finish activity (app-only logout)
@@ -396,13 +399,19 @@ fun HomeScreen(
         ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Tile(
                 title = stringResource(R.string.title_khata_book),
                 icon = Icons.Default.Book,
                 modifier = Modifier.weight(1f)
             ) { onOpenLedger() }
+
+            Tile(
+                title = stringResource(R.string.emi_calculator),
+                icon = Icons.Default.Calculate,
+                modifier = Modifier.weight(1f)
+            ) { onOpenEmi() }
 
             Tile(
                 title = stringResource(R.string.settings_title),
@@ -465,8 +474,10 @@ private fun Tile(
             Spacer(Modifier.height(8.dp))
             Text(
                 title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

@@ -159,6 +159,18 @@
     <string name="total_borrow">Total Borrow</string>
     <string name="borrow_interest">Borrow Interest</string>
     <string name="final_amount">Final Amount</string>
+    
+    <!-- EMI Calculator -->
+    <string name="emi_calculator">EMI Calculator</string>
+    <string name="emi_stats">EMI Stats</string>
+    <string name="repayment_schedule">Repayment Schedule</string>
+    <string name="loan_tenure">Loan Tenure</string>
+    <string name="interest_per_annum">Interest (% p.a.)</string>
+    <string name="summary">Summary</string>
+    <string name="emi_monthly">EMI (Monthly)</string>
+    <string name="col_month">Month</string>
+    <string name="balance">Balance</string>
+    <string name="reset">Reset</string>
     <!-- Reminder chips labels -->
     <string name="overdue_label">Overdue</string>
     <string name="due_soon_label">Due soon</string>

@@ -135,6 +135,18 @@
     <string name="calculate">ಲೆಕ್ಕಿಸಿ</string>
     <string name="rate">ದರ</string>
 
+    <!-- EMI Calculator -->
+    <string name="emi_calculator">ಇಎಂಐ ಗಣಕ</string>
+    <string name="emi_stats">ಇಎಂಐ ಅಂಕಿಅಂಶ</string>
+    <string name="repayment_schedule">ಪಾವತಿ ವೇಳಾಪಟ್ಟಿ</string>
+    <string name="loan_tenure">ಸಾಲದ ಅವಧಿ</string>
+    <string name="interest_per_annum">ಬಡ್ಡಿ (% ವಾರ್ಷಿಕ)</string>
+    <string name="summary">ಸಾರಾಂಶ</string>
+    <string name="emi_monthly">ಇಎಂಐ (ತಿಂಗಳವಾರು)</string>
+    <string name="col_month">ತಿಂಗಳು</string>
+    <string name="balance">ಉಳಿತಾಯ</string>
+    <string name="reset">ಮತ್ತೆ ಹೊಂದಿಸಿ</string>
+
     <!-- Ledger list menus/labels -->
     <string name="more">ಇನ್ನಷ್ಟು</string>
     <string name="share_receipt">ರಸೀತಿ ಹಂಚಿಕೊಳ್ಳಿ</string>

@@ -20,6 +20,7 @@ fun LedgerApp(onRequestLogout: () -> Unit) {
             "home" -> HomeScreen(
                 onOpenLedger = { screen = "list" },
                 onOpenSettings = { screen = "settings" },
+                onOpenEmi = { screen = "emi" },
                 onRequestLogout = onRequestLogout
             )
             "list" -> {
@@ -27,6 +28,10 @@ fun LedgerApp(onRequestLogout: () -> Unit) {
                 LedgerListScreen()
             }
             "settings" -> SettingsScreen(onBack = { screen = "home" })
+            "emi" -> {
+                BackHandler(enabled = true) { screen = "home" }
+                EMICalculatorScreen(onBack = { screen = "home" })
+            }
         }
     }
 }

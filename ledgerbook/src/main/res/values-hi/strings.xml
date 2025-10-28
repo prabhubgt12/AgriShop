@@ -119,6 +119,18 @@
     <string name="calculate">गणना करें</string>
     <string name="rate">दर</string>
 
+    <!-- EMI Calculator -->
+    <string name="emi_calculator">ईएमआई कैलकुलेटर</string>
+    <string name="emi_stats">ईएमआई आँकड़े</string>
+    <string name="repayment_schedule">भुगतान अनुसूची</string>
+    <string name="loan_tenure">ऋण अवधि</string>
+    <string name="interest_per_annum">ब्याज (% प्रति वर्ष)</string>
+    <string name="summary">सारांश</string>
+    <string name="emi_monthly">ईएमआई (मासिक)</string>
+    <string name="col_month">महीना</string>
+    <string name="balance">शेष</string>
+    <string name="reset">रीसेट</string>
+
     <!-- Add/Edit Dialog -->
     <string name="update">अपडेट</string>
     <string name="save">सहेजें</string>
