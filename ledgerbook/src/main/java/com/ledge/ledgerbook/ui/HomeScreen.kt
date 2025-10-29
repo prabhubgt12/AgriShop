@@ -56,6 +56,32 @@ import com.ledge.ledgerbook.ui.settings.CurrencyViewModel
 // Compound type for interest calculation
 enum class CompoundType { Monthly, Yearly }
 
+@Composable
+private fun OptionItem(
+    title: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .clickable { onClick() }
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(imageVector = icon, contentDescription = title, modifier = Modifier.size(36.dp))
+        Spacer(Modifier.height(6.dp))
+        Text(
+            title,
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CenteredAlertDialog(
@@ -399,43 +425,48 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        Row(
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Tile(
-                title = stringResource(R.string.title_khata_book),
-                icon = Icons.Default.Book,
-                modifier = Modifier.weight(1f)
-            ) { onOpenLedger() }
-
-            Tile(
-                title = stringResource(R.string.loan_book),
-                icon = Icons.Default.AccountBalance,
-                modifier = Modifier.weight(1f)
-            ) { onOpenLoanBook() }
-
-            Tile(
-                title = stringResource(R.string.emi_calculator),
-                icon = Icons.Default.Calculate,
-                modifier = Modifier.weight(1f)
-            ) { onOpenEmi() }
-
-            Tile(
-                title = stringResource(R.string.settings_title),
-                icon = Icons.Default.Settings,
-                modifier = Modifier.weight(1f)
-            ) {
-                if (!hasRemoveAds) {
-                    val activity = context as? Activity
-                    if (activity != null) {
-                        InterstitialAds.showIfAvailable(activity) { onOpenSettings() }
-                    } else {
-                        onOpenSettings()
+            Row(Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OptionItem(
+                    title = stringResource(R.string.title_khata_book),
+                    icon = Icons.Default.Book,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onOpenLedger() }
+                )
+                OptionItem(
+                    title = stringResource(R.string.loan_book),
+                    icon = Icons.Default.AccountBalance,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onOpenLoanBook() }
+                )
+                OptionItem(
+                    title = stringResource(R.string.emi_calculator),
+                    icon = Icons.Default.Calculate,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onOpenEmi() }
+                )
+                OptionItem(
+                    title = stringResource(R.string.settings_title),
+                    icon = Icons.Default.Settings,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        if (!hasRemoveAds) {
+                            val activity = context as? Activity
+                            if (activity != null) {
+                                InterstitialAds.showIfAvailable(activity) { onOpenSettings() }
+                            } else {
+                                onOpenSettings()
+                            }
+                        } else {
+                            onOpenSettings()
+                        }
                     }
-                } else {
-                    onOpenSettings()
-                }
+                )
             }
         }
 
