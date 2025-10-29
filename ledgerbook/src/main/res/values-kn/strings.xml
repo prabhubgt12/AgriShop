@@ -135,6 +135,18 @@
     <string name="calculate">ಲೆಕ್ಕಿಸಿ</string>
     <string name="rate">ದರ</string>
 
+    <!-- Loan Book -->
+    <string name="loan_book">ಲೋನ್ ಪುಸ್ತಕ</string>
+    <string name="add_loan">ಲೋನ್ ಸೇರಿಸಿ</string>
+    <string name="loan_type">ಲೋನ್ದ ಪ್ರಕಾರ</string>
+    <string name="profile_name">ಲೋನ್ ಹೆಸರು</string>
+    <string name="loan_details_title">ಲೋನ್ ವಿವರಗಳು</string>
+    <string name="first_emi_date">ಮೊದಲ ಇಎಂಐ ದಿನಾಂಕ</string>
+    <string name="principal_paid">ಪಾವತಿಸಿದ ಅಸಲು</string>
+    <string name="interest_paid">ಪಾವತಿಸಿದ ಬಡ್ಡಿ</string>
+    <string name="total_paid">ಒಟ್ಟು ಪಾವತಿ</string>
+    <string name="remaining_amount">ಉಳಿದ ಮೊತ್ತ</string>
+
     <!-- EMI Calculator -->
     <string name="emi_calculator">ಇಎಂಐ ಗಣಕ</string>
     <string name="emi_stats">ಇಎಂಐ ಅಂಕಿಅಂಶ</string>
@@ -144,7 +156,7 @@
     <string name="summary">ಸಾರಾಂಶ</string>
     <string name="emi_monthly">ಇಎಂಐ (ತಿಂಗಳವಾರು)</string>
     <string name="col_month">ತಿಂಗಳು</string>
-    <string name="balance">ಉಳಿತಾಯ</string>
+    <string name="balance">ಬಾಕಿ</string>
     <string name="reset">ಮತ್ತೆ ಹೊಂದಿಸಿ</string>
 
     <!-- Ledger list menus/labels -->
@@ -160,7 +172,7 @@
     <string name="total_time">ಒಟ್ಟು ಸಮಯ</string>
     <string name="total_amount">ಒಟ್ಟು ಮೊತ್ತ</string>
     <string name="total_interest">ಒಟ್ಟು ಬಡ್ಡಿ</string>
-    <string name="total_principal">ಒಟ್ಟು ಅಸಲು ಮೊತ್ತ</string>
+    <string name="total_principal">ಒಟ್ಟು ಅಸಲು</string>
     <string name="total_lend">ಒಟ್ಟು ಸಾಲ (ಕೊಟ್ಟದ್ದು)</string>
     <string name="lend_interest">ಕೊಟ್ಟ ಸಾಲದ ಬಡ್ಡಿ</string>
     <string name="total_borrow">ಒಟ್ಟು ಸಾಲ (ತೆಗೆದುಕೊಂಡದ್ದು)</string>

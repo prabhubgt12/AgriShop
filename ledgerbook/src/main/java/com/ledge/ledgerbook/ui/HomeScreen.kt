@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -357,6 +358,7 @@ private fun WheelDatePickerDialog(
 fun HomeScreen(
     onOpenLedger: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenLoanBook: () -> Unit,
     onOpenEmi: () -> Unit,
     onRequestLogout: () -> Unit
 ) {
@@ -406,6 +408,12 @@ fun HomeScreen(
                 icon = Icons.Default.Book,
                 modifier = Modifier.weight(1f)
             ) { onOpenLedger() }
+
+            Tile(
+                title = stringResource(R.string.loan_book),
+                icon = Icons.Default.AccountBalance,
+                modifier = Modifier.weight(1f)
+            ) { onOpenLoanBook() }
 
             Tile(
                 title = stringResource(R.string.emi_calculator),
@@ -468,7 +476,7 @@ private fun Tile(
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                modifier = Modifier.size(36.dp),
+                modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.onSecondaryContainer
             )
             Spacer(Modifier.height(8.dp))

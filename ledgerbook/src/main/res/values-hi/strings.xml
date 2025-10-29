@@ -119,6 +119,18 @@
     <string name="calculate">गणना करें</string>
     <string name="rate">दर</string>
 
+    <!-- Loan Book -->
+    <string name="loan_book">ऋण बही</string>
+    <string name="add_loan">ऋण जोड़ें</string>
+    <string name="loan_type">ऋण प्रकार</string>
+    <string name="profile_name">प्रोफ़ाइल नाम</string>
+    <string name="loan_details_title">ऋण विवरण</string>
+    <string name="first_emi_date">पहली EMI तिथि</string>
+    <string name="principal_paid">मूलधन भुगतान</string>
+    <string name="interest_paid">ब्याज भुगतान</string>
+    <string name="total_paid">कुल भुगतान</string>
+    <string name="remaining_amount">शेष राशि</string>
+
     <!-- EMI Calculator -->
     <string name="emi_calculator">ईएमआई कैलकुलेटर</string>
     <string name="emi_stats">ईएमआई आँकड़े</string>

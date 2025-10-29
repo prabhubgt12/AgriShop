@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import com.ledge.ledgerbook.data.local.AppDatabase
 import com.ledge.ledgerbook.data.local.dao.LedgerDao
+import com.ledge.ledgerbook.data.local.dao.LoanDao
 import com.ledge.ledgerbook.data.repo.LedgerRepository
+import com.ledge.ledgerbook.data.repo.LoanRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,7 +31,15 @@ object DatabaseModule {
     fun provideLedgerDao(db: AppDatabase): LedgerDao = db.ledgerDao()
 
     @Provides
+    fun provideLoanDao(db: AppDatabase): LoanDao = db.loanDao()
+
+    @Provides
     @Singleton
     fun provideLedgerRepository(db: AppDatabase, dao: LedgerDao): LedgerRepository =
         LedgerRepository(db, dao)
+
+    @Provides
+    @Singleton
+    fun provideLoanRepository(db: AppDatabase, dao: LoanDao): LoanRepository =
+        LoanRepository(db, dao)
 }

@@ -171,6 +171,18 @@
     <string name="col_month">Month</string>
     <string name="balance">Balance</string>
     <string name="reset">Reset</string>
+    
+    <!-- Loan Book -->
+    <string name="loan_book">Loan Book</string>
+    <string name="add_loan">Add Loan</string>
+    <string name="loan_type">Loan Type</string>
+    <string name="profile_name">Profile name</string>
+    <string name="loan_details_title">Loan Details</string>
+    <string name="first_emi_date">First EMI date</string>
+    <string name="principal_paid">Principal paid</string>
+    <string name="interest_paid">Interest paid</string>
+    <string name="total_paid">Total paid</string>
+    <string name="remaining_amount">Remaining amount</string>
     <!-- Reminder chips labels -->
     <string name="overdue_label">Overdue</string>
     <string name="due_soon_label">Due soon</string>
