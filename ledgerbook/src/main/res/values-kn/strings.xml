@@ -216,6 +216,9 @@
     <string name="image_too_large">ಚಿತ್ರದ ಗಾತ್ರ 1 MB ಕ್ಕಿಂತ ಹೆಚ್ಚು</string>
     <string name="full_payment">ಪೂರ್ಣ ಪಾವತಿ</string>
     <string name="apply_action">ಅನ್ವಯಿಸು</string>
+
+    <!-- Loan delete confirmation (Kannada) -->
+    <string name="delete_loan_confirm">ಈ ಲೋನ್ ಪ್ರೊಫೈಲ್ ಅನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ? ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂತೆಗೆದುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ.</string>
     
     <!-- Generic/detail/dialog labels (Kannada) -->
     <string name="entry_details">ದಾಖಲೆಯ ವಿವರಗಳು</string>

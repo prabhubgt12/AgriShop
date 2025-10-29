@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,6 +28,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import com.ledge.ledgerbook.data.local.entities.LoanProfile
 import kotlin.math.pow
 import java.time.format.DateTimeFormatter
@@ -46,6 +49,7 @@ fun LoanListScreen(
     vm: LoanViewModel = hiltViewModel()
 ) {
     BackHandler { onBack() }
+    var pendingDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -57,7 +61,9 @@ fun LoanListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAdd) { Text("+") }
+            FloatingActionButton(onClick = onAdd) {
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_loan))
+            }
         }
     ) { padding ->
         val loans by vm.loans.collectAsState()
@@ -68,13 +74,35 @@ fun LoanListScreen(
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            items(loans) { p -> LoanCard(p, onClick = { onOpenDetail(p.id) }) }
+            items(loans) { p ->
+                LoanCard(
+                    profile = p,
+                    onClick = { onOpenDetail(p.id) },
+                    onDelete = { pendingDeleteId = p.id }
+                )
+            }
+        }
+        if (pendingDeleteId != null) {
+            AlertDialog(
+                onDismissRequest = { pendingDeleteId = null },
+                confirmButton = {
+                    TextButton(onClick = {
+                        pendingDeleteId?.let { vm.delete(it) }
+                        pendingDeleteId = null
+                    }) { Text(stringResource(R.string.ok)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingDeleteId = null }) { Text(stringResource(R.string.cancel)) }
+                },
+                title = { Text(stringResource(R.string.delete)) },
+                text = { Text(stringResource(R.string.delete_loan_confirm)) }
+            )
         }
     }
 }
 
 @Composable
-private fun LoanCard(profile: LoanProfile, onClick: () -> Unit) {
+private fun LoanCard(profile: LoanProfile, onClick: () -> Unit, onDelete: () -> Unit) {
     val summary = remember(profile) { computeSummary(profile) }
     val paidToDate = remember(profile) { computePaidToDate(profile) }
     Card(
@@ -90,7 +118,13 @@ private fun LoanCard(profile: LoanProfile, onClick: () -> Unit) {
                     Text(profile.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(profile.type, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Text("EMI " + format(summary.emi), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("EMI " + format(summary.emi), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.width(8.dp))
+                    IconButton(onClick = { onDelete() }) {
+                        Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             val paid = paidToDate.total
@@ -109,7 +143,8 @@ private fun LoanCard(profile: LoanProfile, onClick: () -> Unit) {
 private fun iconForType(type: String) = when (type.lowercase()) {
     "home" -> Icons.Default.Home
     "personal" -> Icons.Default.Person
-    "auto" -> Icons.Default.DirectionsCar
+    "car", "auto" -> Icons.Default.DirectionsCar
+    "gold" -> Icons.Default.AccountBalance
     else -> Icons.Default.AccountBalance
 }
 
@@ -475,8 +510,12 @@ private fun computePaidToDate(p: LoanProfile): Paid {
     if (p.firstEmiDateMillis <= 0L) return Paid(0.0, 0.0)
     val first = java.time.Instant.ofEpochMilli(p.firstEmiDateMillis).atZone(ZoneId.systemDefault()).toLocalDate()
     val today = LocalDate.now()
-    val elapsedMonths = ChronoUnit.MONTHS.between(first.withDayOfMonth(1), today.withDayOfMonth(1)).toInt().coerceAtLeast(0)
-    val monthsPaid = elapsedMonths.coerceAtMost(p.tenureMonths)
+    val base = ChronoUnit.MONTHS.between(first.withDayOfMonth(1), today.withDayOfMonth(1)).toInt()
+    var monthsPaid = base
+    if (base >= 0 && today.dayOfMonth >= first.dayOfMonth) {
+        monthsPaid += 1
+    }
+    monthsPaid = monthsPaid.coerceIn(0, p.tenureMonths)
     if (monthsPaid <= 0) return Paid(0.0, 0.0)
     val r = (p.annualRatePercent / 12.0) / 100.0
     val emi = if (r == 0.0) p.principal / p.tenureMonths else p.principal * r * (1 + r).pow(p.tenureMonths) / ((1 + r).pow(p.tenureMonths) - 1)

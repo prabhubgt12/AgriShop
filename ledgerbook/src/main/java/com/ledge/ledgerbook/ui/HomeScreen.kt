@@ -70,7 +70,12 @@ private fun OptionItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(imageVector = icon, contentDescription = title, modifier = Modifier.size(36.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            modifier = Modifier.size(36.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
         Spacer(Modifier.height(6.dp))
         Text(
             title,
@@ -442,13 +447,39 @@ fun HomeScreen(
                     title = stringResource(R.string.loan_book),
                     icon = Icons.Default.AccountBalance,
                     modifier = Modifier.weight(1f),
-                    onClick = { onOpenLoanBook() }
+                    onClick = {
+                        if (!hasRemoveAds) {
+                            val activity = context as? Activity
+                            if (activity != null) {
+                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/9525003390") {
+                                    onOpenLoanBook()
+                                }
+                            } else {
+                                onOpenLoanBook()
+                            }
+                        } else {
+                            onOpenLoanBook()
+                        }
+                    }
                 )
                 OptionItem(
                     title = stringResource(R.string.emi_calculator),
                     icon = Icons.Default.Calculate,
                     modifier = Modifier.weight(1f),
-                    onClick = { onOpenEmi() }
+                    onClick = {
+                        if (!hasRemoveAds) {
+                            val activity = context as? Activity
+                            if (activity != null) {
+                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/7361874486") {
+                                    onOpenEmi()
+                                }
+                            } else {
+                                onOpenEmi()
+                            }
+                        } else {
+                            onOpenEmi()
+                        }
+                    }
                 )
                 OptionItem(
                     title = stringResource(R.string.settings_title),

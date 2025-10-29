@@ -174,6 +174,9 @@
     <string name="full_payment">पूर्ण भुगतान</string>
     <string name="apply_action">लागू करें</string>
 
+    <!-- Loan delete confirmation (Hindi) -->
+    <string name="delete_loan_confirm">क्या आप वाकई इस ऋण प्रोफ़ाइल को हटाना चाहते हैं? इसे वापस नहीं किया जा सकता।</string>
+
     <!-- Ledger list menus/labels additions -->
     <string name="total_principal">कुल मूलधन</string>
     <string name="no_payments_pending">कोई भुगतान लंबित नहीं</string>

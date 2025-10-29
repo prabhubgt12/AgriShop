@@ -234,4 +234,7 @@
     <string name="attach">Attach image</string>
     <string name="image_too_large">Image is larger than 1 MB</string>
     <string name="full_payment">Full Payment</string>
+    
+    <!-- Loan delete confirmation -->
+    <string name="delete_loan_confirm">Are you sure you want to delete this loan profile? This cannot be undone.</string>
 </resources>

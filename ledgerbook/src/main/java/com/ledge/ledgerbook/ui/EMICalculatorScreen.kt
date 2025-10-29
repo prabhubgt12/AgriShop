@@ -16,6 +16,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.ledge.ledgerbook.R
 import kotlin.math.pow
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +40,13 @@ fun EMICalculatorScreen(onBack: () -> Unit) {
 
     var showSchedule by remember { mutableStateOf(false) }
     var schedule by remember { mutableStateOf(listOf<EmiRow>()) }
+
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val dismissKeyboard: () -> Unit = {
+        focusManager.clearFocus()
+        keyboard?.hide()
+    }
 
     fun resetAll() {
         principalText = ""
@@ -106,14 +119,18 @@ fun EMICalculatorScreen(onBack: () -> Unit) {
                             onValueChange = { principalText = it.filter { c -> c.isDigit() || c == '.' } },
                             label = { Text(stringResource(R.string.label_principal_generic)) },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { dismissKeyboard() })
                         )
                         OutlinedTextField(
                             value = annualRateText,
                             onValueChange = { annualRateText = it.filter { c -> c.isDigit() || c == '.' } },
                             label = { Text(stringResource(R.string.interest_per_annum)) },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { dismissKeyboard() })
                         )
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             OutlinedTextField(
@@ -121,7 +138,9 @@ fun EMICalculatorScreen(onBack: () -> Unit) {
                                 onValueChange = { tenureText = it.filter { c -> c.isDigit() } },
                                 label = { Text(stringResource(R.string.loan_tenure)) },
                                 modifier = Modifier.weight(1f),
-                                singleLine = true
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { dismissKeyboard() })
                             )
                             FilledTonalButton(onClick = { tenureInYears = !tenureInYears }) {
                                 Text(if (tenureInYears) stringResource(R.string.years) else stringResource(R.string.months))
@@ -129,15 +148,15 @@ fun EMICalculatorScreen(onBack: () -> Unit) {
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             OutlinedButton(
-                                onClick = { resetAll() },
+                                onClick = { dismissKeyboard(); resetAll() },
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                             ) { Text(stringResource(R.string.reset), style = MaterialTheme.typography.labelMedium) }
                             Button(
-                                onClick = { calculate(); showSchedule = false },
+                                onClick = { dismissKeyboard(); calculate(); showSchedule = false },
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                             ) { Text(stringResource(R.string.calculate), style = MaterialTheme.typography.labelMedium) }
                             Button(
-                                onClick = { if (schedule.isEmpty()) { calculate() }; showSchedule = true },
+                                onClick = { dismissKeyboard(); if (schedule.isEmpty()) { calculate() }; showSchedule = true },
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                             ) { Text(stringResource(R.string.emi_stats), style = MaterialTheme.typography.labelMedium) }
                         }
@@ -205,8 +224,16 @@ fun EMICalculatorScreen(onBack: () -> Unit) {
 
 @Composable private fun SummaryRow(label: String, value: Double) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label)
-        Text(format(value), fontWeight = FontWeight.SemiBold)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = format(value),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 

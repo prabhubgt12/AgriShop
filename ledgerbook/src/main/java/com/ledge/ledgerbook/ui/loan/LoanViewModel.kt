@@ -29,4 +29,10 @@ class LoanViewModel @Inject constructor(
     }
 
     suspend fun getById(id: Long): LoanProfile? = repo.getById(id)
+
+    fun delete(id: Long) {
+        viewModelScope.launch {
+            repo.deleteById(id)
+        }
+    }
 }

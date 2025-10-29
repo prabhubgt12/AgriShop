@@ -22,48 +22,60 @@ object InterstitialAds {
     private var interstitial: InterstitialAd? = null
     @Volatile
     private var isLoading: Boolean = false
-    @Volatile
-    private var lastShownAt: Long = 0L
     private const val MIN_INTERVAL_MS: Long = 2 * 60 * 1000 // 2 minutes
+    // Per-placement throttle timestamps (keyed by effective unit id used for loading/showing)
+    private val lastShownAtByUnit: java.util.concurrent.ConcurrentHashMap<String, Long> = java.util.concurrent.ConcurrentHashMap()
+    @Volatile
+    private var lastLoadedUnitId: String? = null
 
-    fun preload(context: Context) {
-        if (isLoading || interstitial != null) {
-            Log.d("InterstitialAds", "preload skipped: isLoading=$isLoading hasAd=${interstitial != null}")
+    fun preload(context: Context, prodUnitId: String? = null) {
+        val requestedUnit = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else (prodUnitId ?: PROD_UNIT)
+        if (isLoading) {
+            Log.d("InterstitialAds", "preload skipped: loading in progress")
+            return
+        }
+        if (interstitial != null && lastLoadedUnitId == requestedUnit) {
+            Log.d("InterstitialAds", "preload skipped: already have ad for unit=$requestedUnit")
             return
         }
         isLoading = true
         val request = AdRequest.Builder().build()
-        val unitId = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else PROD_UNIT
         InterstitialAd.load(
             context,
-            unitId,
+            requestedUnit,
             request,
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
-                    Log.d("InterstitialAds", "Loaded interstitial unit=" + unitId)
+                    Log.d("InterstitialAds", "Loaded interstitial unit=" + requestedUnit)
                     isLoading = false
                     interstitial = ad
+                    lastLoadedUnitId = requestedUnit
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.e("InterstitialAds", "Failed to load interstitial unit=" + unitId + " code=${error.code} message=${error.message}")
+                    Log.e("InterstitialAds", "Failed to load interstitial unit=" + requestedUnit + " code=${error.code} message=${error.message}")
                     isLoading = false
                     interstitial = null
+                    lastLoadedUnitId = null
                 }
             }
         )
     }
 
     fun showIfAvailable(activity: Activity, onDismiss: (() -> Unit)? = null) {
+        val currentUnit = lastLoadedUnitId
         val now = System.currentTimeMillis()
-        if (now - lastShownAt < MIN_INTERVAL_MS) {
-            Log.d("InterstitialAds", "Throttled: lastShownAt=$lastShownAt now=$now")
-            onDismiss?.invoke(); return
+        if (currentUnit != null) {
+            val last = lastShownAtByUnit[currentUnit] ?: 0L
+            if (now - last < MIN_INTERVAL_MS) {
+                Log.d("InterstitialAds", "Throttled for unit=$currentUnit: lastShown=$last now=$now")
+                onDismiss?.invoke(); return
+            }
         }
         val ad = interstitial
         if (ad == null) {
             Log.d("InterstitialAds", "No interstitial ready; triggering preload and continuing")
-            preload(activity)
+            preload(activity, lastLoadedUnitId)
             onDismiss?.invoke(); return
         }
         // Ensure system bars are shown appropriately during ad without changing bar colors
@@ -75,11 +87,14 @@ object InterstitialAds {
             override fun onAdDismissedFullScreenContent() {
                 Log.d("InterstitialAds", "Dismissed")
                 interstitial = null
-                lastShownAt = System.currentTimeMillis()
+                val unit = lastLoadedUnitId
+                if (unit != null) {
+                    lastShownAtByUnit[unit] = System.currentTimeMillis()
+                }
                 // Restore window settings
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
-                // Preload next for future
-                preload(activity)
+                // Preload next for future (same unit)
+                preload(activity, lastLoadedUnitId)
                 onDismiss?.invoke()
             }
             override fun onAdFailedToShowFullScreenContent(p0: com.google.android.gms.ads.AdError) {
@@ -87,8 +102,8 @@ object InterstitialAds {
                 interstitial = null
                 // Restore window settings
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
-                // Try to load a fresh one for next time
-                preload(activity)
+                // Try to load a fresh one for next time (same unit)
+                preload(activity, lastLoadedUnitId)
                 onDismiss?.invoke()
             }
             override fun onAdShowedFullScreenContent() {
@@ -96,5 +111,21 @@ object InterstitialAds {
             }
         }
         ad.show(activity)
+    }
+
+    fun showWithUnit(activity: Activity, prodUnitId: String, onDismiss: (() -> Unit)? = null) {
+        val requestedUnit = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else prodUnitId
+        val now = System.currentTimeMillis()
+        val last = lastShownAtByUnit[requestedUnit] ?: 0L
+        if (now - last < MIN_INTERVAL_MS) {
+            Log.d("InterstitialAds", "Throttled (placement) for unit=$requestedUnit: lastShown=$last now=$now")
+            onDismiss?.invoke(); return
+        }
+        if (interstitial == null || lastLoadedUnitId != requestedUnit) {
+            Log.d("InterstitialAds", "No ready ad for unit=$requestedUnit; preload and continue")
+            preload(activity, prodUnitId)
+            onDismiss?.invoke(); return
+        }
+        showIfAvailable(activity, onDismiss)
     }
 }
