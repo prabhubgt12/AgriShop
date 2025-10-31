@@ -401,7 +401,14 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         if (!hasRemoveAds) {
-            InterstitialAds.preload(context)
+            InterstitialAds.preloadAll(
+                context,
+                listOf(
+                    "ca-app-pub-2556604347710668/2929559167", // Settings interstitial
+                    "ca-app-pub-2556604347710668/9525003390", // Loan Book interstitial
+                    "ca-app-pub-2556604347710668/7361874486"  // EMI Calculator interstitial
+                )
+            )
         }
     }
 
@@ -451,9 +458,7 @@ fun HomeScreen(
                         if (!hasRemoveAds) {
                             val activity = context as? Activity
                             if (activity != null) {
-                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/9525003390") {
-                                    onOpenLoanBook()
-                                }
+                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/9525003390") { onOpenLoanBook() }
                             } else {
                                 onOpenLoanBook()
                             }
@@ -470,9 +475,7 @@ fun HomeScreen(
                         if (!hasRemoveAds) {
                             val activity = context as? Activity
                             if (activity != null) {
-                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/7361874486") {
-                                    onOpenEmi()
-                                }
+                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/7361874486") { onOpenEmi() }
                             } else {
                                 onOpenEmi()
                             }
@@ -489,7 +492,7 @@ fun HomeScreen(
                         if (!hasRemoveAds) {
                             val activity = context as? Activity
                             if (activity != null) {
-                                InterstitialAds.showIfAvailable(activity) { onOpenSettings() }
+                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/2929559167") { onOpenSettings() }
                             } else {
                                 onOpenSettings()
                             }
