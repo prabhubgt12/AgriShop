@@ -402,6 +402,8 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         if (!hasRemoveAds) {
             InterstitialAds.preload(context)
+            InterstitialAds.preload(context, "ca-app-pub-2556604347710668/9525003390")
+            InterstitialAds.preload(context, "ca-app-pub-2556604347710668/7361874486")
         }
     }
 
