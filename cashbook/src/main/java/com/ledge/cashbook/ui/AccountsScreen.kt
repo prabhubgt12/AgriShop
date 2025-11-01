@@ -160,6 +160,7 @@ fun AccountsScreen(
                                 }
                             }
                         }
+                        HorizontalDivider()
                         Spacer(Modifier.height(8.dp))
                         // Second row: Credit, Debit, Balance (chip)
                         Row(
@@ -197,6 +198,38 @@ fun AccountsScreen(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
+                                }
+                            }
+                        }
+                        val totalTx = (credit + debit).coerceAtLeast(0.0)
+                        if (totalTx > 0.0) {
+                            Spacer(Modifier.height(6.dp))
+                            val creditFrac = (credit / totalTx).toFloat().coerceIn(0f, 1f)
+                            val debitFrac = (debit / totalTx).toFloat().coerceIn(0f, 1f)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(2.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                            ) {
+                                Row(Modifier.fillMaxSize()) {
+                                    if (creditFrac > 0f) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .weight(creditFrac)
+                                                .background(Color(0xFF10B981))
+                                        )
+                                    }
+                                    if (debitFrac > 0f) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .weight(debitFrac)
+                                                .background(Color(0xFFEF4444))
+                                        )
+                                    }
                                 }
                             }
                         }

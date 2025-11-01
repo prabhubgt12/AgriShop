@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Delete
@@ -88,10 +89,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -147,6 +153,18 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             val sOk = filterStart?.let { t.date >= it } ?: true
             val eOk = filterEnd?.let { t.date <= it } ?: true
             sOk && eOk
+        }
+    }
+    // Search state and search-applied list
+    var searchOpen by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    val displayedTxns = remember(filteredTxns, searchQuery) {
+        val q = searchQuery.trim()
+        if (q.isEmpty()) filteredTxns else filteredTxns.filter { t ->
+            val noteOk = (t.note ?: "").contains(q, ignoreCase = true)
+            val catOk = (t.category ?: "").contains(q, ignoreCase = true)
+            val amtOk = t.amount.toString().contains(q, ignoreCase = true)
+            noteOk || catOk || amtOk
         }
     }
     // Observe bulk selection from VM
@@ -676,17 +694,55 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 style = MaterialTheme.typography.titleSmall
                             )
                         } else {
-                            Text(
-                                name,
-                                style = MaterialTheme.typography.titleSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            if (searchOpen) {
+                                val fr = remember { FocusRequester() }
+                                LaunchedEffect(Unit) { fr.requestFocus() }
+                                val shape = RoundedCornerShape(20.dp)
+                                BasicTextField(
+                                    value = searchQuery,
+                                    onValueChange = { searchQuery = it },
+                                    singleLine = true,
+                                    textStyle = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onPrimary),
+                                    cursorBrush = SolidColor(MaterialTheme.colorScheme.onPrimary),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .focusRequester(fr),
+                                    decorationBox = { innerTextField ->
+                                        Row(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = 36.dp)
+                                                .clip(shape)
+                                                .border(1.dp, MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f), shape)
+                                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(Icons.Filled.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                                            Spacer(Modifier.width(8.dp))
+                                            Box(Modifier.weight(1f)) {
+                                                if (searchQuery.isBlank()) {
+                                                    Text(
+                                                        "Search",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                                                    )
+                                                }
+                                                innerTextField()
+                                            }
+                                        }
+                                    }
+                                )
+                            } else {
+                                Text(
+                                    name,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
-                    },
+                    navigationIcon = {},
                     actions = {
                         if (inSelectionMode) {
                             CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
@@ -710,28 +766,41 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             val pos = displayBal >= 0
                             val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
                             val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(chipBg)
-                                    .padding(vertical = 1.dp, horizontal = 4.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = stringResource(R.string.balance) + ": ",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = chipFg
-                                    )
-                                    Text(
-                                        text = Currency.inr(displayBal),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = chipFg
-                                    )
+                            if (!searchOpen) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(chipBg)
+                                        .padding(vertical = 1.dp, horizontal = 4.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = stringResource(R.string.balance) + ": ",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = chipFg
+                                        )
+                                        Text(
+                                            text = Currency.inr(displayBal),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = chipFg
+                                        )
+                                    }
                                 }
                             }
                             // Date filter button (no badge/tint)
                             CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                                IconButton(onClick = {
+                                    if (searchOpen) { searchOpen = false; searchQuery = "" } else { searchOpen = true }
+                                }, modifier = Modifier.size(24.dp)) {
+                                    Icon(
+                                        imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
+                                        contentDescription = if (searchOpen) stringResource(R.string.cancel) else "Search",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                // Actual filter icon
                                 IconButton(onClick = { filterMenuOpen = true }, modifier = Modifier.size(24.dp)) {
                                     Icon(Icons.Default.FilterList, contentDescription = "Filter", modifier = Modifier.size(20.dp))
                                 }
@@ -905,18 +974,18 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             val wAmt = 1.0f
             val headerBg = MaterialTheme.colorScheme.surfaceVariant
 
-            // filteredTxns already computed above to be shared with top bar and totals
-            // Precompute running balances on filtered list
-            val runningBalances = remember(filteredTxns) {
+            // Search+date filtered list reused across top bar, list and totals
+            // Precompute running balances on displayed list
+            val runningBalances = remember(displayedTxns) {
                 var r = 0.0
-                filteredTxns.map { t ->
+                displayedTxns.map { t ->
                     r += if (t.isCredit) t.amount else -t.amount
                     r
                 }
             }
             // Totals for credit and debit
-            val totalCredit = remember(filteredTxns) { filteredTxns.filter { it.isCredit }.sumOf { it.amount } }
-            val totalDebit = remember(filteredTxns) { filteredTxns.filter { !it.isCredit }.sumOf { it.amount } }
+            val totalCredit = remember(displayedTxns) { displayedTxns.filter { it.isCredit }.sumOf { it.amount } }
+            val totalDebit = remember(displayedTxns) { displayedTxns.filter { !it.isCredit }.sumOf { it.amount } }
 
             LazyColumn(
                 modifier = Modifier
@@ -938,7 +1007,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     }
                     HorizontalDivider()
                 }
-                itemsIndexed(filteredTxns) { index, t ->
+                itemsIndexed(displayedTxns) { index, t ->
                     val run = runningBalances.getOrNull(index) ?: 0.0
                     // Theme-aware subtle backgrounds per row by type
                     val dark = androidx.compose.foundation.isSystemInDarkTheme()
