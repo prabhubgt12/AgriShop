@@ -8,8 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,16 +23,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
 import com.ledge.cashbook.util.Currency
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.Box
 import com.ledge.cashbook.util.PdfShare
@@ -37,11 +44,13 @@ import com.ledge.cashbook.util.ExcelShare
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.filled.Delete
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.ads.BannerAd
+import android.graphics.Paint
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,7 +109,7 @@ fun AccountsScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(Modifier.padding(12.dp)) {
-                        // First row: account name + menu
+                        // First row: account name + chart + menu
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 acc.name,
@@ -108,6 +117,10 @@ fun AccountsScreen(
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f)
                             )
+                            // Chart icon to open monthly comparison
+                            IconButton(onClick = { chartFor = acc.id }) {
+                                Icon(Icons.Filled.PieChart, contentDescription = "Chart")
+                            }
                             var menuOpen by remember(acc.id) { mutableStateOf(false) }
                             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
                                 IconButton(onClick = { menuOpen = true }) {
@@ -150,13 +163,7 @@ fun AccountsScreen(
                                             confirmDeleteFor = acc.id
                                         }
                                     )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.category_split)) },
-                                        onClick = {
-                                            menuOpen = false
-                                            chartFor = acc.id
-                                        }
-                                    )
+                                    // Keep other menu items; chart now has its own icon
                                 }
                             }
                         }
@@ -242,89 +249,239 @@ fun AccountsScreen(
                 }
             }
 
-    // Category split dialog (outside LazyColumn scope)
+    // Charts dialog (Monthly comparison + Category split) — outside LazyColumn scope
     val openChartFor = chartFor
     if (openChartFor != null) {
         val txns by remember(openChartFor) { vm.txns(openChartFor) }.collectAsState(initial = emptyList())
-        val groups = remember(txns) {
-            txns.filter { !it.isCredit }.groupBy { it.category?.takeIf { s -> s.isNotBlank() } ?: "" }
+        data class MonthAgg(val label: String, val credit: Double, val debit: Double)
+        val monthData = remember(txns) {
+            val cal = java.util.Calendar.getInstance()
+            // Move to first day of current month
+            cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+            cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            cal.set(java.util.Calendar.MINUTE, 0)
+            cal.set(java.util.Calendar.SECOND, 0)
+            cal.set(java.util.Calendar.MILLISECOND, 0)
+            val fmt = java.text.SimpleDateFormat("MMM")
+            (5 downTo 0).map { back ->
+                val c = cal.clone() as java.util.Calendar
+                c.add(java.util.Calendar.MONTH, -back)
+                val start = c.timeInMillis
+                val label = fmt.format(java.util.Date(start))
+                val c2 = c.clone() as java.util.Calendar
+                c2.add(java.util.Calendar.MONTH, 1)
+                val end = c2.timeInMillis
+                val monthTx = txns.filter { it.date in start until end }
+                val cr = monthTx.filter { it.isCredit }.sumOf { it.amount }
+                val dr = monthTx.filter { !it.isCredit }.sumOf { it.amount }
+                MonthAgg(label, cr, dr)
+            }
+        }
+        val maxTotal = remember(monthData) { monthData.maxOfOrNull { (it.credit + it.debit).coerceAtLeast(0.0) }?.takeIf { it > 0.0 } ?: 1.0 }
+        // Category split (debit-only) aggregates
+        var catRange by rememberSaveable { mutableStateOf(0) } // 0=this month,1=3 months,2=6 months
+        val catFilteredTxns = remember(txns, catRange) {
+            val now = java.util.Calendar.getInstance()
+            val startCal = now.clone() as java.util.Calendar
+            startCal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+            startCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            startCal.set(java.util.Calendar.MINUTE, 0)
+            startCal.set(java.util.Calendar.SECOND, 0)
+            startCal.set(java.util.Calendar.MILLISECOND, 0)
+            val monthsBack = when (catRange) { 1 -> 2; 2 -> 5; else -> 0 } // inclusive current month
+            startCal.add(java.util.Calendar.MONTH, -monthsBack)
+            val startMillis = startCal.timeInMillis
+            txns.filter { it.date >= startMillis }
+        }
+        val catGroups = remember(catFilteredTxns) {
+            catFilteredTxns.filter { !it.isCredit }.groupBy { it.category?.takeIf { s -> s.isNotBlank() } ?: "" }
                 .mapValues { (_, list) -> list.sumOf { it.amount } }
         }
-        val total = remember(groups) { groups.values.sum() }
+        val catTotal = remember(catGroups) { catGroups.values.sum() }
+        val catEntries = remember(catGroups) { catGroups.toList().sortedByDescending { it.second } }
+        val catColors = listOf(
+            Color(0xFF6366F1), Color(0xFFF59E0B), Color(0xFF10B981), Color(0xFFEF4444), Color(0xFF3B82F6),
+            Color(0xFFEC4899), Color(0xFF8B5CF6), Color(0xFF14B8A6), Color(0xFFA3E635), Color(0xFF06B6D4)
+        )
+
+        var tab by rememberSaveable { mutableStateOf(0) }
         AlertDialog(
             onDismissRequest = { chartFor = null },
-            title = { Text(stringResource(R.string.category_split)) },
+            title = { Text(stringResource(R.string.expense_split)) },
             confirmButton = { TextButton(onClick = { chartFor = null }) { Text(stringResource(R.string.ok)) } },
             text = {
-                if (groups.isEmpty() || total <= 0.0) {
-                    Text(text = stringResource(R.string.total_debit) + ": 0")
-                } else {
-                    val entries = groups.toList().sortedByDescending { it.second }
-                    // High-contrast, theme-independent palette (works on light/dark)
-                    val colors = listOf(
-                        Color(0xFF6366F1), // indigo
-                        Color(0xFFF59E0B), // amber
-                        Color(0xFF10B981), // emerald
-                        Color(0xFFEF4444), // red
-                        Color(0xFF3B82F6), // blue
-                        Color(0xFFEC4899), // pink
-                        Color(0xFF8B5CF6), // violet
-                        Color(0xFF14B8A6), // teal
-                        Color(0xFFA3E635), // lime
-                        Color(0xFF06B6D4)  // cyan
-                    )
-                    val sliceColors = entries.mapIndexed { i, _ -> colors[i % colors.size] }
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        // Pie chart
-                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            val chartSize = 220.dp
-                            val surfaceColor = MaterialTheme.colorScheme.surface
-                            Canvas(modifier = Modifier.size(chartSize)) {
-                                var startAngle = -90f
-                                val gap = 1.5f // degrees between slices for visual separation
-                                entries.forEachIndexed { idx, (_, amt) ->
-                                    val rawSweep = (amt / total).toFloat() * 360f
-                                    val sweep = (rawSweep - gap).coerceAtLeast(0f)
-                                    drawArc(
-                                        color = sliceColors[idx],
-                                        startAngle = startAngle + gap / 2f,
-                                        sweepAngle = sweep,
-                                        useCenter = true,
-                                        style = Fill
-                                    )
-                                    startAngle += rawSweep
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    TabRow(selectedTabIndex = tab) {
+                        Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.category_split)) })
+                        Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.last_6_months)) })
+                    }
+                    if (tab == 1) {
+                        if (monthData.all { it.credit + it.debit <= 0.0 }) {
+                            Text(stringResource(R.string.no_data_last_6_months))
+                        } else {
+                            val barHeight = 220.dp
+                            val green = Color(0xFF10B981)
+                            val red = Color(0xFFEF4444)
+                            val onSurfaceArgb = MaterialTheme.colorScheme.onSurface.toArgb()
+                            val density = LocalDensity.current
+                            val leftPad = with(density) { 8.dp.toPx() }
+                            val rightPad = with(density) { 8.dp.toPx() }
+                            var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+                            Box {
+                                val canvasMod = Modifier
+                                    .fillMaxWidth()
+                                    .height(barHeight)
+                                    .pointerInput(monthData, maxTotal) {
+                                        detectTapGestures { offset ->
+                                            val totalW = size.width
+                                            val h = size.height
+                                            val w = (totalW - leftPad - rightPad).coerceAtLeast(1f)
+                                            val count = monthData.size
+                                            val gap = w / (count * 5f)
+                                            val barW = w / (count * 2.5f)
+                                            var x = leftPad + gap
+                                            var hit: Int? = null
+                                            for (i in 0 until count) {
+                                                if (offset.x in x..(x + barW)) { hit = i; break }
+                                                x += barW + gap
+                                            }
+                                            selectedIndex = hit
+                                        }
+                                    }
+                                Canvas(modifier = canvasMod) {
+                                    val count = monthData.size
+                                    val totalW = size.width
+                                    val h = size.height
+                                    val w = (totalW - leftPad - rightPad).coerceAtLeast(1f)
+                                    val gap = w / (count * 5f)
+                                    val barW = w / (count * 2.5f)
+                                    var x = leftPad + gap
+                                    monthData.forEachIndexed { idx, m ->
+                                        val total = (m.credit + m.debit).toFloat()
+                                        val scale = (total / maxTotal.toFloat()).coerceIn(0f, 1f)
+                                        val barH = h * scale
+                                        val creditH = if (total > 0f) barH * (m.credit.toFloat() / total) else 0f
+                                        val debitH = if (total > 0f) barH * (m.debit.toFloat() / total) else 0f
+                                        val bottomY = h
+                                        drawRect(
+                                            color = green,
+                                            topLeft = androidx.compose.ui.geometry.Offset(x, bottomY - creditH),
+                                            size = Size(barW, creditH)
+                                        )
+                                        drawRect(
+                                            color = red,
+                                            topLeft = androidx.compose.ui.geometry.Offset(x, bottomY - creditH - debitH),
+                                            size = Size(barW, debitH)
+                                        )
+                                        if (selectedIndex == idx) {
+                                            drawRect(
+                                                color = Color(onSurfaceArgb),
+                                                topLeft = androidx.compose.ui.geometry.Offset(x - 1f, bottomY - barH - 1f),
+                                                size = Size(barW + 2f, barH + 2f),
+                                                style = Stroke(width = 2f)
+                                            )
+                                        }
+                                        x += barW + gap
+                                    }
                                 }
-                                // Donut hole
-                                val holeRadius = kotlin.math.min(this.size.width, this.size.height) * 0.45f
-                                drawCircle(
-                                    color = surfaceColor,
-                                    radius = holeRadius
-                                )
+                                // values moved below legend (no overlay on chart)
                             }
-                            // Optional center label
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(text = String.format("%.0f", total), style = MaterialTheme.typography.titleMedium)
-                                Text(text = stringResource(R.string.total_debit), style = MaterialTheme.typography.labelSmall)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                monthData.forEach { m -> Text(m.label, style = MaterialTheme.typography.labelSmall) }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Box(Modifier.size(10.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF10B981)))
+                                    Text(stringResource(R.string.credit), style = MaterialTheme.typography.labelSmall)
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Box(Modifier.size(10.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFFEF4444)))
+                                    Text(stringResource(R.string.debit), style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            val sel = selectedIndex
+                            if (sel != null) {
+                                val m = monthData[sel]
+                                Spacer(Modifier.height(6.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Text(stringResource(R.string.credit) + ": " + Currency.inr(m.credit), style = MaterialTheme.typography.labelSmall)
+                                    Text(stringResource(R.string.debit) + ": " + Currency.inr(m.debit), style = MaterialTheme.typography.labelSmall)
+                                }
                             }
                         }
-                        // Legend
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            entries.forEachIndexed { idx, (cat, amt) ->
-                                val pct = (amt / total * 100).toFloat()
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(12.dp)
-                                                .clip(RoundedCornerShape(2.dp))
-                                                .background(sliceColors[idx])
-                                        )
-                                        Text(if (cat.isBlank()) stringResource(R.string.uncategorized) else cat, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    } else {
+                        // Category Split tab content
+                        if (catEntries.isEmpty() || catTotal <= 0.0) {
+                            Text(text = stringResource(R.string.total_debit) + ": 0")
+                        } else {
+                            // Small dropdown for range
+                            var ddOpen by rememberSaveable { mutableStateOf(false) }
+                            val currentLabel = when (catRange) { 1 -> stringResource(R.string.three_months); 2 -> stringResource(R.string.six_months); else -> stringResource(R.string.this_month) }
+                            Box {
+                                OutlinedButton(
+                                    onClick = { ddOpen = true },
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.width(140.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                        Text(currentLabel, style = MaterialTheme.typography.labelSmall)
+                                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
                                     }
-                                    Text(
-                                        text = "${Currency.inr(amt)} (${String.format("%.0f%%", pct)})",
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
+                                }
+                                DropdownMenu(expanded = ddOpen, onDismissRequest = { ddOpen = false }) {
+                                    DropdownMenuItem(text = { Text(stringResource(R.string.this_month)) }, onClick = { catRange = 0; ddOpen = false })
+                                    DropdownMenuItem(text = { Text(stringResource(R.string.three_months)) }, onClick = { catRange = 1; ddOpen = false })
+                                    DropdownMenuItem(text = { Text(stringResource(R.string.six_months)) }, onClick = { catRange = 2; ddOpen = false })
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            val surfaceColor = MaterialTheme.colorScheme.surface
+                            // Donut chart
+                            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                val chartSize = 220.dp
+                                Canvas(modifier = Modifier.size(chartSize)) {
+                                    var startAngle = -90f
+                                    val gap = 1.5f
+                                    catEntries.forEachIndexed { idx, (_, amt) ->
+                                        val rawSweep = (amt / catTotal).toFloat() * 360f
+                                        val sweep = (rawSweep - gap).coerceAtLeast(0f)
+                                        drawArc(
+                                            color = catColors[idx % catColors.size],
+                                            startAngle = startAngle + gap / 2f,
+                                            sweepAngle = sweep,
+                                            useCenter = true,
+                                            style = Fill
+                                        )
+                                        startAngle += rawSweep
+                                    }
+                                    val holeRadius = kotlin.math.min(this.size.width, this.size.height) * 0.45f
+                                    drawCircle(color = surfaceColor, radius = holeRadius)
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(text = String.format("%.0f", catTotal), style = MaterialTheme.typography.titleMedium)
+                                    Text(text = stringResource(R.string.total_debit), style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                catEntries.forEachIndexed { idx, (cat, amt) ->
+                                    val pct = (amt / catTotal * 100).toFloat()
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(12.dp)
+                                                    .clip(RoundedCornerShape(2.dp))
+                                                    .background(catColors[idx % catColors.size])
+                                            )
+                                            Text(if (cat.isBlank()) stringResource(R.string.uncategorized) else cat, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        }
+                                        Text(
+                                            text = "${Currency.inr(amt)} (${String.format("%.0f%%", pct)})",
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    }
                                 }
                             }
                         }

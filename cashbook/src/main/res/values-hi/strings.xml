@@ -72,7 +72,13 @@
     <string name="uncategorized">बिना श्रेणी</string>
     <string name="show_category_field">श्रेणी फ़ील्ड दिखाएं</string>
     <string name="categories_csv">श्रेणियाँ (कॉमा से अलग)</string>
-    <string name="category_split">खर्च का सारांश</string>
+    <string name="category_split">खर्च का विभाजन</string>
+    <string name="expense_split">खर्च का विभाजन</string>
+    <string name="last_6_months">पिछले 6 महीने</string>
+    <string name="no_data_last_6_months">पिछले 6 महीनों में कोई डाटा नहीं</string>
+    <string name="this_month">इस महीने</string>
+    <string name="three_months">3 महीने</string>
+    <string name="six_months">6 महीने</string>
     <string name="move">खाता बदलें</string>
     <string name="move_to_account">खाता बदलें</string>
     <string name="no_other_accounts">अन्य कोई खाता उपलब्ध नहीं</string>

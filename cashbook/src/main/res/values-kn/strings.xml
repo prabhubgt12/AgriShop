@@ -121,7 +121,13 @@
     <string name="uncategorized">ವರ್ಗೀಕರಿಸದ</string>
     <string name="show_category_field">ವರ್ಗ ತೋರಿಸಿ</string>
     <string name="categories_csv">ವರ್ಗಗಳು (ಕಾಮಾ ಪ್ರತ್ಯೇಕ)</string>
-    <string name="category_split">ಖರ್ಚಿನ ವಿವರ</string>
+    <string name="category_split">ಖರ್ಚಿನ ವಿಭಜನೆ</string>
+    <string name="expense_split">ಖರ್ಚಿನ ವಿಭಜನೆ</string>
+    <string name="last_6_months">ಕಳೆದ 6 ತಿಂಗಳು</string>
+    <string name="no_data_last_6_months">ಕಳೆದ 6 ತಿಂಗಳಲ್ಲಿ ಮಾಹಿತಿ ಇಲ್ಲ</string>
+    <string name="this_month">ಈ ತಿಂಗಳು</string>
+    <string name="three_months">3 ತಿಂಗಳು</string>
+    <string name="six_months">6 ತಿಂಗಳು</string>
     <string name="move">ಖಾತೆ ಬದಲಿಸಿ</string>
     <string name="move_to_account">ಖಾತೆ ಬದಲಿಸಿ</string>
     <string name="no_other_accounts">ಇತರ ಖಾತೆಗಳು ಲಭ್ಯವಿಲ್ಲ</string>
