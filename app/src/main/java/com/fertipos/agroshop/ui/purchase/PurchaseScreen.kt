@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
@@ -48,10 +49,17 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.AlertDialog
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.rememberCoroutineScope
+import com.fertipos.agroshop.ui.customer.CustomerViewModel
+import kotlinx.coroutines.launch
+import com.fertipos.agroshop.ui.common.PartyForm
 
 @Composable
 fun PurchaseScreen(navVm: AppNavViewModel) {
     val vm: PurchaseViewModel = hiltViewModel()
+    val custVm: CustomerViewModel = hiltViewModel()
     val state by vm.state.collectAsState()
     // Snackbar replaced with Toast to avoid blocking navigation and being hidden by scroll
     val prevTab = navVm.previousSelected.collectAsState()
@@ -62,6 +70,12 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
     var qtyText by remember { mutableStateOf("") }
     var priceText by remember { mutableStateOf("") }
     // Date handled by VM (newDateMillis for new, editingDateMillis for edit)
+    // Add Supplier dialog state
+    var showAddSupplier by remember { mutableStateOf(false) }
+    var newSuppName by remember { mutableStateOf("") }
+    var newSuppPhone by remember { mutableStateOf("") }
+    var newSuppAddress by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     // Observe pending edit request from navigation and load once
     val pendingEditId = navVm.pendingEditPurchaseId.collectAsState()
@@ -75,7 +89,6 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             vm.resetForNewPurchase()
         }
     }
-
     // Always intercept system back to return to the intended tab.
     BackHandler(enabled = true) {
         val target = backOverride.value ?: prevTab.value
@@ -84,6 +97,13 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
     }
 
     val context = LocalContext.current
+    LaunchedEffect(state.error) {
+        val err = state.error
+        if (err != null) {
+            android.widget.Toast.makeText(context, err, android.widget.Toast.LENGTH_SHORT).show()
+            vm.clearError()
+        }
+    }
     LaunchedEffect(state.successPurchaseId) {
         val id = state.successPurchaseId
         if (id != null) {
@@ -119,6 +139,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
             .imePadding()
             .navigationBarsPadding()
@@ -149,7 +170,8 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                 label = stringResource(R.string.supplier_label),
                 initialQuery = selectedName,
                 modifier = Modifier.fillMaxWidth(),
-                onPicked = { vm.setSupplier(it.id) }
+                onPicked = { vm.setSupplier(it.id) },
+                onAddNew = { showAddSupplier = true }
             )
             Spacer(Modifier.height(8.dp))
         }
@@ -285,8 +307,41 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                 Button(onClick = { vm.submit() }, enabled = state.items.isNotEmpty()) { Text(buttonText) }
                 TextButton(onClick = { vm.clearSuccess() }) { Text(stringResource(R.string.reset_status)) }
             }
-            state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            // Error is shown as a Toast; no inline error text
         }
+    }
+
+    // Add Supplier Dialog (opened via CustomerPicker onAddNew)
+    if (showAddSupplier) {
+        AlertDialog(
+            onDismissRequest = { showAddSupplier = false },
+            confirmButton = {},
+            dismissButton = {},
+            text = {
+                PartyForm(
+                    title = "Add new supplier",
+                    name = newSuppName,
+                    onNameChange = { newSuppName = it },
+                    phone = newSuppPhone,
+                    onPhoneChange = { newSuppPhone = it },
+                    address = newSuppAddress,
+                    onAddressChange = { newSuppAddress = it },
+                    showSupplierToggle = false,
+                    isSupplier = true,
+                    onIsSupplierChange = {},
+                    onSubmit = {
+                        scope.launch {
+                            val id = custVm.addAndReturnId(newSuppName, newSuppPhone.takeIf { it.isNotBlank() }, newSuppAddress.takeIf { it.isNotBlank() }, true)
+                            if (id > 0) vm.setSupplier(id)
+                            newSuppName = ""; newSuppPhone = ""; newSuppAddress = ""
+                            showAddSupplier = false
+                        }
+                    },
+                    onCancel = { showAddSupplier = false },
+                    submitText = "Add"
+                )
+            }
+        )
     }
 
 }
@@ -303,7 +358,8 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors()
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
                 Row(modifier = Modifier.fillMaxWidth()) {

@@ -18,6 +18,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -67,7 +68,7 @@ fun ReportsScreen() {
     val currency = CurrencyFormatter.inr
     val dateFmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)) {
             Text(text = stringResource(R.string.reports_title), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
             Spacer(Modifier.height(16.dp))
@@ -82,7 +83,8 @@ fun ReportsScreen() {
                             .weight(1f)
                             .height(100.dp)
                             .clickable { section = "pl" }
-                            .padding(end = 6.dp)
+                            .padding(end = 6.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(Modifier.fillMaxSize().padding(12.dp)) {
                             Icon(Icons.Filled.Assessment, contentDescription = null)
@@ -95,7 +97,8 @@ fun ReportsScreen() {
                             .weight(1f)
                             .height(100.dp)
                             .clickable { section = "customer" }
-                            .padding(start = 6.dp)
+                            .padding(start = 6.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(Modifier.fillMaxSize().padding(12.dp)) {
                             Icon(Icons.Filled.People, contentDescription = null)
@@ -124,7 +127,7 @@ fun ReportsScreen() {
             var costingExpanded by remember { mutableStateOf(false) }
             var costingMethod by remember { mutableStateOf(ReportsViewModel.CostingMethod.FIFO) }
 
-            if (section == "pl") Card(Modifier.fillMaxWidth()) {
+            if (section == "pl") Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                 Column(Modifier.fillMaxWidth().padding(12.dp).verticalScroll(rememberScrollState())) {
                     Text(text = stringResource(R.string.pl_title), fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(6.dp))
@@ -433,7 +436,7 @@ fun ReportsScreen() {
             val selectedName = customers.firstOrNull { it.id == selectedId }?.name ?: stringResource(R.string.pick_customer)
             val scope = rememberCoroutineScope()
 
-            if (section == "customer") Card(Modifier.fillMaxWidth()) {
+            if (section == "customer") Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
                     Text(text = stringResource(R.string.customer_title), fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(6.dp))

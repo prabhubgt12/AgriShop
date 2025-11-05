@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
@@ -128,7 +129,7 @@ private fun DateChipPH(value: Long?, placeholder: String, onChange: (Long?) -> U
     val ctx = LocalContext.current
     val df = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     val text = remember(value) { value?.let { df.format(Date(it)) } ?: placeholder }
-    Card(modifier = modifier, onClick = {
+    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), onClick = {
         val cal = java.util.Calendar.getInstance().apply { if (value != null) timeInMillis = value }
         DatePickerDialog(
             ctx,
@@ -230,6 +231,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
                 .padding(horizontal = 8.dp, vertical = 8.dp)
                 .onGloballyPositioned { coords ->
@@ -254,7 +256,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
             var durationExpanded by remember { mutableStateOf(false) }
             var selectedDuration by remember { mutableStateOf<DurationOptionPH?>(DurationOptionPH.YEAR) }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Card(onClick = { durationExpanded = true }) {
+                    Card(onClick = { durationExpanded = true }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                         Row(
                             modifier = Modifier
                                 .padding(horizontal = 6.dp, vertical = 6.dp)
@@ -386,7 +388,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                 total to bal
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Card(modifier = Modifier.weight(1f)) {
+                Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                     Column(Modifier.padding(12.dp)) {
                         Text(stringResource(R.string.summary_total_purchase), style = MaterialTheme.typography.labelSmall)
                         Spacer(Modifier.height(4.dp))
@@ -405,7 +407,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                         }
                     }
                 }
-                Card(modifier = Modifier.weight(1f)) {
+                Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                     Column(Modifier.padding(12.dp)) {
                         Text(stringResource(R.string.summary_balance_due), style = MaterialTheme.typography.labelSmall)
                         Spacer(Modifier.height(4.dp))
@@ -425,7 +427,7 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                     }
                 }
                 // Results card
-                Card(modifier = Modifier.weight(1f)) {
+                Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)) {
                     Column(Modifier.padding(12.dp)) {
                         Text(stringResource(R.string.results_label), style = MaterialTheme.typography.labelSmall)
                         Spacer(Modifier.height(4.dp))
@@ -467,7 +469,9 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                             full = vm.getFullPurchaseOnce(item.id)
                                             showReadonly = true
                                         }
-                                    }
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                             ) {
                                 Column(Modifier.padding(12.dp)) {
                                     val dfCard = remember { SimpleDateFormat("dd MMM yy", Locale.getDefault()) }
@@ -556,7 +560,9 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
                                             full = vm.getFullPurchaseOnce(item.purchaseId)
                                             showReadonly = true
                                         }
-                                    }
+                                    },
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                             ) {
                                 Column(Modifier.padding(12.dp)) {
                                     val dfCard = remember { SimpleDateFormat("dd MMM yy", Locale.getDefault()) }

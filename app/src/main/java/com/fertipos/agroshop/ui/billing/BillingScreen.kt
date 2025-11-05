@@ -75,11 +75,16 @@ import com.fertipos.agroshop.ui.common.ProductPicker
 import com.fertipos.agroshop.ui.common.DateField
 import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
+import androidx.compose.material3.AlertDialog
+import androidx.compose.runtime.rememberCoroutineScope
+import com.fertipos.agroshop.ui.customer.CustomerViewModel
+import kotlinx.coroutines.launch
+import com.fertipos.agroshop.ui.common.PartyForm
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BillingScreen(navVm: AppNavViewModel) {
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         // Single screen: New Bill only (history available elsewhere)
         NewBillContent(navVm)
     }
@@ -89,6 +94,7 @@ fun BillingScreen(navVm: AppNavViewModel) {
 @Composable
 private fun NewBillContent(navVm: AppNavViewModel) {
     val vm: BillingViewModel = hiltViewModel()
+    val custVm: CustomerViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
     val context = LocalContext.current
     val currency = remember { CurrencyFormatter.inr }
@@ -110,6 +116,12 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var qtyText by remember { mutableStateOf("") }
     var priceText by remember { mutableStateOf("") }
+    // Add Customer dialog state
+    var showAddCustomer by remember { mutableStateOf(false) }
+    var newCustName by remember { mutableStateOf("") }
+    var newCustPhone by remember { mutableStateOf("") }
+    var newCustAddress by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     // If there's a pending edit request from nav, load it once
     val pendingEditId = navVm.pendingEditInvoiceId.collectAsState()
@@ -140,6 +152,24 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     LaunchedEffect(newBillTick.value) {
         if (pendingEditId.value == null) {
             vm.resetForNewBill()
+        }
+    }
+
+    // Show errors as Toasts so they are always visible
+    LaunchedEffect(state.value.error) {
+        val err = state.value.error
+        if (!err.isNullOrBlank()) {
+            val msg = when {
+                err == "ERR_SELECT_CUSTOMER" -> context.getString(R.string.err_select_customer)
+                err == "ERR_ADD_ONE_ITEM" -> context.getString(R.string.err_add_one_item)
+                err.startsWith("ERR_INSUFFICIENT_STOCK|") -> {
+                    val parts = err.split('|')
+                    "Insufficient stock for ${parts.getOrNull(1) ?: ""}"
+                }
+                else -> err
+            }
+            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+            vm.clearError()
         }
     }
 
@@ -175,7 +205,8 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                 label = stringResource(R.string.customer_required),
                 initialQuery = selectedName,
                 modifier = Modifier.fillMaxWidth(),
-                onPicked = { vm.setCustomer(it.id) }
+                onPicked = { vm.setCustomer(it.id) },
+                onAddNew = { showAddCustomer = true }
             )
             Spacer(Modifier.height(6.dp))
         }
@@ -319,25 +350,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                     vm.submit()
                 }, enabled = !state.value.loading && state.value.selectedCustomerId != null && state.value.items.isNotEmpty()) { Text(stringResource(R.string.submit_and_print)) }
             }
-            if (state.value.error != null && state.value.error!!.isNotBlank()) {
-                Spacer(Modifier.height(4.dp))
-                val err = state.value.error!!
-                val msg = when {
-                    err == "ERR_SELECT_CUSTOMER" -> stringResource(R.string.err_select_customer)
-                    err == "ERR_ADD_ONE_ITEM" -> stringResource(R.string.err_add_one_item)
-                    err.startsWith("ERR_INSUFFICIENT_STOCK|") -> {
-                        val parts = err.split('|')
-                        if (parts.size >= 4) {
-                            val name = parts[1]
-                            val available = parts[2]
-                            val required = parts[3]
-                            stringResource(R.string.err_insufficient_stock, name, available, required)
-                        } else err
-                    }
-                    else -> err
-                }
-                Text(text = msg, color = androidx.compose.ui.graphics.Color.Red)
-            }
+            // Error is now shown as a Toast above; no inline error Text here
         }
     }
 
@@ -440,6 +453,38 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             navVm.navigateTo(target)
         }
     }
+
+    if (showAddCustomer) {
+        AlertDialog(
+            onDismissRequest = { showAddCustomer = false },
+            confirmButton = {},
+            dismissButton = {},
+            text = {
+                PartyForm(
+                    title = "Add new customer",
+                    name = newCustName,
+                    onNameChange = { newCustName = it },
+                    phone = newCustPhone,
+                    onPhoneChange = { newCustPhone = it },
+                    address = newCustAddress,
+                    onAddressChange = { newCustAddress = it },
+                    showSupplierToggle = false,
+                    isSupplier = false,
+                    onIsSupplierChange = {},
+                    onSubmit = {
+                        scope.launch {
+                            val id = custVm.addAndReturnId(newCustName, newCustPhone.takeIf { it.isNotBlank() }, newCustAddress.takeIf { it.isNotBlank() }, false)
+                            if (id > 0) vm.setCustomer(id)
+                            newCustName = ""; newCustPhone = ""; newCustAddress = ""
+                            showAddCustomer = false
+                        }
+                    },
+                    onCancel = { showAddCustomer = false },
+                    submitText = "Add"
+                )
+            }
+        )
+    }
 }
 
 @Composable
@@ -455,7 +500,8 @@ private fun DraftItemRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
-        colors = CardDefaults.cardColors()
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -537,4 +583,3 @@ private fun triggerPrint(context: Context, jobName: String, lines: List<String>)
     }
     printManager.print(jobName, adapter, PrintAttributes.Builder().build())
 }
-

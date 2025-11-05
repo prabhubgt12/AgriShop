@@ -48,6 +48,19 @@ class CustomerViewModel @Inject constructor(
         }
     }
 
+    suspend fun addAndReturnId(name: String, phone: String?, address: String?, isSupplier: Boolean): Int {
+        if (name.isBlank()) return 0
+        val id = dao.insert(
+            Customer(
+                name = name.trim(),
+                phone = phone?.trim().takeUnless { it.isNullOrBlank() },
+                address = address?.trim().takeUnless { it.isNullOrBlank() },
+                isSupplier = isSupplier
+            )
+        )
+        return id.toInt()
+    }
+
     fun update(customer: Customer, name: String, phone: String?, address: String?, isSupplier: Boolean) {
         if (name.isBlank()) return
         viewModelScope.launch {

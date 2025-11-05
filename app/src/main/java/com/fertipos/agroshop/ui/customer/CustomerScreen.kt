@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -71,7 +72,7 @@ fun CustomerScreen() {
     val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 8.dp, vertical = 8.dp)) {
             SnackbarHost(hostState = snackbarHostState)
             // Header with Add button
             var showAdd by remember { mutableStateOf(false) }
@@ -190,7 +191,9 @@ private fun CustomerRow(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { showEdit = true }
+            .clickable { showEdit = true },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
             var menuExpanded by remember { mutableStateOf(false) }

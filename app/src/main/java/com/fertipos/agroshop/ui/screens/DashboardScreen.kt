@@ -230,22 +230,16 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.surface,
-                        MaterialTheme.colorScheme.surfaceVariant
-                    )
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     )
     {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         // Header with logo and shop name
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-            shape = CardDefaults.elevatedShape
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = CardDefaults.elevatedShape,
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             androidx.compose.foundation.layout.Row(
                 modifier = Modifier
@@ -263,7 +257,7 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
                     Text(
                         text = profile.name.ifBlank { stringResource(com.fertipos.agroshop.R.string.your_shop) },
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

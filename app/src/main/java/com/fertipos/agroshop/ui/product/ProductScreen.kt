@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -100,8 +101,8 @@ fun ProductScreen() {
     }
     val lowThreshold = profileState.value.lowStockThreshold
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp)) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 8.dp, vertical = 8.dp)) {
             SnackbarHost(hostState = snackbarHostState)
             // Header with Add button
             var showAdd by remember { mutableStateOf(false) }
@@ -205,7 +206,11 @@ private fun ProductRow(
             maximumFractionDigits = 0
         }
     }
-    Card(modifier = Modifier.fillMaxWidth().clickable { showEdit = true }) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable { showEdit = true },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
         Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
             // Row 1: Name (start), menu (end)
             var menuExpanded by remember { mutableStateOf(false) }

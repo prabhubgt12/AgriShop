@@ -204,6 +204,8 @@ class PurchaseViewModel @Inject constructor(
     fun setEditingDate(millis: Long?) { editingDate.value = millis }
     fun setNewDate(millis: Long?) { newDate.value = millis ?: System.currentTimeMillis() }
 
+    fun clearError() { status.value = status.value.first to null }
+
     fun submit() {
         val supp = selectedSupplier.value ?: run {
             status.value = false to "Select a supplier"
