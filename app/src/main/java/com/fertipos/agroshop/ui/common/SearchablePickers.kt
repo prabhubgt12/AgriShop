@@ -124,8 +124,10 @@ fun UnitPicker(
                 .fillMaxWidth()
                 .onFocusChanged { fs: FocusState -> if (fs.isFocused) expanded = true },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                errorContainerColor = Color.Transparent
             ),
             trailingIcon = {
                 IconButton(onClick = { expanded = !expanded }) {
@@ -174,8 +176,10 @@ fun TypePicker(
                 .fillMaxWidth()
                 .onFocusChanged { fs: FocusState -> if (fs.isFocused) expanded = true },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                errorContainerColor = Color.Transparent
             ),
             trailingIcon = {
                 IconButton(onClick = { expanded = !expanded }) {
@@ -209,7 +213,9 @@ fun ProductPicker(
     label: String = "Product",
     initialQuery: String = "",
     modifier: Modifier = Modifier,
-    onPicked: (Product) -> Unit
+    onPicked: (Product) -> Unit,
+    addNewLabel: String? = null,
+    onAddNew: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     // Re-initialize internal query whenever the external initialQuery changes
@@ -242,6 +248,21 @@ fun ProductPicker(
             onDismissRequest = { expanded = false },
             properties = PopupProperties(focusable = false)
         ) {
+            if (onAddNew != null) {
+                DropdownMenuItem(
+                    text = {
+                        Row {
+                            Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(6.dp))
+                            Text((addNewLabel ?: "Manage products"), color = MaterialTheme.colorScheme.primary)
+                        }
+                    },
+                    onClick = {
+                        expanded = false
+                        onAddNew()
+                    }
+                )
+            }
             products
                 .asSequence()
                 .filter { it.name.contains(query, ignoreCase = true) }

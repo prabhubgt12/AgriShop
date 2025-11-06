@@ -54,6 +54,30 @@ class ProductViewModel @Inject constructor(
         }
     }
 
+    suspend fun addAndReturnId(
+        name: String,
+        type: String,
+        unit: String,
+        sellingPrice: Double,
+        purchasePrice: Double,
+        stockQuantity: Double,
+        gstPercent: Double
+    ): Int {
+        if (name.isBlank() || unit.isBlank()) return 0
+        val id = dao.insert(
+            Product(
+                name = name.trim(),
+                type = type.trim(),
+                unit = unit.trim(),
+                sellingPrice = sellingPrice,
+                purchasePrice = purchasePrice,
+                stockQuantity = stockQuantity,
+                gstPercent = gstPercent
+            )
+        )
+        return id.toInt()
+    }
+
     fun update(
         product: Product,
         name: String,

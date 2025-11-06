@@ -53,6 +53,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.rememberCoroutineScope
 import com.fertipos.agroshop.ui.customer.CustomerViewModel
+import com.fertipos.agroshop.ui.common.AddProductDialog
+import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
+import com.fertipos.agroshop.ui.product.ProductViewModel
 import kotlinx.coroutines.launch
 import com.fertipos.agroshop.ui.common.PartyForm
 
@@ -60,6 +63,8 @@ import com.fertipos.agroshop.ui.common.PartyForm
 fun PurchaseScreen(navVm: AppNavViewModel) {
     val vm: PurchaseViewModel = hiltViewModel()
     val custVm: CustomerViewModel = hiltViewModel()
+    val prodVm: ProductViewModel = hiltViewModel()
+    val profVm: CompanyProfileViewModel = hiltViewModel()
     val state by vm.state.collectAsState()
     // Snackbar replaced with Toast to avoid blocking navigation and being hidden by scroll
     val prevTab = navVm.previousSelected.collectAsState()
@@ -69,12 +74,15 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var qtyText by remember { mutableStateOf("") }
     var priceText by remember { mutableStateOf("") }
+    var pendingSelectProductId by remember { mutableStateOf<Int?>(null) }
     // Date handled by VM (newDateMillis for new, editingDateMillis for edit)
     // Add Supplier dialog state
     var showAddSupplier by remember { mutableStateOf(false) }
     var newSuppName by remember { mutableStateOf("") }
     var newSuppPhone by remember { mutableStateOf("") }
     var newSuppAddress by remember { mutableStateOf("") }
+    // Add Product dialog state
+    var showAddProduct by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Observe pending edit request from navigation and load once
@@ -87,6 +95,17 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         } else {
             // No edit requested; ensure a clean slate for new purchase
             vm.resetForNewPurchase()
+        }
+    }
+
+    // When products list updates and we have a pending product id, auto-select it
+    LaunchedEffect(state.products, pendingSelectProductId) {
+        val pid = pendingSelectProductId
+        if (pid != null) {
+            state.products.firstOrNull { it.id == pid }?.let { newly ->
+                selectedProduct = newly
+                pendingSelectProductId = null
+            }
         }
     }
     // Always intercept system back to return to the intended tab.
@@ -183,10 +202,13 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                 products = state.products,
                 label = stringResource(R.string.product_label),
                 modifier = Modifier.fillMaxWidth(),
+                initialQuery = selectedProduct?.name ?: "",
                 onPicked = { p ->
                     selectedProduct = p
                     priceText = p.purchasePrice.toStringAsFixed(2)
-                }
+                },
+                addNewLabel = stringResource(R.string.add),
+                onAddNew = { showAddProduct = true }
             )
             Spacer(Modifier.height(6.dp))
             // Grouped numeric fields
@@ -309,6 +331,33 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             }
             // Error is shown as a Toast; no inline error text
         }
+    }
+
+    // Add Product dialog (outside list)
+    if (showAddProduct) {
+        val profile by profVm.profile.collectAsState()
+        val typeOptions = remember(profile.productTypesCsv) {
+            profile.productTypesCsv.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                .ifEmpty { listOf("Fertilizer", "Pecticide", "Fungi", "GP", "Other") }
+        }
+        val unitOptions = remember(profile.unitsCsv) {
+            profile.unitsCsv.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                .ifEmpty { listOf("Kg", "Pcs", "L") }
+        }
+        AddProductDialog(
+            typeOptions = typeOptions,
+            unitOptions = unitOptions,
+            onConfirm = { n, t, u, sp, pp, st, g ->
+                scope.launch {
+                    val id = prodVm.addAndReturnId(n, t, u, sp, pp, st, g)
+                    if (id > 0) pendingSelectProductId = id
+                }
+                // prefill with purchase price
+                priceText = pp.toStringAsFixed(2)
+                showAddProduct = false
+            },
+            onDismiss = { showAddProduct = false }
+        )
     }
 
     // Add Supplier Dialog (opened via CustomerPicker onAddNew)

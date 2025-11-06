@@ -20,6 +20,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.Card
@@ -33,6 +35,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +48,7 @@ import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,6 +63,10 @@ import androidx.compose.ui.graphics.nativeCanvas
 import android.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.geometry.CornerRadius
 import com.fertipos.agroshop.ui.customer.CustomerScreen
 import com.fertipos.agroshop.ui.product.ProductScreen
 import com.fertipos.agroshop.ui.billing.BillingScreen
@@ -81,6 +89,166 @@ enum class RangeOption(val label: String, val days: Long) {
     M6("6 months", 180),
     Y1("Year", 365)
 }
+
+@Composable
+private fun MonthlySalesProfitChart() {
+    val reportsVm: com.fertipos.agroshop.ui.reports.ReportsViewModel = hiltViewModel()
+    val ctx = LocalContext.current
+
+    // Build fiscal months (Apr -> Mar) [India common]
+    val months = remember {
+        val cal = java.util.Calendar.getInstance()
+        val now = cal.timeInMillis
+        val fiscalYearStart = run {
+            val c = java.util.Calendar.getInstance()
+            c.timeInMillis = now
+            val year = c.get(java.util.Calendar.YEAR)
+            val month = c.get(java.util.Calendar.MONTH) // 0-based
+            val fy = if (month >= java.util.Calendar.APRIL) year else year - 1
+            c.clear()
+            c.set(fy, java.util.Calendar.APRIL, 1, 0, 0, 0)
+            c.set(java.util.Calendar.MILLISECOND, 0)
+            c.timeInMillis
+        }
+        // 12 months windows
+        (0 until 12).map { i ->
+            val c = java.util.Calendar.getInstance()
+            c.timeInMillis = fiscalYearStart
+            c.add(java.util.Calendar.MONTH, i)
+            val start = c.timeInMillis
+            // end: last millisecond of month
+            c.add(java.util.Calendar.MONTH, 1)
+            c.add(java.util.Calendar.MILLISECOND, -1)
+            val end = c.timeInMillis
+            // label like Apr, May ...
+            c.timeInMillis = start
+            val lbl = c.getDisplayName(java.util.Calendar.MONTH, java.util.Calendar.SHORT, java.util.Locale.getDefault()) ?: ""
+            Triple(lbl, start, end)
+        }
+    }
+
+    // State for monthly values
+    data class MP(val sales: Double, val profit: Double)
+    var monthly by remember { mutableStateOf(List(12) { MP(0.0, 0.0) }) }
+    var selectedIndex by remember { mutableStateOf<Int?>(null) }
+
+    // Load data once
+    LaunchedEffect(months) {
+        val results = mutableListOf<MP>()
+        for ((_, start, end) in months) {
+            val toEnd = end.coerceAtLeast(start)
+            val pl = reportsVm.computeProfitAndLoss(start, toEnd, com.fertipos.agroshop.ui.reports.ReportsViewModel.CostingMethod.AVERAGE)
+            results.add(MP(sales = pl.salesSubtotal, profit = pl.grossProfit.coerceAtLeast(0.0)))
+        }
+        monthly = results
+    }
+
+    val maxSales = remember(monthly) { monthly.maxOfOrNull { it.sales }?.takeIf { it > 0 } ?: 1.0 }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Chart area
+        val barCount = months.size
+        val barSpacing = 8.dp
+        val chartHeight = 180.dp
+        val barCorner = 6.dp
+        // Pre-computed spacing in px for non-composable scopes
+        val spacingPx = with(LocalDensity.current) { barSpacing.toPx() }
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(chartHeight)
+                .pointerInput(barCount, monthly) {
+                    detectTapGestures { offset ->
+                        val w = size.width
+                        val totalSpacingPx = spacingPx * (barCount + 1)
+                        val barWidth = ((w - totalSpacingPx) / barCount).coerceAtLeast(0f)
+                        var x = spacingPx
+                        for (i in 0 until barCount) {
+                            val left = x
+                            val right = x + barWidth
+                            if (offset.x in left..right) {
+                                selectedIndex = i
+                                break
+                            }
+                            x += barWidth + spacingPx
+                        }
+                    }
+                }
+        ) {
+            val w = size.width
+            val h = size.height
+            val barWidth = ((w - spacingPx * (barCount + 1)) / barCount).coerceAtLeast(0f)
+            // Gap between sales and profit bars inside the same month group
+            val innerGap = (spacingPx * 0.4f).coerceAtLeast(2f)
+            var x = spacingPx
+            monthly.forEachIndexed { i, mp ->
+                val salesH = (mp.sales / maxSales).toFloat() * h
+                val profitH = (mp.profit.coerceAtLeast(0.0) / maxSales).toFloat() * h
+                // Two side-by-side bars within the month group
+                val singleBarWidth = ((barWidth - innerGap) / 2f).coerceAtLeast(1f)
+                val salesLeft = x
+                val profitLeft = x + singleBarWidth + innerGap
+
+                // Sales bar
+                drawRect(
+                    color = MonthlySalesColor,
+                    topLeft = Offset(salesLeft, h - salesH),
+                    size = Size(singleBarWidth, salesH)
+                )
+                // Profit bar
+                drawRect(
+                    color = MonthlyProfitColor,
+                    topLeft = Offset(profitLeft, h - profitH),
+                    size = Size(singleBarWidth, profitH)
+                )
+                x += barWidth + spacingPx
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        // X-axis labels
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+        ) {
+            months.forEach { (lbl, _, _) ->
+                Text(lbl, style = MaterialTheme.typography.labelSmall)
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        // Legends
+        Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
+            androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+                Legend(color = MonthlySalesColor)
+                Spacer(Modifier.width(8.dp))
+                val i = selectedIndex
+                val text = if (i != null) {
+                    val v = monthly.getOrNull(i)?.sales ?: 0.0
+                    "Sales: ₹" + String.format("%,.2f", v)
+                } else "Sales"
+                Text(text, style = MaterialTheme.typography.bodySmall)
+            }
+            androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+                Legend(color = MonthlyProfitColor)
+                Spacer(Modifier.width(8.dp))
+                val i = selectedIndex
+                val text = if (i != null) {
+                    val v = monthly.getOrNull(i)?.profit ?: 0.0
+                    "Profit: ₹" + String.format("%,.2f", v)
+                } else "Profit"
+                Text(text, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+// Vibrant palette for Overview chart
+private val OverviewSalesColor = Color(0xFF6C63FF)   // vibrant indigo
+private val OverviewPurchaseColor = Color(0xFFFFA000) // vibrant orange
+private val MonthlySalesColor = Color(0xFF6C63FF)
+private val MonthlyProfitColor = Color(0xFF26A69A)
 
 @Composable
 private fun Legend(color: Color) {
@@ -142,8 +310,8 @@ fun OverviewChart(sales: Double, purchases: Double, profit: Double) {
     val total = (sales + purchases).takeIf { it > 0.0 } ?: 1.0
     val salesSweep = (sales / total).toFloat() * 360f
     val purchaseSweep = (purchases / total).toFloat() * 360f
-    val salesColor = MaterialTheme.colorScheme.primary
-    val purchaseColor = MaterialTheme.colorScheme.tertiary
+    val salesColor = OverviewSalesColor
+    val purchaseColor = OverviewPurchaseColor
     val ringBg = MaterialTheme.colorScheme.surfaceVariant
     val onSurfaceArgb = MaterialTheme.colorScheme.onSurface.toArgb()
     val onSurfaceVariantArgb = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
@@ -233,7 +401,7 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
             .background(MaterialTheme.colorScheme.background)
     )
     {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         // Header with logo and shop name
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -270,7 +438,7 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
             TileData(stringResource(com.fertipos.agroshop.R.string.billing_title), Icons.Filled.ReceiptLong) { onNavigateToTab(3) },
             TileData(stringResource(com.fertipos.agroshop.R.string.customers_title), Icons.Filled.People) { onNavigateToTab(1) },
             TileData(stringResource(com.fertipos.agroshop.R.string.products_title), Icons.Filled.Inventory2) { onNavigateToTab(2) },
-            TileData(stringResource(com.fertipos.agroshop.R.string.purchases_title), Icons.Filled.ReceiptLong) { onNavigateToTab(7) },
+            TileData(stringResource(com.fertipos.agroshop.R.string.purchases_title), Icons.Filled.ShoppingCart) { onNavigateToTab(7) },
             TileData(stringResource(com.fertipos.agroshop.R.string.view_bills), Icons.Filled.History) {
                 val act = (context as? android.app.Activity)
                 if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act, onDismiss = { onNavigateToTab(6) }) else onNavigateToTab(6)
@@ -369,7 +537,7 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
                     androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
-                        Legend(color = MaterialTheme.colorScheme.primary)
+                        Legend(color = OverviewSalesColor)
                         Spacer(Modifier.width(8.dp))
                         Text(
                             text = "Sales Value: "+"₹"+String.format("%,.2f", plState.value?.salesSubtotal ?: 0.0),
@@ -377,7 +545,7 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
                         )
                     }
                     androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
-                        Legend(color = MaterialTheme.colorScheme.tertiary)
+                        Legend(color = OverviewPurchaseColor)
                         Spacer(Modifier.width(8.dp))
                         Text(
                             text = "Purchase Value: "+"₹"+String.format("%,.2f", plState.value?.purchasesSubtotal ?: 0.0),
@@ -389,6 +557,27 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
         }
 
         Spacer(Modifier.height(12.dp))
+
+        // Monthly Sales & Profit chart card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Filled.BarChart, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(text = "Monthly Sales & Profit", style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(Modifier.height(12.dp))
+                MonthlySalesProfitChart()
+            }
+        }
     }
     }
 }

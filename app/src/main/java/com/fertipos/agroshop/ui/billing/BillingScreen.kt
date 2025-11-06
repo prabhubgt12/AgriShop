@@ -57,7 +57,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.fertipos.agroshop.ui.history.InvoiceHistoryScreen
 import com.fertipos.agroshop.ui.screens.AppNavViewModel
-import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
 import com.fertipos.agroshop.data.local.entities.Product
 import com.fertipos.agroshop.data.local.entities.Invoice
 import com.fertipos.agroshop.data.local.entities.InvoiceItem
@@ -80,6 +79,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.fertipos.agroshop.ui.customer.CustomerViewModel
 import kotlinx.coroutines.launch
 import com.fertipos.agroshop.ui.common.PartyForm
+import com.fertipos.agroshop.ui.common.AddProductDialog
+import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
+import com.fertipos.agroshop.ui.product.ProductViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,6 +97,7 @@ fun BillingScreen(navVm: AppNavViewModel) {
 private fun NewBillContent(navVm: AppNavViewModel) {
     val vm: BillingViewModel = hiltViewModel()
     val custVm: CustomerViewModel = hiltViewModel()
+    val prodVm: ProductViewModel = hiltViewModel()
     val state = vm.state.collectAsState()
     val context = LocalContext.current
     val currency = remember { CurrencyFormatter.inr }
@@ -116,12 +119,26 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var qtyText by remember { mutableStateOf("") }
     var priceText by remember { mutableStateOf("") }
+    var pendingSelectProductId by remember { mutableStateOf<Int?>(null) }
     // Add Customer dialog state
     var showAddCustomer by remember { mutableStateOf(false) }
     var newCustName by remember { mutableStateOf("") }
     var newCustPhone by remember { mutableStateOf("") }
     var newCustAddress by remember { mutableStateOf("") }
+    // Add Product dialog state
+    var showAddProduct by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    // Auto-select newly added product when the list updates
+    LaunchedEffect(state.value.products, pendingSelectProductId) {
+        val pid = pendingSelectProductId
+        if (pid != null) {
+            state.value.products.firstOrNull { it.id == pid }?.let { newly ->
+                selectedProduct = newly
+                pendingSelectProductId = null
+            }
+        }
+    }
 
     // If there's a pending edit request from nav, load it once
     val pendingEditId = navVm.pendingEditInvoiceId.collectAsState()
@@ -197,6 +214,8 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             Spacer(Modifier.height(6.dp))
         }
 
+        // (Dialog moved outside LazyColumn)
+
         // Customer selector (typeahead)
         item {
             val selectedName = state.value.customers.firstOrNull { it.id == state.value.selectedCustomerId }?.name ?: ""
@@ -217,10 +236,13 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                 products = state.value.products,
                 label = stringResource(R.string.product_required),
                 modifier = Modifier.fillMaxWidth(),
+                initialQuery = selectedProduct?.name ?: "",
                 onPicked = { p ->
                     selectedProduct = p
                     priceText = p.sellingPrice.toString()
-                }
+                },
+                addNewLabel = stringResource(R.string.add),
+                onAddNew = { showAddProduct = true }
             )
             Spacer(Modifier.height(6.dp))
         }
@@ -352,6 +374,34 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             }
             // Error is now shown as a Toast above; no inline error Text here
         }
+    }
+
+    // Add Product dialog (outside list like Purchase)
+    if (showAddProduct) {
+        val profVm: CompanyProfileViewModel = hiltViewModel()
+        val profile by profVm.profile.collectAsState()
+        val typeOptions = remember(profile.productTypesCsv) {
+            profile.productTypesCsv.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                .ifEmpty { listOf("Fertilizer", "Pecticide", "Fungi", "GP", "Other") }
+        }
+        val unitOptions = remember(profile.unitsCsv) {
+            profile.unitsCsv.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                .ifEmpty { listOf("Kg", "Pcs", "L") }
+        }
+        AddProductDialog(
+            typeOptions = typeOptions,
+            unitOptions = unitOptions,
+            onConfirm = { n, t, u, sp, pp, st, g ->
+                // insert and capture new id
+                scope.launch {
+                    val id = prodVm.addAndReturnId(n, t, u, sp, pp, st, g)
+                    if (id > 0) pendingSelectProductId = id
+                }
+                priceText = sp.toString()
+                showAddProduct = false
+            },
+            onDismiss = { showAddProduct = false }
+        )
     }
 
     // Auto-open print dialog once invoice is saved (observe at the composable root)
