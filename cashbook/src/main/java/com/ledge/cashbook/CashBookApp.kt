@@ -6,6 +6,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,6 +25,16 @@ class CashBookApp : Application() {
             val tag = runBlocking { dataStore.data.first()[key] ?: "" }
             val locales = if (tag.isBlank()) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag)
             AppCompatDelegate.setApplicationLocales(locales)
+        } catch (_: Exception) { }
+
+        try {
+            val ep = EntryPointAccessors.fromApplication(this, DataStoreEntryPoint::class.java)
+            val dataStore = ep.prefs()
+            val codeKey = stringPreferencesKey("currency_code")
+            val showKey = booleanPreferencesKey("currency_show_symbol")
+            val code = runBlocking { dataStore.data.first()[codeKey] ?: "INR" }
+            val show = runBlocking { dataStore.data.first()[showKey] ?: true }
+            com.ledge.cashbook.util.CurrencyFormatter.setConfig(code, show)
         } catch (_: Exception) { }
     }
 }

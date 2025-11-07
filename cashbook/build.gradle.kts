@@ -142,6 +142,10 @@ dependencies {
     // Google Mobile Ads SDK (AdMob)
     implementation("com.google.android.gms:play-services-ads:23.3.0")
 
+    // InMobi Kotlin SDK and AdMob–InMobi mediation adapter (matches GMA 23.3.0)
+    implementation("com.inmobi.monetization:inmobi-ads-kotlin:10.7.8")
+    implementation("com.google.ads.mediation:inmobi:10.7.8.0")
+
     // Play Billing for in-app purchases
     implementation("com.android.billingclient:billing-ktx:7.0.0")
 

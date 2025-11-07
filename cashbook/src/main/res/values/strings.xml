@@ -86,6 +86,11 @@
     <string name="light_option">Light</string>
     <string name="dark_option">Dark</string>
 
+    <!-- Currency settings -->
+    <string name="currency_settings">Currency</string>
+    <string name="currency_code_label">Currency code</string>
+    <string name="show_currency_symbol">Show currency symbol</string>
+
     <!-- Premium / Monetization -->
     <string name="premium_title">Premium</string>
     <string name="ads_removed">Ads are removed on this device</string>

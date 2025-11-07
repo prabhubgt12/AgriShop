@@ -227,6 +227,46 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
             }
             item { HorizontalDivider() }
 
+            // Currency settings
+            item { Text(stringResource(R.string.currency_settings), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                val currencyVm: com.ledge.cashbook.ui.CurrencyViewModel = hiltViewModel()
+                val code by currencyVm.currencyCode.collectAsState()
+                val showSymbol by currencyVm.showSymbol.collectAsState()
+                LaunchedEffect(code, showSymbol) {
+                    com.ledge.cashbook.util.CurrencyFormatter.setConfig(code, showSymbol)
+                }
+                var expanded by remember { mutableStateOf(false) }
+                val options = listOf("INR", "USD", "EUR", "GBP")
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box {
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            value = code,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.currency_code_label)) },
+                            trailingIcon = {
+                                IconButton(onClick = { expanded = !expanded }) { Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null) }
+                            }
+                        )
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            options.forEach { opt ->
+                                DropdownMenuItem(text = { Text(opt) }, onClick = {
+                                    expanded = false
+                                    currencyVm.setCurrencyCode(opt)
+                                })
+                            }
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.show_currency_symbol))
+                        Switch(checked = showSymbol, onCheckedChange = { currencyVm.setShowSymbol(it) })
+                    }
+                }
+            }
+            item { HorizontalDivider() }
+
             // Premium
             item { Text(stringResource(R.string.premium_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             item {
@@ -241,27 +281,12 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                                     snackbarHostState.showSnackbar("Preparing purchase, please try again in a moment")
                                 }
                             }
-                        }, enabled = !hasRemoveAds) { Text(stringResource(R.string.remove_ads)) }
-                        OutlinedButton(onClick = { monetizationVM.restore() }) { Text(stringResource(R.string.restore_purchase)) }
+                        }) { Text(stringResource(R.string.remove_ads)) }
                     }
                 }
             }
             item { HorizontalDivider() }
 
-            // Theme
-            item { Text(stringResource(R.string.theme_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
-            item {
-                val currentMode by themeViewModel.themeMode.collectAsState()
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ThemeOptionRow(label = stringResource(R.string.system_option), selected = currentMode == ThemeViewModel.MODE_SYSTEM) { themeViewModel.setThemeMode(ThemeViewModel.MODE_SYSTEM) }
-                    ThemeOptionRow(label = stringResource(R.string.light_option), selected = currentMode == ThemeViewModel.MODE_LIGHT) { themeViewModel.setThemeMode(ThemeViewModel.MODE_LIGHT) }
-                    ThemeOptionRow(label = stringResource(R.string.dark_option), selected = currentMode == ThemeViewModel.MODE_DARK) { themeViewModel.setThemeMode(ThemeViewModel.MODE_DARK) }
-                }
-            }
-            item { HorizontalDivider() }
-
-            // Backup & Sync (section at bottom to match LedgerBook)
-            item { Text(stringResource(R.string.backup_and_sync), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             // Sign in/out row with status
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
