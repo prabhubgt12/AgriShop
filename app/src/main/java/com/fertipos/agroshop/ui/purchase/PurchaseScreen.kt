@@ -49,6 +49,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.material3.AlertDialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.rememberCoroutineScope
@@ -116,6 +118,8 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
     }
 
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(state.error) {
         val err = state.error
         if (err != null) {
@@ -170,166 +174,182 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
             Spacer(Modifier.height(8.dp))
         }
 
-        // Date (always visible at top). Bound to VM for both new and edit.
+        // Card 1: Supplier & Date
         item {
-            DateField(
-                label = stringResource(R.string.date),
-                value = if (state.editingPurchaseId != null) (state.editingDateMillis ?: state.newDateMillis) else state.newDateMillis,
-                onChange = { millis -> if (state.editingPurchaseId != null) vm.setEditingDate(millis) else vm.setNewDate(millis) },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-
-        // Supplier selection
-        item {
-            val selectedName = state.suppliers.firstOrNull { it.id == state.selectedSupplierId }?.name ?: ""
-            CustomerPicker(
-                customers = state.suppliers,
-                label = stringResource(R.string.supplier_label),
-                initialQuery = selectedName,
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                onPicked = { vm.setSupplier(it.id) },
-                onAddNew = { showAddSupplier = true }
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-
-        // Product picker (own row) + qty & price (grouped row)
-        item {
-            // Product on its own full-width row
-            ProductPicker(
-                products = state.products,
-                label = stringResource(R.string.product_label),
-                modifier = Modifier.fillMaxWidth(),
-                initialQuery = selectedProduct?.name ?: "",
-                onPicked = { p ->
-                    selectedProduct = p
-                    priceText = p.purchasePrice.toStringAsFixed(2)
-                },
-                addNewLabel = stringResource(R.string.add),
-                onAddNew = { showAddProduct = true }
-            )
-            Spacer(Modifier.height(6.dp))
-            // Grouped numeric fields
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = qtyText,
-                    onValueChange = { raw ->
-                        val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
-                        val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
-                        qtyText = final
-                    },
-                    label = { Text(stringResource(R.string.qty)) },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = priceText,
-                    onValueChange = { raw ->
-                        val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
-                        val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
-                        priceText = final
-                    },
-                    label = { Text(stringResource(R.string.unit_price)) },
-                    singleLine = true,
-                    enabled = selectedProduct != null,
-                    placeholder = { Text(selectedProduct?.purchasePrice?.toStringAsFixed(2) ?: "") },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
-                    val p = selectedProduct ?: return@Button
-                    val q = qtyText.toDoubleOrNull() ?: return@Button
-                    // Add with default purchasePrice
-                    vm.addItem(p, q)
-                    // If user entered a price, override unit price
-                    val up = priceText.toDoubleOrNull()
-                    if (up != null) {
-                        vm.updateItem(p.id, quantity = q, unitPrice = up, gstPercent = null)
-                    }
-                    // Keep product selected like Billing; just clear qty for fast repeated adds
-                    qtyText = ""
-                }) { Text(stringResource(R.string.add_item)) }
-                TextButton(onClick = { vm.setNotes(""); vm.clearSuccess() }) { Text(stringResource(R.string.clear_action_text)) }
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+                    val selectedName = state.suppliers.firstOrNull { it.id == state.selectedSupplierId }?.name ?: ""
+                    CustomerPicker(
+                        customers = state.suppliers,
+                        label = stringResource(R.string.supplier_label),
+                        initialQuery = selectedName,
+                        modifier = Modifier.fillMaxWidth(),
+                        onPicked = { vm.setSupplier(it.id) },
+                        onAddNew = { showAddSupplier = true }
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    DateField(
+                        label = stringResource(R.string.date),
+                        value = if (state.editingPurchaseId != null) (state.editingDateMillis ?: state.newDateMillis) else state.newDateMillis,
+                        onChange = { millis -> if (state.editingPurchaseId != null) vm.setEditingDate(millis) else vm.setNewDate(millis) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
             Spacer(Modifier.height(12.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(8.dp))
         }
 
-        // Items list as Cards (use stable key like Billing to avoid state reuse issues)
-        items(state.items, key = { it.product.id }) { it ->
-            PurchaseItemCard(item = it, onRemove = { vm.removeItem(it.product.id) })
-        }
-
-        // Totals + submit at end of scroll
+        // Card 2: Items (product picker, qty/price, add, list)
         item {
-            Text(
-                stringResource(R.string.subtotal_with_amount, state.subtotal.toStringAsFixed(2)),
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = androidx.compose.ui.text.style.TextAlign.End
-            )
-            Text(
-                stringResource(R.string.gst_with_amount, state.gstAmount.toStringAsFixed(2)),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = androidx.compose.ui.text.style.TextAlign.End
-            )
-            Text(
-                stringResource(R.string.total_with_amount, state.total.toStringAsFixed(2)),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = androidx.compose.ui.text.style.TextAlign.End
-            )
-            Spacer(Modifier.height(6.dp))
-            var paidInFull by remember { mutableStateOf(false) }
-            LaunchedEffect(paidInFull, state.total) {
-                if (paidInFull) vm.setPaid(state.total.toStringAsFixed(2))
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
-                androidx.compose.material3.Checkbox(
-                    checked = paidInFull,
-                    onCheckedChange = { checked ->
-                        paidInFull = checked
-                        if (checked) vm.setPaid(state.total.toStringAsFixed(2))
+                Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+                    ProductPicker(
+                        products = state.products,
+                        label = stringResource(R.string.product_label),
+                        modifier = Modifier.fillMaxWidth(),
+                        initialQuery = selectedProduct?.name ?: "",
+                        onPicked = { p ->
+                            selectedProduct = p
+                            priceText = p.purchasePrice.toStringAsFixed(2)
+                        },
+                        addNewLabel = stringResource(R.string.add),
+                        onAddNew = { showAddProduct = true }
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        OutlinedTextField(
+                            value = qtyText,
+                            onValueChange = { raw ->
+                                val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                                val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                                qtyText = final
+                            },
+                            label = { Text(stringResource(R.string.qty)) },
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = priceText,
+                            onValueChange = { raw ->
+                                val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                                val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                                priceText = final
+                            },
+                            label = { Text(stringResource(R.string.unit_price)) },
+                            singleLine = true,
+                            enabled = selectedProduct != null,
+                            placeholder = { Text(selectedProduct?.purchasePrice?.toStringAsFixed(2) ?: "") },
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f)
+                        )
                     }
-                )
-                Text(stringResource(R.string.paid_label), modifier = Modifier.padding(start = 4.dp))
-                TextField(
-                    value = if (state.paid == 0.0) "" else state.paid.toStringAsFixed(2),
-                    onValueChange = { vm.setPaid(it); if (paidInFull && it.toDoubleOrNull() != state.total) paidInFull = false },
-                    singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
-                    textStyle = androidx.compose.ui.text.TextStyle(textAlign = androidx.compose.ui.text.style.TextAlign.End),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        disabledContainerColor = Color.Transparent,
-                        errorContainerColor = Color.Transparent
-                    ),
-                    modifier = Modifier.fillMaxWidth(0.5f)
-                )
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.weight(1f))
+                        Button(onClick = {
+                            val p = selectedProduct ?: return@Button
+                            val q = qtyText.toDoubleOrNull() ?: return@Button
+                            vm.addItem(p, q)
+                            val up = priceText.toDoubleOrNull()
+                            if (up != null) {
+                                vm.updateItem(p.id, quantity = q, unitPrice = up, gstPercent = null)
+                            }
+                            qtyText = ""
+                            // Hide keyboard and clear focus
+                            focusManager.clearFocus(force = true)
+                            keyboard?.hide()
+                        }) { Text(stringResource(R.string.add_item)) }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    state.items.forEach { it ->
+                        PurchaseItemCard(item = it, onRemove = { vm.removeItem(it.product.id) })
+                    }
+                }
             }
-            Spacer(Modifier.height(4.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = stringResource(R.string.balance_colon, String.format(Locale.getDefault(), "%.2f", state.balance))
-                )
+            Spacer(Modifier.height(12.dp))
+        }
+
+        // Card 3: Totals & Submit
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+                    Text(
+                        stringResource(R.string.subtotal_with_amount, state.subtotal.toStringAsFixed(2)),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                    )
+                    Text(
+                        stringResource(R.string.gst_with_amount, state.gstAmount.toStringAsFixed(2)),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                    )
+                    Text(
+                        stringResource(R.string.total_with_amount, state.total.toStringAsFixed(2)),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    var paidInFull by remember { mutableStateOf(false) }
+                    LaunchedEffect(paidInFull, state.total) {
+                        if (paidInFull) vm.setPaid(state.total.toStringAsFixed(2))
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.Checkbox(
+                            checked = paidInFull,
+                            onCheckedChange = { checked ->
+                                paidInFull = checked
+                                if (checked) vm.setPaid(state.total.toStringAsFixed(2))
+                            }
+                        )
+                        Text(stringResource(R.string.paid_label), modifier = Modifier.padding(start = 4.dp))
+                        TextField(
+                            value = if (state.paid == 0.0) "" else state.paid.toStringAsFixed(2),
+                            onValueChange = { vm.setPaid(it); if (paidInFull && it.toDoubleOrNull() != state.total) paidInFull = false },
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                            textStyle = androidx.compose.ui.text.TextStyle(textAlign = androidx.compose.ui.text.style.TextAlign.End),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                disabledContainerColor = Color.Transparent,
+                                errorContainerColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth(0.5f)
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Spacer(Modifier.weight(1f))
+                        Text(
+                            text = stringResource(R.string.balance_colon, String.format(Locale.getDefault(), "%.2f", state.balance))
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val buttonText = if (state.editingPurchaseId != null) stringResource(R.string.save_purchase) else stringResource(R.string.create_purchase)
+                        Spacer(Modifier.weight(1f))
+                        Button(onClick = { vm.submit() }, enabled = state.items.isNotEmpty()) { Text(buttonText) }
+                        TextButton(onClick = { vm.clearSuccess() }) { Text(stringResource(R.string.reset_status)) }
+                    }
+                }
             }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val buttonText = if (state.editingPurchaseId != null) stringResource(R.string.save_purchase) else stringResource(R.string.create_purchase)
-                Button(onClick = { vm.submit() }, enabled = state.items.isNotEmpty()) { Text(buttonText) }
-                TextButton(onClick = { vm.clearSuccess() }) { Text(stringResource(R.string.reset_status)) }
-            }
-            // Error is shown as a Toast; no inline error text
+            Spacer(Modifier.height(12.dp))
         }
     }
 

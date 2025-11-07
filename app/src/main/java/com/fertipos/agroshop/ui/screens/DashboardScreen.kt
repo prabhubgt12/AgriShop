@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Settings
@@ -439,7 +440,7 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
             TileData(stringResource(com.fertipos.agroshop.R.string.customers_title), Icons.Filled.People) { onNavigateToTab(1) },
             TileData(stringResource(com.fertipos.agroshop.R.string.products_title), Icons.Filled.Inventory2) { onNavigateToTab(2) },
             TileData(stringResource(com.fertipos.agroshop.R.string.purchases_title), Icons.Filled.ShoppingCart) { onNavigateToTab(7) },
-            TileData(stringResource(com.fertipos.agroshop.R.string.view_bills), Icons.Filled.History) {
+            TileData(stringResource(com.fertipos.agroshop.R.string.view_bills), Icons.Filled.Description) {
                 val act = (context as? android.app.Activity)
                 if (!hasRemoveAds && act != null) InterstitialAds.showIfAvailable(act, onDismiss = { onNavigateToTab(6) }) else onNavigateToTab(6)
             },

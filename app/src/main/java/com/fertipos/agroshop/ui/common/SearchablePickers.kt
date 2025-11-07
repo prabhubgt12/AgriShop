@@ -44,7 +44,7 @@ fun CustomerPicker(
     var query by remember(initialQuery) { mutableStateOf(initialQuery) }
 
     Box(modifier = modifier.fillMaxWidth()) {
-        TextField(
+        androidx.compose.material3.OutlinedTextField(
             value = query,
             onValueChange = {
                 query = it
@@ -55,8 +55,8 @@ fun CustomerPicker(
                 .fillMaxWidth()
                 .onFocusChanged { fs: FocusState -> if (fs.isFocused) expanded = true },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent
             ),
             trailingIcon = {
                 IconButton(onClick = { expanded = !expanded }) {
@@ -222,7 +222,7 @@ fun ProductPicker(
     var query by remember(initialQuery) { mutableStateOf(initialQuery) }
 
     Box(modifier = modifier.fillMaxWidth()) {
-        TextField(
+        androidx.compose.material3.OutlinedTextField(
             value = query,
             onValueChange = {
                 query = it
@@ -233,8 +233,8 @@ fun ProductPicker(
                 .fillMaxWidth()
                 .onFocusChanged { fs: FocusState -> if (fs.isFocused) expanded = true },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent
             ),
             trailingIcon = {
                 IconButton(onClick = { expanded = !expanded }) {
