@@ -86,6 +86,29 @@
     <!-- Common -->
     <string name="ok">ठीक</string>
 
+    <!-- Currency settings -->
+    <string name="currency_title">मुद्रा</string>
+    <string name="currency_label">मुद्रा</string>
+    <string name="show_currency_symbol">मुद्रा प्रतीक दिखाएँ</string>
+    <string name="inr_label">भारतीय रुपया (INR)</string>
+    <string name="usd_label">यूएस डॉलर (USD)</string>
+    <string name="eur_label">यूरो (EUR)</string>
+    <string name="gbp_label">पाउंड (GBP)</string>
+
+    <!-- Home / Dashboard additions -->
+    <string name="low_stock_title">लो स्टॉक</string>
+    <string name="view_all">सभी देखें</string>
+    <string name="no_low_stock">सब अच्छा है। कोई लो स्टॉक नहीं।</string>
+    <string name="overview_title">ओवरव्यू</string>
+    <string name="last_month_label">पिछला माह</string>
+    <string name="three_months_label">3 माह</string>
+    <string name="six_months_label">6 माह</string>
+    <string name="year_label">वर्ष</string>
+    <string name="sales_value_label">बिक्री मूल्य:</string>
+    <string name="purchase_value_label">खरीद मूल्य:</string>
+    <string name="monthly_sales_profit_title">मासिक बिक्री और लाभ</string>
+    <string name="profit_label">लाभ</string>
+
     <!-- Common UI -->
     <string name="back">वापस</string>
     <string name="export">एक्सपोर्ट</string>

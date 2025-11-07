@@ -62,6 +62,8 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import android.graphics.Paint
+import com.fertipos.agroshop.ui.product.ProductViewModel
+import androidx.compose.material3.Badge
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
@@ -221,14 +223,17 @@ private fun MonthlySalesProfitChart() {
         Spacer(Modifier.height(8.dp))
         // Legends
         Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
+            val currencyVm: com.fertipos.agroshop.ui.settings.CurrencyViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+            val code by currencyVm.currencyCode.collectAsState()
+            val showSymbol by currencyVm.showSymbol.collectAsState()
             androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
                 Legend(color = MonthlySalesColor)
                 Spacer(Modifier.width(8.dp))
                 val i = selectedIndex
                 val text = if (i != null) {
                     val v = monthly.getOrNull(i)?.sales ?: 0.0
-                    "Sales: ₹" + String.format("%,.2f", v)
-                } else "Sales"
+                    stringResource(com.fertipos.agroshop.R.string.sales_label) + ": " + com.fertipos.agroshop.util.CurrencyFormatter.format(v, code, showSymbol)
+                } else stringResource(com.fertipos.agroshop.R.string.sales_label)
                 Text(text, style = MaterialTheme.typography.bodySmall)
             }
             androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
@@ -237,8 +242,8 @@ private fun MonthlySalesProfitChart() {
                 val i = selectedIndex
                 val text = if (i != null) {
                     val v = monthly.getOrNull(i)?.profit ?: 0.0
-                    "Profit: ₹" + String.format("%,.2f", v)
-                } else "Profit"
+                    stringResource(com.fertipos.agroshop.R.string.profit_label) + ": " + com.fertipos.agroshop.util.CurrencyFormatter.format(v, code, showSymbol)
+                } else stringResource(com.fertipos.agroshop.R.string.profit_label)
                 Text(text, style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -317,6 +322,12 @@ fun OverviewChart(sales: Double, purchases: Double, profit: Double) {
     val onSurfaceArgb = MaterialTheme.colorScheme.onSurface.toArgb()
     val onSurfaceVariantArgb = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
+        // Read currency outside Canvas (composable scope)
+        val currencyVmCenter: com.fertipos.agroshop.ui.settings.CurrencyViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+        val codeCenter by currencyVmCenter.currencyCode.collectAsState()
+        val showSymbolCenter by currencyVmCenter.showSymbol.collectAsState()
+        val profitTextComputed = com.fertipos.agroshop.util.CurrencyFormatter.formatNoDecimals(profit, codeCenter, showSymbolCenter)
+        val labelComputed = stringResource(com.fertipos.agroshop.R.string.profit_label)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
@@ -355,9 +366,9 @@ fun OverviewChart(sales: Double, purchases: Double, profit: Double) {
                 style = Stroke(width = strokeWidth)
             )
 
-            // Center text: Profit value and label
-            val profitText = "₹" + String.format("%,.0f", profit)
-            val label = "Profit"
+            // Center text: Profit value and label (precomputed)
+            val profitText = profitTextComputed
+            val label = labelComputed
             val paintValue = Paint().apply {
                 isAntiAlias = true
                 color = onSurfaceArgb
@@ -500,6 +511,66 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
 
         Spacer(Modifier.height(16.dp))
 
+        // Low Stock card (below actions)
+        run {
+            val productVm: ProductViewModel = hiltViewModel()
+            val prodState = productVm.state.collectAsState()
+            val threshold = profile.lowStockThreshold.takeIf { it > 0 } ?: 10
+            val low = remember(prodState.value.products, threshold) {
+                prodState.value.products
+                    .filter { it.stockQuantity < threshold.toDouble() }
+                    .sortedBy { it.stockQuantity }
+                    .take(5)
+            }
+            val lowAllCount = remember(prodState.value.products, threshold) {
+                prodState.value.products.count { it.stockQuantity < threshold.toDouble() }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = stringResource(com.fertipos.agroshop.R.string.low_stock_title), style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.width(8.dp))
+                        Badge(
+                            modifier = Modifier.clickable { onNavigateToTab(2) },
+                            containerColor = if (lowAllCount > 0) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (lowAllCount > 0) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                        ) { Text(lowAllCount.toString(), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)) }
+                        Spacer(Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    if (low.isEmpty()) {
+                        Text(stringResource(com.fertipos.agroshop.R.string.no_low_stock), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        low.forEach { p ->
+                            androidx.compose.foundation.layout.Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(p.name, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall)
+                                val qtyText = String.format("%s %s",
+                                    String.format(java.util.Locale.getDefault(), "%.2f", p.stockQuantity).trimEnd('0').trimEnd('.'),
+                                    p.unit
+                                )
+                                val color = if (p.stockQuantity < 3.0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                                Text(qtyText, color = color, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Overview card
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -514,19 +585,35 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
                 ) {
                     Icon(imageVector = Icons.Filled.BarChart, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(text = "Overview", style = MaterialTheme.typography.titleMedium)
+                    Text(text = stringResource(com.fertipos.agroshop.R.string.overview_title), style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = { menuOpen.value = true }) {
-                        Text(selectedRange.value.label)
+                        val currentLabel = when (selectedRange.value) {
+                            RangeOption.M1 -> stringResource(com.fertipos.agroshop.R.string.last_month_label)
+                            RangeOption.M3 -> stringResource(com.fertipos.agroshop.R.string.three_months_label)
+                            RangeOption.M6 -> stringResource(com.fertipos.agroshop.R.string.six_months_label)
+                            RangeOption.Y1 -> stringResource(com.fertipos.agroshop.R.string.year_label)
+                        }
+                        Text(currentLabel)
                         Icon(imageVector = Icons.Filled.ArrowDropDown, contentDescription = null)
                     }
                     DropdownMenu(expanded = menuOpen.value, onDismissRequest = { menuOpen.value = false }) {
-                        RangeOption.values().forEach { opt ->
-                            DropdownMenuItem(text = { Text(opt.label) }, onClick = {
-                                selectedRange.value = opt
-                                menuOpen.value = false
-                            })
-                        }
+                        DropdownMenuItem(text = { Text(stringResource(com.fertipos.agroshop.R.string.last_month_label)) }, onClick = {
+                            selectedRange.value = RangeOption.M1
+                            menuOpen.value = false
+                        })
+                        DropdownMenuItem(text = { Text(stringResource(com.fertipos.agroshop.R.string.three_months_label)) }, onClick = {
+                            selectedRange.value = RangeOption.M3
+                            menuOpen.value = false
+                        })
+                        DropdownMenuItem(text = { Text(stringResource(com.fertipos.agroshop.R.string.six_months_label)) }, onClick = {
+                            selectedRange.value = RangeOption.M6
+                            menuOpen.value = false
+                        })
+                        DropdownMenuItem(text = { Text(stringResource(com.fertipos.agroshop.R.string.year_label)) }, onClick = {
+                            selectedRange.value = RangeOption.Y1
+                            menuOpen.value = false
+                        })
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -537,11 +624,14 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
                 )
                 Spacer(Modifier.height(8.dp))
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
+                    val currencyVmBottom: com.fertipos.agroshop.ui.settings.CurrencyViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+                    val codeBottom by currencyVmBottom.currencyCode.collectAsState()
+                    val showSymbolBottom by currencyVmBottom.showSymbol.collectAsState()
                     androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
                         Legend(color = OverviewSalesColor)
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Sales Value: "+"₹"+String.format("%,.2f", plState.value?.salesSubtotal ?: 0.0),
+                            text = stringResource(com.fertipos.agroshop.R.string.sales_value_label) + " " + com.fertipos.agroshop.util.CurrencyFormatter.format(plState.value?.salesSubtotal ?: 0.0, codeBottom, showSymbolBottom),
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -549,7 +639,7 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
                         Legend(color = OverviewPurchaseColor)
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "Purchase Value: "+"₹"+String.format("%,.2f", plState.value?.purchasesSubtotal ?: 0.0),
+                            text = stringResource(com.fertipos.agroshop.R.string.purchase_value_label) + " " + com.fertipos.agroshop.util.CurrencyFormatter.format(plState.value?.purchasesSubtotal ?: 0.0, codeBottom, showSymbolBottom),
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -573,7 +663,7 @@ private fun HomeScreen(hasRemoveAds: Boolean, onNavigateToTab: (Int) -> Unit) {
                 ) {
                     Icon(imageVector = Icons.Filled.BarChart, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(text = "Monthly Sales & Profit", style = MaterialTheme.typography.titleMedium)
+                    Text(text = stringResource(com.fertipos.agroshop.R.string.monthly_sales_profit_title), style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(Modifier.height(12.dp))
                 MonthlySalesProfitChart()

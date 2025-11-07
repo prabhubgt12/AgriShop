@@ -104,7 +104,13 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
-    val currency = remember { CurrencyFormatter.inr }
+    // Currency settings
+    val currencyVm: com.fertipos.agroshop.ui.settings.CurrencyViewModel = hiltViewModel()
+    val currencyCode by currencyVm.currencyCode.collectAsState()
+    val showSymbol by currencyVm.showSymbol.collectAsState()
+    val currencyFormat: (Double) -> String = remember(currencyCode, showSymbol) {
+        { amt -> com.fertipos.agroshop.util.CurrencyFormatter.format(amt, currencyCode, showSymbol) }
+    }
     val prevTab = navVm.previousSelected.collectAsState()
     val backOverride = navVm.backOverrideTab.collectAsState()
     // Hoisted pending print data to avoid being lost on recompositions
@@ -314,7 +320,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                     Text(text = stringResource(R.string.items_title), style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(6.dp))
                     state.value.items.forEach { item ->
-                        DraftItemRow(item = item, currency = currency, onRemove = { vm.removeItem(item.product.id) })
+                        DraftItemRow(item = item, format = currencyFormat, onRemove = { vm.removeItem(item.product.id) })
                     }
                 }
             }
@@ -330,9 +336,9 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                 shape = CardDefaults.elevatedShape
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                    Text(stringResource(R.string.subtotal_with_amount, currency.format(state.value.subtotal)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
-                    Text(stringResource(R.string.gst_with_amount, currency.format(state.value.gstAmount)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
-                    Text(stringResource(R.string.total_with_amount, currency.format(state.value.total)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+                    Text(stringResource(R.string.subtotal_with_amount, currencyFormat(state.value.subtotal)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+                    Text(stringResource(R.string.gst_with_amount, currencyFormat(state.value.gstAmount)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
+                    Text(stringResource(R.string.total_with_amount, currencyFormat(state.value.total)), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
                     Spacer(Modifier.height(6.dp))
                     var paidInFull by remember { mutableStateOf(false) }
                     LaunchedEffect(paidInFull, state.value.total) {
@@ -370,7 +376,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Spacer(Modifier.weight(1f))
                         Text(
-                            text = stringResource(R.string.balance_colon, currency.format(state.value.balance)),
+                            text = stringResource(R.string.balance_colon, currencyFormat(state.value.balance)),
                             textAlign = TextAlign.End
                         )
                     }
@@ -580,7 +586,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
 @Composable
 private fun DraftItemRow(
     item: BillingViewModel.DraftItem,
-    currency: NumberFormat,
+    format: (Double) -> String,
     onRemove: () -> Unit
 ) {
     val lineBase = item.quantity * item.unitPrice
@@ -603,18 +609,18 @@ private fun DraftItemRow(
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.qty_label) + ": ${item.quantity}")
                 Spacer(Modifier.weight(1f))
-                Text(text = stringResource(R.string.price_label) + ": ${currency.format(item.unitPrice)}")
+                Text(text = stringResource(R.string.price_label) + ": ${format(item.unitPrice)}")
             }
             Spacer(Modifier.height(2.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.gst_percent_colon, String.format(java.util.Locale.getDefault(), "%.1f", item.gstPercent)))
                 Spacer(Modifier.weight(1f))
-                Text(text = stringResource(R.string.gst_amt_colon, currency.format(gstAmt)))
+                Text(text = stringResource(R.string.gst_amt_colon, format(gstAmt)))
             }
             Spacer(Modifier.height(2.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 Spacer(Modifier.weight(1f))
-                Text(text = stringResource(R.string.total_with_amount, currency.format(lineTotal)))
+                Text(text = stringResource(R.string.total_with_amount, format(lineTotal)))
             }
         }
     }

@@ -207,6 +207,14 @@ fun InvoiceHistoryScreen(navVm: AppNavViewModel) {
 
     // Interstitials are shown when entering history from Home (Dashboard). No FAB interstitial here.
 
+    // Currency settings -> apply to global formatter for this screen
+    val currencyVm: com.fertipos.agroshop.ui.settings.CurrencyViewModel = hiltViewModel()
+    val currencyCode by currencyVm.currencyCode.collectAsState()
+    val showSymbol by currencyVm.showSymbol.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(currencyCode, showSymbol) {
+        com.fertipos.agroshop.util.CurrencyFormatter.setConfig(currencyCode, showSymbol)
+    }
+
     // Offsets are relative to bottom-end base position (0 = bottom-right). Negative = move left/up.
     var fabDx by remember { mutableStateOf(0.dp) }
     var fabDy by remember { mutableStateOf(0.dp) }

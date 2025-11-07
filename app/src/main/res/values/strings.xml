@@ -85,6 +85,29 @@
     <!-- Common -->
     <string name="ok">OK</string>
 
+    <!-- Currency settings -->
+    <string name="currency_title">Currency</string>
+    <string name="currency_label">Currency</string>
+    <string name="show_currency_symbol">Show currency symbol</string>
+    <string name="inr_label">Indian Rupee (INR)</string>
+    <string name="usd_label">US Dollar (USD)</string>
+    <string name="eur_label">Euro (EUR)</string>
+    <string name="gbp_label">Pound (GBP)</string>
+
+    <!-- Home / Dashboard additions -->
+    <string name="low_stock_title">Low stock</string>
+    <string name="view_all">View all</string>
+    <string name="no_low_stock">All good. No low stock.</string>
+    <string name="overview_title">Overview</string>
+    <string name="last_month_label">Last month</string>
+    <string name="three_months_label">3 months</string>
+    <string name="six_months_label">6 months</string>
+    <string name="year_label">Year</string>
+    <string name="sales_value_label">Sales Value:</string>
+    <string name="purchase_value_label">Purchase Value:</string>
+    <string name="monthly_sales_profit_title">Monthly Sales &amp; Profit</string>
+    <string name="profit_label">Profit</string>
+
     <!-- Purchase History -->
     <string name="new_purchase_cd">New Purchase</string>
     <string name="purchases_title">Purchases</string>

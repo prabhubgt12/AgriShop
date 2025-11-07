@@ -186,6 +186,14 @@ fun PurchaseHistoryScreen(navVm: AppNavViewModel) {
     val list by vm.listState.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
+    // Currency settings -> apply to global formatter for this screen
+    val currencyVm: com.fertipos.agroshop.ui.settings.CurrencyViewModel = hiltViewModel()
+    val currencyCode by currencyVm.currencyCode.collectAsState()
+    val showSymbol by currencyVm.showSymbol.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(currencyCode, showSymbol) {
+        com.fertipos.agroshop.util.CurrencyFormatter.setConfig(currencyCode, showSymbol)
+    }
+
     var fabDx by remember { mutableStateOf(0.dp) }
     var fabDy by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current

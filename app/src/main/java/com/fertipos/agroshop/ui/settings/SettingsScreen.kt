@@ -211,6 +211,63 @@ private fun varStatefulForm(
                 OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text(stringResource(R.string.email_label)) }, singleLine = true, modifier = Modifier.weight(1f))
             }
 
+            // Currency
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.currency_title))
+            Spacer(Modifier.height(6.dp))
+            run {
+                val currencyVm: CurrencyViewModel = hiltViewModel()
+                val currentCode by currencyVm.currencyCode.collectAsState()
+                val showSymbol by currencyVm.showSymbol.collectAsState()
+                var expanded by remember { mutableStateOf(false) }
+                val options = listOf(
+                    "INR" to stringResource(R.string.inr_label),
+                    "USD" to stringResource(R.string.usd_label),
+                    "EUR" to stringResource(R.string.eur_label),
+                    "GBP" to stringResource(R.string.gbp_label),
+                )
+                val current = options.firstOrNull { it.first == currentCode } ?: options.first()
+
+                androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = current.second,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.currency_label)) }
+                    )
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { expanded = true }
+                    )
+                    androidx.compose.material3.DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        options.forEach { (code, label) ->
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    expanded = false
+                                    if (code != currentCode) {
+                                        scope.launch { currencyVm.setCurrencyCode(code) }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.show_currency_symbol))
+                    androidx.compose.material3.Switch(checked = showSymbol, onCheckedChange = { on -> scope.launch { currencyVm.setShowSymbol(on) } })
+                }
+            }
+
             Spacer(Modifier.height(12.dp))
             HorizontalDivider()
             Spacer(Modifier.height(8.dp))

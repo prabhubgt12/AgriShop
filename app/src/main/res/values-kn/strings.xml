@@ -86,6 +86,29 @@
     <!-- Common -->
     <string name="ok">ಸರಿ</string>
 
+    <!-- Currency settings -->
+    <string name="currency_title">ಕರೆನ್ಸಿ</string>
+    <string name="currency_label">ಕರೆನ್ಸಿ</string>
+    <string name="show_currency_symbol">ಕರೆನ್ಸಿ ಚಿಹ್ನೆ ತೋರಿಸು</string>
+    <string name="inr_label">ಇಂಡಿಯನ್ ರೂಪಿ (INR)</string>
+    <string name="usd_label">ಯುಎಸ್ ಡಾಲರ್ (USD)</string>
+    <string name="eur_label">ಯೂರೋ (EUR)</string>
+    <string name="gbp_label">ಪೌಂಡ್ (GBP)</string>
+
+    <!-- Home / Dashboard additions -->
+    <string name="low_stock_title">ಕಡಿಮೆ ಸ್ಟಾಕ್</string>
+    <string name="view_all">ಎಲ್ಲಾ ನೋಡಿ</string>
+    <string name="no_low_stock">ಎಲ್ಲವೂ ಸರಿಯಾಗಿದೆ. ಕಡಿಮೆ ಸ್ಟಾಕ್ ಇಲ್ಲ.</string>
+    <string name="overview_title">ಓವರ್‌ವ್ಯೂ</string>
+    <string name="last_month_label">ಕಳೆದ ತಿಂಗಳು</string>
+    <string name="three_months_label">3 ತಿಂಗಳು</string>
+    <string name="six_months_label">6 ತಿಂಗಳು</string>
+    <string name="year_label">ವರ್ಷ</string>
+    <string name="sales_value_label">ಮಾರಾಟ ಮೌಲ್ಯ:</string>
+    <string name="purchase_value_label">ಖರೀದಿ ಮೌಲ್ಯ:</string>
+    <string name="monthly_sales_profit_title">ಮಾಸಿಕ ಮಾರಾಟ ಮತ್ತು ಲಾಭ</string>
+    <string name="profit_label">ಲಾಭ</string>
+
     <!-- Common UI -->
     <string name="back">ಹಿಂದೆ</string>
     <string name="export">ಎಕ್ಸ್‌ಪೋರ್ಟ್</string>
