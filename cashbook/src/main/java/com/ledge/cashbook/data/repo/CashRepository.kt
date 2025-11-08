@@ -29,4 +29,9 @@ class CashRepository(
 
     suspend fun creditSum(accountId: Int): Double = dao.creditSum(accountId)
     suspend fun debitSum(accountId: Int): Double = dao.debitSum(accountId)
+
+    // Aggregates across all accounts
+    fun totalCredit(): Flow<Double> = dao.totalCredit()
+    fun totalDebit(): Flow<Double> = dao.totalDebit()
+    fun dueAccountsCount(): Flow<Int> = dao.dueAccountsCount()
 }

@@ -31,6 +31,7 @@
     <string name="pick_date">Pick a Date</string>
     <string name="amount">Amount</string>
     <string name="particular">Particular</string>
+    <string name="search">Search</string>
 
     <!-- Table headers -->
     <string name="col_date">Date</string>
@@ -43,6 +44,7 @@
     <string name="ok">OK</string>
     <string name="total_credit">Total Credit</string>
     <string name="total_debit">Total Debit</string>
+    <string name="due_accounts">Due Accounts</string>
     <string name="export_to_pdf">Export to PDF</string>
     <string name="export_to_excel">Export to Excel</string>
     
@@ -136,6 +138,7 @@
     <string name="uncategorized">Uncategorized</string>
     <string name="show_category_field">Show category field</string>
     <string name="categories_csv">Categories (comma-separated)</string>
+    <string name="show_summary_card_label">Show summary on accounts</string>
     <string name="category_split">Expense Split</string>
     <string name="expense_split">Expense Split</string>
     <string name="last_6_months">Last 6 Months</string>

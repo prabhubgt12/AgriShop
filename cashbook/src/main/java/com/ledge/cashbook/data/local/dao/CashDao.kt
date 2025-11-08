@@ -47,4 +47,14 @@ interface CashDao {
 
     @Query("SELECT IFNULL(SUM(CASE WHEN isCredit THEN 0 ELSE amount END), 0) FROM cash_txns WHERE accountId = :accountId")
     suspend fun debitSum(accountId: Int): Double
+
+    // Aggregates across all accounts
+    @Query("SELECT IFNULL(SUM(CASE WHEN isCredit THEN amount ELSE 0 END), 0) FROM cash_txns")
+    fun totalCredit(): Flow<Double>
+
+    @Query("SELECT IFNULL(SUM(CASE WHEN isCredit THEN 0 ELSE amount END), 0) FROM cash_txns")
+    fun totalDebit(): Flow<Double>
+
+    @Query("SELECT COUNT(*) FROM (SELECT accountId, SUM(CASE WHEN isCredit THEN amount ELSE -amount END) AS bal FROM cash_txns GROUP BY accountId HAVING bal < 0) AS d")
+    fun dueAccountsCount(): Flow<Int>
 }

@@ -8,6 +8,7 @@
     <!-- Totals footer -->
     <string name="total_credit">ಒಟ್ಟು ಜಮಾ</string>
     <string name="total_debit">ಒಟ್ಟು ಖರ್ಚು</string>
+    <string name="due_accounts">ಬಾಕಿ ಖಾತೆಗಳು</string>
 
     <string name="app_name">Simple CashBook</string>
 
@@ -90,6 +91,18 @@
     <string name="light_option">ಲೈಟ್</string>
     <string name="dark_option">ಡಾರ್ಕ್</string>
 
+    <!-- Currency settings -->
+    <string name="currency_settings">ಕರೆನ್ಸಿ</string>
+    <string name="currency_code_label">ಕರೆನ್ಸಿ ಕೋಡ್</string>
+    <string name="show_currency_symbol">ಕರೆನ್ಸಿ ಚಿಹ್ನೆ ತೋರಿಸಿ</string>
+
+    <!-- Premium / Monetization -->
+    <string name="premium_title">ಪ್ರೀಮಿಯಂ</string>
+    <string name="ads_removed">ಈ ಸಾಧನದಲ್ಲಿ ಜಾಹೀರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ</string>
+    <string name="ads_enabled_msg">ಜಾಹೀರಾತುಗಳು ಸಕ್ರಿಯ. ಶಾಶ್ವತವಾಗಿ ತೆಗೆದುಹಾಕಲು ಖರೀದಿಸಿ.</string>
+    <string name="remove_ads">ಜಾಹೀರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಿ</string>
+    <string name="restore_purchase">ಖರೀದಿ ಮರುಸ್ಥಾಪಿಸಿ</string>
+
     <string name="backup_to_drive">ಡ್ರೈವ್‌ಗೆ ಬ್ಯಾಕಪ್</string>
     <string name="list_backups">ಬ್ಯಾಕಪ್‌ಗಳ ಪಟ್ಟಿಮಾಡಿ</string>
     <string name="listed_backups">%1$d ಬ್ಯಾಕಪ್‌ಗಳು ಕಂಡುಬಂದಿವೆ</string>
@@ -121,6 +134,7 @@
     <string name="uncategorized">ವರ್ಗೀಕರಿಸದ</string>
     <string name="show_category_field">ವರ್ಗ ತೋರಿಸಿ</string>
     <string name="categories_csv">ವರ್ಗಗಳು (ಕಾಮಾ ಪ್ರತ್ಯೇಕ)</string>
+    <string name="show_summary_card_label">ಖಾತೆಗಳಲ್ಲಿ ಸಾರಾಂಶ ತೋರಿಸಿ</string>
     <string name="category_split">ಖರ್ಚಿನ ವಿಭಜನೆ</string>
     <string name="expense_split">ಖರ್ಚಿನ ವಿಭಜನೆ</string>
     <string name="last_6_months">ಕಳೆದ 6 ತಿಂಗಳು</string>

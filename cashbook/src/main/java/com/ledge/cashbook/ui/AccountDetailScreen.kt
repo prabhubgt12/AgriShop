@@ -419,7 +419,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         // Start edit with prefilled fields
                         editTxn = pendingAction
                         editIsCredit = pendingAction.isCredit
-                        editAmount = pendingAction.amount.toString()
+                        editAmount = java.math.BigDecimal.valueOf(pendingAction.amount).stripTrailingZeros().toPlainString()
                         editNote = pendingAction.note ?: ""
                         editDateMillis = pendingAction.date
                         editAttachmentUri = pendingAction.attachmentUri
@@ -722,7 +722,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                             Box(Modifier.weight(1f)) {
                                                 if (searchQuery.isBlank()) {
                                                     Text(
-                                                        "Search",
+                                                        stringResource(R.string.search),
                                                         style = MaterialTheme.typography.bodySmall,
                                                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
                                                     )
@@ -795,7 +795,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 }, modifier = Modifier.size(24.dp)) {
                                     Icon(
                                         imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
-                                        contentDescription = if (searchOpen) stringResource(R.string.cancel) else "Search",
+                                        contentDescription = if (searchOpen) stringResource(R.string.cancel) else stringResource(R.string.search),
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }

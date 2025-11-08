@@ -8,6 +8,7 @@
     <!-- Totals footer -->
     <string name="total_credit">कुल जमा</string>
     <string name="total_debit">कुल निकासी</string>
+    <string name="due_accounts">बकाया खाते</string>
     <string name="export_to_pdf">पीडीएफ में निर्यात</string>
     <string name="export_to_excel">एक्सेल में निर्यात</string>
 
@@ -46,6 +47,7 @@
     <string name="pick_date">तिथि चुनें</string>
     <string name="amount">राशि</string>
     <string name="particular">विवरण</string>
+    <string name="search">खोजें</string>
 
     <!-- Table headers -->
     <string name="col_date">तिथि</string>
@@ -72,6 +74,7 @@
     <string name="uncategorized">बिना श्रेणी</string>
     <string name="show_category_field">श्रेणी फ़ील्ड दिखाएं</string>
     <string name="categories_csv">श्रेणियाँ (कॉमा से अलग)</string>
+    <string name="show_summary_card_label">खातों पर सारांश दिखाएं</string>
     <string name="category_split">खर्च का विभाजन</string>
     <string name="expense_split">खर्च का विभाजन</string>
     <string name="last_6_months">पिछले 6 महीने</string>
@@ -111,6 +114,18 @@
     <string name="theme_title">थीम</string>
     <string name="light_option">लाइट</string>
     <string name="dark_option">डार्क</string>
+
+    <!-- Currency settings -->
+    <string name="currency_settings">मुद्रा</string>
+    <string name="currency_code_label">मुद्रा कोड</string>
+    <string name="show_currency_symbol">मुद्रा प्रतीक दिखाएं</string>
+
+    <!-- Premium / Monetization -->
+    <string name="premium_title">प्रीमियम</string>
+    <string name="ads_removed">इस डिवाइस पर विज्ञापन हटाए गए हैं</string>
+    <string name="ads_enabled_msg">विज्ञापन सक्षम। स्थायी रूप से हटाने के लिए खरीदें।</string>
+    <string name="remove_ads">विज्ञापन हटाएं</string>
+    <string name="restore_purchase">खरीद पुनर्स्थापित करें</string>
 
     <string name="backup_to_drive">ड्राइव पर बैकअप</string>
     <string name="list_backups">बैकअप सूची</string>

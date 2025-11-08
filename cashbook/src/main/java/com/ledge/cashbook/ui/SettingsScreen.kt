@@ -185,6 +185,29 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 }
             }
             item { HorizontalDivider() }
+            // Theme
+            item { Text(stringResource(R.string.theme_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                val mode by themeViewModel.themeMode.collectAsState()
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ThemeOptionRow(
+                        label = stringResource(R.string.system_option),
+                        selected = mode == ThemeViewModel.MODE_SYSTEM,
+                        onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_SYSTEM) }
+                    )
+                    ThemeOptionRow(
+                        label = stringResource(R.string.light_option),
+                        selected = mode == ThemeViewModel.MODE_LIGHT,
+                        onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_LIGHT) }
+                    )
+                    ThemeOptionRow(
+                        label = stringResource(R.string.dark_option),
+                        selected = mode == ThemeViewModel.MODE_DARK,
+                        onSelect = { themeViewModel.setThemeMode(ThemeViewModel.MODE_DARK) }
+                    )
+                }
+            }
+            item { HorizontalDivider() }
 
             // Categories settings
             item { Text(stringResource(R.string.category), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
@@ -223,6 +246,17 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                             }
                         }
                     }
+                }
+            }
+            item { HorizontalDivider() }
+
+            // Accounts summary
+            item {
+                val settingsVM: SettingsViewModel = hiltViewModel()
+                val showSummary by settingsVM.showSummary.collectAsState(initial = false)
+                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.show_summary_card_label))
+                    Switch(checked = showSummary, onCheckedChange = { settingsVM.setShowSummary(it) })
                 }
             }
             item { HorizontalDivider() }
@@ -273,15 +307,22 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(if (hasRemoveAds) stringResource(R.string.ads_removed) else stringResource(R.string.ads_enabled_msg))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(onClick = {
-                            val act = activity ?: return@Button
-                            scope.launch {
-                                val started = monetizationVM.purchaseRemoveAds(act)
-                                if (!started) {
-                                    snackbarHostState.showSnackbar("Preparing purchase, please try again in a moment")
+                        Button(
+                            enabled = !hasRemoveAds,
+                            onClick = {
+                                val act = activity ?: return@Button
+                                scope.launch {
+                                    val started = monetizationVM.purchaseRemoveAds(act)
+                                    if (!started) {
+                                        snackbarHostState.showSnackbar("Preparing purchase, please try again in a moment")
+                                    }
                                 }
                             }
-                        }) { Text(stringResource(R.string.remove_ads)) }
+                        ) { Text(stringResource(R.string.remove_ads)) }
+
+                        OutlinedButton(onClick = { monetizationVM.restore() }) {
+                            Text(stringResource(R.string.restore_purchase))
+                        }
                     }
                 }
             }

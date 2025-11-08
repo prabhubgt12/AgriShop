@@ -18,6 +18,14 @@ class AccountsViewModel @Inject constructor(
     val accounts: StateFlow<List<CashAccount>> = repo.accounts()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    // Aggregates across all accounts
+    val totalCredit: StateFlow<Double> = repo.totalCredit()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0.0)
+    val totalDebit: StateFlow<Double> = repo.totalDebit()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0.0)
+    val dueAccountsCount: StateFlow<Int> = repo.dueAccountsCount()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
     fun addAccount(name: String) {
         viewModelScope.launch { repo.addAccount(name) }
     }

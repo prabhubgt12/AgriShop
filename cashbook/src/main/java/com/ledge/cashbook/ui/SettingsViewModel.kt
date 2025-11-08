@@ -21,10 +21,12 @@ class SettingsViewModel @Inject constructor(
     companion object Keys {
         val SHOW_CATEGORY = booleanPreferencesKey("show_category_field")
         val CATEGORIES_CSV = stringPreferencesKey("categories_csv")
+        val SHOW_SUMMARY = booleanPreferencesKey("show_summary_card")
     }
 
     val showCategory: Flow<Boolean> = prefs.data.map { it[SHOW_CATEGORY] ?: false }
     val categoriesCsv: Flow<String> = prefs.data.map { it[CATEGORIES_CSV] ?: "" }
+    val showSummary: Flow<Boolean> = prefs.data.map { it[SHOW_SUMMARY] ?: true }
 
     fun setShowCategory(enabled: Boolean) {
         viewModelScope.launch {
@@ -35,6 +37,12 @@ class SettingsViewModel @Inject constructor(
     fun setCategoriesCsv(csv: String) {
         viewModelScope.launch {
             prefs.edit { it[CATEGORIES_CSV] = csv }
+        }
+    }
+
+    fun setShowSummary(enabled: Boolean) {
+        viewModelScope.launch {
+            prefs.edit { it[SHOW_SUMMARY] = enabled }
         }
     }
 }
