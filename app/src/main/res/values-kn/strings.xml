@@ -160,6 +160,8 @@
     <string name="today">ಇಂದು</string>
     <string name="week">ವಾರ</string>
     <string name="month">ತಿಂಗಳು</string>
+    <string name="six_months">6 ತಿಂಗಳು</string>
+    <string name="year">ವರ್ಷ</string>
     <string name="costing_method">ಖರ್ಚು ವಿಧಾನ</string>
     <string name="method_label">ವಿಧಾನ</string>
     <string name="compute_pl">ಲಾ/ನ ಲೆಕ್ಕಿಸಿ</string>
