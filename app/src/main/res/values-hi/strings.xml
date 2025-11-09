@@ -119,6 +119,7 @@
     <string name="customer_required">ग्राहक*</string>
     <string name="product_required">उत्पाद*</string>
     <string name="price_label">कीमत</string>
+    <string name="print_failed_after_save_try_view_bills">बिल सफलतापूर्वक सहेजा गया।\nतकनीकी समस्या के कारण प्रिंट विफल हो गया।\nआप कभी भी बिल देखें स्क्रीन से बिल प्रिंट कर सकते हैं।\nयदि समस्या बनी रहती है, तो कृपया ऐप को पुनःइंस्टॉल करने का प्रयास करें।</string>
     <string name="qty_label">मात्रा</string>
     <string name="paid_label">भुगतान</string>
     <string name="balance_only_label">बाकी</string>
@@ -155,6 +156,8 @@
     <string name="today">आज</string>
     <string name="week">सप्ताह</string>
     <string name="month">माह</string>
+    <string name="six_months">6 माह</string>
+    <string name="year">वर्ष</string>
     <string name="costing_method">कॉस्टिंग मेथड</string>
     <string name="method_label">मेथड</string>
     <string name="compute_pl">पी &amp; एल निकालें</string>

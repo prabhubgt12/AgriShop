@@ -1,6 +1,8 @@
 package com.fertipos.agroshop.ui.billing
 
 import android.content.Context
+import android.app.Activity
+import android.content.ContextWrapper
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.print.PageRange
@@ -397,25 +399,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                             vm.submit()
                         }, enabled = !state.value.loading && state.value.selectedCustomerId != null && state.value.items.isNotEmpty()) { Text(stringResource(R.string.submit_and_print)) }
                     }
-                    if (state.value.error != null && state.value.error!!.isNotBlank()) {
-                        Spacer(Modifier.height(6.dp))
-                        val err = state.value.error!!
-                        val msg = when {
-                            err == "ERR_SELECT_CUSTOMER" -> stringResource(R.string.err_select_customer)
-                            err == "ERR_ADD_ONE_ITEM" -> stringResource(R.string.err_add_one_item)
-                            err.startsWith("ERR_INSUFFICIENT_STOCK|") -> {
-                                val parts = err.split('|')
-                                if (parts.size >= 4) {
-                                    val name = parts[1]
-                                    val available = parts[2]
-                                    val required = parts[3]
-                                    stringResource(R.string.err_insufficient_stock, name, available, required)
-                                } else err
-                            }
-                            else -> err
-                        }
-                        Text(text = msg, color = androidx.compose.ui.graphics.Color.Red)
-                    }
+                    
                 }
             }
             Spacer(Modifier.height(12.dp))
@@ -495,7 +479,13 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                 balance = pendingPrint!!.balance,
                 hasRemoveAds = hasRemoveAds
             )
-            val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
+            val activity = context.asActivity()
+            if (activity == null) {
+                android.widget.Toast.makeText(context, context.getString(R.string.print_failed_after_save_try_view_bills), android.widget.Toast.LENGTH_SHORT).show()
+                // Do not clear pendingPrint so user can try again after returning to Activity context
+                return@LaunchedEffect
+            }
+            val printManager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
             val jobName = "Invoice #$successId"
             val adapter = object : PrintDocumentAdapter() {
                 override fun onLayout(
@@ -628,7 +618,12 @@ private fun DraftItemRow(
 
 // Simple text invoice print using Android Print Framework
 private fun triggerPrint(context: Context, jobName: String, lines: List<String>) {
-    val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
+    val activity = context.asActivity()
+    if (activity == null) {
+        android.widget.Toast.makeText(context, context.getString(R.string.print_failed_after_save_try_view_bills), android.widget.Toast.LENGTH_SHORT).show()
+        return
+    }
+    val printManager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
     val adapter = object : PrintDocumentAdapter() {
         private var pdfDocument: PdfDocument? = null
 
@@ -678,4 +673,11 @@ private fun triggerPrint(context: Context, jobName: String, lines: List<String>)
         }
     }
     printManager.print(jobName, adapter, PrintAttributes.Builder().build())
+}
+
+// Unwrap a Context to an Activity if possible
+private tailrec fun Context.asActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.asActivity()
+    else -> null
 }

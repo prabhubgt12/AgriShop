@@ -103,6 +103,8 @@
     <string name="three_months_label">3 months</string>
     <string name="six_months_label">6 months</string>
     <string name="year_label">Year</string>
+    <string name="six_months">6 Months</string>
+    <string name="year">Year</string>
     <string name="sales_value_label">Sales Value:</string>
     <string name="purchase_value_label">Purchase Value:</string>
     <string name="monthly_sales_profit_title">Monthly Sales &amp; Profit</string>
@@ -164,6 +166,7 @@
     <string name="customer_required">Customer*</string>
     <string name="product_required">Product*</string>
     <string name="price_label">Price</string>
+    <string name="print_failed_after_save_try_view_bills">Bill saved successfully.\nHowever, printing failed due to a technical issue.\nYou can print the bill anytime from the View Bills screen.\nIf the problem continues, please try reinstalling the app.</string>
     <string name="qty_label">Qty</string>
     <string name="paid_label">Paid</string>
     <string name="balance_only_label">Balance</string>

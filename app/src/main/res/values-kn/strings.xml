@@ -119,6 +119,7 @@
     <string name="customer_required">ಗ್ರಾಹಕ*</string>
     <string name="product_required">ಉತ್ಪನ್ನ*</string>
     <string name="price_label">ಬೆಲೆ</string>
+    <string name="print_failed_after_save_try_view_bills">ಬಿಲ್ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ.\nತಾಂತ್ರಿಕ ಸಮಸ್ಯೆಯಿಂದ ಮುದ್ರಣೆ ವಿಫಲವಾಗಿದೆ.\nನೀವು ಯಾವಾಗ ಬೇಕಾದರೂ ಬಿಲ್‌ಗಳು ನೋಡಿ ಪರದೆಯಿಂದ ಮುದ್ರಿಸಬಹುದು.\nಸಮಸ್ಯೆ ಮುಂದುವರೆದರೆ, ದಯವಿಟ್ಟು ಆಪ್ ಅನ್ನು ಮರುಸ್ಥಾಪಿಸಿ.</string>
     <string name="qty_label">ಪ್ರಮಾಣ</string>
     <string name="paid_label">ಪಾವತಿ</string>
     <string name="balance_only_label">ಬಾಕಿ</string>

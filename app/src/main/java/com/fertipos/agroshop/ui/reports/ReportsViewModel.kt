@@ -68,7 +68,7 @@ class ReportsViewModel @Inject constructor(
                     lastInvoiceDate = it.lastInvoiceDate
                 )
             },
-            customers = customers
+            customers = customers.filter { !it.isSupplier }
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
@@ -159,8 +159,8 @@ class ReportsViewModel @Inject constructor(
     }
 
     val state: StateFlow<UiState> = combine(baseState, selectedCustomer, filteredInvoices) { base, selId, invoices ->
-        val effectiveSelected = selId ?: base.customers.firstOrNull()?.id
-        val list = if (selId == null) invoices else invoices
+        val effectiveSelected = selId // keep null until user selects
+        val list = if (selId == null) emptyList() else invoices
         val sum = list.sumOf { it.total }
         base.copy(
             selectedCustomerId = effectiveSelected,
