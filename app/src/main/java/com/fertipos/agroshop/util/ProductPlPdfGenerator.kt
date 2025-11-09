@@ -39,11 +39,12 @@ object ProductPlPdfGenerator {
 
         // Header
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        canvas.drawText(context.getString(R.string.product_pl_title), 40f, y, paint)
+        canvas.drawText(context.getString(R.string.product_pl_title) + " Report", 40f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 18f
-        canvas.drawText(context.getString(R.string.from_colon, df.format(Date(from))), 40f, y, paint); y += 16f
-        canvas.drawText(context.getString(R.string.to_colon, df.format(Date(to))), 40f, y, paint); y += 12f
+        val rangeLine = context.getString(R.string.from_colon, df.format(Date(from))) +
+                "    " + context.getString(R.string.to_colon, df.format(Date(to)))
+        canvas.drawText(rangeLine, 40f, y, paint); y += 16f
         canvas.drawLine(40f, y, 555f, y, paint); y += 16f
 
         // Table header
@@ -121,7 +122,8 @@ object ProductPlPdfGenerator {
 
         doc.finishPage(page)
 
-        val outFile = File(context.cacheDir, "product_pl_${System.currentTimeMillis()}.pdf")
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val outFile = File(context.cacheDir, "Product_PL_Report_${ts}.pdf")
         FileOutputStream(outFile).use { doc.writeTo(it) }
         doc.close()
 

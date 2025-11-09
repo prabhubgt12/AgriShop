@@ -39,8 +39,9 @@ object SalesRangePdfGenerator {
         canvas.drawText(context.getString(R.string.sales_report_title), 35f, y, paint)
         paint.typeface = Typeface.DEFAULT
         y += 18f
-        canvas.drawText(context.getString(R.string.from_colon, df.format(Date(from))), 35f, y, paint); y += 16f
-        canvas.drawText(context.getString(R.string.to_colon, df.format(Date(to))), 35f, y, paint); y += 16f
+        val rangeLine = context.getString(R.string.from_colon, df.format(Date(from))) +
+                "    " + context.getString(R.string.to_colon, df.format(Date(to)))
+        canvas.drawText(rangeLine, 35f, y, paint); y += 16f
         canvas.drawLine(35f, y, 585f, y, paint); y += 16f
 
         // Table header
@@ -109,7 +110,8 @@ object SalesRangePdfGenerator {
 
         doc.finishPage(page)
 
-        val outFile = File(context.cacheDir, "sales_${from}_${to}.pdf")
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val outFile = File(context.cacheDir, "Sales_Report_${ts}.pdf")
         FileOutputStream(outFile).use { doc.writeTo(it) }
         doc.close()
 

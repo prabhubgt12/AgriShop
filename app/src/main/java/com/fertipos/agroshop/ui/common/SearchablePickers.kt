@@ -53,7 +53,13 @@ fun CustomerPicker(
             label = { Text(label) },
             modifier = Modifier
                 .fillMaxWidth()
-                .onFocusChanged { fs: FocusState -> if (fs.isFocused) expanded = true },
+                .onFocusChanged { fs: FocusState ->
+                    if (fs.isFocused) {
+                        expanded = true
+                        // Clear query on focus so full list is visible even when a previous selection exists
+                        query = ""
+                    }
+                },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent
@@ -231,13 +237,24 @@ fun ProductPicker(
             label = { Text(label) },
             modifier = Modifier
                 .fillMaxWidth()
-                .onFocusChanged { fs: FocusState -> if (fs.isFocused) expanded = true },
+                .onFocusChanged { fs: FocusState ->
+                    if (fs.isFocused) {
+                        expanded = true
+                        query = ""
+                    }
+                },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent
             ),
             trailingIcon = {
-                IconButton(onClick = { expanded = !expanded }) {
+                IconButton(onClick = {
+                    val willOpen = !expanded
+                    expanded = !expanded
+                    if (willOpen) {
+                        query = ""
+                    }
+                }) {
                     Text(if (expanded) "▲" else "▼", style = MaterialTheme.typography.labelLarge)
                 }
             },

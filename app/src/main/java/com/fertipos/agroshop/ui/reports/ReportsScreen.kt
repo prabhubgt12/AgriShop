@@ -132,6 +132,8 @@ fun ReportsScreen() {
                         fun setRange(calStart: Calendar, calEnd: Calendar) {
                             fromMillis = calStart.timeInMillis
                             toMillis = calEnd.timeInMillis
+                            plResult = null
+                            plError = null
                         }
                         // Month
                         Button(
@@ -174,15 +176,15 @@ fun ReportsScreen() {
                     BoxWithConstraints(Modifier.fillMaxWidth()) {
                         if (maxWidth < 360.dp) {
                             Column(Modifier.fillMaxWidth()) {
-                                DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { fromMillis = it }, modifier = Modifier.fillMaxWidth())
+                                DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { fromMillis = it; plResult = null; plError = null }, modifier = Modifier.fillMaxWidth())
                                 Spacer(Modifier.height(6.dp))
-                                DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { toMillis = it }, modifier = Modifier.fillMaxWidth())
+                                DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { toMillis = it; plResult = null; plError = null }, modifier = Modifier.fillMaxWidth())
                             }
                         } else {
                             Row(Modifier.fillMaxWidth()) {
-                                DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { fromMillis = it }, modifier = Modifier.weight(1f))
+                                DateField(label = stringResource(R.string.from_label), value = fromMillis, onChange = { fromMillis = it; plResult = null; plError = null }, modifier = Modifier.weight(1f))
                                 Spacer(Modifier.width(8.dp))
-                                DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { toMillis = it }, modifier = Modifier.weight(1f))
+                                DateField(label = stringResource(R.string.to_label), value = toMillis, onChange = { toMillis = it; plResult = null; plError = null }, modifier = Modifier.weight(1f))
                             }
                         }
                     }
@@ -250,26 +252,24 @@ fun ReportsScreen() {
                             onClick = {
                                 val f = fromMillis
                                 val t = toMillis
-                                if (f != null && t != null) {
+                                if (f == null || t == null) return@Button
+                                plScope.launch {
                                     val toEnd = t + 86_399_999
-                                    plScope.launch {
-                                        val r = vm.computeProfitAndLoss(f, toEnd, ReportsViewModel.CostingMethod.FIFO)
-                                        plResult = r
-                                        val uri = com.fertipos.agroshop.util.ReportExporter.exportPLCsv(
-                                            context,
-                                            context.packageName + ".fileprovider",
-                                            r.from, r.to,
-                                            r.salesSubtotal, r.salesGst, r.salesTotal,
-                                            r.purchasesSubtotal, r.purchasesGst, r.purchasesTotal,
-                                            r.grossProfit, r.netAmount
-                                        )
-                                        val intent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/csv"
-                                            putExtra(Intent.EXTRA_STREAM, uri)
-                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        }
-                                        ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_csv_title)), null)
+                                    val r = plResult ?: vm.computeProfitAndLoss(f, toEnd, ReportsViewModel.CostingMethod.FIFO).also { plResult = it }
+                                    val uri = com.fertipos.agroshop.util.ReportExporter.exportPLExcel(
+                                        context,
+                                        context.packageName + ".fileprovider",
+                                        r.from, r.to,
+                                        r.salesSubtotal, r.salesGst, r.salesTotal,
+                                        r.purchasesSubtotal, r.purchasesGst, r.purchasesTotal,
+                                        r.grossProfit, r.netAmount
+                                    )
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "application/vnd.ms-excel"
+                                        putExtra(Intent.EXTRA_STREAM, uri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     }
+                                    ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_csv_title)), null)
                                 }
                             }
                         ) { Text(stringResource(R.string.export_pl_csv)) }
@@ -279,27 +279,25 @@ fun ReportsScreen() {
                             onClick = {
                                 val f = fromMillis
                                 val t = toMillis
-                                if (f != null && t != null) {
+                                if (f == null || t == null) return@Button
+                                plScope.launch {
                                     val toEnd = t + 86_399_999
-                                    plScope.launch {
-                                        val r = vm.computeProfitAndLoss(f, toEnd, ReportsViewModel.CostingMethod.FIFO)
-                                        plResult = r
-                                        val uri = com.fertipos.agroshop.util.PLPdfGenerator.generate(
-                                            context,
-                                            context.packageName + ".fileprovider",
-                                            r.from, r.to,
-                                            r.salesSubtotal, r.salesGst, r.salesTotal,
-                                            r.purchasesSubtotal, r.purchasesGst, r.purchasesTotal,
-                                            r.grossProfit, r.netAmount,
-                                            hasRemoveAds = hasRemoveAds
-                                        )
-                                        val intent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "application/pdf"
-                                            putExtra(Intent.EXTRA_STREAM, uri)
-                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                        }
-                                        ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_pl_pdf_title)), null)
+                                    val r = plResult ?: vm.computeProfitAndLoss(f, toEnd, ReportsViewModel.CostingMethod.FIFO).also { plResult = it }
+                                    val uri = com.fertipos.agroshop.util.PLPdfGenerator.generate(
+                                        context,
+                                        context.packageName + ".fileprovider",
+                                        r.from, r.to,
+                                        r.salesSubtotal, r.salesGst, r.salesTotal,
+                                        r.purchasesSubtotal, r.purchasesGst, r.purchasesTotal,
+                                        r.grossProfit, r.netAmount,
+                                        hasRemoveAds = hasRemoveAds
+                                    )
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "application/pdf"
+                                        putExtra(Intent.EXTRA_STREAM, uri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     }
+                                    ContextCompat.startActivity(context, Intent.createChooser(intent, context.getString(R.string.share_pl_pdf_title)), null)
                                 }
                             }
                         ) { Text(stringResource(R.string.share_pl_pdf)) }
@@ -471,14 +469,14 @@ fun ReportsScreen() {
                     if (selectedId != null) {
                         scope.launch {
                             val (name, rows) = vm.getExportRowsForCustomer(selectedId)
-                            val uri = ReportExporter.exportCustomerCsv(
+                            val uri = ReportExporter.exportCustomerExcel(
                                 context,
                                 context.packageName + ".fileprovider",
                                 name,
                                 rows
                             )
                             val intent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/csv"
+                                type = "application/vnd.ms-excel"
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
@@ -492,13 +490,13 @@ fun ReportsScreen() {
                 Button(onClick = {
                     scope.launch {
                         val rows = vm.getExportRowsAll()
-                        val uri = ReportExporter.exportAllCsv(
+                        val uri = ReportExporter.exportAllExcel(
                             context,
                             context.packageName + ".fileprovider",
                             rows
                         )
                         val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/csv"
+                            type = "application/vnd.ms-excel"
                             putExtra(Intent.EXTRA_STREAM, uri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
