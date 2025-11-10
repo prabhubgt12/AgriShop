@@ -300,22 +300,49 @@ fun LoanAddScreen(
         }
 
         if (showDatePicker) {
-            DatePickerDialog(
-                onDismissRequest = { showDatePicker = false },
-                confirmButton = {
-                    TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.ok)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
-                }
-            ) {
-                val state = rememberDatePickerState()
-                DatePicker(state = state)
-                LaunchedEffect(state.selectedDateMillis) {
-                    state.selectedDateMillis?.let { millis ->
-                        firstEmiDate = LocalDate.ofInstant(java.time.Instant.ofEpochMilli(millis), ZoneId.systemDefault())
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            if (android.os.Build.VERSION.SDK_INT <= 30) {
+                androidx.compose.runtime.DisposableEffect(Unit) {
+                    val today = java.util.Calendar.getInstance()
+                    firstEmiDate?.let {
+                        today.set(java.util.Calendar.YEAR, it.year)
+                        today.set(java.util.Calendar.MONTH, it.monthValue - 1)
+                        today.set(java.util.Calendar.DAY_OF_MONTH, it.dayOfMonth)
                     }
+                    val dlg = android.app.DatePickerDialog(
+                        ctx,
+                        { _, y, m, d ->
+                            try { firstEmiDate = LocalDate.of(y, m + 1, d) } catch (_: Exception) {}
+                        },
+                        today.get(java.util.Calendar.YEAR),
+                        today.get(java.util.Calendar.MONTH),
+                        today.get(java.util.Calendar.DAY_OF_MONTH)
+                    )
+                    dlg.setOnDismissListener { showDatePicker = false }
+                    dlg.show()
+                    onDispose { dlg.dismiss() }
                 }
+            } else {
+                val initial = try {
+                    firstEmiDate?.atStartOfDay(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()
+                        ?: System.currentTimeMillis()
+                } catch (_: Exception) { System.currentTimeMillis() }
+                val dateState = rememberDatePickerState(initialSelectedDateMillis = initial)
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            val selected = dateState.selectedDateMillis ?: initial
+                            try {
+                                firstEmiDate = LocalDate.ofInstant(java.time.Instant.ofEpochMilli(selected), ZoneId.systemDefault())
+                            } catch (_: Exception) {}
+                            showDatePicker = false
+                        }) { Text(stringResource(R.string.ok)) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
+                    }
+                ) { DatePicker(state = dateState) }
             }
         }
     }
