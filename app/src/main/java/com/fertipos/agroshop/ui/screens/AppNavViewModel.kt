@@ -1,6 +1,7 @@
 package com.fertipos.agroshop.ui.screens
 
 import androidx.lifecycle.ViewModel
+import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -84,4 +85,21 @@ class AppNavViewModel @Inject constructor() : ViewModel() {
 
     fun requestInvoiceHistoryForCustomer(customerId: Int) { _pendingInvoiceHistoryCustomerId.value = customerId }
     fun clearPendingInvoiceHistoryCustomer() { _pendingInvoiceHistoryCustomerId.value = null }
+
+    // Print Preview: pending PDF uri and job name
+    private val _pendingPrintPreviewUri = MutableStateFlow<Uri?>(null)
+    val pendingPrintPreviewUri: StateFlow<Uri?> = _pendingPrintPreviewUri
+    private val _pendingPrintJobName = MutableStateFlow<String?>(null)
+    val pendingPrintJobName: StateFlow<String?> = _pendingPrintJobName
+
+    fun requestPrintPreview(uri: Uri, jobName: String) {
+        _pendingPrintPreviewUri.value = uri
+        _pendingPrintJobName.value = jobName
+        navigateTo(9)
+    }
+
+    fun clearPrintPreview() {
+        _pendingPrintPreviewUri.value = null
+        _pendingPrintJobName.value = null
+    }
 }

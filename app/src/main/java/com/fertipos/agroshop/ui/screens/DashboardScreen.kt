@@ -299,6 +299,7 @@ fun DashboardScreen() {
                 5 -> SettingsScreen()
                 6 -> InvoiceHistoryScreen(navVm)
                 8 -> PurchaseHistoryScreen(navVm)
+                9 -> com.fertipos.agroshop.ui.print.PrintPreviewScreen(navVm)
                 // Interest Book removed from parent app
             }
         }

@@ -345,7 +345,6 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                         val buttonText = if (state.editingPurchaseId != null) stringResource(R.string.save_purchase) else stringResource(R.string.create_purchase)
                         Spacer(Modifier.weight(1f))
                         Button(onClick = { vm.submit() }, enabled = state.items.isNotEmpty()) { Text(buttonText) }
-                        TextButton(onClick = { vm.clearSuccess() }) { Text(stringResource(R.string.reset_status)) }
                     }
                 }
             }

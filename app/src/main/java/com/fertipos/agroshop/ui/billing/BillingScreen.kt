@@ -479,64 +479,12 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                 balance = pendingPrint!!.balance,
                 hasRemoveAds = hasRemoveAds
             )
-            val activity = context.asActivity()
-            if (activity == null) {
-                android.widget.Toast.makeText(context, context.getString(R.string.print_failed_after_save_try_view_bills), android.widget.Toast.LENGTH_SHORT).show()
-                // Do not clear pendingPrint so user can try again after returning to Activity context
-                return@LaunchedEffect
-            }
-            val printManager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
             val jobName = "Invoice #$successId"
-            val adapter = object : PrintDocumentAdapter() {
-                override fun onLayout(
-                    oldAttributes: PrintAttributes?,
-                    newAttributes: PrintAttributes?,
-                    cancellationSignal: android.os.CancellationSignal?,
-                    callback: LayoutResultCallback?,
-                    extras: android.os.Bundle?
-                ) {
-                    if (cancellationSignal?.isCanceled == true) {
-                        callback?.onLayoutCancelled()
-                        return
-                    }
-                    val info = PrintDocumentInfo.Builder("invoice_$successId.pdf")
-                        .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                        .build()
-                    callback?.onLayoutFinished(info, true)
-                }
-                override fun onWrite(
-                    pages: Array<out PageRange>?,
-                    destination: android.os.ParcelFileDescriptor?,
-                    cancellationSignal: android.os.CancellationSignal?,
-                    callback: WriteResultCallback?
-                ) {
-                    try {
-                        context.contentResolver.openInputStream(uri)?.use { input ->
-                            destination?.fileDescriptor?.let { fd ->
-                                FileOutputStream(fd).use { out ->
-                                    val buf = ByteArray(8192)
-                                    while (true) {
-                                        val r = input.read(buf)
-                                        if (r <= 0) break
-                                        out.write(buf, 0, r)
-                                    }
-                                }
-                            }
-                        }
-                        callback?.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
-                    } catch (e: Exception) {
-                        callback?.onWriteFailed(e.message)
-                    }
-                }
-            }
-            printManager.print(jobName, adapter, null)
-            // Reset triggers to avoid duplicate prints
+            navVm.requestPrintPreview(uri, jobName)
+            // Reset triggers to avoid duplicate actions
             pendingPrint = null
             vm.clearSuccess()
-            // Immediately navigate away from Billing so back does not return here.
-            val target = backOverride.value ?: prevTab.value
             navVm.clearBackOverrideTab()
-            navVm.navigateTo(target)
         }
     }
 
