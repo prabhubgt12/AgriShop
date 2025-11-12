@@ -15,6 +15,9 @@ import com.ledge.cashbook.BuildConfig
 import android.widget.TextView
 import android.widget.ImageView
 import android.view.ViewGroup
+import android.util.Log
+import android.os.Handler
+import android.os.Looper
 
 @Composable
 fun NativeAdvancedAd(
@@ -43,10 +46,11 @@ fun NativeAdvancedAd(
             val container = FrameLayout(ctx).apply {
                 layoutParams = FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
+                    ViewGroup.LayoutParams.WRAP_CONTENT
                 )
             }
-            val adLoader = AdLoader.Builder(ctx, unit)
+            lateinit var loader: AdLoader
+            val builder = AdLoader.Builder(ctx, unit)
                 .forNativeAd { ad ->
                     nativeAd?.destroy()
                     nativeAd = ad
@@ -67,16 +71,28 @@ fun NativeAdvancedAd(
                     adView.setNativeAd(ad)
                     container.removeAllViews()
                     container.addView(adView, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                    val adapter = ad.responseInfo?.mediationAdapterClassName
+                    Log.d("NativeAdvancedAd", "Loaded native ad unit=$unit adapter=${adapter} headline='${ad.headline}'")
                     onLoadState(true)
                 }
                 .withAdListener(object : AdListener() {
                     override fun onAdFailedToLoad(error: LoadAdError) {
+                        Log.e("NativeAdvancedAd", "Failed to load native (unit=$unit): code=${error.code} message=${error.message} domain=${error.domain}")
                         onLoadState(false)
+                        // Cooldown before retry to avoid request spam / rate limiting
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            try {
+                                Log.d("NativeAdvancedAd", "Retry loading native after cooldown")
+                                loader.loadAd(AdRequest.Builder().build())
+                            } catch (_: Exception) {}
+                        }, 60_000)
                     }
+                    override fun onAdClicked() { Log.d("NativeAdvancedAd", "Ad clicked (unit=$unit)") }
+                    override fun onAdImpression() { Log.d("NativeAdvancedAd", "Impression recorded (unit=$unit)") }
                 })
                 .withNativeAdOptions(NativeAdOptions.Builder().build())
-                .build()
-            adLoader.loadAd(AdRequest.Builder().build())
+            loader = builder.build()
+            loader.loadAd(AdRequest.Builder().build())
             container
         },
         update = { }

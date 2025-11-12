@@ -14,6 +14,7 @@ class MonetizationViewModel @Inject constructor(
 ) : ViewModel() {
 
     val hasRemoveAds: StateFlow<Boolean> = billing.hasRemoveAds
+    val removeAdsPrice: StateFlow<String?> = billing.removeAdsPrice
 
     suspend fun purchaseRemoveAds(activity: Activity): Boolean {
         return billing.launchPurchase(activity)

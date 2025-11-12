@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -34,19 +35,29 @@ class BillingManager @Inject constructor(
     val hasRemoveAds: StateFlow<Boolean> = prefs.removeAdsFlow(false)
         .stateIn(scope, SharingStarted.Eagerly, false)
 
+    // Formatted price for remove_ads (e.g., ₹150.00). Null until queried.
+    private val _removeAdsPrice = MutableStateFlow<String?>(null)
+    val removeAdsPrice: StateFlow<String?> = _removeAdsPrice
+
     init {
         connectAndQuery()
     }
 
     private fun connectAndQuery() {
         if (billingClient.isReady) {
-            scope.launch { queryAndAcknowledgeOwned() }
+            scope.launch {
+                queryAndAcknowledgeOwned()
+                queryRemoveAdsPrice()
+            }
             return
         }
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    scope.launch { queryAndAcknowledgeOwned() }
+                    scope.launch {
+                        queryAndAcknowledgeOwned()
+                        queryRemoveAdsPrice()
+                    }
                 }
             }
             override fun onBillingServiceDisconnected() {
@@ -78,6 +89,7 @@ class BillingManager @Inject constructor(
             .build()
         val detailsResult = billingClient.queryProductDetails(params)
         val pd = detailsResult.productDetailsList?.firstOrNull() ?: return false
+        _removeAdsPrice.value = pd.oneTimePurchaseOfferDetails?.formattedPrice
         val offer = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(pd)
             .build()
@@ -99,11 +111,27 @@ class BillingManager @Inject constructor(
         handlePurchases(result.purchasesList ?: emptyList())
     }
 
+    private suspend fun queryRemoveAdsPrice() {
+        try {
+            val productList = listOf(
+                QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId(PRODUCT_REMOVE_ADS)
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
+            )
+            val params = QueryProductDetailsParams.newBuilder().setProductList(productList).build()
+            val detailsResult = billingClient.queryProductDetails(params)
+            val pd = detailsResult.productDetailsList?.firstOrNull()
+            _removeAdsPrice.value = pd?.oneTimePurchaseOfferDetails?.formattedPrice
+        } catch (_: Exception) {
+            // ignore
+        }
+    }
+
     private suspend fun handlePurchases(purchases: List<Purchase>) {
         val ownsRemoveAds = purchases.any { it.products.contains(PRODUCT_REMOVE_ADS) && it.purchaseState == Purchase.PurchaseState.PURCHASED }
-        if (ownsRemoveAds) {
-            prefs.setRemoveAds(true)
-        }
+        // Update local entitlement based on current ownership snapshot
+        prefs.setRemoveAds(ownsRemoveAds)
         // Acknowledge any unacknowledged purchases
         purchases.filter { it.products.contains(PRODUCT_REMOVE_ADS) && !it.isAcknowledged }
             .forEach { p ->

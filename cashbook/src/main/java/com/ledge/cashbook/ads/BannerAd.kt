@@ -11,6 +11,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.*
 import com.ledge.cashbook.BuildConfig
 import android.util.Log
+import android.os.Handler
+import android.os.Looper
 
 @Composable
 fun BannerAd(
@@ -55,7 +57,16 @@ fun BannerAd(
                             Log.e("BannerAd", "Failed code=${error.code} ${error.message}")
                             visibility = View.GONE
                             onLoadState(false)
+                            // Cooldown before retry to avoid request spam
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                try {
+                                    Log.d("BannerAd", "Retry loading banner after cooldown")
+                                    loadAd(AdRequest.Builder().build())
+                                } catch (_: Exception) {}
+                            }, 60_000)
                         }
+                        override fun onAdImpression() { Log.d("BannerAd", "Ad impression") }
+                        override fun onAdClicked() { Log.d("BannerAd", "Ad clicked") }
                     }
                     listenerAttached.value = true
                 }
