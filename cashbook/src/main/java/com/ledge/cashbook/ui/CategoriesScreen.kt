@@ -72,8 +72,9 @@ fun CategoriesScreen(onBack: () -> Unit, vm: CategoriesViewModel = hiltViewModel
                     Spacer(Modifier.height(8.dp))
                 }
             }
-            items(categories) { cat ->
-                val kws by vm.keywordsFor(cat.id).collectAsState(initial = emptyList())
+            items(categories, key = { it.id }) { cat ->
+                val kwsFlow = remember(cat.id) { vm.keywordsFor(cat.id) }
+                val kws by kwsFlow.collectAsState(initial = emptyList())
                 ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -85,28 +86,24 @@ fun CategoriesScreen(onBack: () -> Unit, vm: CategoriesViewModel = hiltViewModel
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(cat.name, style = MaterialTheme.typography.titleMedium)
-                            if (kws.isEmpty()) {
-                                Text(text = stringResource(id = R.string.never_label), style = MaterialTheme.typography.bodySmall)
-                            } else {
-                                val preview = remember(kws) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = stringResource(R.string.prefix_keywords) + " ",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                val preview = if (kws.isEmpty()) "—" else run {
                                     val list = kws.map { it.keyword }
                                     val head = list.take(2).joinToString(",")
                                     val rem = (list.size - 2).coerceAtLeast(0)
                                     if (rem > 0) "$head,+$rem" else head
                                 }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = stringResource(R.string.prefix_keywords) + " ",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = preview,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1
-                                    )
-                                }
+                                Text(
+                                    text = preview,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1
+                                )
                             }
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -6,6 +6,7 @@ import com.ledge.cashbook.data.local.dao.CategoryKeywordDao
 import com.ledge.cashbook.data.local.entities.Category
 import com.ledge.cashbook.data.local.entities.CategoryKeyword
 import kotlinx.coroutines.flow.Flow
+import androidx.room.withTransaction
 
 class CategoryRepository(
     private val db: AppDatabase,
@@ -19,21 +20,23 @@ class CategoryRepository(
     suspend fun upsertCategoryWithKeywords(
         id: Long?, name: String, color: Int?, isSystem: Boolean = false, keywords: List<String>
     ): Long {
-        val now = System.currentTimeMillis()
-        val categoryId = if (id == null || id == 0L) {
-            categoryDao.insert(Category(name = name.trim(), color = color, isSystem = isSystem, createdAt = now, updatedAt = now))
-        } else {
-            val existing = categoryDao.getById(id) ?: return 0L
-            categoryDao.update(existing.copy(name = name.trim(), color = color, updatedAt = now))
-            id
+        return db.withTransaction {
+            val now = System.currentTimeMillis()
+            val categoryId = if (id == null || id == 0L) {
+                categoryDao.insert(Category(name = name.trim(), color = color, isSystem = isSystem, createdAt = now, updatedAt = now))
+            } else {
+                val existing = categoryDao.getById(id) ?: return@withTransaction 0L
+                categoryDao.update(existing.copy(name = name.trim(), color = color, updatedAt = now))
+                id
+            }
+            // Replace keywords set atomically
+            keywordDao.deleteForCategory(categoryId)
+            keywords.map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinctBy { it.lowercase() }
+                .forEach { kw -> keywordDao.insert(CategoryKeyword(categoryId = categoryId, keyword = kw)) }
+            categoryId
         }
-        // Replace keywords set
-        keywordDao.deleteForCategory(categoryId)
-        keywords.map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinctBy { it.lowercase() }
-            .forEach { kw -> keywordDao.insert(CategoryKeyword(categoryId = categoryId, keyword = kw)) }
-        return categoryId
     }
 
     suspend fun deleteCategoryCascade(id: Long) {
