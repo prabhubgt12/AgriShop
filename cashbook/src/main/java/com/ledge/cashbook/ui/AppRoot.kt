@@ -21,6 +21,7 @@ fun AppRoot() {
                 HomeScreen(
                     onOpenCashBook = { nav.navigate("accounts") },
                     onOpenSettings = { nav.navigate("settings") },
+                    onOpenCategories = { nav.navigate("categories") },
                 )
             }
             composable("accounts") {
@@ -42,6 +43,9 @@ fun AppRoot() {
             }
             composable("settings") {
                 SettingsScreen(onBack = { nav.popBackStack() })
+            }
+            composable("categories") {
+                CategoriesScreen(onBack = { nav.popBackStack() })
             }
         }
     }

@@ -57,4 +57,8 @@ interface CashDao {
 
     @Query("SELECT COUNT(*) FROM (SELECT accountId, SUM(CASE WHEN isCredit THEN amount ELSE -amount END) AS bal FROM cash_txns GROUP BY accountId HAVING bal < 0) AS d")
     fun dueAccountsCount(): Flow<Int>
+
+    // Distinct category strings currently used in transactions
+    @Query("SELECT DISTINCT category FROM cash_txns WHERE category IS NOT NULL AND TRIM(category) != ''")
+    suspend fun distinctCategories(): List<String>
 }

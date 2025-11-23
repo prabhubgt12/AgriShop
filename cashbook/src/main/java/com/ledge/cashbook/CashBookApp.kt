@@ -12,6 +12,10 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.first
+import com.ledge.cashbook.data.local.dao.CategoryDao
+import com.ledge.cashbook.data.local.dao.CategoryKeywordDao
+import com.ledge.cashbook.data.local.dao.CashDao
+import com.ledge.cashbook.data.local.entities.Category
 
 @HiltAndroidApp
 class CashBookApp : Application() {
@@ -36,6 +40,26 @@ class CashBookApp : Application() {
             val show = runBlocking { dataStore.data.first()[showKey] ?: true }
             com.ledge.cashbook.util.CurrencyFormatter.setConfig(code, show)
         } catch (_: Exception) { }
+
+        // One-time seed: create Category rows from existing distinct cash_txns.category strings if categories table is empty
+        try {
+            val ep = EntryPointAccessors.fromApplication(this, CategorySeedEntryPoint::class.java)
+            val categoryDao = ep.categoryDao()
+            val cashDao = ep.cashDao()
+            runBlocking {
+                val count = categoryDao.count()
+                if (count == 0) {
+                    val names = cashDao.distinctCategories()
+                    val now = System.currentTimeMillis()
+                    names.map { it.trim() }
+                        .filter { it.isNotEmpty() }
+                        .distinctBy { it.lowercase() }
+                        .forEach { name ->
+                            categoryDao.insert(Category(name = name, createdAt = now, updatedAt = now))
+                        }
+                }
+            }
+        } catch (_: Exception) { }
     }
 }
 
@@ -43,4 +67,12 @@ class CashBookApp : Application() {
 @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
 interface DataStoreEntryPoint {
     fun prefs(): DataStore<Preferences>
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface CategorySeedEntryPoint {
+    fun categoryDao(): CategoryDao
+    fun categoryKeywordDao(): CategoryKeywordDao
+    fun cashDao(): CashDao
 }

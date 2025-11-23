@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.runtime.*
 fun HomeScreen(
     onOpenCashBook: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenCategories: () -> Unit,
 ) {
     val adsVm: AdsViewModel = hiltViewModel()
     val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = adsVm.hasRemoveAds.value)
@@ -71,15 +73,65 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                HomeTile(title = stringResource(R.string.title_cash_book), icon = Icons.Default.Book, modifier = Modifier.weight(1f)) { onOpenCashBook() }
-                HomeTile(title = stringResource(R.string.settings_title), icon = Icons.Default.Settings, modifier = Modifier.weight(1f)) {
-                    if (!hasRemoveAds) {
-                        val act = (ctx as? android.app.Activity)
-                        if (act != null) {
-                            InterstitialAds.showIfAvailable(act) { onOpenSettings() }
-                        } else onOpenSettings()
-                    } else onOpenSettings()
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Cash Book
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onOpenCashBook() },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Book, contentDescription = null)
+                        Spacer(Modifier.height(8.dp))
+                        Text(text = stringResource(R.string.title_cash_book))
+                    }
+                    // Categories
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                if (!hasRemoveAds) {
+                                    val act = (ctx as? android.app.Activity)
+                                    if (act != null) {
+                                        InterstitialAds.showIfAvailable(act) { onOpenCategories() }
+                                    } else onOpenCategories()
+                                } else onOpenCategories()
+                            },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.List, contentDescription = null)
+                        Spacer(Modifier.height(8.dp))
+                        Text(text = stringResource(R.string.title_categories))
+                    }
+                    // Settings
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                if (!hasRemoveAds) {
+                                    val act = (ctx as? android.app.Activity)
+                                    if (act != null) {
+                                        InterstitialAds.showIfAvailable(act) { onOpenSettings() }
+                                    } else onOpenSettings()
+                                } else onOpenSettings()
+                            },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Settings, contentDescription = null)
+                        Spacer(Modifier.height(8.dp))
+                        Text(text = stringResource(R.string.settings_title))
+                    }
                 }
             }
             // Remove-ads banner card just below tiles (gate on price so it doesn't flash before billing resolves)
@@ -95,7 +147,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Remove ads permanently in just " + (price ?: "—"),
+                            text = stringResource(R.string.remove_ads_card_text, (price ?: "—")),
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f)
                         )

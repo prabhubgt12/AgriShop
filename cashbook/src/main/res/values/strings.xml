@@ -6,6 +6,7 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_cash_book">Cash Book</string>
     <string name="settings_title">Settings</string>
+    <string name="title_categories">Categories</string>
 
     <!-- Accounts -->
     <string name="add_account">Add Account</string>
@@ -82,6 +83,8 @@
     <string name="english_label">English</string>
     <string name="hindi_label">हिन्दी</string>
     <string name="kannada_label">Kannada</string>
+    <string name="tamil_label">Tamil</string>
+    <string name="telugu_label">Telugu</string>
     <string name="changes_apply_note">Changes apply after screen reload</string>
 
     <string name="theme_title">Theme</string>
@@ -99,6 +102,7 @@
     <string name="ads_enabled_msg">Ads enabled. Purchase to remove permanently.</string>
     <string name="remove_ads">Remove ads</string>
     <string name="restore_purchase">Restore Purchase</string>
+    <string name="remove_ads_card_text">Remove ads permanently in just %1$s</string>
 
     <string name="backup_to_drive">Backup to Drive</string>
     <string name="list_backups">List Backups</string>
@@ -152,4 +156,19 @@
     <string name="confirm_move_title">Confirm move</string>
     <string name="confirm_move_single">Move this transaction to "%1$s"?</string>
     <string name="confirm_move_bulk">Move %1$d transactions to "%2$s"?</string>
+    <string name="add_category">Add Category</string>
+    <string name="edit_category">Edit Category</string>
+    <string name="category_name">Category Name</string>
+
+    <!-- Category management labels -->
+    <string name="label_keywords">Keywords</string>
+    <string name="prefix_keywords">Keywords:</string>
+
+    <!-- Category auto-suggest notes/labels -->
+    <string name="settings_category_toggle_note">Hiding the category field will also turn off category auto-suggestions and auto-selection.</string>
+    <string name="categories_info_note_top">Categories can be auto-selected while typing the Particular. Add keywords for each category to improve suggestions.</string>
+    <string name="categories_keywords_help_note">Keywords help auto-select this category when they match the Particular (supports fuzzy typos).</string>
+    <string name="label_auto_selected">Auto-selected</string>
+    <string name="label_suggested">Suggested</string>
+    <string name="label_suggested_with_name">Suggested: %1$s</string>
 </resources>

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
+import androidx.compose.ui.unit.sp
 import com.ledge.cashbook.util.Currency
 import com.ledge.cashbook.data.local.entities.CashTxn
 import com.ledge.cashbook.data.local.entities.CashAccount
@@ -129,6 +130,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var editAttachmentUri by remember { mutableStateOf<String?>(null) }
     var editCategory by remember { mutableStateOf("") }
     var showEditDatePicker by remember { mutableStateOf(false) }
+    // Suggestion state for Edit dialog
+    var userSetEditCategory by remember { mutableStateOf(false) }
+    var editSuggestion by remember { mutableStateOf<Pair<String, Double>?>(null) }
+    var autoSetEditCategory by remember { mutableStateOf(false) }
+    // Add dialog suggestion state
+    var userSetAddCategory by remember { mutableStateOf(false) }
+    var addSuggestion by remember { mutableStateOf<Pair<String, Double>?>(null) }
+    var autoSetAddCategory by remember { mutableStateOf(false) }
     var moveFor by remember { mutableStateOf<CashTxn?>(null) }
     var moveBulk by remember { mutableStateOf(false) }
     // Explicit selection mode toggle for bulk actions
@@ -139,6 +148,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Load all accounts for move action (placed before usage)
     val accountsVM: AccountsViewModel = hiltViewModel()
     val allAccounts by accountsVM.accounts.collectAsState()
+    // DB category list for dropdowns
+    val catListVM: CategoryListViewModel = hiltViewModel()
+    val dbCategories by catListVM.categories.collectAsState()
     // Filter state
     var filterMenuOpen by remember { mutableStateOf(false) }
     var filterStart by remember { mutableStateOf<Long?>(null) }
@@ -176,6 +188,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var bannerLoaded by remember { mutableStateOf(false) }
     // Expense overview chart state
     var showExpenseChart by remember { mutableStateOf(false) }
+
+    // Vibrant palette shared with expense chart for category pills
+    val categoryPalette = remember {
+        listOf(
+            Color(0xFFEF5350), Color(0xFFAB47BC), Color(0xFF5C6BC0), Color(0xFF29B6F6),
+            Color(0xFF26A69A), Color(0xFF66BB6A), Color(0xFFFFCA28), Color(0xFFFFA726), Color(0xFF8D6E63)
+        )
+    }
 
     // Image preview dialog state and in-app preview (reduced height)
     var previewUri by remember { mutableStateOf<String?>(null) }
@@ -373,22 +393,12 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
         if (openAdd) showAdd = true
     }
 
-    // Settings for category dropdown
+    // Settings toggle still controls visibility; source now from DB
     val settingsVM: SettingsViewModel = hiltViewModel()
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
-    val categoriesCsv by settingsVM.categoriesCsv.collectAsState(initial = "")
-    val categories = remember(categoriesCsv) {
-        val normalized = categoriesCsv
-            .replace('\r', '\n')
-            .replace('\uFF0C', ',') // fullwidth comma
-            .replace('\u060C', ',') // arabic comma
-            .replace('\u061B', ';') // arabic semicolon
-        Regex("[,;\n]+")
-            .split(normalized)
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
-    }
+    val categories = remember(dbCategories) { dbCategories.map { it.name }.distinct() }
+    // Category suggestion engine (only when category is shown)
+    val catSuggestVm: CategorySuggestionViewModel? = if (showCategory) hiltViewModel() else null
 
 
     // Helper to copy the picked image into app-private storage and keep only our own file path
@@ -493,6 +503,16 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         onValueChange = { editNote = it },
                         label = { Text(stringResource(R.string.particular)) }
                     )
+                    val es = editSuggestion
+                    if (es != null && editCategory.isBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            AssistChip(onClick = {
+                                editCategory = es.first
+                                userSetEditCategory = true
+                                editSuggestion = null
+                            }, label = { Text(stringResource(R.string.label_suggested_with_name, es.first)) })
+                        }
+                    }
                     if (showCategory) {
                         var expanded by remember { mutableStateOf(false) }
                         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
@@ -1037,19 +1057,40 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             modifier = Modifier
                                 .weight(wDatePart)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    val catLabelDate = (t.category ?: "").trim()
+                                    if (showCategory && !t.isCredit && catLabelDate.isNotEmpty()) {
+                                        val color = Color(0xFF7E57C2)
+                                        Box(
+                                            modifier = Modifier
+                                                .padding(start = 6.dp)
+                                                .background(color = color, shape = RoundedCornerShape(4.dp))
+                                                .padding(horizontal = 4.dp, vertical = 0.dp)
+                                        ) {
+                                            Text(
+                                                text = catLabelDate,
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                }
                                 if (t.attachmentUri != null) {
-                                    Spacer(modifier = Modifier.width(6.dp))
                                     CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
                                         IconButton(
-                                            onClick = {
-                                                previewUri = t.attachmentUri
-                                            },
+                                            onClick = { previewUri = t.attachmentUri },
                                             modifier = Modifier.size(24.dp)
                                         ) {
                                             Icon(
@@ -1064,7 +1105,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             Text(
                                 t.note ?: "-",
                                 style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
@@ -1191,6 +1234,49 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             dateMillis = System.currentTimeMillis()
             addAttachmentUri = null
             addCategory = ""
+            userSetAddCategory = false
+            addSuggestion = null
+            autoSetAddCategory = false
+        }
+    }
+    // (moved declarations above)
+    // Debounced auto-category selection from note when user hasn't chosen manually
+    LaunchedEffect(note, showAdd, showCategory) {
+        if (showCategory && catSuggestVm != null && showAdd && (!userSetAddCategory)) {
+            kotlinx.coroutines.delay(350)
+            val sugg = try { catSuggestVm.suggest(note) } catch (_: Exception) { null }
+            if (sugg != null) {
+                val (nameS, score) = sugg
+                // Remember suggestion for chip if medium
+                addSuggestion = if (score in 0.75..0.8999 && addCategory.isBlank()) nameS to score else null
+                if (score >= 0.9) {
+                    addCategory = nameS
+                    autoSetAddCategory = true
+                }
+            }
+        }
+    }
+    // Suggestion for Edit dialog with debounce
+    LaunchedEffect(editNote, editTxn, showCategory) {
+        if (showCategory && catSuggestVm != null && editTxn != null && (!userSetEditCategory)) {
+            kotlinx.coroutines.delay(350)
+            val sugg = try { catSuggestVm.suggest(editNote) } catch (_: Exception) { null }
+            if (sugg != null) {
+                val (nameS, score) = sugg
+                editSuggestion = if (score in 0.75..0.8999 && editCategory.isBlank()) nameS to score else null
+                if (score >= 0.9) {
+                    editCategory = nameS
+                    autoSetEditCategory = true
+                }
+            }
+        }
+    }
+    // Reset edit suggestion flags when opening edit dialog
+    LaunchedEffect(editTxn) {
+        if (editTxn != null) {
+            userSetEditCategory = false
+            editSuggestion = null
+            autoSetEditCategory = false
         }
     }
     if (showAdd) {
@@ -1267,6 +1353,17 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         onValueChange = { note = it },
                         label = { Text(stringResource(R.string.particular)) }
                     )
+                    val asugg = addSuggestion
+                    if (asugg != null && addCategory.isBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            AssistChip(onClick = {
+                                addCategory = asugg.first
+                                userSetAddCategory = true
+                                autoSetAddCategory = false
+                                addSuggestion = null
+                            }, label = { Text(stringResource(R.string.label_suggested_with_name, asugg.first)) })
+                        }
+                    }
                     if (showCategory) {
                         var expanded by remember { mutableStateOf(false) }
                         ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
@@ -1281,10 +1378,17 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) }
                             )
                             ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                                DropdownMenuItem(text = { Text(stringResource(R.string.uncategorized)) }, onClick = { addCategory = ""; expanded = false })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.uncategorized)) }, onClick = { addCategory = ""; userSetAddCategory = true; autoSetAddCategory = false; expanded = false })
                                 categories.forEach { cat ->
-                                    DropdownMenuItem(text = { Text(cat) }, onClick = { addCategory = cat; expanded = false })
+                                    DropdownMenuItem(text = { Text(cat) }, onClick = { addCategory = cat; userSetAddCategory = true; autoSetAddCategory = false; expanded = false })
                                 }
+                            }
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+                            if (autoSetAddCategory && addCategory.isNotBlank()) {
+                                AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.label_auto_selected)) })
+                            } else if (addSuggestion != null && addCategory.isBlank()) {
+                                AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(R.string.label_suggested)) })
                             }
                         }
                     }

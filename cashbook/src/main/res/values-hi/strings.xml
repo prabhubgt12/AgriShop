@@ -25,6 +25,7 @@
     <string name="title_dashboard">डैशबोर्ड</string>
     <string name="title_cash_book">कैश बुक</string>
     <string name="settings_title">सेटिंग्स</string>
+    <string name="title_categories">श्रेणियाँ</string>
 
     <!-- Accounts -->
     <string name="add_account">खाता जोड़ें</string>
@@ -90,6 +91,9 @@
     <string name="confirm_move_bulk">क्या आप %1$d प्रविष्टियाँ "%2$s" में स्थानांतरित करना चाहते हैं?</string>
     <string name="from_label">से: %1$s</string>
     <string name="to_label">तक: %1$s</string>
+    <string name="add_category">श्रेणी जोड़ें</string>
+    <string name="edit_category">श्रेणी संपादित करें</string>
+    <string name="category_name">श्रेणी का नाम</string>
 
     <!-- Image labels -->
     <string name="attachment">छवि</string>
@@ -126,6 +130,7 @@
     <string name="ads_enabled_msg">विज्ञापन सक्षम। स्थायी रूप से हटाने के लिए खरीदें।</string>
     <string name="remove_ads">विज्ञापन हटाएं</string>
     <string name="restore_purchase">खरीद पुनर्स्थापित करें</string>
+    <string name="remove_ads_card_text">सिर्फ %1$s में विज्ञापन स्थायी रूप से हटाएँ</string>
 
     <string name="backup_to_drive">ड्राइव पर बैकअप</string>
     <string name="list_backups">बैकअप सूची</string>
@@ -150,4 +155,16 @@
     <string name="backup_confirm_message">यह ड्राइव पर बैकअप बनाएगा और उसी नाम वाले मौजूदा बैकअप को ओवरराइट कर सकता है। जारी रखें?</string>
     <string name="restore_confirm_title">रिस्टोर की पुष्टि करें</string>
     <string name="restore_confirm_message">यह चयनित बैकअप से आपके वर्तमान डेटा को ओवरराइट कर देगा। जारी रखें?</string>
+
+    <!-- Category auto-suggest notes/labels -->
+    <string name="settings_category_toggle_note">श्रेणी फ़ील्ड छिपाने पर श्रेणी के सुझाव और स्वत: चयन बंद हो जाएगा।</string>
+    <string name="categories_info_note_top">विवरण टाइप करते समय श्रेणियाँ स्वत: चुनी जा सकती हैं। बेहतर सुझाव के लिए प्रत्येक श्रेणी के लिए कीवर्ड जोड़ें।</string>
+    <string name="categories_keywords_help_note">जब कीवर्ड विवरण से मेल खाते हैं तो यह श्रेणी स्वत: चुनी जाएगी (टाइपो के लिए फज़ी भी)।</string>
+    <string name="label_auto_selected">स्वत: चुना गया</string>
+    <string name="label_suggested">सुझाव</string>
+    <string name="label_suggested_with_name">सुझाव: %1$s</string>
+
+    <!-- Category management labels -->
+    <string name="label_keywords">कीवर्ड</string>
+    <string name="prefix_keywords">कीवर्ड:</string>
 </resources>

@@ -16,6 +16,7 @@
     <string name="title_dashboard">ಡ್ಯಾಶ್‌ಬೋರ್ಡ್</string>
     <string name="title_cash_book">ಕ್ಯಾಶ್ ಬುಕ್</string>
     <string name="settings_title">ಸೆಟ್ಟಿಂಗ್ಸ್</string>
+    <string name="title_categories">ವರ್ಗಗಳು</string>
 
     <!-- Accounts -->
     <string name="add_account">ಖಾತೆ ಸೇರಿಸಿ</string>
@@ -100,8 +101,9 @@
     <string name="premium_title">ಪ್ರೀಮಿಯಂ</string>
     <string name="ads_removed">ಈ ಸಾಧನದಲ್ಲಿ ಜಾಹೀರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ</string>
     <string name="ads_enabled_msg">ಜಾಹೀರಾತುಗಳು ಸಕ್ರಿಯ. ಶಾಶ್ವತವಾಗಿ ತೆಗೆದುಹಾಕಲು ಖರೀದಿಸಿ.</string>
-    <string name="remove_ads">ಜಾಹೀರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಿ</string>
+    <string name="remove_ads">ಜಾಹೀರಾತು ತೆಗೆ</string>
     <string name="restore_purchase">ಖರೀದಿ ಮರುಸ್ಥಾಪಿಸಿ</string>
+    <string name="remove_ads_card_text">ಕೇವಲ %1$s ಕ್ಕೆ ಜಾಹೀರಾತುಗಳನ್ನು ಶಾಶ್ವತವಾಗಿ ತೆಗೆದುಹಾಕಿ</string>
 
     <string name="backup_to_drive">ಡ್ರೈವ್‌ಗೆ ಬ್ಯಾಕಪ್</string>
     <string name="list_backups">ಬ್ಯಾಕಪ್‌ಗಳ ಪಟ್ಟಿಮಾಡಿ</string>
@@ -127,6 +129,14 @@
     <string name="restore_confirm_title">ರಿಸ್ಟೋರ್ ದೃಢೀಕರಿಸಿ</string>
     <string name="restore_confirm_message">ಇದು ಆಯ್ಕೆ ಮಾಡಿದ ಬ್ಯಾಕಪ್‌ನಿಂದ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಡೇಟಾವನ್ನು ಅಳಿಸಿ ಬರೆಯುತ್ತದೆ. ಮುಂದುವರಿಸಬೇಕೆ?</string>
     
+    <!-- Category auto-suggest notes/labels -->
+    <string name="settings_category_toggle_note">ವರ್ಗ ಫೀಲ್ಡ್ ಅನ್ನು ಮರೆಮಾಡಿದರೆ ವರ್ಗದ ಸೂಚನೆ ಮತ್ತು ಸ್ವಯಂ-ಆಯ್ಕೆ ನಿಷ್ಕ್ರಿಯವಾಗುತ್ತದೆ.</string>
+    <string name="categories_info_note_top">ವಿವರವನ್ನು ಟೈಪ್ ಮಾಡುವಾಗ ವರ್ಗವನ್ನು ಸ್ವಯಂ ಆಯ್ಕೆ ಮಾಡಬಹುದು. ಉತ್ತಮ ಸೂಚನೆಗಾಗಿ ಪ್ರತಿ ವರ್ಗಕ್ಕೆ ಕೀವರ್ಡ್‌ಗಳನ್ನು ಸೇರಿಸಿ.</string>
+    <string name="categories_keywords_help_note">ಕೀವರ್ಡ್‌ಗಳು ವಿವರಕ್ಕೆ ತಾಳಿಕೊಂಡರೆ ಈ ವರ್ಗವನ್ನು ಸ್ವಯಂ ಆಯ್ಕೆ ಮಾಡಲಾಗುತ್ತದೆ (ಟೈಪೋಗಳಿಗೂ ಫಜ್ಜಿ ಬೆಂಬಲ).</string>
+    <string name="label_auto_selected">ಸ್ವಯಂ-ಆಯ್ಕೆ</string>
+    <string name="label_suggested">ಸೂಚಿಸಲಾಗಿದೆ</string>
+    <string name="label_suggested_with_name">ಸೂಚಿಸಲಾಗಿದೆ: %1$s</string>
+    
     <!-- Categories -->
     <string name="category">ವರ್ಗ</string>
     <string name="select_category">ವರ್ಗ ಆಯ್ಕೆಮಾಡಿ</string>
@@ -148,4 +158,9 @@
     <string name="confirm_move_title">ಸ್ಥಳಾಂತರವನ್ನು ದೃಢೀಕರಿಸಿ</string>
     <string name="confirm_move_single">ಈ ವಹಿವಾಟನ್ನು "%1$s" ಗೆ ಸ್ಥಳಾಂತರಿಸಬೇಕೇ?</string>
     <string name="confirm_move_bulk">%1$d ವಹಿವಾಟುಗಳನ್ನು "%2$s" ಗೆ ಸ್ಥಳಾಂತರಿಸಬೇಕೇ?</string>
+    <string name="label_keywords">ಕೀವರ್ಡ್‌ಗಳು</string>
+    <string name="prefix_keywords">ಕೀವರ್ಡ್‌ಗಳು:</string>
+    <string name="add_category">ವರ್ಗವನ್ನು ಸೇರಿಸಿ</string>
+    <string name="edit_category">ವರ್ಗವನ್ನು ಸಂಪಾದಿಸಿ</string>
+    <string name="category_name">ವರ್ಗದ ಹೆಸರು</string>
 </resources>

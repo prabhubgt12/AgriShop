@@ -132,7 +132,9 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     "" to stringResource(R.string.system_option),
                     "en" to stringResource(R.string.english_label),
                     "hi" to stringResource(R.string.hindi_label),
-                    "kn" to stringResource(R.string.kannada_label)
+                    "kn" to stringResource(R.string.kannada_label),
+                    "ta" to stringResource(R.string.tamil_label),
+                    "te" to stringResource(R.string.telugu_label)
                 )
                 var expanded by remember { mutableStateOf(false) }
                 val current = options.firstOrNull { (tag, _) -> if (tag.isBlank()) normTag.isBlank() else normTag == tag || normTag.startsWith("$tag-") } ?: options.first()
@@ -167,6 +169,8 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                                                     "en" -> "Language: English"
                                                     "hi" -> "भाषा: हिन्दी"
                                                     "kn" -> "Language: Kannada"
+                                                    "ta" -> "மொழி: தமிழ்"
+                                                    "te" -> "భాష: తెలుగు"
                                                     else -> "Language: System"
                                                 },
                                                 Toast.LENGTH_SHORT
@@ -217,6 +221,10 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         Text(stringResource(R.string.show_category_field))
                         Switch(checked = showCategory, onCheckedChange = { settingsVM.setShowCategory(it) })
                     }
+                    Text(
+                        text = stringResource(R.string.settings_category_toggle_note),
+                        style = MaterialTheme.typography.labelSmall
+                    )
                     OutlinedTextField(
                         value = categoriesCsvLocal,
                         onValueChange = { categoriesCsvLocal = it },
