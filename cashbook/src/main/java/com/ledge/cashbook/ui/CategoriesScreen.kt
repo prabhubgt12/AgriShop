@@ -24,6 +24,9 @@ fun CategoriesScreen(onBack: () -> Unit, vm: CategoriesViewModel = hiltViewModel
     var editId by remember { mutableStateOf<Long?>(null) }
     var name by remember { mutableStateOf(TextFieldValue("")) }
     var keywords by remember { mutableStateOf(TextFieldValue("")) }
+    // Read setting to guide users when the feature is off
+    val settingsVM: SettingsViewModel = hiltViewModel()
+    val showCategory by settingsVM.showCategory.collectAsState(initial = false)
 
     fun openAdd() {
         editId = null; name = TextFieldValue(""); keywords = TextFieldValue(""); showDialog = true
@@ -60,6 +63,14 @@ fun CategoriesScreen(onBack: () -> Unit, vm: CategoriesViewModel = hiltViewModel
                     style = MaterialTheme.typography.labelSmall
                 )
                 Spacer(Modifier.height(8.dp))
+                if (!showCategory) {
+                    Text(
+                        text = stringResource(R.string.categories_enable_note),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
             }
             items(categories) { cat ->
                 val kws by vm.keywordsFor(cat.id).collectAsState(initial = emptyList())

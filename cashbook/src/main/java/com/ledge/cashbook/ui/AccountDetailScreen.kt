@@ -396,6 +396,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Settings toggle still controls visibility; source now from DB
     val settingsVM: SettingsViewModel = hiltViewModel()
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
+    val showCategoryInList by settingsVM.showCategoryInList.collectAsState(initial = true)
     val categories = remember(dbCategories) { dbCategories.map { it.name }.distinct() }
     // Category suggestion engine (only when category is shown)
     val catSuggestVm: CategorySuggestionViewModel? = if (showCategory) hiltViewModel() else null
@@ -1063,13 +1064,19 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .background(color = Color(0xFF5C6BC0), shape = RoundedCornerShape(4.dp))
+                                            .padding(horizontal = 4.dp, vertical = 0.dp)
+                                    ) {
+                                        Text(
+                                            SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = Color.White
+                                        )
+                                    }
                                     val catLabelDate = (t.category ?: "").trim()
-                                    if (showCategory && !t.isCredit && catLabelDate.isNotEmpty()) {
+                                    if (showCategory && showCategoryInList && !t.isCredit && catLabelDate.isNotEmpty()) {
                                         val color = Color(0xFF7E57C2)
                                         Box(
                                             modifier = Modifier

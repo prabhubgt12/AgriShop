@@ -136,13 +136,15 @@
     <string name="label_auto_selected">ಸ್ವಯಂ-ಆಯ್ಕೆ</string>
     <string name="label_suggested">ಸೂಚಿಸಲಾಗಿದೆ</string>
     <string name="label_suggested_with_name">ಸೂಚಿಸಲಾಗಿದೆ: %1$s</string>
+    <string name="categories_enable_note">ವಹಿವಾಟುಗಳಲ್ಲಿ ವರ್ಗಗಳನ್ನು ಬಳಸಲು, ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ ವರ್ಗ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.</string>
+    <string name="show_category_in_list_label">ವಹಿವಾಟು ಪಟ್ಟಿಯಲ್ಲಿ ವರ್ಗ ತೋರಿಸಿ</string>
     
     <!-- Categories -->
     <string name="category">ವರ್ಗ</string>
     <string name="select_category">ವರ್ಗ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="select_account_label">ಖಾತೆ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="uncategorized">ವರ್ಗೀಕರಿಸದ</string>
-    <string name="show_category_field">ವರ್ಗ ತೋರಿಸಿ</string>
+    <string name="show_category_field">ವರ್ಗ ಸಕ್ರಿಯಗೊಳಿಸಿ</string>
     <string name="categories_csv">ವರ್ಗಗಳು (ಕಾಮಾ ಪ್ರತ್ಯೇಕ)</string>
     <string name="show_summary_card_label">ಖಾತೆಗಳಲ್ಲಿ ಸಾರಾಂಶ ತೋರಿಸಿ</string>
     <string name="category_split">ಖರ್ಚಿನ ವಿಭಜನೆ</string>

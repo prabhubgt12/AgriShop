@@ -64,30 +64,8 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     // Category settings
     val settingsVM: SettingsViewModel = hiltViewModel()
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
-    val categoriesCsvRaw by settingsVM.categoriesCsv.collectAsState(initial = "")
-    var categoriesCsvLocal by remember(categoriesCsvRaw) { mutableStateOf(categoriesCsvRaw) }
-    var csvFocused by remember { mutableStateOf(false) }
-    val parsedCategories by remember(categoriesCsvLocal) {
-        mutableStateOf(
-            categoriesCsvLocal
-                .replace('\r', '\n')
-                .replace('\uFF0C', ',')
-                .replace('\u060C', ',')
-                .replace('\u061B', ';')
-                .let { Regex("[,;\n]+").split(it) }
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-                .distinct()
-        )
-    }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            if (categoriesCsvLocal != categoriesCsvRaw) {
-                settingsVM.setCategoriesCsv(categoriesCsvLocal)
-            }
-        }
-    }
+    // Removed legacy CSV categories field and persistence
 
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         val act = activity ?: return@rememberLauncherForActivityResult
@@ -108,9 +86,6 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     }
 
     BackHandler(enabled = true) {
-        if (categoriesCsvLocal != categoriesCsvRaw) {
-            settingsVM.setCategoriesCsv(categoriesCsvLocal)
-        }
         onBack()
     }
 
@@ -225,35 +200,13 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         text = stringResource(R.string.settings_category_toggle_note),
                         style = MaterialTheme.typography.labelSmall
                     )
-                    OutlinedTextField(
-                        value = categoriesCsvLocal,
-                        onValueChange = { categoriesCsvLocal = it },
-                        label = { Text(stringResource(R.string.categories_csv)) },
-                        singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onFocusChanged { f ->
-                                val now = f.isFocused
-                                if (csvFocused && !now) {
-                                    if (categoriesCsvLocal != categoriesCsvRaw) {
-                                        settingsVM.setCategoriesCsv(categoriesCsvLocal)
-                                    }
-                                }
-                                csvFocused = now
-                            },
-                        enabled = showCategory
-                    )
-                    if (showCategory) {
-                        if (parsedCategories.isEmpty()) {
-                            Text(text = "No categories parsed", style = MaterialTheme.typography.labelSmall)
-                        } else {
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                items(parsedCategories.size) { i ->
-                                    AssistChip(onClick = {}, label = { Text(parsedCategories[i]) })
-                                }
-                            }
-                        }
+                    // Show category pill in transaction list
+                    val showCategoryInList by settingsVM.showCategoryInList.collectAsState(initial = true)
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.show_category_in_list_label))
+                        Switch(checked = showCategoryInList, onCheckedChange = { settingsVM.setShowCategoryInList(it) })
                     }
+                    // Legacy CSV field removed. Category management is now via the Categories screen.
                 }
             }
             item { HorizontalDivider() }
@@ -424,14 +377,24 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         scope.launch {
                             isWorking = true
                             val latest = DriveClient.listBackups().firstOrNull()
+                            var ok = false
                             val msg = if (latest != null) {
                                 val bytes = DriveClient.download(latest.id)
-                                if (bytes != null && activity != null && BackupManager.restoreBackupZip(activity, bytes)) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
+                                ok = bytes != null && activity != null && BackupManager.restoreBackupZip(activity, bytes)
+                                if (ok) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
                             } else context.getString(R.string.download_failed)
                             isWorking = false
                             snackbarHostState.showSnackbar(msg)
                             // After restore, refresh last backup info from Drive list
                             lastBackupDisplay = fetchLastBackupTime()
+                            // Critical: restart app so Room reopens the restored DB and prefs are reloaded
+                            if (ok) {
+                                val act = activity
+                                if (act != null) {
+                                    act.finishAffinity()
+                                    act.startActivity(Intent(act, MainActivity::class.java))
+                                }
+                            }
                         }
                     }) { Text(stringResource(R.string.ok)) }
                 },

@@ -138,7 +138,7 @@
     <string name="select_category">வகையைத் தேர்ந்தெடுக்கவும்</string>
     <string name="select_account_label">கணக்கைத் தேர்ந்தெடுக்கவும்</string>
     <string name="uncategorized">வகைப்படுத்தப்படாதது</string>
-    <string name="show_category_field">வகை புலத்தை காட்டு</string>
+    <string name="show_category_field">வகை அம்சத்தை இயக்கவும்</string>
     <string name="categories_csv">வகைகள் (கூட்டுப்புள்ளி பிரிக்கப்பட்டது)</string>
     <string name="show_summary_card_label">கணக்குகளில் சுருக்கத்தை காட்டு</string>
     <string name="category_split">செலவு பிரிப்பு</string>
@@ -169,4 +169,6 @@
     <string name="label_auto_selected">தானாகத் தேர்ந்தெடுக்கப்பட்டது</string>
     <string name="label_suggested">பரிந்துரைக்கப்பட்டது</string>
     <string name="label_suggested_with_name">பரிந்துரை: %1$s</string>
+    <string name="categories_enable_note">பரிவர்த்தனைகளில் வகைகளை பயன்படுத்த, அமைப்புகளில் வகை அம்சத்தை இயக்கவும்.</string>
+    <string name="show_category_in_list_label">பரிவர்த்தனை பட்டியலில் வகையை காட்டு</string>
 </resources>

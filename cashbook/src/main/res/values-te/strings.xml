@@ -138,7 +138,7 @@
     <string name="select_category">వర్గాన్ని ఎంచుకోండి</string>
     <string name="select_account_label">ఖాతాను ఎంచుకోండి</string>
     <string name="uncategorized">వర్గీకరించని</string>
-    <string name="show_category_field">వర్గ ఫీల్డ్ చూపించు</string>
+    <string name="show_category_field">వర్గాన్ని ప్రారంభించండి</string>
     <string name="categories_csv">వర్గాలు (కామా-వేరు)</string>
     <string name="show_summary_card_label">ఖాతాల్లో సమగ్ర వివరణ చూపించు</string>
     <string name="category_split">ఖర్చు విభజన</string>
@@ -169,4 +169,6 @@
     <string name="label_auto_selected">ఆటో-ఎంపిక</string>
     <string name="label_suggested">సూచించబడింది</string>
     <string name="label_suggested_with_name">సూచన: %1$s</string>
+    <string name="categories_enable_note">లావాదేవీలలో వర్గాలను ఉపయోగించడానికి, సెట్టింగ్‌లలో వర్గ ఫీచర్‌ను ప్రారంభించండి.</string>
+    <string name="show_category_in_list_label">లావాదేవీ జాబితాలో వర్గం చూపించు</string>
 </resources>

@@ -140,7 +140,7 @@
     <string name="select_category">Select category</string>
     <string name="select_account_label">Select account</string>
     <string name="uncategorized">Uncategorized</string>
-    <string name="show_category_field">Show category field</string>
+    <string name="show_category_field">Enable Category</string>
     <string name="categories_csv">Categories (comma-separated)</string>
     <string name="show_summary_card_label">Show summary on accounts</string>
     <string name="category_split">Expense Split</string>
@@ -171,4 +171,7 @@
     <string name="label_auto_selected">Auto-selected</string>
     <string name="label_suggested">Suggested</string>
     <string name="label_suggested_with_name">Suggested: %1$s</string>
+    <string name="categories_enable_note">To use categories in transactions, enable the category feature in Settings.</string>
+    <string name="show_category_in_list_label">Show category in transaction list</string>
+
 </resources>

@@ -73,7 +73,7 @@
     <string name="select_category">श्रेणी चुनें</string>
     <string name="select_account_label">खाता चुनें</string>
     <string name="uncategorized">बिना श्रेणी</string>
-    <string name="show_category_field">श्रेणी फ़ील्ड दिखाएं</string>
+    <string name="show_category_field">श्रेणी सक्षम करें</string>
     <string name="categories_csv">श्रेणियाँ (कॉमा से अलग)</string>
     <string name="show_summary_card_label">खातों पर सारांश दिखाएं</string>
     <string name="category_split">खर्च का विभाजन</string>
@@ -163,6 +163,8 @@
     <string name="label_auto_selected">स्वत: चुना गया</string>
     <string name="label_suggested">सुझाव</string>
     <string name="label_suggested_with_name">सुझाव: %1$s</string>
+    <string name="categories_enable_note">लेन-देन में श्रेणियाँ उपयोग करने के लिए, सेटिंग्स में श्रेणी फीचर सक्षम करें।</string>
+    <string name="show_category_in_list_label">लेन-देन सूची में श्रेणी दिखाएँ</string>
 
     <!-- Category management labels -->
     <string name="label_keywords">कीवर्ड</string>
