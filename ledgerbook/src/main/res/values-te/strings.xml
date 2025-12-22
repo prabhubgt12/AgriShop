@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings / Language -->
+    <string name="settings_title">సెట్టింగ్స్</string>
+    <string name="language_title">భాష</string>
+    <string name="system_option">సిస్టమ్</string>
+    <string name="english_label">English</string>
+    <string name="hindi_label">हिन्दी</string>
+    <string name="kannada_label">ಕನ್ನಡ</string>
+    <string name="telugu_label">తెలుగు</string>
+    <string name="tamil_label">தமிழ்</string>
+
+    <!-- Common -->
+    <string name="ok">సరే</string>
+    <string name="cancel">రద్దు</string>
+    <string name="clear">క్లియర్</string>
+    <string name="calculate">గణన</string>
+
+    <!-- App / Share/PDF labels -->
+    <string name="unlock_to_continue">కొనసాగించడానికి అన్‌లాక్ చేయండి</string>
+    <string name="ledger_entry_title">ఖాతా ఎంట్రీ</string>
+    <string name="pdf_title_receipt">ఖాతా రసీదు</string>
+    <string name="pdf_title_statement">ఖాతా స్టేట్‌మెంట్</string>
+    <string name="label_name_with_value">పేరు: %1$s</string>
+    <string name="label_type_with_value">రకం: %1$s</string>
+    <string name="label_principal_with_value">ప్రిన్సిపల్: %1$s</string>
+    <string name="label_rate_with_value">రేటు: %1$s%% %2$s</string>
+    <string name="label_from_with_value">నుండి: %1$s</string>
+    <string name="label_interest_till_now_with_value">ఇప్పటివరకు వడ్డీ: %1$s</string>
+    <string name="label_total_with_value">మొత్తం: %1$s</string>
+    <string name="label_date_with_value">తేదీ: %1$s</string>
+    <string name="label_customer_with_value">కస్టమర్: %1$s</string>
+    <string name="label_total_lend_with_value">మొత్తం ఇచ్చినవి: %1$s</string>
+    <string name="label_total_borrow_with_value">మొత్తం తీసుకున్నవి: %1$s</string>
+    <string name="label_net_with_value">నికరము: %1$s</string>
+
+    <!-- Base labels -->
+    <string name="label_type">రకం</string>
+    <string name="label_principal">ప్రిన్సిపల్</string>
+    <string name="label_rate">రేటు</string>
+    <string name="label_from">నుండి</string>
+    <string name="label_interest">వడ్డీ</string>
+    <string name="label_total">మొత్తం</string>
+    <string name="label_subtotal">ఉపమొత్తం</string>
+
+    <!-- Table column labels -->
+    <string name="col_date">తేదీ</string>
+    <string name="col_principal">ప్రిన్సిపల్</string>
+    <string name="col_rate">రేటు</string>
+    <string name="col_interest">వడ్డీ</string>
+    <string name="col_total">మొత్తం</string>
+
+    <!-- Home / Titles -->
+    <string name="interest_calculator">వడ్డీ కాలిక్యులేటర్</string>
+    <string name="emi_calculator">ఈఎంఐ కాలిక్యులేటర్</string>
+    <string name="sip">ఎస్‌ఐపీ</string>
+    <string name="sip_calculator">ఎస్‌ఐపీ కాలిక్యులేటర్</string>
+
+    <!-- Calculator labels -->
+    <string name="label_principal_generic">ప్రిన్సిపల్</string>
+    <string name="label_rate_per_month">రేటు (%/నెల)</string>
+    <string name="dates">తేదీలు</string>
+    <string name="duration">వ్యవధి</string>
+    <string name="from">నుండి</string>
+    <string name="to">వరకు</string>
+    <string name="years">సంవత్సరాలు</string>
+    <string name="months">నెలలు</string>
+    <string name="days">రోజులు</string>
+    <string name="year_singular">సంవత్సరం</string>
+    <string name="month_singular">నెల</string>
+    <string name="day_singular">రోజు</string>
+    <plurals name="years_qty">
+        <item quantity="one">%d సంవత్సరం</item>
+        <item quantity="other">%d సంవత్సరాలు</item>
+    </plurals>
+    <plurals name="months_qty">
+        <item quantity="one">%d నెల</item>
+        <item quantity="other">%d నెలలు</item>
+    </plurals>
+    <plurals name="days_qty">
+        <item quantity="one">%d రోజు</item>
+        <item quantity="other">%d రోజులు</item>
+    </plurals>
+    <string name="simple">సింపుల్</string>
+    <string name="compound">కాంపౌండ్</string>
+    <string name="monthly">నెలవారీ</string>
+    <string name="yearly">వార్షిక</string>
+    <string name="rate">రేటు</string>
+    <string name="interest">వడ్డీ</string>
+
+    <!-- SIP specific -->
+    <string name="monthly_investment">నెలవారీ పెట్టుబడి</string>
+    <string name="yearly_investment">వార్షిక పెట్టుబడి</string>
+    <string name="sip_expected_return">అంచనా రాబడి (ప్ర.వ %)</string>
+    <string name="total_investment">మొత్తం పెట్టుబడి</string>
+    <string name="estimated_returns">అంచనా వాపసు</string>
+    <string name="maturity_amount">పరిపక్వత మొత్తం</string>
+
+    <!-- Misc used in lists -->
+    <string name="more">మరింత</string>
+    <string name="share_via">ద్వారా పంచుకోండి</string>
+    <string name="generated_by_footer_with_link">సింపుల్ ఖాతా ద్వారా రూపొందించబడింది – %1$s</string>
+    
+    <!-- App/Home titles -->
+    <string name="app_name">సింపుల్ ఖాతా</string>
+    <string name="title_ledger_book">సింపుల్ ఖాతా</string>
+    <string name="title_khata_book">ఖాతా బుక్</string>
+    <string name="loan_book">లోన్ బుక్</string>
+
+    <!-- Short tab labels -->
+
+    <!-- Ledger summary labels -->
+    <string name="interest_rate">వడ్డీ రేటు</string>
+    <string name="from_date">తేదీ నుంచి</string>
+    <string name="total_time">మొత్తం సమయం</string>
+    <string name="total_amount">మొత్తం మొత్తం</string>
+    <string name="total_interest">మొత్తం వడ్డీ</string>
+    <string name="total_principal">మొత్తం ప్రిన్సిపల్</string>
+    <string name="total_lend">మొత్తం ఇచ్చినవి</string>
+    <string name="lend_interest">ఇచ్చిన వాటి వడ్డీ</string>
+    <string name="total_borrow">మొత్తం తీసుకున్నవి</string>
+    <string name="borrow_interest">తీసుకున్న వాటి వడ్డీ</string>
+    <string name="final_amount">చివరి మొత్తం</string>
+
+    <!-- Ledger list menus/labels & dialogs -->
+    <string name="share_receipt">రసీదు పంచుకోండి</string>
+    <string name="share">పంచుకోండి</string>
+    <string name="payment_history">చెల్లింపు చరిత్ర</string>
+    <string name="partial_payment">పాక్షిక చెల్లింపు</string>
+    <string name="edit">సవరించు</string>
+    <string name="delete">తొలగించు</string>
+    <string name="user_label">వినియోగదారు</string>
+    <string name="payments_title">చెల్లింపులు</string>
+    <string name="add_payment">చెల్లింపు జోడించు</string>
+    <string name="payment_amount">చెల్లింపు మొత్తం</string>
+    <string name="call_user">కాల్ చేయండి</string>
+    <string name="attach">చిత్రాన్ని జోడించు</string>
+    <string name="image_too_large">చిత్రం 1 MB కంటే పెద్దది</string>
+    <string name="full_payment">పూర్తి చెల్లింపు</string>
+    <string name="apply_action">వర్తింపజేయి</string>
+    <string name="entry_details">నమోదు వివరాలు</string>
+    <string name="name_label">పేరు</string>
+    <string name="payment_date">చెల్లింపు తేదీ</string>
+    <string name="amount">మొత్తం</string>
+    <string name="interest_till_date">ఇప్పటివరకు వడ్డీ</string>
+    <string name="remaining_after_payment">చెల్లింపు తర్వాత మిగిలింది</string>
+    <string name="close">మూసివేయి</string>
+    <string name="delete_entry">నమోదు తొలగించు</string>
+    <string name="delete_entry_confirm">ఈ నమోదు తొలగించాలనుకుంటున్నారా? దీనికి చెందిన చెల్లింపులు కూడా తొలగిస్తారు. ఈ చర్యను రద్దు చేయలేరు.</string>
+    <string name="no_payments_yet">ఇంకా ఎలాంటి చెల్లింపులు లేవు.</string>
+    <string name="no_payments_pending">వాయిదా ఉన్న చెల్లింపులు లేవు</string>
+    <!-- Reminder chips labels -->
+    <string name="overdue_label">గడువు మించింది</string>
+    <string name="due_soon_label">త్వరలో గడువు</string>
+    <string name="overdue_with_count">గడువు మించింది %1$d</string>
+    <string name="due_soon_with_count">త్వరలో గడువు %1$d</string>
+    <string name="overdue_with_count_paren">గడువు మించింది (%1$d)</string>
+    <string name="due_soon_with_count_paren">త్వరలో గడువు (%1$d)</string>
+
+    <!-- Settings / Premium / Backup -->
+    <string name="changes_apply_note">మార్పులు వెంటనే అమలవుతాయి. కొన్ని స్క్రీన్లు రీఫ్రెష్ కావచ్చు.</string>
+    <string name="premium_title">ప్రీమియం</string>
+    <string name="ads_removed">ఈ పరికరంలో ప్రకటనలు తొలగించబడ్డాయి</string>
+    <string name="ads_enabled_msg">ప్రకటనలు ఎనేబుల్ అయ్యాయి. శాశ్వతంగా తొలగించడానికి కొనుగోలు చేయండి.</string>
+    <string name="remove_ads">ప్రకటనలను తొలగించు</string>
+    <string name="restore_purchase">కొనుగోలును పునరుద్ధరించు</string>
+    <string name="features_title">లక్షణాలు</string>
+    <string name="group_by_customer">కస్టమర్ వారీగా సమూహీకరించు</string>
+    <string name="group_by_desc">పేరెంట్‌తో చైల్డ్ లావాదేవీలను విస్తరించదగిన రూపంలో చూపించండి.</string>
+    <string name="theme_title">థీమ్</string>
+    <string name="light_option">లైట్</string>
+    <string name="dark_option">డార్క్</string>
+    <string name="reminders_title">రిమైండర్లు</string>
+    <string name="overdue_days_label">విలంబం (ఎన్ని రోజుల తర్వాత)</string>
+    <string name="due_soon_window_days_label">త్వరలో గడువు విండో (రోజులు)</string>
+    <string name="due_soon_hint">"త్వరలో గడువు" అనేది గడువు ముందు చివరి N రోజులను చూపిస్తుంది.</string>
+    <string name="backup_to_drive">డ్రైవ్‌లో బ్యాకప్</string>
+    <string name="list_backups">బ్యాకప్‌ల జాబితా</string>
+    <string name="tap_to_restore">రిస్టోర్ చేయడానికి ట్యాప్ చేయండి</string>
+    <string name="developer_label">డెవలపర్: SimpleAndro</string>
+    <string name="email_label">ఇమెయిల్: prabhurb@gmail.com</string>
+    <string name="app_version_label">యాప్ వెర్షన్: %1$s</string>
+    <string name="gd_connected">గూగుల్ డ్రైవ్: కనెక్ట్ అయింది</string>
+    <string name="gd_not_connected">గూగుల్ డ్రైవ్: కనెక్ట్ కాలేదు</string>
+    <string name="sign_in">సైన్ ఇన్</string>
+    <string name="sign_out">సైన్ అవుట్</string>
+    <string name="sign_in_failed">సైన్-ఇన్ విఫలమైంది</string>
+    <string name="backup_and_sync">బ్యాకప్ మరియు సింక్</string>
+    <string name="backup_uploaded">బ్యాకప్ అప్లోడ్ అయింది</string>
+    <string name="backup_failed">బ్యాకప్ విఫలమైంది</string>
+    <string name="restore_complete">రిస్టోర్ పూర్తైంది. యాప్ రీస్టార్ట్ చేయండి.</string>
+    <string name="restore_failed">రిస్టోర్ విఫలమైంది</string>
+    <string name="no_backups_found">బ్యాకప్‌లు కనబడలేదు</string>
+    <string name="restore">రిస్టోర్</string>
+    <string name="backup_confirm_title">బ్యాకప్‌ని నిర్ధారించండి</string>
+    <string name="backup_confirm_message">ఇది డ్రైవ్‌లో బ్యాకప్ సృష్టిస్తుంది మరియు అదే పేరుతో ఉన్న బ్యాకప్‌ను ఓవర్‌రైట్ చేయవచ్చు. కొనసాగించాలి?</string>
+    <string name="restore_confirm_title">రిస్టోర్‌ను నిర్ధారించండి</string>
+    <string name="restore_confirm_message">ఇది ఎంపిక చేసిన బ్యాకప్‌తో మీ ప్రస్తుత డేటాను ఓవర్‌రైట్ చేస్తుంది. కొనసాగించాలి?</string>
+    <string name="last_backup_label">చివరి బ్యాకప్: %1$s</string>
+    <string name="never_label">ఎప్పుడూ కాదు</string>
+
+    <!-- Loan Book -->
+    <string name="add_loan">లోన్ జోడించు</string>
+    <string name="loan_type">లోన్ రకం</string>
+    <string name="profile_name">ప్రొఫైల్ పేరు</string>
+    <string name="loan_details_title">లోన్ వివరాలు</string>
+    <string name="first_emi_date">మొదటి EMI తేదీ</string>
+    <string name="principal_paid">చెల్లించిన ప్రిన్సిపల్</string>
+    <string name="interest_paid">చెల్లించిన వడ్డీ</string>
+    <string name="total_paid">మొత్తం చెల్లింపు</string>
+    <string name="remaining_amount">మిగిలిన మొత్తం</string>
+
+    <!-- EMI Calculator -->
+    <string name="emi_stats">EMI గణాంకాలు</string>
+    <string name="repayment_schedule">చెల్లింపు షెడ్యూల్</string>
+    <string name="loan_tenure">లోన్ వ్యవధి</string>
+    <string name="interest_per_annum">వడ్డీ (% వార్షిక)</string>
+    <string name="summary">సారాంశం</string>
+    <string name="emi_monthly">EMI (నెలవారీ)</string>
+    <string name="col_month">నెల</string>
+    <string name="balance">బ్యాలెన్స్</string>
+    <string name="reset">రిసెట్</string>
+
+    <!-- Add/Edit Dialog -->
+    <string name="update">అప్‌డేట్</string>
+    <string name="save">సేవ్</string>
+    <string name="edit_entry">ఎంట్రీని సవరించు</string>
+    <string name="add_to_book">బుక్కులో జోడించు</string>
+    <string name="lend">ఇచ్చినవి</string>
+    <string name="borrow">తీసుకున్నవి</string>
+    <string name="borrower_name">అప్పు తీసుకున్నవారి పేరు</string>
+    <string name="lender_name">అప్పు ఇచ్చినవారి పేరు</string>
+    <string name="name_required">పేరు అవసరం</string>
+    <string name="interest_type">వడ్డీ రకం</string>
+    <string name="rate_basis">రేటు ఆధారం</string>
+    <string name="duration_type">కాంపౌండ్ వ్యవధి</string>
+    <string name="principal_amount">ప్రిన్సిపల్ మొత్తం</string>
+    <string name="enter_valid_number">చెల్లుబాటు అయ్యే సంఖ్యను నమోదు చేయండి</string>
+    <string name="interest_rate_percent">వడ్డీ రేటు (%)</string>
+    <string name="pick">ఎంచుకోండి</string>
+    <string name="notes_optional">గమనికలు</string>
+    <string name="phone">ఫోన్</string>
+    <string name="phone_optional">ఫోన్ (ఐచ్చికం)</string>
+    
+    <!-- Loan delete confirmation -->
+    <string name="delete_loan_confirm">ఈ లోన్ ప్రొఫైల్‌ను నిజంగా తొలగించాలా? దీన్ని తిరిగి చేసుకోలేరు.</string>
+    
+</resources>

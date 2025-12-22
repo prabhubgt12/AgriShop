@@ -134,6 +134,19 @@
     <string name="clear">ಅಳಿಸಿ</string>
     <string name="calculate">ಲೆಕ್ಕಿಸಿ</string>
     <string name="rate">ದರ</string>
+    <string name="interest">ಬಡ್ಡಿ</string>
+
+    <!-- SIP Calculator (Kannada) -->
+    <string name="sip">ಎಸ್
+ಐಪಿ</string>
+    <string name="sip_calculator">ಎಸ್
+ಐಪಿ ಕ್ಯಾಲ್ಕುಲೇಟರ್</string>
+    <string name="monthly_investment">ತಿಂಗಳ ಹೂಡಿಕೆ</string>
+    <string name="yearly_investment">ವಾರ್ಷಿಕ ಹೂಡಿಕೆ</string>
+    <string name="sip_expected_return">ಅಂದಾಜು ವಾಪಸು (ಪ್ರ.ವ %)</string>
+    <string name="total_investment">ಒಟ್ಟು ಹೂಡಿಕೆ</string>
+    <string name="estimated_returns">ಅಂದಾಜು ವಾಪಸು</string>
+    <string name="maturity_amount">ಪೂರ್ಣತೆಯ ಮೊತ್ತ</string>
 
     <!-- Loan Book -->
     <string name="loan_book">ಲೋನ್ ಪುಸ್ತಕ</string>

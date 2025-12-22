@@ -52,9 +52,151 @@ import com.ledge.ledgerbook.R
 import com.ledge.ledgerbook.util.NumberToWords
 import com.ledge.ledgerbook.util.CurrencyFormatter
 import com.ledge.ledgerbook.ui.settings.CurrencyViewModel
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 // Compound type for interest calculation
 enum class CompoundType { Monthly, Yearly }
+
+@Composable
+private fun SipCalculatorCard(onCalculated: () -> Unit = {}) {
+    var monthly by remember { mutableStateOf("") }
+    var annualRate by remember { mutableStateOf("") }
+    var yearsText by remember { mutableStateOf("") }
+    var monthsText by remember { mutableStateOf("") }
+
+    val currencyVM: CurrencyViewModel = hiltViewModel()
+    val currencyCode by currencyVM.currencyCode.collectAsState()
+    val showCurrencySymbol by currencyVM.showSymbol.collectAsState()
+    LaunchedEffect(currencyCode, showCurrencySymbol) {
+        CurrencyFormatter.setConfig(currencyCode, showCurrencySymbol)
+    }
+    fun fmtNo(v: Double): String = CurrencyFormatter.formatNoDecimals(v, currencyCode, showCurrencySymbol)
+
+    var resultInvested by remember { mutableStateOf("") }
+    var resultReturns by remember { mutableStateOf("") }
+    var resultMaturity by remember { mutableStateOf("") }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.sip_calculator), style = MaterialTheme.typography.titleLarge)
+            val compactHeight = 40.dp
+            // Investment frequency toggle
+            var investMonthly by remember { mutableStateOf(true) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                FilterChip(selected = investMonthly, onClick = { investMonthly = true }, label = { Text(stringResource(R.string.monthly)) })
+                FilterChip(selected = !investMonthly, onClick = { investMonthly = false }, label = { Text(stringResource(R.string.yearly)) })
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = monthly,
+                    onValueChange = { monthly = it.filter { ch -> ch.isDigit() || ch == '.' } },
+                    label = { Text(if (investMonthly) stringResource(R.string.monthly_investment) else stringResource(R.string.yearly_investment), style = MaterialTheme.typography.labelSmall) },
+                    modifier = Modifier.weight(1f).heightIn(min = compactHeight),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    )
+                )
+                OutlinedTextField(
+                    value = annualRate,
+                    onValueChange = { annualRate = it.filter { ch -> ch.isDigit() || ch == '.' } },
+                    label = { Text(stringResource(R.string.sip_expected_return), style = MaterialTheme.typography.labelSmall) },
+                    modifier = Modifier.weight(1f).heightIn(min = compactHeight),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    )
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = yearsText,
+                    onValueChange = { yearsText = it.filter { ch -> ch.isDigit() } },
+                    label = { Text(stringResource(R.string.years), style = MaterialTheme.typography.labelSmall) },
+                    modifier = Modifier.weight(1f).heightIn(min = compactHeight),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    )
+                )
+                OutlinedTextField(
+                    value = monthsText,
+                    onValueChange = { monthsText = it.filter { ch -> ch.isDigit() } },
+                    label = { Text(stringResource(R.string.months), style = MaterialTheme.typography.labelSmall) },
+                    modifier = Modifier.weight(1f).heightIn(min = compactHeight),
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodySmall,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    )
+                )
+            }
+            // Actions
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = {
+                    monthly = ""
+                    annualRate = ""
+                    yearsText = ""
+                    monthsText = ""
+                    resultInvested = ""; resultReturns = ""; resultMaturity = ""
+                }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.clear)) }
+                Button(onClick = {
+                    val y = yearsText.toIntOrNull() ?: 0
+                    val m = monthsText.toIntOrNull() ?: 0
+                    val nMonths = (y.coerceAtLeast(0) * 12 + m.coerceAtLeast(0)).coerceAtLeast(0)
+                    val entered = monthly.toDoubleOrNull() ?: 0.0
+                    val p = if (investMonthly) entered else entered / 12.0
+                    val rMonthly = ((annualRate.toDoubleOrNull() ?: 0.0) / 100.0) / 12.0
+                    val maturity = if (nMonths <= 0) 0.0 else if (rMonthly == 0.0) p * nMonths
+                        else p * (((1 + rMonthly).pow(nMonths) - 1) / rMonthly) * (1 + rMonthly)
+                    // Total invested uses entered frequency directly
+                    val investedFinal = if (investMonthly) entered * nMonths.toDouble() else entered * (y + m / 12.0)
+                    val returns = (maturity - investedFinal).coerceAtLeast(0.0)
+                    resultInvested = fmtNo(investedFinal)
+                    resultReturns = fmtNo(returns)
+                    resultMaturity = fmtNo(maturity)
+                    onCalculated()
+                }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.calculate)) }
+            }
+
+            // Results in a single compact card (stacked rows)
+            if (resultMaturity.isNotEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(stringResource(R.string.total_investment), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(resultInvested, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(stringResource(R.string.estimated_returns), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(resultReturns, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
+                        Divider()
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(stringResource(R.string.maturity_amount), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                            Text(resultMaturity, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun OptionItem(
@@ -422,12 +564,14 @@ fun HomeScreen(
             )
         }
     ) { padding ->
+        val scrollState = rememberScrollState()
+        val scope = rememberCoroutineScope()
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 10.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -510,8 +654,31 @@ fun HomeScreen(
             )
         }
 
-        // Interest Calculator Card
-        InterestCalculatorCard()
+        // Calculators: Interest | SIP
+        val calcTab = rememberSaveable { mutableStateOf(0) }
+        TabRow(selectedTabIndex = calcTab.value) {
+            Tab(selected = calcTab.value == 0, onClick = { calcTab.value = 0 }) {
+                Box(Modifier.height(44.dp).padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
+                    Text(text = stringResource(R.string.interest))
+                }
+            }
+            Tab(selected = calcTab.value == 1, onClick = { calcTab.value = 1 }) {
+                Box(Modifier.height(44.dp).padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
+                    Text(text = stringResource(R.string.sip))
+                }
+            }
+        }
+        if (calcTab.value == 0) {
+            InterestCalculatorCard(onCalculated = {
+                scope.launch {
+                    // Let composition show results, then scroll
+                    delay(50)
+                    scrollState.animateScrollTo(scrollState.maxValue)
+                }
+            })
+        } else {
+            SipCalculatorCard()
+        }
     }
     }
 }
@@ -556,7 +723,7 @@ private fun Tile(
 }
 
 @Composable
-private fun InterestCalculatorCard() {
+private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
     // Input states
     var principal by remember { mutableStateOf("") }
     var ratePerMonth by remember { mutableStateOf("") }
@@ -877,6 +1044,7 @@ private fun InterestCalculatorCard() {
                     resultRate = "%.2f%%/mo".format(rM)
                     resultInterest = fmtNo(interest)
                     resultTotal = fmtNo(total)
+                    onCalculated()
                 }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.calculate)) }
             }
 

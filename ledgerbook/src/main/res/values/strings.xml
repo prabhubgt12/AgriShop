@@ -60,6 +60,8 @@
     <string name="english_label">English</string>
     <string name="hindi_label">हिन्दी</string>
     <string name="kannada_label">ಕನ್ನಡ</string>
+    <string name="telugu_label">తెలుగు</string>
+    <string name="tamil_label">தமிழ்</string>
     <string name="light_option">Light</string>
     <string name="dark_option">Dark</string>
     <!-- Currency settings -->
@@ -139,6 +141,16 @@
     <string name="clear">Clear</string>
     <string name="calculate">Calculate</string>
     <string name="rate">Rate</string>
+    <string name="interest">Interest</string>
+    <!-- SIP Calculator -->
+    <string name="sip">SIP</string>
+    <string name="sip_calculator">SIP Calculator</string>
+    <string name="monthly_investment">Monthly Investment</string>
+    <string name="yearly_investment">Yearly Investment</string>
+    <string name="sip_expected_return">Exp Return (p.a. %)</string>
+    <string name="total_investment">Total Investment</string>
+    <string name="estimated_returns">Estimated Returns</string>
+    <string name="maturity_amount">Maturity Amount</string>
     
     <!-- Ledger list menus/labels -->
     <string name="more">More</string>

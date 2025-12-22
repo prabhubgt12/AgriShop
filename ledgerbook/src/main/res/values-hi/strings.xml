@@ -118,6 +118,17 @@
     <string name="clear">साफ़ करें</string>
     <string name="calculate">गणना करें</string>
     <string name="rate">दर</string>
+    <string name="interest">ब्याज</string>
+
+    <!-- SIP Calculator (Hindi) -->
+    <string name="sip">एसआईपी</string>
+    <string name="sip_calculator">एसआईपी कैलकुलेटर</string>
+    <string name="monthly_investment">मासिक निवेश</string>
+    <string name="yearly_investment">वार्षिक निवेश</string>
+    <string name="sip_expected_return">Exp Return (प्रतिवर्ष %)</string>
+    <string name="total_investment">कुल निवेश</string>
+    <string name="estimated_returns">अनुमानित रिटर्न</string>
+    <string name="maturity_amount">परिपक्वता राशि</string>
 
     <!-- Loan Book -->
     <string name="loan_book">ऋण बही</string>

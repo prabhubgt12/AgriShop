@@ -1,6 +1,10 @@
 package com.ledge.ledgerbook.ui.settings
 
 import android.app.Activity
+import android.content.Intent
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +25,7 @@ import com.google.api.services.drive.model.File
 import com.ledge.ledgerbook.data.backup.BackupManager
 import com.ledge.ledgerbook.data.backup.DriveClient
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
+import com.ledge.ledgerbook.MainActivity
 import kotlinx.coroutines.launch
 import com.ledge.ledgerbook.ui.settings.CurrencyViewModel
 import androidx.appcompat.app.AppCompatDelegate
@@ -108,7 +113,9 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     "" to stringResource(R.string.system_option),
                     "en" to stringResource(R.string.english_label),
                     "hi" to stringResource(R.string.hindi_label),
-                    "kn" to stringResource(R.string.kannada_label)
+                    "kn" to stringResource(R.string.kannada_label),
+                    "te" to stringResource(R.string.telugu_label),
+                    "ta" to stringResource(R.string.tamil_label)
                 )
                 var expanded by remember { mutableStateOf(false) }
                 val current = options.firstOrNull { (tag, _) ->
@@ -140,6 +147,8 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                                                     "en" -> "Language: English"
                                                     "hi" -> "भाषा: हिन्दी"
                                                     "kn" -> "Language: Kannada"
+                                                    "te" -> "భాష: తెలుగు"
+                                                    "ta" -> "மொழி: தமிழ்"
                                                     else -> "Language: System"
                                                 },
                                                 Toast.LENGTH_SHORT
@@ -373,14 +382,39 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         showRestoreConfirm = false
                         scope.launch {
                             isWorking = true
-                            val latest = DriveClient.listBackups().firstOrNull()
+                            val latest = DriveClient.listBackups().firstOrNull { it.name == "ledgerbook-backup.zip" }
+                            var ok = false
                             val msg = if (latest != null) {
                                 val bytes = DriveClient.download(latest.id)
-                                if (bytes != null && activity != null && BackupManager.restoreBackupZip(activity, bytes)) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
+                                ok = bytes != null && activity != null && BackupManager.restoreBackupZip(activity, bytes)
+                                if (ok) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
                             } else context.getString(R.string.no_backups_found)
                             isWorking = false
                             snackbarHostState.showSnackbar(msg)
                             lastBackupDisplay = fetchLbLastBackupTime()
+                            if (ok) {
+                                val act = activity
+                                if (act != null) {
+                                    val ctx = act.applicationContext
+                                    val restartIntent = Intent(ctx, MainActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    }
+                                    val pi = PendingIntent.getActivity(
+                                        ctx,
+                                        0,
+                                        restartIntent,
+                                        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                    )
+                                    val am = ctx.getSystemService(AlarmManager::class.java)
+                                    am?.setExact(
+                                        AlarmManager.ELAPSED_REALTIME,
+                                        SystemClock.elapsedRealtime() + 200,
+                                        pi
+                                    )
+                                    act.finishAffinity()
+                                    android.os.Process.killProcess(android.os.Process.myPid())
+                                }
+                            }
                         }
                     }) { Text(stringResource(R.string.ok)) }
                 },
@@ -407,8 +441,13 @@ private fun ThemeOptionRow(label: String, selected: Boolean, onSelect: () -> Uni
 private suspend fun fetchLbLastBackupTime(): String? {
     return try {
         val list = DriveClient.listBackups()
-        val latest = list.firstOrNull()
-        latest?.modifiedTime?.toString()
+        val latest = list.firstOrNull { it.name == "ledgerbook-backup.zip" }
+        latest?.modifiedTime?.let { dt ->
+            val inst = java.time.Instant.ofEpochMilli(dt.value)
+            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                .withZone(java.time.ZoneId.systemDefault())
+                .format(inst)
+        }
     } catch (_: Throwable) {
         null
     }

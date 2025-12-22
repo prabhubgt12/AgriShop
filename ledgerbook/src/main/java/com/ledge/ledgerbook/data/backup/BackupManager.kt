@@ -58,6 +58,12 @@ object BackupManager {
             val tmp = File.createTempFile("restore", ".zip", context.cacheDir)
             tmp.outputStream().use { it.write(zipBytes) }
             java.util.zip.ZipFile(tmp).use { zf ->
+                // Clear existing DB files to avoid mixed WAL/SHM state
+                runCatching {
+                    File(dbDir, DB_NAME).delete()
+                    File(dbDir, "$DB_NAME-wal").delete()
+                    File(dbDir, "$DB_NAME-shm").delete()
+                }
                 val entries = zf.entries()
                 while (entries.hasMoreElements()) {
                     val e = entries.nextElement()

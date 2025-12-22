@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings / Language -->
+    <string name="settings_title">அமைப்புகள்</string>
+    <string name="language_title">மொழி</string>
+    <string name="system_option">சிஸ்டம்</string>
+    <string name="english_label">English</string>
+    <string name="hindi_label">हिन्दी</string>
+    <string name="kannada_label">ಕನ್ನಡ</string>
+    <string name="telugu_label">తెలుగు</string>
+    <string name="tamil_label">தமிழ்</string>
+
+    <!-- Common -->
+    <string name="ok">சரி</string>
+    <string name="cancel">ரத்து</string>
+    <string name="clear">அழி</string>
+    <string name="calculate">கணக்கிடு</string>
+
+    <!-- App / Share/PDF labels -->
+    <string name="unlock_to_continue">தொடர அன்லாக் செய்யவும்</string>
+    <string name="ledger_entry_title">காத்தா பதிவேடு</string>
+    <string name="pdf_title_receipt">காத்தா ரசீது</string>
+    <string name="pdf_title_statement">காத்தா அறிக்கை</string>
+    <string name="label_name_with_value">பெயர்: %1$s</string>
+    <string name="label_type_with_value">வகை: %1$s</string>
+    <string name="label_principal_with_value">முதல்தொகை: %1$s</string>
+    <string name="label_rate_with_value">விகிதம்: %1$s%% %2$s</string>
+    <string name="label_from_with_value">இருந்து: %1$s</string>
+    <string name="label_interest_till_now_with_value">இன்றுவரை வட்டி: %1$s</string>
+    <string name="label_total_with_value">மொத்தம்: %1$s</string>
+    <string name="label_date_with_value">தேதி: %1$s</string>
+    <string name="label_customer_with_value">வாடிக்கையாளர்: %1$s</string>
+    <string name="label_total_lend_with_value">மொத்தம் கொடுத்தது: %1$s</string>
+    <string name="label_total_borrow_with_value">மொத்தம் எடுத்தது: %1$s</string>
+    <string name="label_net_with_value">நிகர: %1$s</string>
+
+    <!-- Base labels -->
+    <string name="label_type">வகை</string>
+    <string name="label_principal">முதல்தொகை</string>
+    <string name="label_rate">விகிதம்</string>
+    <string name="label_from">இருந்து</string>
+    <string name="label_interest">வட்டி</string>
+    <string name="label_total">மொத்தம்</string>
+    <string name="label_subtotal">இடை மொத்தம்</string>
+
+    <!-- Table column labels -->
+    <string name="col_date">தேதி</string>
+    <string name="col_principal">முதல்தொகை</string>
+    <string name="col_rate">விகிதம்</string>
+    <string name="col_interest">வட்டி</string>
+    <string name="col_total">மொத்தம்</string>
+
+    <!-- Home / Titles -->
+    <string name="interest_calculator">வட்டி கணக்கீடு</string>
+    <string name="emi_calculator">EMI கணக்கீடு</string>
+    <string name="sip">எஸ்‌ஐபி</string>
+    <string name="sip_calculator">எஸ்‌ஐபி கணக்கீடு</string>
+
+    <!-- Calculator labels -->
+    <string name="label_principal_generic">முதல்தொகை</string>
+    <string name="label_rate_per_month">விகிதம் (%/மாதம்)</string>
+    <string name="dates">தேதிகள்</string>
+    <string name="duration">காலநிலை</string>
+    <string name="from">இருந்து</string>
+    <string name="to">வரை</string>
+    <string name="years">ஆண்டுகள்</string>
+    <string name="months">மாதங்கள்</string>
+    <string name="days">நாட்கள்</string>
+    <string name="year_singular">ஆண்டு</string>
+    <string name="month_singular">மாதம்</string>
+    <string name="day_singular">நாள்</string>
+    <plurals name="years_qty">
+        <item quantity="one">%d ஆண்டு</item>
+        <item quantity="other">%d ஆண்டுகள்</item>
+    </plurals>
+    <plurals name="months_qty">
+        <item quantity="one">%d மாதம்</item>
+        <item quantity="other">%d மாதங்கள்</item>
+    </plurals>
+    <plurals name="days_qty">
+        <item quantity="one">%d நாள்</item>
+        <item quantity="other">%d நாட்கள்</item>
+    </plurals>
+    <string name="simple">சரள</string>
+    <string name="compound">கூட்டு</string>
+    <string name="monthly">மாதந்தோறும்</string>
+    <string name="yearly">வருடாந்திர</string>
+    <string name="rate">விகிதம்</string>
+    <string name="interest">வட்டி</string>
+
+    <!-- SIP specific -->
+    <string name="monthly_investment">மாதாந்திர முதலீடு</string>
+    <string name="yearly_investment">வருடாந்திர முதலீடு</string>
+    <string name="sip_expected_return">Exp Return (ஆ.வ %)</string>
+    <string name="total_investment">மொத்த முதலீடு</string>
+    <string name="estimated_returns">மதிப்பிட்ட வருமானம்</string>
+    <string name="maturity_amount">முதிர்வு தொகை</string>
+
+    <!-- Misc used in lists -->
+    <string name="more">மேலும்</string>
+    <string name="share_via">வழியாக பகிர்</string>
+    <string name="generated_by_footer_with_link">சிம்பிள் காத்தா மூலம் உருவாக்கப்பட்டது – %1$s</string>
+    
+    <!-- App/Home titles -->
+    <string name="app_name">சிம்பிள் காத்தா</string>
+    <string name="title_ledger_book">சிம்பிள் காத்தா</string>
+    <string name="title_khata_book">காத்தா புத்தகம்</string>
+    <string name="loan_book">கடன் புத்தகம்</string>
+
+    <!-- Short tab labels -->
+
+    <!-- Ledger summary labels -->
+    <string name="interest_rate">வட்டி விகிதம்</string>
+    <string name="from_date">தேதி முதல்</string>
+    <string name="total_time">மொத்த நேரம்</string>
+    <string name="total_amount">மொத்த தொகை</string>
+    <string name="total_interest">மொத்த வட்டி</string>
+    <string name="total_principal">மொத்த முதல்தொகை</string>
+    <string name="total_lend">மொத்தம் கொடுத்தது</string>
+    <string name="lend_interest">கொடுத்ததின் வட்டி</string>
+    <string name="total_borrow">மொத்தம் எடுத்தது</string>
+    <string name="borrow_interest">எடுத்ததின் வட்டி</string>
+    <string name="final_amount">இறுதி தொகை</string>
+
+    <!-- Ledger list menus/labels & dialogs -->
+    <string name="share_receipt">ரசீதை பகிர்</string>
+    <string name="share">பகிர்</string>
+    <string name="payment_history">கட்டண வரலாறு</string>
+    <string name="partial_payment">பகுதி கட்டணம்</string>
+    <string name="edit">திருத்து</string>
+    <string name="delete">அழி</string>
+    <string name="user_label">பயனர்</string>
+    <string name="payments_title">கட்டணங்கள்</string>
+    <string name="add_payment">கட்டணம் சேர்க்க</string>
+    <string name="payment_amount">கட்டணத் தொகை</string>
+    <string name="call_user">கால் செய்ய</string>
+    <string name="attach">படத்தை இணை</string>
+    <string name="image_too_large">படம் 1 MB-ஐ விட பெரியது</string>
+    <string name="full_payment">முழு கட்டணம்</string>
+    <string name="apply_action">பயன்படுத்து</string>
+    <string name="entry_details">பதிவின் விவரங்கள்</string>
+    <string name="name_label">பெயர்</string>
+    <string name="payment_date">கட்டண தேதி</string>
+    <string name="amount">தொகை</string>
+    <string name="interest_till_date">இன்றுவரை வட்டி</string>
+    <string name="remaining_after_payment">கட்டணத்திற்கு பின் மீதமுள்ளது</string>
+    <string name="close">மூடு</string>
+    <string name="delete_entry">பதிவை அழி</string>
+    <string name="delete_entry_confirm">இந்த பதிவை நிச்சயமாக அழிக்கவா? இதன் கட்டணங்களும் அழிக்கப்படும். இந்த நடவடிக்கையை திரும்பப்பெற முடியாது.</string>
+    <string name="no_payments_yet">இன்னும் கட்டணங்கள் இல்லை.</string>
+    <string name="no_payments_pending">நிலுவையில் கட்டணங்கள் இல்லை</string>
+    <!-- Reminder chips labels -->
+    <string name="overdue_label">காலாவதி</string>
+    <string name="due_soon_label">விரைவில் கடன்</string>
+    <string name="overdue_with_count">காலாவதி %1$d</string>
+    <string name="due_soon_with_count">விரைவில் %1$d</string>
+    <string name="overdue_with_count_paren">காலாவதி (%1$d)</string>
+    <string name="due_soon_with_count_paren">விரைவில் (%1$d)</string>
+
+    <!-- Settings / Premium / Backup -->
+    <string name="changes_apply_note">மாற்றங்கள் உடனே அமலும். சில திரைகள் புதுப்பிக்கப்படும்.</string>
+    <string name="premium_title">பிரீமியம்</string>
+    <string name="ads_removed">இந்த சாதனத்தில் விளம்பரங்கள் நீக்கப்பட்டுள்ளன</string>
+    <string name="ads_enabled_msg">விளம்பரங்கள் இயங்குகின்றன. நிரந்தரமாக நீக்க வாங்கவும்.</string>
+    <string name="remove_ads">விளம்பரங்களை நீக்கு</string>
+    <string name="restore_purchase">கொள்முதல் மீட்டெடு</string>
+    <string name="features_title">அம்சங்கள்</string>
+    <string name="group_by_customer">வாடிக்கையாளர் வாரியாக குழுவாக்கு</string>
+    <string name="group_by_desc">பெற்றோருடன் குழந்தை பரிவர்த்தனைகளை விரிவாக்கத்துடன் காட்டு.</string>
+    <string name="theme_title">தீம்</string>
+    <string name="light_option">ஒளிர்வான</string>
+    <string name="dark_option">இருண்ட</string>
+    <string name="reminders_title">நினைவூட்டல்கள்</string>
+    <string name="overdue_days_label">காலாவதி (நாட்களுக்கு பின்)</string>
+    <string name="due_soon_window_days_label">விரைவில் (நாட்கள்) விண்டோ</string>
+    <string name="due_soon_hint">"விரைவில்" என்பது காலாவதிக்கு முன் கடைசி N நாட்களை காட்டும்.</string>
+    <string name="backup_to_drive">டிரைவில் காப்புப்பிரதி</string>
+    <string name="list_backups">காப்புப் பிரதிகள் பட்டியல்</string>
+    <string name="tap_to_restore">மீட்டெடுக்க தட்டவும்</string>
+    <string name="developer_label">உருவாக்குனர்: SimpleAndro</string>
+    <string name="email_label">மின்னஞ்சல்: prabhurb@gmail.com</string>
+    <string name="app_version_label">ஆப் பதிப்பு: %1$s</string>
+    <string name="gd_connected">கூகுள் டிரைவ்: இணைக்கப்பட்டது</string>
+    <string name="gd_not_connected">கூகுள் டிரைவ்: இணைக்கப்படவில்லை</string>
+    <string name="sign_in">சைன் இன்</string>
+    <string name="sign_out">சைன் அவுட்</string>
+    <string name="sign_in_failed">சைன்-இன் தோல்வியடைந்தது</string>
+    <string name="backup_and_sync">காப்புப்பிரதி &amp; ஒத்திசைவு</string>
+    <string name="backup_uploaded">காப்புப்பிரதி பதிவேற்றப்பட்டது</string>
+    <string name="backup_failed">காப்புப்பிரதி தோல்வியடைந்தது</string>
+    <string name="restore_complete">மீட்டெடுக்கப்பட்டது. ஆப்பை மறுதொடக்கம் செய்க.</string>
+    <string name="restore_failed">மீட்டெடுப்பு தோல்வியடைந்தது</string>
+    <string name="no_backups_found">காப்புப்பிரதிகள் எதுவும் இல்லை</string>
+    <string name="restore">மீட்டெடு</string>
+    <string name="last_backup_label">கடைசி காப்புப்பிரதி: %1$s</string>
+    <string name="never_label">எப்போதும் இல்லை</string>
+
+    <!-- Loan Book extras -->
+    <string name="add_loan">கடனைச் சேர்</string>
+    <string name="loan_type">கடன் வகை</string>
+    <string name="profile_name">சுயவிவரப் பெயர்</string>
+    <string name="loan_details_title">கடன் விவரங்கள்</string>
+    <string name="first_emi_date">முதல் EMI தேதி</string>
+    <string name="principal_paid">செலுத்திய முதல்தொகை</string>
+    <string name="interest_paid">செலுத்திய வட்டி</string>
+    <string name="total_paid">மொத்தம் செலுத்தியது</string>
+    <string name="remaining_amount">மீதமுள்ள தொகை</string>
+
+    <!-- EMI Calculator extras -->
+    <string name="emi_stats">EMI புள்ளிவிவரங்கள்</string>
+    <string name="repayment_schedule">கட்டணம் அட்டவணை</string>
+    <string name="loan_tenure">கடன் காலம்</string>
+    <string name="interest_per_annum">வட்டி (% ஆண்டு)</string>
+    <string name="summary">சுருக்கம்</string>
+    <string name="emi_monthly">EMI (மாதாந்திர)</string>
+    <string name="col_month">மாதம்</string>
+    <string name="balance">இருப்பு</string>
+    <string name="reset">மீட்டமை</string>
+
+    <!-- Add/Edit Dialog extras -->
+    <string name="update">புதுப்பி</string>
+    <string name="save">சேமி</string>
+    <string name="edit_entry">பதிவை திருத்து</string>
+    <string name="add_to_book">புத்தகத்தில் சேர்</string>
+    <string name="lend">கொடுத்தது</string>
+    <string name="borrow">எடுத்தது</string>
+    <string name="borrower_name">கடன் பெற்றவர் பெயர்</string>
+    <string name="lender_name">கடன் வழங்கியவர் பெயர்</string>
+    <string name="name_required">பெயர் தேவையானது</string>
+    <string name="interest_type">வட்டி வகை</string>
+    <string name="rate_basis">விகிதத்தின் அடிப்படை</string>
+    <string name="duration_type">கூட்டு காலம்</string>
+    <string name="principal_amount">முதல்தொகை</string>
+    <string name="enter_valid_number">செல்லுபடியாகும் எண்ணை உள்ளிடவும்</string>
+    <string name="interest_rate_percent">வட்டி விகிதம் (%)</string>
+    <string name="pick">தேர்வு செய்</string>
+    <string name="notes_optional">குறிப்புகள்</string>
+    <string name="phone">தொலைபேசி</string>
+    <string name="phone_optional">தொலைபேசி (விருப்பம்)</string>
+
+    <!-- Loan delete confirmation -->
+    <string name="delete_loan_confirm">இந்த கடன் சுயவிவரத்தை நிச்சயமாக அழிக்கவா? இதை மாற்ற இயலும் இல்லை.</string>
+</resources>
