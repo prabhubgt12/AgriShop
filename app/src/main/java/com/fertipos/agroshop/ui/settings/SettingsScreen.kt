@@ -2,6 +2,8 @@ package com.fertipos.agroshop.ui.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import android.app.AlarmManager
+import android.app.PendingIntent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -43,6 +45,7 @@ import com.fertipos.agroshop.data.local.entities.CompanyProfile
 import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import android.content.Intent
+import android.os.SystemClock
 import com.fertipos.agroshop.ui.theme.ThemeViewModel
 import com.fertipos.agroshop.ui.theme.ThemeMode
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +61,7 @@ import com.fertipos.agroshop.data.prefs.LocalePrefs
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
+import com.fertipos.agroshop.MainActivity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -143,9 +147,9 @@ private fun varStatefulForm(
             )
             snackbarHostState.showSnackbar(msg)
             if (signedIn.value) {
-                // Fetch latest backup time
+                // Fetch latest AgroShop backup time only
                 val files = DriveClient.listBackups()
-                val ts = files.firstOrNull()?.modifiedTime?.value
+                val ts = files.firstOrNull { it.name == "agroshop_backup.zip" }?.modifiedTime?.value
                 lastBackupDisplay = ts?.let { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(it)) }
             } else {
                 lastBackupDisplay = null
@@ -160,12 +164,12 @@ private fun varStatefulForm(
             if (ok) {
                 signedIn.value = true
                 val files = DriveClient.listBackups()
-                val ts = files.firstOrNull()?.modifiedTime?.value
+                val ts = files.firstOrNull { it.name == "agroshop_backup.zip" }?.modifiedTime?.value
                 lastBackupDisplay = ts?.let { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(it)) }
             }
         } else {
             val files = DriveClient.listBackups()
-            val ts = files.firstOrNull()?.modifiedTime?.value
+            val ts = files.firstOrNull { it.name == "agroshop_backup.zip" }?.modifiedTime?.value
             lastBackupDisplay = ts?.let { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(it)) }
         }
     }
@@ -533,10 +537,12 @@ private fun varStatefulForm(
                             scope.launch {
                                 isWorking = true
                                 val files = DriveClient.listBackups()
-                                val latest = files.firstOrNull()
+                                val latest = files.firstOrNull { it.name == "agroshop_backup.zip" }
+                                var ok = false
                                 val msg = if (latest != null) {
                                     val bytes = DriveClient.download(latest.id)
-                                    if (bytes != null && BackupManager.restoreBackupZip(context, bytes)) context.getString(R.string.restore_complete_restart) else context.getString(
+                                    ok = bytes != null && BackupManager.restoreBackupZip(context, bytes)
+                                    if (ok) context.getString(R.string.restore_complete_restart) else context.getString(
                                         R.string.restore_failed_with_error,
                                         DriveClient.lastError() ?: context.getString(R.string.unknown_error)
                                     )
@@ -546,8 +552,28 @@ private fun varStatefulForm(
                                 isWorking = false
                                 snackbarHostState.showSnackbar(msg)
                                 // Refresh last backup time after restore
-                                val refreshed = DriveClient.listBackups().firstOrNull()?.modifiedTime?.value
+                                val refreshed = DriveClient.listBackups().firstOrNull { it.name == "agroshop_backup.zip" }?.modifiedTime?.value
                                 lastBackupDisplay = refreshed?.let { java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault()).format(java.util.Date(it)) }
+                                if (ok) {
+                                    val ctx = context.applicationContext
+                                    val restartIntent = Intent(ctx, MainActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    }
+                                    val pi = PendingIntent.getActivity(
+                                        ctx,
+                                        0,
+                                        restartIntent,
+                                        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                    )
+                                    val am = ctx.getSystemService(AlarmManager::class.java)
+                                    am?.setExact(
+                                        AlarmManager.ELAPSED_REALTIME,
+                                        SystemClock.elapsedRealtime() + 200,
+                                        pi
+                                    )
+                                    (context as? android.app.Activity)?.finishAffinity()
+                                    android.os.Process.killProcess(android.os.Process.myPid())
+                                }
                             }
                         }) { Text(stringResource(R.string.ok)) }
                     },

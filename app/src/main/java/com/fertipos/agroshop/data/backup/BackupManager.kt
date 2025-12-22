@@ -19,6 +19,7 @@ object BackupManager {
         val dbWal = File(dbMain.parentFile, "$DB_NAME-wal")
         val dbShm = File(dbMain.parentFile, "$DB_NAME-shm")
         val files = listOf(dbMain, dbWal, dbShm).filter { it.exists() }
+        val attachmentsDir = File(context.filesDir, "attachments")
 
         val bos = ByteArrayOutputStream()
         ZipOutputStream(bos).use { zos ->
@@ -28,6 +29,20 @@ object BackupManager {
                     zos.putNextEntry(entry)
                     fis.copyTo(zos)
                     zos.closeEntry()
+                }
+            }
+
+            // Include attachments under attachments/ prefix
+            if (attachmentsDir.exists()) {
+                attachmentsDir.listFiles()?.forEach { att ->
+                    if (att.isFile) {
+                        FileInputStream(att).use { fis ->
+                            val entry = ZipEntry("attachments/" + att.name)
+                            zos.putNextEntry(entry)
+                            fis.copyTo(zos)
+                            zos.closeEntry()
+                        }
+                    }
                 }
             }
         }
@@ -43,13 +58,24 @@ object BackupManager {
         return try {
             val dbDir = context.getDatabasePath(DB_NAME).parentFile
             if (dbDir?.exists() != true) dbDir?.mkdirs()
+            // Clear existing DB files to avoid mixed WAL/SHM state
+            runCatching {
+                File(dbDir, DB_NAME).delete()
+                File(dbDir, "$DB_NAME-wal").delete()
+                File(dbDir, "$DB_NAME-shm").delete()
+            }
+            val attachmentsDir = File(context.filesDir, "attachments").apply { mkdirs() }
             val tmp = File.createTempFile("restore", ".zip", context.cacheDir)
             tmp.outputStream().use { it.write(zipBytes) }
             java.util.zip.ZipFile(tmp).use { zf ->
                 val entries = zf.entries()
                 while (entries.hasMoreElements()) {
                     val e = entries.nextElement()
-                    val outFile = File(dbDir, e.name)
+                    val outFile = if (e.name.startsWith("attachments/")) {
+                        File(attachmentsDir, e.name.removePrefix("attachments/"))
+                    } else {
+                        File(dbDir, e.name)
+                    }
                     zf.getInputStream(e).use { ins ->
                         outFile.outputStream().use { outs -> ins.copyTo(outs) }
                     }
