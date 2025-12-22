@@ -498,34 +498,32 @@ fun AccountsScreen(
                         }
                     } else {
                         // Category Split tab content
+                        var ddOpen by rememberSaveable { mutableStateOf(false) }
+                        val currentLabel = when (catRange) { 1 -> stringResource(R.string.three_months); 2 -> stringResource(R.string.six_months); else -> stringResource(R.string.this_month) }
+                        Box {
+                            OutlinedButton(
+                                onClick = { ddOpen = true },
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.width(140.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                    Text(currentLabel, style = MaterialTheme.typography.labelSmall)
+                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                            DropdownMenu(expanded = ddOpen, onDismissRequest = { ddOpen = false }) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.this_month)) }, onClick = { catRange = 0; ddOpen = false })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.three_months)) }, onClick = { catRange = 1; ddOpen = false })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.six_months)) }, onClick = { catRange = 2; ddOpen = false })
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
                         if (catEntries.isEmpty() || catTotal <= 0.0) {
                             Text(text = stringResource(R.string.total_debit) + ": 0")
                         } else {
-                            // Small dropdown for range
-                            var ddOpen by rememberSaveable { mutableStateOf(false) }
-                            val currentLabel = when (catRange) { 1 -> stringResource(R.string.three_months); 2 -> stringResource(R.string.six_months); else -> stringResource(R.string.this_month) }
-                            Box {
-                                OutlinedButton(
-                                    onClick = { ddOpen = true },
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.width(140.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                                        Text(currentLabel, style = MaterialTheme.typography.labelSmall)
-                                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
-                                    }
-                                }
-                                DropdownMenu(expanded = ddOpen, onDismissRequest = { ddOpen = false }) {
-                                    DropdownMenuItem(text = { Text(stringResource(R.string.this_month)) }, onClick = { catRange = 0; ddOpen = false })
-                                    DropdownMenuItem(text = { Text(stringResource(R.string.three_months)) }, onClick = { catRange = 1; ddOpen = false })
-                                    DropdownMenuItem(text = { Text(stringResource(R.string.six_months)) }, onClick = { catRange = 2; ddOpen = false })
-                                }
-                            }
-                            Spacer(Modifier.height(8.dp))
                             val surfaceColor = MaterialTheme.colorScheme.surface
-                            // Donut chart
                             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                                 val chartSize = 220.dp
                                 Canvas(modifier = Modifier.size(chartSize)) {
