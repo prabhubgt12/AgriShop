@@ -132,6 +132,10 @@
     <!-- Backup info -->
     <string name="last_backup_label">கடைசி காப்புப்பிரதி: %1$s</string>
     <string name="never_label">எப்போதுமே இல்லை</string>
+    <string name="auto_backup_label">தானியங்கு காப்புப்பிரதி (தினசரி)</string>
+    <string name="auto_backup_enabled_msg">தானியங்கு காப்புப்பிரதி இயக்கப்பட்டது</string>
+    <string name="auto_backup_disabled_msg">தானியங்கு காப்புப்பிரதி நிறுத்தப்பட்டது</string>
+    <string name="sign_in_required">தானியங்கு காப்புப்பிரதியை இயக்க உள்நுழைக</string>
 
     <!-- Categories -->
     <string name="category">வகை</string>

@@ -104,7 +104,7 @@ object DriveClient {
         try {
             service.files().list()
                 .setSpaces("appDataFolder")
-                .setFields("files(id,name,modifiedTime)")
+                .setFields("files(id,name,modifiedTime,size)")
                 .setOrderBy("modifiedTime desc")
                 .execute()
                 .files ?: emptyList()

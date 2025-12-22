@@ -1,6 +1,8 @@
 package com.ledge.cashbook.ui
 
 import android.app.Activity
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -26,11 +28,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import android.content.Intent
+import android.util.Log
+import android.os.SystemClock
 import com.ledge.cashbook.MainActivity
 import com.ledge.cashbook.BuildConfig
 import com.ledge.cashbook.R
 import com.ledge.cashbook.data.backup.BackupManager
 import com.ledge.cashbook.data.backup.DriveClient
+import com.ledge.cashbook.data.backup.AutoBackupScheduler
 import com.ledge.cashbook.data.prefs.LocalePrefs
 import com.ledge.cashbook.ui.theme.ThemeViewModel
 import com.google.api.services.drive.model.File
@@ -60,10 +65,12 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
 
     // Monetization: remove ads purchase state
     val monetizationVM: MonetizationViewModel = hiltViewModel()
+    val restoreVM: RestoreViewModel = hiltViewModel()
     val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState(initial = false)
     // Category settings
     val settingsVM: SettingsViewModel = hiltViewModel()
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
+    val autoBackupEnabled by settingsVM.autoBackupEnabled.collectAsState(initial = false)
 
     // Removed legacy CSV categories field and persistence
 
@@ -314,6 +321,30 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     Text(text = stringResource(R.string.last_backup_label, label), style = MaterialTheme.typography.bodySmall)
                 }
             }
+            // Auto backup toggle
+            item {
+                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.auto_backup_label))
+                    Switch(
+                        checked = autoBackupEnabled,
+                        onCheckedChange = { enabled ->
+                            settingsVM.setAutoBackupEnabled(enabled)
+                            val act = activity
+                            if (enabled) {
+                                if (signedIn && act != null) {
+                                    AutoBackupScheduler.schedule(act)
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.auto_backup_enabled_msg)) }
+                                } else {
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.sign_in_required)) }
+                                }
+                            } else if (act != null) {
+                                AutoBackupScheduler.cancel(act)
+                                scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.auto_backup_disabled_msg)) }
+                            }
+                        }
+                    )
+                }
+            }
             // Backup & Restore (simplified)
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -376,13 +407,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                         showRestoreConfirm = false
                         scope.launch {
                             isWorking = true
-                            val latest = DriveClient.listBackups().firstOrNull()
-                            var ok = false
-                            val msg = if (latest != null) {
-                                val bytes = DriveClient.download(latest.id)
-                                ok = bytes != null && activity != null && BackupManager.restoreBackupZip(activity, bytes)
-                                if (ok) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
-                            } else context.getString(R.string.download_failed)
+                            val (ok, msg) = restoreVM.restoreLatestFromDrive()
                             isWorking = false
                             snackbarHostState.showSnackbar(msg)
                             // After restore, refresh last backup info from Drive list
@@ -391,8 +416,25 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                             if (ok) {
                                 val act = activity
                                 if (act != null) {
+                                    // Schedule a cold relaunch and then kill the process to avoid cached state
+                                    val ctx = act.applicationContext
+                                    val restartIntent = Intent(ctx, MainActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    }
+                                    val pi = PendingIntent.getActivity(
+                                        ctx,
+                                        0,
+                                        restartIntent,
+                                        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                                    )
+                                    val am = ctx.getSystemService(AlarmManager::class.java)
+                                    am?.setExact(
+                                        AlarmManager.ELAPSED_REALTIME,
+                                        SystemClock.elapsedRealtime() + 200,
+                                        pi
+                                    )
                                     act.finishAffinity()
-                                    act.startActivity(Intent(act, MainActivity::class.java))
+                                    android.os.Process.killProcess(android.os.Process.myPid())
                                 }
                             }
                         }
@@ -418,8 +460,14 @@ private fun ThemeOptionRow(label: String, selected: Boolean, onSelect: () -> Uni
 private suspend fun fetchLastBackupTime(): String? {
     return try {
         val backups = DriveClient.listBackups()
-        val latest = backups.firstOrNull()
-        latest?.modifiedTime?.toString()
+        val latest = backups.firstOrNull { it.name == "cashbook-backup.zip" }
+        latest?.modifiedTime?.let { dt ->
+            val inst = java.time.Instant.ofEpochMilli(dt.value)
+            java.time.format.DateTimeFormatter
+                .ofPattern("yyyy-MM-dd HH:mm")
+                .withZone(java.time.ZoneId.systemDefault())
+                .format(inst)
+        }
     } catch (t: Throwable) {
         null
     }

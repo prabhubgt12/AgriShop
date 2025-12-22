@@ -7,6 +7,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import com.ledge.cashbook.data.backup.AutoBackupScheduler
+import com.ledge.cashbook.data.backup.DriveClient
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,6 +41,19 @@ class CashBookApp : Application() {
             val code = runBlocking { dataStore.data.first()[codeKey] ?: "INR" }
             val show = runBlocking { dataStore.data.first()[showKey] ?: true }
             com.ledge.cashbook.util.CurrencyFormatter.setConfig(code, show)
+        } catch (_: Exception) { }
+
+        // Schedule auto backup if enabled
+        try {
+            val ep = EntryPointAccessors.fromApplication(this, DataStoreEntryPoint::class.java)
+            val dataStore = ep.prefs()
+            val key = booleanPreferencesKey("auto_backup_enabled")
+            val enabled = runBlocking { dataStore.data.first()[key] ?: false }
+            if (enabled) {
+                // Ensure Drive is initialized; if not, try to init from last account
+                val ok = DriveClient.isSignedIn(this) || DriveClient.tryInitFromLastAccount(this)
+                if (ok) AutoBackupScheduler.schedule(this)
+            }
         } catch (_: Exception) { }
 
         // One-time seed: create Category rows from existing distinct cash_txns.category strings if categories table is empty

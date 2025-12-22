@@ -151,6 +151,8 @@ dependencies {
 
     // FastExcel for Excel (.xlsx) export (Android-friendly)
     implementation("org.dhatim:fastexcel:0.17.0")
+    // WorkManager for background auto backups
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
     testImplementation("junit:junit:4.13.2")

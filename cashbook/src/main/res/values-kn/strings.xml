@@ -129,6 +129,14 @@
     <string name="restore_confirm_title">ರಿಸ್ಟೋರ್ ದೃಢೀಕರಿಸಿ</string>
     <string name="restore_confirm_message">ಇದು ಆಯ್ಕೆ ಮಾಡಿದ ಬ್ಯಾಕಪ್‌ನಿಂದ ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಡೇಟಾವನ್ನು ಅಳಿಸಿ ಬರೆಯುತ್ತದೆ. ಮುಂದುವರಿಸಬೇಕೆ?</string>
     
+    <!-- Backup info -->
+    <string name="last_backup_label">ಕೊನೆಯ ಬ್ಯಾಕಪ್: %1$s</string>
+    <string name="never_label">ಎಂದಿಗೂ ಇಲ್ಲ</string>
+    <string name="auto_backup_label">ಸ್ವಯಂ ಬ್ಯಾಕಪ್ (ದೈನಂದಿನ)</string>
+    <string name="auto_backup_enabled_msg">ಸ್ವಯಂ ಬ್ಯಾಕಪ್ ಸಕ್ರಿಯವಾಗಿದೆ</string>
+    <string name="auto_backup_disabled_msg">ಸ್ವಯಂ ಬ್ಯಾಕಪ್ ನಿಷ್ಕ್ರಿಯಗೊಂಡಿದೆ</string>
+    <string name="sign_in_required">ಸ್ವಯಂ ಬ್ಯಾಕಪ್ ಸಕ್ರಿಯಗೊಳಿಸಲು ದಯವಿಟ್ಟು ಸೈನ್ ಇನ್ ಮಾಡಿ</string>
+    
     <!-- Category auto-suggest notes/labels -->
     <string name="settings_category_toggle_note">ವರ್ಗ ಫೀಲ್ಡ್ ಅನ್ನು ಮರೆಮಾಡಿದರೆ ವರ್ಗದ ಸೂಚನೆ ಮತ್ತು ಸ್ವಯಂ-ಆಯ್ಕೆ ನಿಷ್ಕ್ರಿಯವಾಗುತ್ತದೆ.</string>
     <string name="categories_info_note_top">ವಿವರವನ್ನು ಟೈಪ್ ಮಾಡುವಾಗ ವರ್ಗವನ್ನು ಸ್ವಯಂ ಆಯ್ಕೆ ಮಾಡಬಹುದು. ಉತ್ತಮ ಸೂಚನೆಗಾಗಿ ಪ್ರತಿ ವರ್ಗಕ್ಕೆ ಕೀವರ್ಡ್‌ಗಳನ್ನು ಸೇರಿಸಿ.</string>

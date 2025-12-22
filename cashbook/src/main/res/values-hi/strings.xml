@@ -155,6 +155,13 @@
     <string name="backup_confirm_message">यह ड्राइव पर बैकअप बनाएगा और उसी नाम वाले मौजूदा बैकअप को ओवरराइट कर सकता है। जारी रखें?</string>
     <string name="restore_confirm_title">रिस्टोर की पुष्टि करें</string>
     <string name="restore_confirm_message">यह चयनित बैकअप से आपके वर्तमान डेटा को ओवरराइट कर देगा। जारी रखें?</string>
+    
+    <!-- Backup info -->
+    <string name="last_backup_label">आखिरी बैकअप: %1$s</string>
+    <string name="auto_backup_label">ऑटो बैकअप (दैनिक)</string>
+    <string name="auto_backup_enabled_msg">ऑटो बैकअप चालू</string>
+    <string name="auto_backup_disabled_msg">ऑटो बैकअप बंद</string>
+    <string name="sign_in_required">ऑटो बैकअप सक्षम करने के लिए कृपया साइन इन करें</string>
 
     <!-- Category auto-suggest notes/labels -->
     <string name="settings_category_toggle_note">श्रेणी फ़ील्ड छिपाने पर श्रेणी के सुझाव और स्वत: चयन बंद हो जाएगा।</string>

@@ -2,6 +2,7 @@ package com.ledge.cashbook.data.backup
 
 import android.content.Context
 import androidx.datastore.preferences.preferencesDataStoreFile
+import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -15,6 +16,10 @@ import java.util.zip.ZipOutputStream
 object BackupManager {
     private const val DB_NAME = "cashbook.db"
     private const val PREFS_NAME = "cashbook_settings"
+    private const val TAG = "CashbookRestore"
+
+    @Volatile private var lastErrorMessage: String? = null
+    fun lastError(): String? = lastErrorMessage
 
     fun createBackupZip(context: Context): ByteArray {
         val dbMain = context.getDatabasePath(DB_NAME)
@@ -76,6 +81,7 @@ object BackupManager {
             java.util.zip.ZipFile(tmp).use { zf ->
                 // Proactively clear existing DB files to avoid mixed WAL/SHM state
                 runCatching {
+                    Log.d(TAG, "Deleting existing DB files before restore")
                     File(dbDir, DB_NAME).delete()
                     File(dbDir, "$DB_NAME-wal").delete()
                     File(dbDir, "$DB_NAME-shm").delete()
@@ -92,6 +98,7 @@ object BackupManager {
                     } else {
                         File(dbDir, e.name)
                     }
+                    Log.d(TAG, "Restoring entry ${e.name} -> ${outFile.absolutePath}")
                     outFile.parentFile?.let { if (!it.exists()) it.mkdirs() }
                     zf.getInputStream(e).use { ins ->
                         outFile.outputStream().use { outs -> ins.copyTo(outs) }
@@ -100,7 +107,9 @@ object BackupManager {
             }
             tmp.delete()
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            lastErrorMessage = e.localizedMessage ?: e.toString()
+            Log.e(TAG, "restoreBackupZip failed", e)
             false
         }
     }

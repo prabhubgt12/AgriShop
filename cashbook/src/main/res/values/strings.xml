@@ -134,6 +134,10 @@
     <!-- Backup info -->
     <string name="last_backup_label">Last backup: %1$s</string>
     <string name="never_label">Never</string>
+    <string name="auto_backup_label">Auto backup (daily)</string>
+    <string name="auto_backup_enabled_msg">Auto backup enabled</string>
+    <string name="auto_backup_disabled_msg">Auto backup disabled</string>
+    <string name="sign_in_required">Please sign in to enable auto backup</string>
 
     <!-- Categories -->
     <string name="category">Category</string>

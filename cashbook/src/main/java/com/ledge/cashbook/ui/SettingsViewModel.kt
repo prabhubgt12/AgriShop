@@ -23,12 +23,14 @@ class SettingsViewModel @Inject constructor(
         val SHOW_CATEGORY_IN_LIST = booleanPreferencesKey("show_category_in_list")
         val CATEGORIES_CSV = stringPreferencesKey("categories_csv")
         val SHOW_SUMMARY = booleanPreferencesKey("show_summary_card")
+        val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
     }
 
     val showCategory: Flow<Boolean> = prefs.data.map { it[SHOW_CATEGORY] ?: false }
     val showCategoryInList: Flow<Boolean> = prefs.data.map { it[SHOW_CATEGORY_IN_LIST] ?: true }
     val categoriesCsv: Flow<String> = prefs.data.map { it[CATEGORIES_CSV] ?: "" }
     val showSummary: Flow<Boolean> = prefs.data.map { it[SHOW_SUMMARY] ?: true }
+    val autoBackupEnabled: Flow<Boolean> = prefs.data.map { it[AUTO_BACKUP_ENABLED] ?: false }
 
     fun setShowCategory(enabled: Boolean) {
         viewModelScope.launch {
@@ -51,6 +53,12 @@ class SettingsViewModel @Inject constructor(
     fun setShowSummary(enabled: Boolean) {
         viewModelScope.launch {
             prefs.edit { it[SHOW_SUMMARY] = enabled }
+        }
+    }
+
+    fun setAutoBackupEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            prefs.edit { it[AUTO_BACKUP_ENABLED] = enabled }
         }
     }
 }

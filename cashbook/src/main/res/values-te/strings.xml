@@ -132,6 +132,10 @@
     <!-- Backup info -->
     <string name="last_backup_label">చివరి బ్యాకప్: %1$s</string>
     <string name="never_label">ఎప్పుడూ కాదు</string>
+    <string name="auto_backup_label">స్వయంచాలిత బ్యాకప్ (ప్రతిరోజు)</string>
+    <string name="auto_backup_enabled_msg">స్వయంచాలిత బ్యాకప్ ప్రారంభించబడింది</string>
+    <string name="auto_backup_disabled_msg">స్వయంచాలిత బ్యాకప్ నిలిపివేయబడింది</string>
+    <string name="sign_in_required">స్వయంచాలిత బ్యాకప్ కోసం దయచేసి సైన్ ఇన్ చేయండి</string>
 
     <!-- Categories -->
     <string name="category">వర్గం</string>
