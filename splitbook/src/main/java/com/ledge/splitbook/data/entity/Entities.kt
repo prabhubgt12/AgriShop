@@ -32,7 +32,8 @@ data class MemberEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val groupId: Long,
     val name: String,
-    @ColumnInfo(defaultValue = "0.0") val deposit: Double = 0.0
+    @ColumnInfo(defaultValue = "0.0") val deposit: Double = 0.0,
+    @ColumnInfo(defaultValue = "0") val isAdmin: Boolean = false
 )
 
 @Entity(

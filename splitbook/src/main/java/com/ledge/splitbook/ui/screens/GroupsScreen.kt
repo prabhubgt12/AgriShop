@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +53,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.ledge.splitbook.BuildConfig
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +63,15 @@ fun GroupsScreen(
     viewModel: GroupsViewModel = hiltViewModel()
 ) {
     val groups by viewModel.groups.collectAsState(initial = emptyList())
+    var showEmpty by remember { mutableStateOf(false) }
+    LaunchedEffect(groups) {
+        if (groups.isEmpty()) {
+            kotlinx.coroutines.delay(250)
+            showEmpty = groups.isEmpty()
+        } else {
+            showEmpty = false
+        }
+    }
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val settings by settingsViewModel.ui.collectAsState()
     var showCreate by remember { mutableStateOf(false) }
@@ -102,7 +113,7 @@ fun GroupsScreen(
         }
     ) { padding ->
         val contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = padding.calculateTopPadding() + 8.dp, bottom = 96.dp)
-        if (groups.isEmpty()) {
+        if (showEmpty) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()

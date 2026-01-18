@@ -45,7 +45,7 @@ android {
     buildTypes {
         debug {
             buildConfigField("boolean", "USE_TEST_ADS", "true")
-            buildConfigField("boolean", "DISABLE_LOCK", "true")
+            buildConfigField("boolean", "DISABLE_LOCK", "false")
             buildConfigField("boolean", "SHOW_MINIMAL_UI", "false")
             buildConfigField("boolean", "SHOW_COMPOSE_MINIMAL", "false")
         }

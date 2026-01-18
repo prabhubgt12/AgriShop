@@ -20,9 +20,11 @@ import java.nio.charset.StandardCharsets
 
 object Routes {
     const val GROUPS = "groups"
-    const val ADD_EXPENSE = "addExpense/{groupId}?payerId={payerId}"
-    fun addExpense(groupId: Long, payerId: Long? = null): String {
-        return if (payerId != null) "addExpense/$groupId?payerId=$payerId" else "addExpense/$groupId?payerId="
+    const val ADD_EXPENSE = "addExpense/{groupId}?payerId={payerId}&expenseId={expenseId}"
+    fun addExpense(groupId: Long, payerId: Long? = null, expenseId: Long? = null): String {
+        val payerPart = payerId?.toString() ?: ""
+        val expPart = expenseId?.toString() ?: ""
+        return "addExpense/$groupId?payerId=$payerPart&expenseId=$expPart"
     }
     const val SETTLE = "settle/{groupId}?groupName={groupName}"
     fun settle(groupId: Long, groupName: String): String {
@@ -63,13 +65,16 @@ private fun AppNavHost(navController: NavHostController) {
             route = Routes.ADD_EXPENSE,
             arguments = listOf(
                 navArgument("groupId") { type = NavType.LongType },
-                navArgument("payerId") { type = NavType.LongType; defaultValue = Long.MIN_VALUE }
+                navArgument("payerId") { type = NavType.LongType; defaultValue = Long.MIN_VALUE },
+                navArgument("expenseId") { type = NavType.LongType; defaultValue = Long.MIN_VALUE }
             )
         ) { backStackEntry ->
             val gid = backStackEntry.arguments?.getLong("groupId") ?: 0L
             val rawPayer = backStackEntry.arguments?.getLong("payerId") ?: Long.MIN_VALUE
             val payerId: Long? = if (rawPayer == Long.MIN_VALUE) null else rawPayer
-            AddExpenseScreen(groupId = gid, payerId = payerId, onDone = { navController.popBackStack() })
+            val rawExp = backStackEntry.arguments?.getLong("expenseId") ?: Long.MIN_VALUE
+            val expenseId: Long? = if (rawExp == Long.MIN_VALUE) null else rawExp
+            AddExpenseScreen(groupId = gid, payerId = payerId, expenseId = expenseId, onDone = { navController.popBackStack() })
         }
         composable(
             route = Routes.SETTLE,
@@ -113,7 +118,13 @@ private fun AppNavHost(navController: NavHostController) {
             val gid = backStackEntry.arguments?.getLong("groupId") ?: 0L
             val encName = backStackEntry.arguments?.getString("groupName") ?: ""
             val gname = URLDecoder.decode(encName, StandardCharsets.UTF_8.toString())
-            TransactionsScreen(groupId = gid, groupName = gname, onBack = { navController.popBackStack() }, onEdit = { /* TODO */ }, onDelete = { /* handled in screen */ })
+            TransactionsScreen(
+                groupId = gid,
+                groupName = gname,
+                onBack = { navController.popBackStack() },
+                onEdit = { expenseId -> navController.navigate(Routes.addExpense(gid, null, expenseId)) },
+                onDelete = { /* handled in screen */ }
+            )
         }
         composable(
             route = Routes.MEMBERS,

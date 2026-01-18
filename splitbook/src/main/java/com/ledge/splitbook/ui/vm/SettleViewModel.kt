@@ -8,6 +8,7 @@ import com.ledge.splitbook.data.entity.MemberEntity
 import com.ledge.splitbook.data.repo.ExpenseRepository
 import com.ledge.splitbook.data.repo.MemberRepository
 import com.ledge.splitbook.data.repo.SettlementRepository
+import com.ledge.splitbook.data.entity.SettlementEntity
 import com.ledge.splitbook.domain.SettlementLogic
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,6 +30,7 @@ class SettleViewModel @Inject constructor(
         val groupId: Long = 0L,
         val members: List<MemberEntity> = emptyList(),
         val expenses: List<ExpenseEntity> = emptyList(),
+        val settlements: List<SettlementEntity> = emptyList(),
         val nets: Map<Long, Double> = emptyMap(),
         val transfers: List<SettlementLogic.Transfer> = emptyList(),
         val memberSummaries: List<com.ledge.splitbook.util.MemberSummary> = emptyList(),
@@ -56,6 +58,13 @@ class SettleViewModel @Inject constructor(
                     recompute()
                 }
             }
+            // Observe settlements
+            launch {
+                settlementRepo.observeSettlements(groupId).collectLatest { settlements ->
+                    _ui.value = _ui.value.copy(settlements = settlements)
+                    recompute()
+                }
+            }
         }
     }
 
@@ -67,10 +76,18 @@ class SettleViewModel @Inject constructor(
         }
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val nets = computeNets(state.members, state.expenses)
+                // Base nets from expenses and deposits
+                val baseNets = computeNets(state.members, state.expenses).toMutableMap()
+                // Apply recorded settlements (paid transfers) to adjust nets
+                state.settlements.forEach { s ->
+                    if (s.status == "completed") {
+                        baseNets[s.fromMemberId] = (baseNets[s.fromMemberId] ?: 0.0) + s.amount
+                        baseNets[s.toMemberId] = (baseNets[s.toMemberId] ?: 0.0) - s.amount
+                    }
+                }
                 val summaries = computeMemberSummaries(state.members, state.expenses)
-                val transfers = SettlementLogic.settle(nets)
-                _ui.value = _ui.value.copy(nets = nets, transfers = transfers, memberSummaries = summaries, isLoading = false, error = null)
+                val transfers = SettlementLogic.settle(baseNets)
+                _ui.value = _ui.value.copy(nets = baseNets, transfers = transfers, memberSummaries = summaries, isLoading = false, error = null)
             } catch (t: Throwable) {
                 _ui.value = _ui.value.copy(isLoading = false, error = t.message)
             }
@@ -86,9 +103,14 @@ class SettleViewModel @Inject constructor(
         @Suppress("UNCHECKED_CAST")
         val splitDao = splitDaoField.get(expenseRepo) as com.ledge.splitbook.data.dao.ExpenseSplitDao
         val nets = members.associate { it.id to 0.0 }.toMutableMap()
-        // Apply initial deposits as positive credit
-        members.forEach { m ->
+        val adminId = members.firstOrNull { it.isAdmin }?.id
+        // Apply deposits: credit each depositor, and debit the admin with total deposits
+        val totalDeposits = members.filter { !it.isAdmin }.sumOf { it.deposit }
+        members.filter { !it.isAdmin }.forEach { m ->
             nets[m.id] = (nets[m.id] ?: 0.0) + (m.deposit)
+        }
+        if (adminId != null && totalDeposits != 0.0) {
+            nets[adminId] = (nets[adminId] ?: 0.0) - totalDeposits
         }
         for (exp in expenses) {
             nets[exp.paidByMemberId] = (nets[exp.paidByMemberId] ?: 0.0) + exp.amount
@@ -129,11 +151,11 @@ class SettleViewModel @Inject constructor(
         }
     }
 
-    fun addMember(name: String, deposit: Double = 0.0) {
+    fun addMember(name: String, deposit: Double = 0.0, isAdmin: Boolean = false) {
         val gid = _ui.value.groupId
         if (gid == 0L) return
         viewModelScope.launch(Dispatchers.IO) {
-            memberRepo.addMember(gid, name, deposit)
+            memberRepo.addMember(gid, name, deposit, isAdmin)
         }
     }
 
@@ -146,7 +168,22 @@ class SettleViewModel @Inject constructor(
     fun removeMember(memberId: Long) {
         val gid = _ui.value.groupId
         viewModelScope.launch(Dispatchers.IO) {
-            memberRepo.removeMemberIfUnused(gid, memberId)
+            val ok = memberRepo.removeMemberIfUnused(gid, memberId)
+            if (!ok) {
+                _ui.value = _ui.value.copy(error = "Cannot remove: used in expenses")
+            }
         }
+    }
+
+    fun makeAdmin(memberId: Long) {
+        val gid = _ui.value.groupId
+        if (gid == 0L) return
+        viewModelScope.launch(Dispatchers.IO) {
+            memberRepo.setAdmin(gid, memberId)
+        }
+    }
+
+    fun clearError() {
+        _ui.value = _ui.value.copy(error = null)
     }
 }

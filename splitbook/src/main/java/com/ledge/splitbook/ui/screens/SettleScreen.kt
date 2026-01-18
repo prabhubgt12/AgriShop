@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
@@ -64,6 +65,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.ledge.splitbook.ui.vm.SettingsViewModel
 import com.ledge.splitbook.util.formatAmount
 import com.ledge.splitbook.ui.components.AddMemberDialog
@@ -147,15 +149,28 @@ fun SettleScreen(
                         })
                     }
 
+    // Error alert for operations like delete not allowed
+    if (ui.error != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text("Action not allowed") },
+            text = { Text(ui.error ?: "") },
+            confirmButton = { TextButton(onClick = { viewModel.clearError() }) { Text("OK") } }
+        )
+    }
+
     if (showAddMember) {
+        val hasAdmin = ui.members.any { it.isAdmin }
         AddMemberDialog(
             onDismiss = { showAddMember = false },
-            onAdd = { name, depStr ->
+            onAdd = { name, depStr, isAdmin ->
                 val trimmed = name.trim()
                 val deposit = depStr.toDoubleOrNull() ?: 0.0
-                if (trimmed.isNotEmpty()) viewModel.addMember(trimmed, deposit)
+                if (trimmed.isNotEmpty()) viewModel.addMember(trimmed, deposit, isAdmin)
                 showAddMember = false
-            }
+            },
+            showAdminOption = !hasAdmin,
+            adminRequired = !hasAdmin
         )
     }
                 },
@@ -204,6 +219,7 @@ fun SettleScreen(
                             )
                         }
                         androidx.compose.material3.HorizontalDivider()
+                        val totalDepositsByMembers = ui.members.filter { !it.isAdmin }.sumOf { it.deposit }
                         ui.members.forEachIndexed { idx, m ->
                             val net = ui.nets[m.id] ?: 0.0
                             androidx.compose.foundation.layout.Row(
@@ -213,12 +229,13 @@ fun SettleScreen(
                                 androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     AvatarCircle(name = m.name)
                                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text(m.name, fontWeight = FontWeight.Medium)
+                                        Text(if (m.isAdmin) "${m.name} (Admin)" else m.name, fontWeight = FontWeight.Medium)
                                         val summary = ui.memberSummaries.firstOrNull { it.memberId == m.id }
                                         val paid = summary?.amountPaid ?: 0.0
                                         val shared = summary?.expenseShared ?: 0.0
-                                        val dep = m.deposit
-                                        val due = dep + paid - shared
+                                        val dep = if (m.isAdmin) totalDepositsByMembers else m.deposit
+                                        val dueBase = if (m.isAdmin) -totalDepositsByMembers else m.deposit
+                                        val due = dueBase + paid - shared
                                         val dueColor = if (due >= 0) Color(0xFF16A34A) else Color(0xFFDC2626)
                                         Text(
                                             "Due Amount: ${formatAmount(kotlin.math.abs(due), currency).let { if (due >= 0) "+$it" else "-$it" }}",
@@ -274,8 +291,40 @@ fun SettleScreen(
                     // Expense donut chart
                     Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)) {
                         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Expense Chart")
-                            val groups = ui.expenses.groupBy { it.category.ifBlank { "Uncategorized" } }
+                            // Title row with compact Split-by filter at right
+                            var splitBy by remember { mutableStateOf("Category") }
+                            var ddOpen by remember { mutableStateOf(false) }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Expense Chart")
+                                androidx.compose.foundation.layout.Box(modifier = Modifier) {
+                                    androidx.compose.material3.TextButton(
+                                        onClick = { ddOpen = true },
+                                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                                    ) {
+                                        Text(splitBy)
+                                        androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = ddOpen)
+                                    }
+                                    androidx.compose.material3.DropdownMenu(expanded = ddOpen, onDismissRequest = { ddOpen = false }) {
+                                        listOf("Category", "Date", "Member").forEach { option ->
+                                            androidx.compose.material3.DropdownMenuItem(
+                                                text = { Text(option) },
+                                                onClick = { splitBy = option; ddOpen = false }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            val byId = ui.members.associateBy { it.id }
+                            val groups = when (splitBy) {
+                                "Date" -> ui.expenses.groupBy { it.createdAt ?: "—" }
+                                "Member" -> ui.expenses.groupBy { byId[it.paidByMemberId]?.name ?: "—" }
+                                else -> ui.expenses.groupBy { it.category.ifBlank { "Uncategorized" } }
+                            }
                             val totals = groups.mapValues { (_, list) -> list.sumOf { it.amount } }
                             val grand = totals.values.sum()
                             val slices = totals.entries.sortedByDescending { it.value }
@@ -376,33 +425,83 @@ fun SettleScreen(
         }
     }
 
-    // Member details dialog
+    // Member details dialog (beautified header, colored amounts, action buttons with dividers)
     if (detailsMember != null) {
         val m = detailsMember!!
         val summary = ui.memberSummaries.firstOrNull { it.memberId == m.id }
         val paid = summary?.amountPaid ?: 0.0
         val shared = summary?.expenseShared ?: 0.0
-        val dep = m.deposit
-        val due = dep + paid - shared
+        val totalDepositsByMembers = ui.members.filter { !it.isAdmin }.sumOf { it.deposit }
+        val dep = if (m.isAdmin) totalDepositsByMembers else m.deposit
+        val dueBase = if (m.isAdmin) -totalDepositsByMembers else m.deposit
+        val due = dueBase + paid - shared
         AlertDialog(
             onDismissRequest = { detailsMember = null },
-            title = { Text(m.name) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Deposit: ${formatAmount(dep, currency)}")
-                    Text("Spent Amount: ${formatAmount(paid, currency)}")
-                    Text("Shared By: ${formatAmount(shared, currency)}")
-                    val dueLabel = formatAmount(kotlin.math.abs(due), currency).let { if (due >= 0) "+$it" else "-$it" }
-                    Text("Due Amount: $dueLabel")
+                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                    // Header bar with avatar and name
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                            .background(color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AvatarCircle(name = m.name)
+                            Text(if (m.isAdmin) "${m.name} (Admin)" else m.name, color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary)
+                        }
+                    }
+                    androidx.compose.material3.HorizontalDivider()
+                    // Metrics
+                    Column(modifier = Modifier.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Amount Spent")
+                            Text(formatAmount(paid, currency))
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Amount Share By")
+                            Text(formatAmount(shared, currency))
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(if (m.isAdmin) "Group Deposit" else "Deposit Amount")
+                            Text(formatAmount(dep, currency), color = Color(0xFF2563EB))
+                        }
+                        val dueColor = if (due >= 0) Color(0xFF16A34A) else Color(0xFFDC2626)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Due/Refund")
+                            val dueLabel = formatAmount(kotlin.math.abs(due), currency).let { if (due >= 0) "+$it" else "-$it" }
+                            Text(dueLabel, color = dueColor, fontWeight = FontWeight.Medium)
+                        }
+                    }
                 }
             },
-            confirmButton = {
-                TextButton(onClick = { editMember = m; detailsMember = null }) { Text("Edit") }
-            },
+            confirmButton = {},
             dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = { viewModel.removeMember(m.id); detailsMember = null }) { Text("Delete") }
-                    TextButton(onClick = { detailsMember = null }) { Text("Close") }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        enabled = !m.isAdmin,
+                        modifier = Modifier.weight(1f),
+                        onClick = { editMember = m; detailsMember = null }
+                    ) { Text("EDIT", maxLines = 1) }
+                    androidx.compose.material3.VerticalDivider(modifier = Modifier.height(24.dp))
+                    TextButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = { detailsMember = null }
+                    ) { Text("CLOSE", maxLines = 1) }
+                    androidx.compose.material3.VerticalDivider(modifier = Modifier.height(24.dp))
+                    TextButton(
+                        enabled = !m.isAdmin,
+                        modifier = Modifier.weight(1f),
+                        onClick = { viewModel.removeMember(m.id); detailsMember = null }
+                    ) { Text("DELETE", maxLines = 1) }
                 }
             }
         )
@@ -413,15 +512,26 @@ fun SettleScreen(
         val m = editMember!!
         AddMemberDialog(
             onDismiss = { editMember = null },
-            onAdd = { _, depStr ->
+            onAdd = { _, depStr, isAdmin ->
+                // Save edited fields: if setting admin from non-admin, make admin.
+                if (isAdmin && !m.isAdmin) {
+                    viewModel.makeAdmin(m.id)
+                }
+                // Update deposit only when member is not admin.
                 val newDep = depStr.toDoubleOrNull() ?: 0.0
-                viewModel.updateMemberDeposit(m.id, newDep)
+                if (!isAdmin) {
+                    viewModel.updateMemberDeposit(m.id, newDep)
+                }
                 editMember = null
             },
             initialName = m.name,
             initialDeposit = if (m.deposit == 0.0) "" else String.format("%.2f", m.deposit),
             nameReadOnly = true,
-            confirmLabel = "Save"
+            confirmLabel = "Save",
+            showAdminOption = true,
+            adminRequired = m.isAdmin,
+            title = "Edit Member",
+            initialIsAdmin = m.isAdmin
         )
     }
 

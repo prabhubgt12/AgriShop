@@ -44,6 +44,12 @@ interface MemberDao {
 
     @Query("SELECT * FROM members WHERE id IN (:ids)")
     suspend fun getByIds(ids: List<Long>): List<MemberEntity>
+
+    @Query("SELECT * FROM members WHERE groupId = :groupId AND isAdmin = 1 LIMIT 1")
+    suspend fun getAdminForGroup(groupId: Long): MemberEntity?
+
+    @Query("UPDATE members SET isAdmin = 0 WHERE groupId = :groupId AND isAdmin = 1")
+    suspend fun clearAdmin(groupId: Long)
 }
 
 @Dao
@@ -59,6 +65,9 @@ interface ExpenseDao {
 
     @Query("SELECT * FROM expenses WHERE groupId = :groupId ORDER BY id DESC")
     fun observeByGroup(groupId: Long): Flow<List<ExpenseEntity>>
+
+    @Query("SELECT * FROM expenses WHERE id = :id")
+    suspend fun getById(id: Long): ExpenseEntity?
 
     @Query("DELETE FROM expenses WHERE id = :expenseId")
     suspend fun deleteById(expenseId: Long)

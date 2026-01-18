@@ -77,14 +77,14 @@ fun MembersScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             MemberAvatar(name = m.name)
-                            Text(m.name)
+                            Text(if (m.isAdmin) "${m.name} (Admin)" else m.name)
                         }
                         Row {
                             IconButton(onClick = {
                                 renameDialog = m.id
                                 renameText = TextFieldValue(m.name)
-                            }) { Icon(Icons.Default.Edit, contentDescription = "Rename") }
-                            IconButton(onClick = { removeDialog = m.id }) { Icon(Icons.Default.Delete, contentDescription = "Remove") }
+                            }, enabled = !m.isAdmin) { Icon(Icons.Default.Edit, contentDescription = "Rename") }
+                            IconButton(onClick = { removeDialog = m.id }, enabled = !m.isAdmin) { Icon(Icons.Default.Delete, contentDescription = "Remove") }
                         }
                     }
                 }
@@ -96,14 +96,17 @@ fun MembersScreen(
     }
 
     if (showAddDialog) {
-        AddMemberDialog(
+        val hasAdmin = ui.members.any { it.isAdmin }
+        com.ledge.splitbook.ui.components.AddMemberDialog(
             onDismiss = { showAddDialog = false },
-            onAdd = { name, depStr ->
+            onAdd = { name, depStr, isAdmin ->
                 val trimmed = name.trim()
                 val deposit = depStr.toDoubleOrNull() ?: 0.0
-                if (trimmed.isNotEmpty()) viewModel.add(trimmed, deposit)
+                if (trimmed.isNotEmpty()) viewModel.add(trimmed, deposit, isAdmin)
                 showAddDialog = false
-            }
+            },
+            showAdminOption = !hasAdmin,
+            adminRequired = !hasAdmin
         )
     }
 

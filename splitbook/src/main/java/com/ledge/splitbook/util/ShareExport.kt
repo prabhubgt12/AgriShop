@@ -42,7 +42,7 @@ object ShareExport {
         sb.appendLine()
         // 1) Transactions list
         sb.appendLine("Transactions:")
-        sb.appendLine("Date | Paid By | Category | Notes | Amount")
+        sb.appendLine("Date | Paid By | Category | Description | Amount")
         var total = 0.0
         expenses.forEach { e ->
             val date = e.createdAt ?: "—"
@@ -160,7 +160,7 @@ object ShareExport {
         // Title
         drawTitle("Simple Split — $groupName")
         // Transactions table
-        val txHeaders = listOf("Date", "Paid By", "Category", "Notes", "Amount")
+        val txHeaders = listOf("Date", "Paid By", "Category", "Description", "Amount")
         var total = 0.0
         val txRows = expenses.map { e ->
             total += e.amount
@@ -185,17 +185,19 @@ object ShareExport {
         canvas.drawText(formatAmount(total, currency), right - 120f, totalTop, totalText)
         y += rowH + 10f
         // Members table
-        val msHeaders = listOf("Member", "Amount Paid", "Expense Shared", "Due Amount")
+        val msHeaders = listOf("Member", "Amount Paid", "Deposit", "Expense Shared", "Due Amount")
         val msRows = memberSummaries.map { ms ->
+            val deposit = byId[ms.memberId]?.deposit ?: 0.0
             listOf(
                 byId[ms.memberId]?.name ?: "—",
                 formatAmount(ms.amountPaid, currency),
+                formatAmount(deposit, currency),
                 formatAmount(ms.expenseShared, currency),
                 formatAmount(ms.dueAmount, currency)
             )
         }
-        // Make "Expense Shared" wider so header and values don't collide with the next column
-        drawTable(msHeaders, msRows, listOf(0.30f, 0.20f, 0.30f, 0.20f))
+        // Adjust widths to accommodate the extra Deposit column
+        drawTable(msHeaders, msRows, listOf(0.26f, 0.18f, 0.14f, 0.22f, 0.20f))
         doc.finishPage(page)
         FileOutputStream(file).use { out -> doc.writeTo(out) }
         doc.close()
@@ -224,7 +226,7 @@ object ShareExport {
             tx.value(1, 1, "Date")
             tx.value(1, 2, "Paid By")
             tx.value(1, 3, "Category")
-            tx.value(1, 4, "Notes")
+            tx.value(1, 4, "Description")
             tx.value(1, 5, "Amount")
             val byId = members.associateBy { it.id }
             var total = 0.0
@@ -273,31 +275,34 @@ object ShareExport {
             val ms = wb.newWorksheet("Members")
             ms.value(1, 1, "Member")
             ms.value(1, 2, "Amount Paid")
-            ms.value(1, 3, "Expense Shared")
-            ms.value(1, 4, "Due Amount")
+            ms.value(1, 3, "Deposit")
+            ms.value(1, 4, "Expense Shared")
+            ms.value(1, 5, "Due Amount")
             memberSummaries.forEachIndexed { idx, s ->
                 val row = idx + 2
                 ms.value(row, 1, byId[s.memberId]?.name ?: "")
                 ms.value(row, 2, s.amountPaid)
-                ms.value(row, 3, s.expenseShared)
-                ms.value(row, 4, s.dueAmount)
+                ms.value(row, 3, byId[s.memberId]?.deposit ?: 0.0)
+                ms.value(row, 4, s.expenseShared)
+                ms.value(row, 5, s.dueAmount)
             }
             val msLastRow = memberSummaries.size + 1
-            ms.range(1, 1, msLastRow, 4).style()
+            ms.range(1, 1, msLastRow, 5).style()
                 .borderStyle(BorderSide.TOP, BorderStyle.THIN)
                 .borderStyle(BorderSide.BOTTOM, BorderStyle.THIN)
                 .borderStyle(BorderSide.LEFT, BorderStyle.THIN)
                 .borderStyle(BorderSide.RIGHT, BorderStyle.THIN)
                 .set()
-            ms.range(1, 1, 1, 4).style()
+            ms.range(1, 1, 1, 5).style()
                 .bold()
                 .fillColor("#6B46C1")
                 .fontColor("#FFFFFF")
                 .set()
             ms.width(1, 22.0)
             ms.width(2, 16.0)
-            ms.width(3, 18.0)
-            ms.width(4, 16.0)
+            ms.width(3, 12.0)
+            ms.width(4, 18.0)
+            ms.width(5, 16.0)
             wb.finish()
         }
 

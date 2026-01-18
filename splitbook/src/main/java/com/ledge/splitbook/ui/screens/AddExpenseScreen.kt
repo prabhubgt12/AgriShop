@@ -3,8 +3,13 @@ package com.ledge.splitbook.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenu
@@ -15,6 +20,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Checkbox
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,12 +51,16 @@ import java.util.Calendar
 fun AddExpenseScreen(
     groupId: Long,
     payerId: Long? = null,
+    expenseId: Long? = null,
     onDone: () -> Unit,
     viewModel: AddExpenseViewModel = hiltViewModel()
 ) {
     LaunchedEffect(groupId) { viewModel.load(groupId) }
     LaunchedEffect(payerId) {
         if (payerId != null) viewModel.selectPayer(payerId)
+    }
+    LaunchedEffect(expenseId) {
+        if (expenseId != null) viewModel.loadForEdit(expenseId)
     }
     val context = LocalContext.current
     val settingsViewModel: SettingsViewModel = hiltViewModel()
@@ -60,8 +71,20 @@ fun AddExpenseScreen(
 
     val ui by viewModel.uiFlow.collectAsState()
 
-    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         Text("Add Expense")
+        // Description at top (mandatory)
+        OutlinedTextField(
+            value = ui.note,
+            onValueChange = { viewModel.updateNote(it) },
+            label = { Text("Description") },
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         OutlinedTextField(
             value = ui.amount,
@@ -134,45 +157,93 @@ fun AddExpenseScreen(
             }
         )
 
-        OutlinedTextField(
-            value = ui.note,
-            onValueChange = { viewModel.updateNote(it) },
-            label = { Text("Note (optional)") },
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        // Split mode selector
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(onClick = { viewModel.setMode(Mode.EQUAL) }) { Text("Equal") }
-            Button(onClick = { viewModel.setMode(Mode.CUSTOM) }) { Text("Custom") }
-            Button(onClick = { viewModel.setMode(Mode.PERCENT) }) { Text("Percent") }
+        // Simplified split controls
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = ui.shareByAll, onCheckedChange = { viewModel.toggleShareByAll(it) })
+            Text("Expense share by all")
         }
 
-        // Dynamic split inputs per mode
-        when (ui.mode) {
-            Mode.EQUAL -> {
-                Text("Split equally among ${ui.members.size} members")
+        if (!ui.shareByAll) {
+            // Multi-select dropdown for members
+            var selOpen by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(expanded = selOpen, onExpandedChange = { selOpen = !selOpen }) {
+                val selectedCount = ui.selectedMemberIds.size
+                OutlinedTextField(
+                    value = if (selectedCount == 0) "Select members" else "$selectedCount selected",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Select Person") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = selOpen) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth(),
+                )
+                DropdownMenu(expanded = selOpen, onDismissRequest = { selOpen = false }) {
+                    ui.members.forEach { m ->
+                        val checked = ui.selectedMemberIds.contains(m.id)
+                        DropdownMenuItem(
+                            text = {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Checkbox(checked = checked, onCheckedChange = null)
+                                    Text(m.name)
+                                }
+                            },
+                            onClick = { viewModel.toggleMemberSelected(m.id, !checked) }
+                        )
+                    }
+                }
             }
-            Mode.CUSTOM -> {
-                ui.members.forEach { m ->
+
+            // Rows for selected members with Amount and Percent
+            ui.members.filter { ui.selectedMemberIds.contains(it.id) }.forEach { m ->
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = ui.customAmounts[m.id] ?: "",
                         onValueChange = { viewModel.updateCustomAmount(m.id, it) },
-                        label = { Text("${m.name} amount (INR)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("${m.name} amount") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
-                }
-            }
-            Mode.PERCENT -> {
-                ui.members.forEach { m ->
                     OutlinedTextField(
                         value = ui.percentages[m.id] ?: "",
                         onValueChange = { viewModel.updatePercentage(m.id, it) },
-                        label = { Text("${m.name} percent (%)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = { Text("%") },
+                        modifier = Modifier.weight(0.6f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                 }
             }
+
+            // Helper note
+            Text(
+                "Note: Enter amounts that total the expense or percentages that sum to 100% to enable Save.",
+                style = androidx.compose.material3.MaterialTheme.typography.bodySmall
+            )
+
+            // Live summary of totals with validity color
+            val selectedIds = ui.selectedMemberIds
+            val total = ui.amount.toDoubleOrNull() ?: 0.0
+            val sumAmounts = ui.members.filter { selectedIds.contains(it.id) }
+                .sumOf { ui.customAmounts[it.id]?.toDoubleOrNull() ?: 0.0 }
+            val sumPct = ui.members.filter { selectedIds.contains(it.id) }
+                .sumOf { ui.percentages[it.id]?.toDoubleOrNull() ?: 0.0 }
+            val totalR = kotlin.math.round(total * 100) / 100.0
+            val sumAmtR = kotlin.math.round(sumAmounts * 100) / 100.0
+            val sumPctR = kotlin.math.round(sumPct * 100) / 100.0
+            val valid = if (sumPctR > 0.0) kotlin.math.abs(sumPctR - 100.0) <= 0.01 else kotlin.math.abs(sumAmtR - totalR) <= 0.01
+            val infoColor = if (valid) Color(0xFF16A34A) else Color(0xFFDC2626)
+            Text(
+                "Amounts: %.2f/%.2f • Percent: %.2f%%".format(sumAmtR, totalR, sumPctR),
+                color = infoColor,
+                style = androidx.compose.material3.MaterialTheme.typography.bodySmall
+            )
+        } else {
+            Text(
+                "Split equally among ${ui.members.size} members",
+                style = androidx.compose.material3.MaterialTheme.typography.bodySmall
+            )
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -184,6 +255,7 @@ fun AddExpenseScreen(
                 })
             }, enabled = ui.canSave) { Text("Save") }
         }
+        Spacer(modifier = Modifier.height(80.dp))
 
         if (ui.members.isEmpty()) {
             Text("No members yet. Adding two sample members for quick start…")

@@ -35,8 +35,24 @@ class MemberRepository @Inject constructor(
     private val splitDao: ExpenseSplitDao,
 ) {
     fun observeMembers(groupId: Long): Flow<List<MemberEntity>> = memberDao.observeByGroup(groupId)
-    suspend fun addMember(groupId: Long, name: String, deposit: Double = 0.0): Long =
-        memberDao.insert(MemberEntity(groupId = groupId, name = name, deposit = deposit))
+    suspend fun addMember(groupId: Long, name: String, deposit: Double = 0.0, isAdmin: Boolean = false): Long =
+        memberDao.insert(
+            MemberEntity(
+                groupId = groupId,
+                name = name,
+                deposit = if (isAdmin) 0.0 else deposit,
+                isAdmin = isAdmin
+            )
+        )
+
+    suspend fun setAdmin(groupId: Long, memberId: Long) {
+        // Ensure only one admin per group
+        db.withTransaction {
+            memberDao.clearAdmin(groupId)
+        }
+        val current = memberDao.getByIds(listOf(memberId)).firstOrNull() ?: return
+        memberDao.update(current.copy(isAdmin = true, deposit = 0.0))
+    }
 
     suspend fun renameMember(memberId: Long, newName: String) {
         val current = memberDao.getByIds(listOf(memberId)).firstOrNull() ?: return
@@ -45,6 +61,7 @@ class MemberRepository @Inject constructor(
 
     suspend fun updateMemberDeposit(memberId: Long, newDeposit: Double) {
         val current = memberDao.getByIds(listOf(memberId)).firstOrNull() ?: return
+        if (current.isAdmin) return // admin deposit is managed implicitly as pool; ignore updates
         memberDao.update(current.copy(deposit = newDeposit))
     }
 
@@ -67,6 +84,9 @@ class ExpenseRepository @Inject constructor(
     private val expenseSplitDao: ExpenseSplitDao,
 ) {
     fun observeExpenses(groupId: Long): Flow<List<ExpenseEntity>> = expenseDao.observeByGroup(groupId)
+
+    suspend fun getExpense(expenseId: Long): ExpenseEntity? = expenseDao.getById(expenseId)
+    suspend fun getSplits(expenseId: Long): List<ExpenseSplitEntity> = expenseSplitDao.getByExpense(expenseId)
 
     suspend fun addExpense(
         groupId: Long,
@@ -94,6 +114,32 @@ class ExpenseRepository @Inject constructor(
             }
             expenseSplitDao.insertAll(withIds)
             expenseId
+        }
+    }
+
+    suspend fun updateExpense(
+        expenseId: Long,
+        amount: Double,
+        category: String,
+        paidByMemberId: Long,
+        note: String?,
+        createdAt: String?,
+        splits: List<ExpenseSplitEntity>
+    ) {
+        db.withTransaction {
+            val current = expenseDao.getById(expenseId) ?: return@withTransaction
+            expenseDao.update(
+                current.copy(
+                    amount = amount,
+                    category = category,
+                    paidByMemberId = paidByMemberId,
+                    note = note,
+                    createdAt = createdAt
+                )
+            )
+            expenseSplitDao.deleteByExpense(expenseId)
+            val withIds = splits.map { it.copy(id = 0, expenseId = expenseId) }
+            expenseSplitDao.insertAll(withIds)
         }
     }
 

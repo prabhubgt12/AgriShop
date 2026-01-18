@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class TransactionsViewModel @Inject constructor(
@@ -41,5 +43,25 @@ class TransactionsViewModel @Inject constructor(
 
     fun deleteExpense(expenseId: Long) {
         viewModelScope.launch { expenseRepo.deleteExpense(expenseId) }
+    }
+
+    suspend fun getSharedByText(expenseId: Long): String = withContext(Dispatchers.IO) {
+        return@withContext try {
+            val splitDaoField = ExpenseRepository::class.java.getDeclaredField("expenseSplitDao").apply { isAccessible = true }
+            val splitDao = splitDaoField.get(expenseRepo) as com.ledge.splitbook.data.dao.ExpenseSplitDao
+            val splits = splitDao.getByExpense(expenseId)
+            val memberIds = splits.map { it.memberId }.toSet()
+            val allIds = _ui.value.members.map { it.id }.toSet()
+            if (memberIds.isEmpty()) {
+                "—"
+            } else if (memberIds == allIds && allIds.isNotEmpty()) {
+                "All"
+            } else {
+                val names = _ui.value.members.filter { memberIds.contains(it.id) }.map { it.name }
+                names.joinToString(", ")
+            }
+        } catch (t: Throwable) {
+            "—"
+        }
     }
 }

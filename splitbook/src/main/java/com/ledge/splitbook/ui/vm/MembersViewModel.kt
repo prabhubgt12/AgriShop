@@ -35,11 +35,11 @@ class MembersViewModel @Inject constructor(
         }
     }
 
-    fun add(name: String, deposit: Double = 0.0) {
+    fun add(name: String, deposit: Double = 0.0, isAdmin: Boolean = false) {
         val gid = _ui.value.groupId
         if (gid == 0L) return
         viewModelScope.launch {
-            membersRepo.addMember(gid, name, deposit)
+            membersRepo.addMember(gid, name, deposit, isAdmin)
             _ui.value = _ui.value.copy(message = "Added $name")
         }
     }
