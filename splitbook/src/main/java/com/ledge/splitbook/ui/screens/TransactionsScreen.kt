@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,6 +31,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -40,8 +42,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.material3.LocalMinimumTouchTargetEnforcement
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -121,18 +126,62 @@ fun TransactionsScreen(
         LaunchedEffect(groupKeys) { selectedIndex = 0; scope.launch { pagerState.scrollToPage(0) } }
         LaunchedEffect(pagerState.currentPage) { if (groupKeys.isNotEmpty()) selectedIndex = pagerState.currentPage }
 
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)) {
-            // Centered single tab title with indicator (instead of showing all tabs)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                // Apply only vertical insets so the header strip can span edge-to-edge horizontally
+                .padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding())
+        ) {
+            // Centered single tab title with partial previous/next titles visible
             if (groupKeys.isNotEmpty()) {
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(groupKeys[selectedIndex], fontWeight = FontWeight.SemiBold)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
+                        .padding(vertical = 6.dp)
+                ) {
+                    val prev = if (selectedIndex > 0) groupKeys[selectedIndex - 1] else null
+                    val curr = groupKeys[selectedIndex]
+                    val next = if (selectedIndex < groupKeys.lastIndex) groupKeys[selectedIndex + 1] else null
+
+                    // Left: previous title at extreme start, tap to go prev
+                    if (prev != null) {
+                        Text(
+                            prev,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                            maxLines = 1,
+                            textAlign = TextAlign.Start,
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .clickable { scope.launch { pagerState.animateScrollToPage(selectedIndex - 1) } }
+                        )
+                    }
+
+                    // Center: current title with white underline
+                    Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            curr,
+                            fontWeight = FontWeight.SemiBold,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center
+                        )
                         androidx.compose.material3.Divider(
                             modifier = Modifier.padding(top = 4.dp).fillMaxWidth(0.2f),
-                            color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
                             thickness = 2.dp
+                        )
+                    }
+                    // Right: next title at extreme end, tap to go next
+                    if (next != null) {
+                        Text(
+                            next,
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                            maxLines = 1,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .clickable { scope.launch { pagerState.animateScrollToPage(selectedIndex + 1) } }
                         )
                     }
                 }
@@ -147,32 +196,28 @@ fun TransactionsScreen(
                 }
                 val groupTotal = showing.sumOf { it.amount }
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     item {
                         Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RectangleShape) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Total Amount", fontWeight = FontWeight.SemiBold, color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
-                                Text(formatAmount(groupTotal, currency), fontWeight = FontWeight.SemiBold, color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                    }
-                    item {
-                        Card(
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                            shape = RectangleShape
-                        ) {
                             Column {
+                                // Top total row
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Total Amount", fontWeight = FontWeight.SemiBold, color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
+                                    Text(formatAmount(groupTotal, currency), fontWeight = FontWeight.SemiBold, color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
+                                }
+                                // Divider between total and list to appear as one card
+                                HorizontalDivider()
+                                // Stacked transactions with dividers
                                 showing.forEachIndexed { index, e ->
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clickable { detailsForId = e.id }
-                                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                                            .padding(start = 14.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Column(
@@ -180,13 +225,40 @@ fun TransactionsScreen(
                                             verticalArrangement = Arrangement.spacedBy(2.dp)
                                         ) {
                                             val desc = e.note?.takeIf { it.isNotBlank() } ?: e.category
-                                            Text(desc, fontWeight = FontWeight.SemiBold)
+                                            Text(
+                                                desc,
+                                                fontWeight = FontWeight.SemiBold,
+                                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                                            )
+                                            // Date and Category line(s)
                                             e.createdAt?.let { Text(it, style = androidx.compose.material3.MaterialTheme.typography.bodySmall, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant) }
+                                            Text(
+                                                "Category: ${e.category.ifBlank { "Uncategorized" }}",
+                                                style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
                                         }
-                                        Row {
+                                        // Amount aligned to top-right; menu below amount
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text(
+                                                formatAmount(e.amount, currency),
+                                                // non-bold to match request
+                                                modifier = Modifier.padding(bottom = 2.dp),
+                                                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                                            )
                                             var overflowOpen by remember { mutableStateOf(false) }
-                                            Text(formatAmount(e.amount, currency), fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.CenterVertically).padding(end = 4.dp))
-                                            IconButton(onClick = { overflowOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = "More") }
+                                            CompositionLocalProvider(LocalMinimumTouchTargetEnforcement provides false) {
+                                                IconButton(
+                                                    onClick = { overflowOpen = true },
+                                                    modifier = Modifier.size(24.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.MoreVert,
+                                                        contentDescription = "More",
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
                                             DropdownMenu(expanded = overflowOpen, onDismissRequest = { overflowOpen = false }) {
                                                 DropdownMenuItem(text = { Text("Edit") }, onClick = { overflowOpen = false; onEdit(e.id) })
                                                 DropdownMenuItem(text = { Text("Delete") }, onClick = { overflowOpen = false; confirmDeleteForId = e.id })

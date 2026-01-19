@@ -185,7 +185,7 @@ object ShareExport {
         canvas.drawText(formatAmount(total, currency), right - 120f, totalTop, totalText)
         y += rowH + 10f
         // Members table
-        val msHeaders = listOf("Member", "Amount Paid", "Deposit", "Expense Shared", "Due Amount")
+        val msHeaders = listOf("Member", "Paid", "Deposit", "Exp Share", "Due Amount")
         val msRows = memberSummaries.map { ms ->
             val deposit = byId[ms.memberId]?.deposit ?: 0.0
             listOf(
@@ -221,88 +221,97 @@ object ShareExport {
 
         FileOutputStream(file).use { fos ->
             val wb = Workbook(fos, "Simple Split", "1.0")
-            // Transactions sheet
+            // Transactions sheet (FastExcel uses 0-based row/col indices)
             val tx = wb.newWorksheet("Transactions")
-            tx.value(1, 1, "Date")
-            tx.value(1, 2, "Paid By")
-            tx.value(1, 3, "Category")
-            tx.value(1, 4, "Description")
-            tx.value(1, 5, "Amount")
+            tx.value(0, 0, "Date")
+            tx.value(0, 1, "Paid By")
+            tx.value(0, 2, "Category")
+            tx.value(0, 3, "Description")
+            tx.value(0, 4, "Amount")
             val byId = members.associateBy { it.id }
             var total = 0.0
             expenses.forEachIndexed { idx, e ->
-                val row = idx + 2
-                tx.value(row, 1, e.createdAt ?: "")
-                tx.value(row, 2, byId[e.paidByMemberId]?.name ?: "")
-                tx.value(row, 3, e.category)
-                tx.value(row, 4, e.note ?: "")
-                tx.value(row, 5, e.amount)
+                val row = idx + 1
+                tx.value(row, 0, e.createdAt ?: "")
+                tx.value(row, 1, byId[e.paidByMemberId]?.name ?: "")
+                tx.value(row, 2, e.category)
+                tx.value(row, 3, e.note ?: "")
+                tx.value(row, 4, e.amount)
                 total += e.amount
             }
-            val totalRow = expenses.size + 3
-            tx.value(totalRow, 4, "Total")
-            tx.value(totalRow, 5, total)
+            val totalRow = expenses.size + 1
+            tx.value(totalRow, 3, "Total")
+            tx.value(totalRow, 4, total)
             // Style as table: borders, header fill/bold, total row highlight
             val lastDataRow = totalRow - 1
-            tx.range(1, 1, lastDataRow, 5).style()
+            tx.range(1, 0, lastDataRow, 4).style()
                 .borderStyle(BorderSide.TOP, BorderStyle.THIN)
                 .borderStyle(BorderSide.BOTTOM, BorderStyle.THIN)
                 .borderStyle(BorderSide.LEFT, BorderStyle.THIN)
                 .borderStyle(BorderSide.RIGHT, BorderStyle.THIN)
                 .set()
-            tx.range(1, 1, 1, 5).style()
+            // Header styling: apply only to used header cells (A..E)
+            for (c in 0..4) {
+                tx.style(0, c)
+                    .bold()
+                    .fillColor("6B46C1")
+                    .fontColor("FFFFFF")
+                    .set()
+            }
+            tx.rowHeight(0, 18.0)
+            // Total styling: apply only to used cells (D..E)
+            tx.range(totalRow, 3, totalRow, 4).style()
                 .bold()
-                .fillColor("#6B46C1")
-                .fontColor("#FFFFFF")
-                .set()
-            tx.range(totalRow, 4, totalRow, 5).style()
-                .bold()
-                .fillColor("#6B46C1")
-                .fontColor("#FFFFFF")
+                .fillColor("6B46C1")
+                .fontColor("FFFFFF")
                 .borderStyle(BorderSide.TOP, BorderStyle.THIN)
                 .borderStyle(BorderSide.BOTTOM, BorderStyle.THIN)
                 .borderStyle(BorderSide.LEFT, BorderStyle.THIN)
                 .borderStyle(BorderSide.RIGHT, BorderStyle.THIN)
                 .set()
             // Optional: set reasonable column widths
-            tx.width(1, 14.0)
-            tx.width(2, 18.0)
-            tx.width(3, 16.0)
-            tx.width(4, 28.0)
-            tx.width(5, 12.0)
+            tx.width(0, 14.0)
+            tx.width(1, 18.0)
+            tx.width(2, 16.0)
+            tx.width(3, 28.0)
+            tx.width(4, 12.0)
 
-            // Members sheet
+            // Members sheet (0-based)
             val ms = wb.newWorksheet("Members")
-            ms.value(1, 1, "Member")
-            ms.value(1, 2, "Amount Paid")
-            ms.value(1, 3, "Deposit")
-            ms.value(1, 4, "Expense Shared")
-            ms.value(1, 5, "Due Amount")
+            ms.value(0, 0, "Member")
+            ms.value(0, 1, "Amount Paid")
+            ms.value(0, 2, "Deposit")
+            ms.value(0, 3, "Expense Shared")
+            ms.value(0, 4, "Due Amount")
             memberSummaries.forEachIndexed { idx, s ->
-                val row = idx + 2
-                ms.value(row, 1, byId[s.memberId]?.name ?: "")
-                ms.value(row, 2, s.amountPaid)
-                ms.value(row, 3, byId[s.memberId]?.deposit ?: 0.0)
-                ms.value(row, 4, s.expenseShared)
-                ms.value(row, 5, s.dueAmount)
+                val row = idx + 1
+                ms.value(row, 0, byId[s.memberId]?.name ?: "")
+                ms.value(row, 1, s.amountPaid)
+                ms.value(row, 2, byId[s.memberId]?.deposit ?: 0.0)
+                ms.value(row, 3, s.expenseShared)
+                ms.value(row, 4, s.dueAmount)
             }
-            val msLastRow = memberSummaries.size + 1
-            ms.range(1, 1, msLastRow, 5).style()
+            val msLastRow = memberSummaries.size
+            ms.range(1, 0, msLastRow, 4).style()
                 .borderStyle(BorderSide.TOP, BorderStyle.THIN)
                 .borderStyle(BorderSide.BOTTOM, BorderStyle.THIN)
                 .borderStyle(BorderSide.LEFT, BorderStyle.THIN)
                 .borderStyle(BorderSide.RIGHT, BorderStyle.THIN)
                 .set()
-            ms.range(1, 1, 1, 5).style()
-                .bold()
-                .fillColor("#6B46C1")
-                .fontColor("#FFFFFF")
-                .set()
-            ms.width(1, 22.0)
-            ms.width(2, 16.0)
-            ms.width(3, 12.0)
-            ms.width(4, 18.0)
-            ms.width(5, 16.0)
+            // Members header styling: only used header cells (A..E)
+            for (c in 0..4) {
+                ms.style(0, c)
+                    .bold()
+                    .fillColor("6B46C1")
+                    .fontColor("FFFFFF")
+                    .set()
+            }
+            ms.rowHeight(0, 18.0)
+            ms.width(0, 22.0)
+            ms.width(1, 16.0)
+            ms.width(2, 12.0)
+            ms.width(3, 18.0)
+            ms.width(4, 16.0)
             wb.finish()
         }
 
