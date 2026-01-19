@@ -1,6 +1,7 @@
 package com.ledge.splitbook.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,12 +15,15 @@ import com.ledge.splitbook.ui.screens.MembersScreen
 import com.ledge.splitbook.ui.screens.TransactionsScreen
 import com.ledge.splitbook.ui.screens.SettingsScreen
 import com.ledge.splitbook.ui.screens.SettleDetailsScreen
+import com.ledge.splitbook.ui.vm.BillingViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import java.net.URLEncoder
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 object Routes {
     const val GROUPS = "groups"
+    const val CATEGORIES = "categories"
     const val ADD_EXPENSE = "addExpense/{groupId}?payerId={payerId}&expenseId={expenseId}"
     fun addExpense(groupId: Long, payerId: Long? = null, expenseId: Long? = null): String {
         val payerPart = payerId?.toString() ?: ""
@@ -49,6 +53,9 @@ object Routes {
 @Composable
 fun NavRoot() {
     val navController = rememberNavController()
+    // Start Billing client on app start to refresh entitlements (e.g., Remove Ads)
+    val billingVM: BillingViewModel = hiltViewModel()
+    LaunchedEffect(Unit) { billingVM.start() }
     AppNavHost(navController)
 }
 
@@ -58,7 +65,8 @@ private fun AppNavHost(navController: NavHostController) {
         composable(Routes.GROUPS) {
             GroupsScreen(
                 onOpenGroup = { gid, name -> navController.navigate(Routes.settle(gid, name)) },
-                onOpenSettings = { navController.navigate(Routes.SETTINGS) }
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                onOpenCategories = { navController.navigate(Routes.CATEGORIES) }
             )
         }
         composable(
@@ -135,6 +143,9 @@ private fun AppNavHost(navController: NavHostController) {
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.CATEGORIES) {
+            com.ledge.splitbook.ui.screens.CategoriesScreen(onBack = { navController.popBackStack() })
         }
     }
 }

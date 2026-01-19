@@ -9,6 +9,32 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
+class CategoryRepository @Inject constructor(
+    private val categoryDao: CategoryDao
+) {
+    fun observeCategories(): Flow<List<CategoryEntity>> = categoryDao.observeAll()
+
+    suspend fun add(name: String): Long {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return -1
+        val existing = categoryDao.getByName(trimmed)
+        return existing?.id ?: categoryDao.insert(CategoryEntity(name = trimmed))
+    }
+
+    suspend fun rename(id: Long, newName: String) {
+        val current = categoryDao.getById(id) ?: return
+        val trimmed = newName.trim()
+        if (trimmed.isEmpty()) return
+        categoryDao.update(current.copy(name = trimmed))
+    }
+
+    suspend fun delete(id: Long) {
+        val current = categoryDao.getById(id) ?: return
+        categoryDao.delete(current)
+    }
+}
+
+@Singleton
 class GroupRepository @Inject constructor(
     private val groupDao: GroupDao,
 ) {

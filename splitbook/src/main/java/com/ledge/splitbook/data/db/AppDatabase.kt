@@ -10,17 +10,19 @@ import com.ledge.splitbook.data.entity.*
 
 @Database(
     entities = [
+        CategoryEntity::class,
         GroupEntity::class,
         MemberEntity::class,
         ExpenseEntity::class,
         ExpenseSplitEntity::class,
         SettlementEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(SplitTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun categoryDao(): CategoryDao
     abstract fun groupDao(): GroupDao
     abstract fun memberDao(): MemberDao
     abstract fun expenseDao(): ExpenseDao

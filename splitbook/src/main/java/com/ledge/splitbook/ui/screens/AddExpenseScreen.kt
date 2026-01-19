@@ -28,6 +28,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardOptions
@@ -45,6 +46,8 @@ import com.ledge.splitbook.util.AdsManager
 import java.time.LocalDate
 import android.app.DatePickerDialog
 import java.util.Calendar
+import androidx.compose.material3.AlertDialog
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,12 +67,14 @@ fun AddExpenseScreen(
     }
     val context = LocalContext.current
     val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val categoriesViewModel: com.ledge.splitbook.ui.vm.CategoriesViewModel = hiltViewModel()
     val settings by settingsViewModel.ui.collectAsState()
     LaunchedEffect(Unit) {
         if (!settings.removeAds) AdsManager.ensureInterstitialLoaded(context)
     }
 
     val ui by viewModel.uiFlow.collectAsState()
+    val catScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -117,12 +122,63 @@ fun AddExpenseScreen(
             }
         }
 
-        OutlinedTextField(
-            value = ui.category,
-            onValueChange = { viewModel.updateCategory(it) },
-            label = { Text("Category") },
-            modifier = Modifier.fillMaxWidth(),
-        )
+        // Category dropdown with inline Add option
+        val cats by categoriesViewModel.categories.collectAsState()
+        var catExpanded by remember { mutableStateOf(false) }
+        var showAddCat by remember { mutableStateOf(false) }
+        var newCat by remember { mutableStateOf("") }
+        ExposedDropdownMenuBox(expanded = catExpanded, onExpandedChange = { catExpanded = !catExpanded }) {
+            OutlinedTextField(
+                value = ui.category,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Category") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catExpanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+            DropdownMenu(expanded = catExpanded, onDismissRequest = { catExpanded = false }) {
+                cats.forEach { c ->
+                    DropdownMenuItem(text = { Text(c.name) }, onClick = {
+                        viewModel.updateCategory(c.name)
+                        catExpanded = false
+                    })
+                }
+                androidx.compose.material3.Divider()
+                DropdownMenuItem(text = { Text("Add new category…") }, onClick = {
+                    catExpanded = false
+                    showAddCat = true
+                })
+            }
+        }
+
+        if (showAddCat) {
+            AlertDialog(
+                onDismissRequest = { showAddCat = false },
+                title = { Text("Add New Category") },
+                text = {
+                    OutlinedTextField(
+                        value = newCat,
+                        onValueChange = { newCat = it },
+                        label = { Text("Enter category name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        val trimmed = newCat.trim()
+                        if (trimmed.isNotEmpty()) {
+                            catScope.launch { categoriesViewModel.add(trimmed) }
+                            viewModel.updateCategory(trimmed)
+                        }
+                        newCat = ""
+                        showAddCat = false
+                    }) { Text("OK") }
+                },
+                dismissButton = { androidx.compose.material3.TextButton(onClick = { showAddCat = false }) { Text("Cancel") } }
+            )
+        }
 
         // Date field with picker
         val dateStr = ui.date

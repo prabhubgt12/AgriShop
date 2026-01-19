@@ -405,14 +405,15 @@ fun SettleScreen(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 14.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            val nets = ui.nets.values
-                            val receivers = nets.count { it > 0.0 }
-                            val payers = nets.count { it < 0.0 }
-                            val totalToSettle = nets.filter { it > 0.0 }.sum()
+                            // Show pending settlements based on computed transfers (tolerant to rounding),
+                            // instead of raw nets which may have tiny residuals after 'Settle All'.
+                            val pendingTransfers = ui.transfers
+                            val transfersCount = pendingTransfers.size
+                            val totalToSettle = pendingTransfers.sumOf { it.amount }
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text("Settle Up")
                                 Text(
-                                    "Transfers: ${maxOf(receivers, payers)} • Amount: ${formatAmount(totalToSettle, currency)}",
+                                    "Transfers: ${transfersCount} • Amount: ${formatAmount(totalToSettle, currency)}",
                                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                                 )

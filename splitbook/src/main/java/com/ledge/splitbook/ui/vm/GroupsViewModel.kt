@@ -20,10 +20,16 @@ class GroupsViewModel @Inject constructor(
     val groups = groupsRepo.observeGroups()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    fun totalForGroup(groupId: Long) =
-        expenseRepo.observeExpenses(groupId)
-            .map { list -> list.sumOf { it.amount } }
-            .stateIn(viewModelScope, SharingStarted.Lazily, 0.0)
+    // Memoize per-group total flows so collectors receive the latest value without
+    // resetting to 0.0 on recomposition (prevents flicker when navigating back).
+    private val totalFlows = mutableMapOf<Long, kotlinx.coroutines.flow.StateFlow<Double>>()
+
+    fun totalForGroup(groupId: Long): kotlinx.coroutines.flow.StateFlow<Double> =
+        totalFlows.getOrPut(groupId) {
+            expenseRepo.observeExpenses(groupId)
+                .map { list -> list.sumOf { it.amount } }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+        }
 
     fun createGroup(name: String, icon: String?, onCreated: (Long) -> Unit) {
         viewModelScope.launch {

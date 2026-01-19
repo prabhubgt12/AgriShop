@@ -11,6 +11,27 @@ import com.ledge.splitbook.data.entity.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
+interface CategoryDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(category: CategoryEntity): Long
+
+    @Update
+    suspend fun update(category: CategoryEntity)
+
+    @Delete
+    suspend fun delete(category: CategoryEntity)
+
+    @Query("SELECT * FROM categories ORDER BY name ASC")
+    fun observeAll(): Flow<List<CategoryEntity>>
+
+    @Query("SELECT * FROM categories WHERE id = :id")
+    suspend fun getById(id: Long): CategoryEntity?
+
+    @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): CategoryEntity?
+}
+
+@Dao
 interface GroupDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(group: GroupEntity): Long

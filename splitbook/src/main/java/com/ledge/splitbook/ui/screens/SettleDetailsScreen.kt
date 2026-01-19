@@ -71,9 +71,16 @@ fun SettleDetailsScreen(
                         Column(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("$from → $to: ₹${String.format("%.2f", t.amount)}")
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                FilledTonalButton(onClick = {
-                                    viewModel.markTransferPaid(t.fromMemberId, t.toMemberId, t.amount)
-                                }) { Text("Mark as Paid") }
+                                // Use a filled button with primary container for strong contrast on cards
+                                Button(
+                                    onClick = {
+                                        viewModel.markTransferPaid(t.fromMemberId, t.toMemberId, t.amount)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                ) { Text("Mark as Paid") }
                                 OutlinedButton(onClick = { upiDialog = t }) { Text("Pay via UPI") }
                             }
                         }

@@ -231,7 +231,10 @@ fun TransactionsScreen(
                                                 style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
                                             )
                                             // Date and Category line(s)
-                                            e.createdAt?.let { Text(it, style = androidx.compose.material3.MaterialTheme.typography.bodySmall, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant) }
+                                            e.createdAt?.let {
+                                                val pretty = com.ledge.splitbook.util.DateFormats.formatExpenseDate(it)
+                                                Text(pretty, style = androidx.compose.material3.MaterialTheme.typography.bodySmall, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                                            }
                                             Text(
                                                 "Category: ${e.category.ifBlank { "Uncategorized" }}",
                                                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall,

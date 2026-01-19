@@ -45,7 +45,7 @@ object ShareExport {
         sb.appendLine("Date | Paid By | Category | Description | Amount")
         var total = 0.0
         expenses.forEach { e ->
-            val date = e.createdAt ?: "—"
+            val date = DateFormats.formatExpenseDate(e.createdAt)
             val payer = byId[e.paidByMemberId]?.name ?: "—"
             val notes = e.note ?: ""
             total += e.amount
@@ -165,7 +165,7 @@ object ShareExport {
         val txRows = expenses.map { e ->
             total += e.amount
             listOf(
-                e.createdAt ?: "—",
+                DateFormats.formatExpenseDate(e.createdAt),
                 byId[e.paidByMemberId]?.name ?: "—",
                 e.category,
                 e.note ?: "",
@@ -232,7 +232,7 @@ object ShareExport {
             var total = 0.0
             expenses.forEachIndexed { idx, e ->
                 val row = idx + 1
-                tx.value(row, 0, e.createdAt ?: "")
+                tx.value(row, 0, DateFormats.formatExpenseDate(e.createdAt))
                 tx.value(row, 1, byId[e.paidByMemberId]?.name ?: "")
                 tx.value(row, 2, e.category)
                 tx.value(row, 3, e.note ?: "")

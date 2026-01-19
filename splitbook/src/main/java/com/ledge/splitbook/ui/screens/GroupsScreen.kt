@@ -31,6 +31,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +47,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -60,6 +68,7 @@ import kotlinx.coroutines.delay
 fun GroupsScreen(
     onOpenGroup: (Long, String) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenCategories: () -> Unit,
     viewModel: GroupsViewModel = hiltViewModel()
 ) {
     val groups by viewModel.groups.collectAsState(initial = emptyList())
@@ -81,9 +90,56 @@ fun GroupsScreen(
 
     Scaffold(
         topBar = {
+            var menuOpen by remember { mutableStateOf(false) }
             TopAppBar(
                 title = { Text("Simple Split") },
-                actions = { IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, contentDescription = "Settings") } },
+                navigationIcon = {
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.Menu, contentDescription = "Menu") }
+                        val context = LocalContext.current
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                leadingIcon = { Icon(Icons.Default.List, contentDescription = null) },
+                                text = { Text("Manage Category") }, onClick = {
+                                menuOpen = false
+                                onOpenCategories()
+                            })
+                            DropdownMenuItem(
+                                leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                                text = { Text("Settings") }, onClick = {
+                                menuOpen = false
+                                onOpenSettings()
+                            })
+                            DropdownMenuItem(
+                                leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
+                                text = { Text("Remove Ads") },
+                                enabled = !settings.removeAds,
+                                onClick = {
+                                    menuOpen = false
+                                    // Redirect to Settings where purchase flow lives
+                                    onOpenSettings()
+                                }
+                            )
+                            
+                            DropdownMenuItem(
+                                leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
+                                text = { Text("Rate It") }, onClick = {
+                                menuOpen = false
+                                val pkg = context.packageName
+                                val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
+                                market.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                try {
+                                    context.startActivity(market)
+                                } catch (_: Exception) {
+                                    val web = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg"))
+                                    web.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(web)
+                                }
+                            })
+                        }
+                    }
+                },
+                actions = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,

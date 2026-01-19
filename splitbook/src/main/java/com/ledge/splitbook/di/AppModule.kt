@@ -19,6 +19,7 @@ object AppModule {
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         AppDatabase.build(context)
 
+    @Provides fun provideCategoryDao(db: AppDatabase): CategoryDao = db.categoryDao()
     @Provides fun provideGroupDao(db: AppDatabase): GroupDao = db.groupDao()
     @Provides fun provideMemberDao(db: AppDatabase): MemberDao = db.memberDao()
     @Provides fun provideExpenseDao(db: AppDatabase): ExpenseDao = db.expenseDao()
