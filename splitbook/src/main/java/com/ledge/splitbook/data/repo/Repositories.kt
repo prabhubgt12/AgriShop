@@ -36,7 +36,12 @@ class CategoryRepository @Inject constructor(
 
 @Singleton
 class GroupRepository @Inject constructor(
+    private val db: AppDatabase,
     private val groupDao: GroupDao,
+    private val memberDao: MemberDao,
+    private val expenseDao: ExpenseDao,
+    private val expenseSplitDao: ExpenseSplitDao,
+    private val settlementDao: SettlementDao,
 ) {
     fun observeGroups(): Flow<List<GroupEntity>> = groupDao.observeAll()
     suspend fun createGroup(name: String, icon: String? = null): Long =
@@ -49,7 +54,15 @@ class GroupRepository @Inject constructor(
 
     suspend fun deleteGroup(id: Long) {
         val current = groupDao.getById(id) ?: return
-        groupDao.delete(current)
+        db.withTransaction {
+            // Delete in dependency order to avoid RESTRICT FK issues on restored DBs
+            val expenseIds = expenseDao.idsByGroup(id)
+            if (expenseIds.isNotEmpty()) expenseSplitDao.deleteByExpenseIds(expenseIds)
+            settlementDao.deleteByGroup(id)
+            expenseDao.deleteByGroup(id)
+            memberDao.deleteByGroup(id)
+            groupDao.delete(current)
+        }
     }
 }
 

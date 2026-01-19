@@ -7,6 +7,8 @@ import com.ledge.splitbook.data.repo.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -17,7 +19,9 @@ class GroupsViewModel @Inject constructor(
     private val expenseRepo: ExpenseRepository,
 ) : ViewModel() {
 
+    private val removedIds = MutableStateFlow<Set<Long>>(emptySet())
     val groups = groupsRepo.observeGroups()
+        .combine(removedIds) { list, removed -> list.filter { it.id !in removed } }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Memoize per-group total flows so collectors receive the latest value without
@@ -43,6 +47,9 @@ class GroupsViewModel @Inject constructor(
     }
 
     fun deleteGroup(id: Long) {
-        viewModelScope.launch { groupsRepo.deleteGroup(id) }
+        viewModelScope.launch {
+            groupsRepo.deleteGroup(id)
+            removedIds.value = removedIds.value + id
+        }
     }
 }

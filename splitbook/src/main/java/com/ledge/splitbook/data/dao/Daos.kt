@@ -63,6 +63,9 @@ interface MemberDao {
     @Query("SELECT * FROM members WHERE groupId = :groupId ORDER BY id ASC")
     fun observeByGroup(groupId: Long): Flow<List<MemberEntity>>
 
+    @Query("DELETE FROM members WHERE groupId = :groupId")
+    suspend fun deleteByGroup(groupId: Long)
+
     @Query("SELECT * FROM members WHERE id IN (:ids)")
     suspend fun getByIds(ids: List<Long>): List<MemberEntity>
 
@@ -95,6 +98,12 @@ interface ExpenseDao {
 
     @Query("SELECT COUNT(*) FROM expenses WHERE groupId = :groupId AND paidByMemberId = :memberId")
     suspend fun countPaidByMember(groupId: Long, memberId: Long): Int
+
+    @Query("SELECT id FROM expenses WHERE groupId = :groupId")
+    suspend fun idsByGroup(groupId: Long): List<Long>
+
+    @Query("DELETE FROM expenses WHERE groupId = :groupId")
+    suspend fun deleteByGroup(groupId: Long)
 }
 
 @Dao
@@ -110,6 +119,9 @@ interface ExpenseSplitDao {
 
     @Query("DELETE FROM expense_splits WHERE expenseId = :expenseId")
     suspend fun deleteByExpense(expenseId: Long)
+
+    @Query("DELETE FROM expense_splits WHERE expenseId IN (:expenseIds)")
+    suspend fun deleteByExpenseIds(expenseIds: List<Long>)
 
     @Query(
         """
@@ -131,4 +143,7 @@ interface SettlementDao {
 
     @Query("SELECT * FROM settlements WHERE groupId = :groupId ORDER BY id DESC")
     fun observeByGroup(groupId: Long): Flow<List<SettlementEntity>>
+
+    @Query("DELETE FROM settlements WHERE groupId = :groupId")
+    suspend fun deleteByGroup(groupId: Long)
 }

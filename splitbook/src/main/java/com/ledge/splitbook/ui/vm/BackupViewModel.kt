@@ -21,6 +21,7 @@ class BackupViewModel @Inject constructor(
         val accountEmail: String? = null,
         val lastBackupTime: String? = null,
         val isRunning: Boolean = false,
+        val runningOp: String? = null, // "backup" or "restore"
         val error: String? = null
     )
 
@@ -67,11 +68,12 @@ class BackupViewModel @Inject constructor(
 
     fun backupNow() {
         viewModelScope.launch {
-            _ui.value = _ui.value.copy(isRunning = true, error = null)
+            _ui.value = _ui.value.copy(isRunning = true, runningOp = "backup", error = null)
             val ok = repo.backupNow()
             val last = repo.lastBackupTime()
             _ui.value = _ui.value.copy(
                 isRunning = false,
+                runningOp = null,
                 lastBackupTime = last,
                 error = if (!ok) (com.ledge.splitbook.data.backup.DriveClient.lastError() ?: "Backup failed") else null
             )
@@ -80,11 +82,12 @@ class BackupViewModel @Inject constructor(
 
     fun restoreLatest() {
         viewModelScope.launch {
-            _ui.value = _ui.value.copy(isRunning = true, error = null)
+            _ui.value = _ui.value.copy(isRunning = true, runningOp = "restore", error = null)
             val ok = repo.restoreLatest()
             val last = repo.lastBackupTime()
             _ui.value = _ui.value.copy(
                 isRunning = false,
+                runningOp = null,
                 lastBackupTime = last,
                 error = if (!ok) (com.ledge.splitbook.data.backup.DriveClient.lastError() ?: "Restore failed") else null
             )

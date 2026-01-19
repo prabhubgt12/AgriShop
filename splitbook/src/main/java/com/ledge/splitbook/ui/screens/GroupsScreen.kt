@@ -179,7 +179,7 @@ fun GroupsScreen(
             ) { Text("No groups yet. Tap + to create.", textAlign = TextAlign.Center) }
         } else {
             LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(groups) { g ->
+                items(items = groups, key = { it.id }) { g ->
                     var menuOpen by remember { mutableStateOf(false) }
                     var showRename by remember { mutableStateOf(false) }
                     var showDelete by remember { mutableStateOf(false) }

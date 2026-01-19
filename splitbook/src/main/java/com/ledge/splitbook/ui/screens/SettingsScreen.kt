@@ -38,6 +38,15 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import android.app.Activity
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Intent
+import android.os.SystemClock
+import android.widget.Toast
+import com.ledge.splitbook.MainActivity
+import androidx.compose.ui.Alignment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +70,56 @@ fun SettingsScreen(
         backupViewModel.handleSignInResult(result.data)
     }
 
+    var showBackupConfirm by remember { mutableStateOf(false) }
+    var showRestoreConfirm by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val activity = context as? Activity
+    var pendingRestart by remember { mutableStateOf(false) }
+    var pendingBackupToast by remember { mutableStateOf(false) }
+
+    // After a successful restore completes, show a toast and restart the app cleanly
+    LaunchedEffect(backupUi.isRunning, backupUi.runningOp, backupUi.error, pendingRestart) {
+        if (pendingRestart && !backupUi.isRunning && backupUi.runningOp == null && backupUi.error == null) {
+            pendingRestart = false
+            Toast.makeText(context, "Restore is complete. The app will restart now to apply changes.", Toast.LENGTH_SHORT).show()
+            val act = activity
+            if (act != null) {
+                val ctx = act.applicationContext
+                val restartIntent = Intent(ctx, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+                if (restartIntent != null) {
+                    // Immediate bring-up as primary path
+                    ctx.startActivity(restartIntent)
+                    val pi = PendingIntent.getActivity(
+                        ctx,
+                        0,
+                        restartIntent,
+                        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    val am = ctx.getSystemService(AlarmManager::class.java)
+                    val triggerAt = SystemClock.elapsedRealtime() + 1200
+                    try {
+                        am?.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                    } catch (_: Throwable) {
+                        am?.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                    }
+                    act.finishAffinity()
+                    try { Thread.sleep(200) } catch (_: Throwable) {}
+                    android.os.Process.killProcess(android.os.Process.myPid())
+                }
+            }
+        }
+    }
+
+    // After a successful backup completes, show a toast
+    LaunchedEffect(backupUi.isRunning, backupUi.runningOp, backupUi.error, pendingBackupToast) {
+        if (pendingBackupToast && !backupUi.isRunning && backupUi.runningOp == null && backupUi.error == null) {
+            pendingBackupToast = false
+            Toast.makeText(context, "Backup completed.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -82,7 +141,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Theme")
                         ListItem(
@@ -95,7 +154,7 @@ fun SettingsScreen(
             }
 
             item {
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Google Backup")
                         val email = backupUi.accountEmail ?: "Not signed in"
@@ -110,16 +169,31 @@ fun SettingsScreen(
                                 }
                             }
                         )
-                        ListItem(
-                            headlineContent = { Text("Last backup") },
-                            supportingContent = { Text(backupUi.lastBackupTime ?: "Never") },
-                            trailingContent = {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            androidx.compose.foundation.layout.Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Last backup")
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    TextButton(enabled = backupUi.signedIn && !backupUi.isRunning, onClick = { backupViewModel.restoreLatest() }) { Text("Restore") }
-                                    TextButton(enabled = backupUi.signedIn && !backupUi.isRunning, onClick = { backupViewModel.backupNow() }) { Text(if (backupUi.isRunning) "Backing up..." else "Backup now") }
+                                    TextButton(
+                                        enabled = backupUi.signedIn && !backupUi.isRunning,
+                                        onClick = { showRestoreConfirm = true }
+                                    ) { Text(if (backupUi.isRunning && backupUi.runningOp == "restore") "Restoring..." else "Restore") }
+                                    TextButton(
+                                        enabled = backupUi.signedIn && !backupUi.isRunning,
+                                        onClick = { showBackupConfirm = true }
+                                    ) { Text(if (backupUi.isRunning && backupUi.runningOp == "backup") "Backing up..." else "Backup now") }
                                 }
                             }
-                        )
+                            Text(
+                                text = backupUi.lastBackupTime ?: "Never",
+                                style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
                         if (backupUi.error != null) {
                             Text(backupUi.error!!)
                         }
@@ -128,7 +202,7 @@ fun SettingsScreen(
             }
 
             item {
-                OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+                OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text("Remove Ads")
                         ListItem(
@@ -196,4 +270,40 @@ fun SettingsScreen(
             }
         }
     }
+
+    // Backup confirm dialog (messages matched to Cashbook)
+    if (showBackupConfirm) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showBackupConfirm = false },
+            title = { Text("Confirm backup") },
+            text = { Text("This will create a backup on Drive and may overwrite existing backups with the same name. Continue?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showBackupConfirm = false
+                    pendingBackupToast = true
+                    backupViewModel.backupNow()
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showBackupConfirm = false }) { Text("Cancel") } }
+        )
+    }
+
+    // Restore confirm dialog (messages matched to Cashbook)
+    if (showRestoreConfirm) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showRestoreConfirm = false },
+            title = { Text("Confirm restore") },
+            text = { Text("This will overwrite your current data with the selected backup. Continue?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRestoreConfirm = false
+                    pendingRestart = true
+                    backupViewModel.restoreLatest()
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { showRestoreConfirm = false }) { Text("Cancel") } }
+        )
+    }
+
+    // No dialog on completion; toast and auto-restart handled above
 }

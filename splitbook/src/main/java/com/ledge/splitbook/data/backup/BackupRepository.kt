@@ -13,10 +13,14 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.ledge.splitbook.data.db.AppDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Singleton
 class BackupRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val db: AppDatabase
 ) {
     companion object {
         private const val DB_NAME = "splitbook.db"
@@ -32,26 +36,31 @@ class BackupRepository @Inject constructor(
 
     suspend fun listBackups(): List<File> = DriveClient.listBackups().filter { it.name == BACKUP_FILENAME }
 
-    suspend fun lastBackupTime(): String? {
+    suspend fun lastBackupTime(): String? = withContext(Dispatchers.IO) {
         val files = listBackups()
-        val first = files.firstOrNull() ?: return null
+        val first = files.firstOrNull() ?: return@withContext null
         val sdf = SimpleDateFormat("dd-MMM-yyyy HH:mm", Locale.getDefault())
-        return first.modifiedTime?.let { sdf.format(Date(it.value)) }
+        first.modifiedTime?.let { sdf.format(Date(it.value)) }
     }
 
-    suspend fun backupNow(): Boolean {
-        val bytes = makeBackupZip() ?: return false
+    suspend fun backupNow(): Boolean = withContext(Dispatchers.IO) {
+        val bytes = makeBackupZip() ?: return@withContext false
         val ok = DriveClient.uploadAppData(BACKUP_FILENAME, bytes)
-        if (!ok) return false
+        if (!ok) return@withContext false
         // keep only the latest backup
         val files = listBackups()
         files.drop(1).forEach { DriveClient.delete(it.id) }
-        return true
+        true
     }
 
     private fun makeBackupZip(): ByteArray? {
-        val dbFile = context.getDatabasePath(DB_NAME)
-        if (!dbFile.exists()) return null
+        // Close Room to ensure pages are flushed and WAL checkpointed
+        runCatching { db.close() }
+        val dbMain = context.getDatabasePath(DB_NAME)
+        if (!dbMain.exists()) return null
+        val dbWal = java.io.File(dbMain.parentFile, "$DB_NAME-wal")
+        val dbShm = java.io.File(dbMain.parentFile, "$DB_NAME-shm")
+        val files = listOf(dbMain, dbWal, dbShm).filter { it.exists() }
         val metaJson = """{"package":"com.ledge.splitbook","db":"$DB_NAME","version":1}""".toByteArray()
         val bos = ByteArrayOutputStream()
         ZipOutputStream(bos).use { zos ->
@@ -59,49 +68,66 @@ class BackupRepository @Inject constructor(
             zos.putNextEntry(ZipEntry("metadata.json"))
             zos.write(metaJson)
             zos.closeEntry()
-            // database
-            zos.putNextEntry(ZipEntry("db/$DB_NAME"))
-            FileInputStream(dbFile).use { fis ->
-                val buf = ByteArray(8 * 1024)
-                while (true) {
-                    val r = fis.read(buf)
-                    if (r <= 0) break
-                    zos.write(buf, 0, r)
+            // database files at zip root (match Cashbook style)
+            files.forEach { f ->
+                FileInputStream(f).use { fis ->
+                    val entry = ZipEntry(f.name)
+                    zos.putNextEntry(entry)
+                    val buf = ByteArray(8 * 1024)
+                    while (true) {
+                        val r = fis.read(buf)
+                        if (r <= 0) break
+                        zos.write(buf, 0, r)
+                    }
+                    zos.closeEntry()
                 }
             }
-            zos.closeEntry()
         }
         return bos.toByteArray()
     }
 
-    suspend fun restoreLatest(): Boolean {
-        val latest = listBackups().firstOrNull() ?: return false
-        val data = DriveClient.download(latest.id) ?: return false
-        return restoreFromZip(data)
+    suspend fun restoreLatest(): Boolean = withContext(Dispatchers.IO) {
+        val latest = listBackups().firstOrNull() ?: return@withContext false
+        val data = DriveClient.download(latest.id) ?: return@withContext false
+        restoreFromZip(data)
     }
 
     private fun restoreFromZip(zipBytes: ByteArray): Boolean {
-        val dbFile = context.getDatabasePath(DB_NAME)
-        // best-effort close by letting Room reopen later; overwrite file
+        val dbDir = context.getDatabasePath(DB_NAME).parentFile
+        val dbMain = context.getDatabasePath(DB_NAME)
+        // Close Room before replacing DB files and clear previous state
+        runCatching { db.close() }
+        runCatching { java.io.File(dbMain.absolutePath + "-wal").delete() }
+        runCatching { java.io.File(dbMain.absolutePath + "-shm").delete() }
         return try {
-            java.util.zip.ZipInputStream(java.io.ByteArrayInputStream(zipBytes)).use { zis ->
-                var entry = zis.nextEntry
+            val tmp = java.io.File.createTempFile("restore", ".zip", context.cacheDir)
+            tmp.outputStream().use { it.write(zipBytes) }
+            java.util.zip.ZipFile(tmp).use { zf ->
+                if (dbDir?.exists() != true) dbDir?.mkdirs()
+                // Delete existing DB, WAL, SHM to avoid mixed state
+                runCatching { dbMain.delete() }
+                runCatching { java.io.File(dbMain.absolutePath + "-wal").delete() }
+                runCatching { java.io.File(dbMain.absolutePath + "-shm").delete() }
+                val entries = zf.entries()
                 var restored = false
-                while (entry != null) {
-                    if (!entry.isDirectory && entry.name == "db/$DB_NAME") {
-                        dbFile.parentFile?.mkdirs()
-                        java.io.FileOutputStream(dbFile).use { fos ->
-                            val buf = ByteArray(8 * 1024)
-                            while (true) {
-                                val r = zis.read(buf)
-                                if (r <= 0) break
-                                fos.write(buf, 0, r)
-                            }
+                while (entries.hasMoreElements()) {
+                    val e = entries.nextElement()
+                    if (e.isDirectory) continue
+                    // Support both legacy path (db/...) and root files
+                    val name = e.name
+                    val outFile = when {
+                        name == DB_NAME || name.endsWith("/$DB_NAME") -> dbMain
+                        name == "$DB_NAME-wal" || name.endsWith("/$DB_NAME-wal") -> java.io.File(dbMain.parentFile, "$DB_NAME-wal")
+                        name == "$DB_NAME-shm" || name.endsWith("/$DB_NAME-shm") -> java.io.File(dbMain.parentFile, "$DB_NAME-shm")
+                        else -> null
+                    }
+                    if (outFile != null) {
+                        outFile.parentFile?.let { if (!it.exists()) it.mkdirs() }
+                        zf.getInputStream(e).use { ins ->
+                            java.io.FileOutputStream(outFile).use { outs -> ins.copyTo(outs); outs.fd.sync() }
                         }
                         restored = true
-                        break
                     }
-                    entry = zis.nextEntry
                 }
                 restored
             }
