@@ -2,6 +2,7 @@ package com.ledge.splitbook.ui.screens
 
 import android.content.Intent
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -46,6 +47,12 @@ fun SettleDetailsScreen(
             )
         }
     ) { padding ->
+        if (ui.isLoading) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -64,7 +71,10 @@ fun SettleDetailsScreen(
                     }
                 }
             } else {
-                items(ui.transfers) { t ->
+                items(
+                    items = ui.transfers,
+                    key = { t -> "${t.fromMemberId}-${t.toMemberId}-${String.format("%.2f", t.amount)}" }
+                ) { t ->
                     val from = ui.members.firstOrNull { it.id == t.fromMemberId }?.name ?: "From"
                     val to = ui.members.firstOrNull { it.id == t.toMemberId }?.name ?: "To"
                     Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(6.dp)) {
@@ -74,7 +84,7 @@ fun SettleDetailsScreen(
                                 // Use a filled button with primary container for strong contrast on cards
                                 Button(
                                     onClick = {
-                                        viewModel.markTransferPaid(t.fromMemberId, t.toMemberId, t.amount)
+                                        viewModel.markTransferPaid(groupId, t.fromMemberId, t.toMemberId, t.amount)
                                     },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary,

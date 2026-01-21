@@ -131,6 +131,15 @@ interface ExpenseSplitDao {
         """
     )
     suspend fun countSplitsForMemberInGroup(groupId: Long, memberId: Long): Int
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM expense_splits es
+        INNER JOIN expenses e ON es.expenseId = e.id
+        WHERE e.groupId = :groupId
+        """
+    )
+    fun observeSplitCountForGroup(groupId: Long): kotlinx.coroutines.flow.Flow<Int>
 }
 
 @Dao

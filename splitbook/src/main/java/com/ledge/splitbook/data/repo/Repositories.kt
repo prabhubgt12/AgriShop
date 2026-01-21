@@ -123,6 +123,7 @@ class ExpenseRepository @Inject constructor(
     private val expenseSplitDao: ExpenseSplitDao,
 ) {
     fun observeExpenses(groupId: Long): Flow<List<ExpenseEntity>> = expenseDao.observeByGroup(groupId)
+    fun observeSplitCount(groupId: Long): Flow<Int> = expenseSplitDao.observeSplitCountForGroup(groupId)
 
     suspend fun getExpense(expenseId: Long): ExpenseEntity? = expenseDao.getById(expenseId)
     suspend fun getSplits(expenseId: Long): List<ExpenseSplitEntity> = expenseSplitDao.getByExpense(expenseId)
@@ -201,7 +202,7 @@ class SettlementRepository @Inject constructor(
                 groupId = groupId,
                 fromMemberId = from,
                 toMemberId = to,
-                amount = amount,
+                amount = kotlin.math.round(amount * 100.0) / 100.0,
                 status = "completed"
             )
         )

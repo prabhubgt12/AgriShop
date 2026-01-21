@@ -183,6 +183,12 @@ fun SettleScreen(
             )
         }
     ) { padding ->
+        if (ui.isLoading) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+            return@Scaffold
+        }
         val listPadding = PaddingValues(
             start = 16.dp,
             end = 16.dp,

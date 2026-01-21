@@ -117,9 +117,10 @@ fun CategoriesScreen(
                                             )
                                         },
                                         confirmButton = {
-                                            TextButton(onClick = {
+                                            val canSave = newName.trim().isNotEmpty()
+                                            TextButton(enabled = canSave, onClick = {
                                                 val trimmed = newName.trim()
-                                                if (trimmed.isNotEmpty()) scope.launch { viewModel.rename(cat.id, trimmed) }
+                                                scope.launch { viewModel.rename(cat.id, trimmed) }
                                                 showRename = false
                                             }) { Text("Save") }
                                         },
@@ -147,9 +148,10 @@ fun CategoriesScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
+                val canAdd = input.trim().isNotEmpty()
+                TextButton(enabled = canAdd, onClick = {
                     val trimmed = input.trim()
-                    if (trimmed.isNotEmpty()) scope.launch { viewModel.add(trimmed) }
+                    scope.launch { viewModel.add(trimmed) }
                     input = ""
                     showAdd = false
                 }) { Text("OK") }

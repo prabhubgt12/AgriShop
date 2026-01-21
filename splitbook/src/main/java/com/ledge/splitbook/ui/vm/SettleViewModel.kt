@@ -13,10 +13,14 @@ import com.ledge.splitbook.domain.SettlementLogic
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -40,32 +44,45 @@ class SettleViewModel @Inject constructor(
 
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui.asStateFlow()
+    private var observeJob: Job? = null
+    private var loadedGroupId: Long? = null
 
     fun load(groupId: Long) {
+        if (loadedGroupId == groupId && observeJob != null) return
+        loadedGroupId = groupId
+        observeJob?.cancel()
         _ui.value = UiState(groupId = groupId, isLoading = true)
-        viewModelScope.launch {
-            // Observe members
-            launch {
-                memberRepo.observeMembers(groupId).collectLatest { members ->
-                    _ui.value = _ui.value.copy(members = members)
-                    recompute()
-                }
+        observeJob = viewModelScope.launch {
+            combine(
+                memberRepo.observeMembers(groupId).distinctUntilChanged(),
+                expenseRepo.observeExpenses(groupId),
+                // Also observe split count so we recompute when splits change without expense list changing
+                expenseRepo.observeSplitCount(groupId),
+                settlementRepo.observeSettlements(groupId)
+            ) { members, expenses, splitCount, settlements ->
+                // splitCount is only for invalidation; not stored in state
+                Triple(members, expenses, settlements)
             }
-            // Observe expenses
-            launch {
-                expenseRepo.observeExpenses(groupId).collectLatest { expenses ->
-                    _ui.value = _ui.value.copy(expenses = expenses)
-                    recompute()
-                }
-            }
-            // Observe settlements
-            launch {
-                settlementRepo.observeSettlements(groupId).collectLatest { settlements ->
-                    _ui.value = _ui.value.copy(settlements = settlements)
-                    recompute()
-                }
+                .debounce(200)
+                .collectLatest { (members, expenses, settlements) ->
+                // Mark loading while we recompute the derived snapshot to avoid transient mismatches in UI
+                _ui.value = _ui.value.copy(
+                    members = members,
+                    expenses = expenses,
+                    settlements = settlements,
+                    isLoading = true
+                )
+                recompute()
             }
         }
+    }
+
+    fun reload() {
+        val gid = loadedGroupId ?: return
+        observeJob?.cancel()
+        observeJob = null
+        loadedGroupId = null
+        load(gid)
     }
 
     private fun recompute() {
@@ -85,9 +102,26 @@ class SettleViewModel @Inject constructor(
                         baseNets[s.toMemberId] = (baseNets[s.toMemberId] ?: 0.0) - s.amount
                     }
                 }
+                // Normalize after applying settlements to avoid -0.0/epsilon drift
+                val normalized = baseNets.mapValues { v ->
+                    val r = kotlin.math.round((v.value) * 100.0) / 100.0
+                    if (kotlin.math.abs(r) <= 0.01) 0.0 else r
+                }
                 val summaries = computeMemberSummaries(state.members, state.expenses)
-                val transfers = SettlementLogic.settle(baseNets)
-                _ui.value = _ui.value.copy(nets = baseNets, transfers = transfers, memberSummaries = summaries, isLoading = false, error = null)
+                val transfers = SettlementLogic.settle(normalized)
+                val current = _ui.value
+                val netsChanged = current.nets != normalized
+                val transfersChanged = current.transfers != transfers
+                val summariesChanged = current.memberSummaries != summaries
+                if (netsChanged || transfersChanged || summariesChanged || current.isLoading) {
+                    _ui.value = current.copy(
+                        nets = if (netsChanged) normalized else current.nets,
+                        transfers = if (transfersChanged) transfers else current.transfers,
+                        memberSummaries = if (summariesChanged) summaries else current.memberSummaries,
+                        isLoading = false,
+                        error = null
+                    )
+                }
             } catch (t: Throwable) {
                 _ui.value = _ui.value.copy(isLoading = false, error = t.message)
             }
@@ -119,8 +153,8 @@ class SettleViewModel @Inject constructor(
                 nets[s.memberId] = (nets[s.memberId] ?: 0.0) - s.value
             }
         }
-        // Round to 2 decimals
-        return nets.mapValues { ((it.value * 100).toInt()) / 100.0 }
+        // Round to 2 decimals to avoid truncation bias and residuals
+        return nets.mapValues { kotlin.math.round(it.value * 100.0) / 100.0 }
     }
 
     private suspend fun computeMemberSummaries(members: List<MemberEntity>, expenses: List<ExpenseEntity>): List<com.ledge.splitbook.util.MemberSummary> {
@@ -144,10 +178,22 @@ class SettleViewModel @Inject constructor(
         }
     }
 
-    fun markTransferPaid(fromMemberId: Long, toMemberId: Long, amount: Double) {
-        val gid = _ui.value.groupId
+    fun markTransferPaid(groupId: Long, fromMemberId: Long, toMemberId: Long, amount: Double) {
+        // Optimistic UI update: adjust nets and transfers immediately
+        val current = _ui.value
+        val nets = current.nets.toMutableMap()
+        nets[fromMemberId] = (nets[fromMemberId] ?: 0.0) + amount
+        nets[toMemberId] = (nets[toMemberId] ?: 0.0) - amount
+        val normalized = nets.mapValues { v ->
+            val r = kotlin.math.round((v.value) * 100.0) / 100.0
+            if (kotlin.math.abs(r) <= 0.01) 0.0 else r
+        }
+        val transfersNow = SettlementLogic.settle(normalized)
+        _ui.value = current.copy(nets = normalized, transfers = transfersNow)
+
+        // Persist settlement
         viewModelScope.launch(Dispatchers.IO) {
-            settlementRepo.markPaid(gid, fromMemberId, toMemberId, amount)
+            settlementRepo.markPaid(groupId, fromMemberId, toMemberId, amount)
         }
     }
 

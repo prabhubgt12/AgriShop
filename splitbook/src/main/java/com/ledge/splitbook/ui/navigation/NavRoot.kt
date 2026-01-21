@@ -17,6 +17,8 @@ import com.ledge.splitbook.ui.screens.SettingsScreen
 import com.ledge.splitbook.ui.screens.SettleDetailsScreen
 import com.ledge.splitbook.ui.vm.BillingViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ledge.splitbook.ui.vm.SettleViewModel
+import androidx.compose.runtime.remember
 import java.net.URLEncoder
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -82,7 +84,12 @@ private fun AppNavHost(navController: NavHostController) {
             val payerId: Long? = if (rawPayer == Long.MIN_VALUE) null else rawPayer
             val rawExp = backStackEntry.arguments?.getLong("expenseId") ?: Long.MIN_VALUE
             val expenseId: Long? = if (rawExp == Long.MIN_VALUE) null else rawExp
-            AddExpenseScreen(groupId = gid, payerId = payerId, expenseId = expenseId, onDone = { navController.popBackStack() })
+            AddExpenseScreen(groupId = gid, payerId = payerId, expenseId = expenseId, onDone = {
+                // Signal the SETTLE screen to refresh its subscriptions/snapshot after save
+                val parentEntry = navController.getBackStackEntry(Routes.SETTLE)
+                parentEntry.savedStateHandle["refresh_settle"] = true
+                navController.popBackStack()
+            })
         }
         composable(
             route = Routes.SETTLE,
@@ -94,6 +101,18 @@ private fun AppNavHost(navController: NavHostController) {
             val gid = backStackEntry.arguments?.getLong("groupId") ?: 0L
             val encName = backStackEntry.arguments?.getString("groupName") ?: ""
             val gname = URLDecoder.decode(encName, StandardCharsets.UTF_8.toString())
+            // ViewModel scoped to this SETTLE route entry
+            val settleVm: SettleViewModel = hiltViewModel(backStackEntry)
+            // Listen for refresh flag posted by AddExpense screen and reload VM when set
+            val refreshFlow = remember(backStackEntry) { backStackEntry.savedStateHandle.getStateFlow("refresh_settle", false) }
+            LaunchedEffect(refreshFlow) {
+                refreshFlow.collect { need ->
+                    if (need) {
+                        settleVm.reload()
+                        backStackEntry.savedStateHandle["refresh_settle"] = false
+                    }
+                }
+            }
             SettleScreen(
                 groupId = gid,
                 groupName = gname,
@@ -101,7 +120,8 @@ private fun AppNavHost(navController: NavHostController) {
                 onOpenSettleDetails = { navController.navigate(Routes.settleDetails(gid, gname)) },
                 onAddExpense = { payerId -> navController.navigate(Routes.addExpense(gid, payerId)) },
                 onManageMembers = { navController.navigate(Routes.members(gid)) },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                viewModel = settleVm
             )
         }
         composable(
@@ -114,7 +134,10 @@ private fun AppNavHost(navController: NavHostController) {
             val gid = backStackEntry.arguments?.getLong("groupId") ?: 0L
             val encName = backStackEntry.arguments?.getString("groupName") ?: ""
             val gname = URLDecoder.decode(encName, StandardCharsets.UTF_8.toString())
-            SettleDetailsScreen(groupId = gid, groupName = gname, onBack = { navController.popBackStack() })
+            // Share the same SettleViewModel instance as the SETTLE screen by scoping to its back stack entry
+            val parentEntry = remember(backStackEntry) { navController.getBackStackEntry(Routes.SETTLE) }
+            val sharedVm: SettleViewModel = hiltViewModel(parentEntry)
+            SettleDetailsScreen(groupId = gid, groupName = gname, onBack = { navController.popBackStack() }, viewModel = sharedVm)
         }
         composable(
             route = Routes.TRANSACTIONS,

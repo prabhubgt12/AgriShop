@@ -3,6 +3,8 @@ package com.ledge.splitbook.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,6 +14,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -39,6 +44,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.ledge.splitbook.ui.vm.AddExpenseViewModel
 import com.ledge.splitbook.ui.vm.AddExpenseViewModel.Mode
 import com.ledge.splitbook.ui.vm.SettingsViewModel
@@ -48,6 +55,10 @@ import android.app.DatePickerDialog
 import java.util.Calendar
 import androidx.compose.material3.AlertDialog
 import kotlinx.coroutines.launch
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,24 +83,39 @@ fun AddExpenseScreen(
     LaunchedEffect(Unit) {
         if (!settings.removeAds) AdsManager.ensureInterstitialLoaded(context)
     }
-
     val ui by viewModel.uiFlow.collectAsState()
     val catScope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Add Expense")
-        // Description at top (mandatory)
-        OutlinedTextField(
-            value = ui.note,
-            onValueChange = { viewModel.updateNote(it) },
-            label = { Text("Description") },
-            modifier = Modifier.fillMaxWidth(),
-        )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(if (ui.editingExpenseId != null) "Edit Expense" else "Add Expense") },
+                navigationIcon = {
+                    IconButton(onClick = onDone) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                    titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(
+                value = ui.note,
+                onValueChange = { viewModel.updateNote(it) },
+                label = { Text("Description") },
+                modifier = Modifier.fillMaxWidth(),
+            )
 
         OutlinedTextField(
             value = ui.amount,
@@ -112,7 +138,13 @@ fun AddExpenseScreen(
                     .menuAnchor()
                     .fillMaxWidth(),
             )
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.widthIn(min = 300.dp)) {
+                Text(
+                    text = "Select Member",
+                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                )
+                androidx.compose.material3.HorizontalDivider()
                 ui.members.forEach { m ->
                     DropdownMenuItem(text = { Text(m.name) }, onClick = {
                         viewModel.selectPayer(m.id)
@@ -127,29 +159,76 @@ fun AddExpenseScreen(
         var catExpanded by remember { mutableStateOf(false) }
         var showAddCat by remember { mutableStateOf(false) }
         var newCat by remember { mutableStateOf("") }
-        ExposedDropdownMenuBox(expanded = catExpanded, onExpandedChange = { catExpanded = !catExpanded }) {
-            OutlinedTextField(
-                value = ui.category,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Category") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catExpanded) },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
-            )
-            DropdownMenu(expanded = catExpanded, onDismissRequest = { catExpanded = false }) {
-                cats.forEach { c ->
-                    DropdownMenuItem(text = { Text(c.name) }, onClick = {
-                        viewModel.updateCategory(c.name)
-                        catExpanded = false
-                    })
+        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            ExposedDropdownMenuBox(expanded = catExpanded, onExpandedChange = { catExpanded = !catExpanded }, modifier = Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = ui.category,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Category") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                DropdownMenu(
+                    expanded = catExpanded,
+                    onDismissRequest = { catExpanded = false },
+                    modifier = Modifier.widthIn(min = 300.dp) // wider menu for readability
+                ) {
+                    // Title
+                    Text(
+                        text = "Select Category",
+                        style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
+                    androidx.compose.material3.HorizontalDivider()
+                    // Scrollable list with a visible scrollbar thumb
+                    val menuScroll = rememberScrollState()
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .heightIn(max = 360.dp)
+                            .drawWithContent {
+                                drawContent()
+                                val max = menuScroll.maxValue
+                                if (max > 0) {
+                                    val proportion = size.height / (size.height + max)
+                                    val thumbH = (size.height * proportion).coerceAtLeast(24f)
+                                    val thumbOffset = (menuScroll.value.toFloat() / max.toFloat()) * (size.height - thumbH)
+                                    val thumbW = 4.dp.toPx()
+                                    val padding = 2.dp.toPx()
+                                    drawRoundRect(
+                                        color = Color(0x80212121),
+                                        topLeft = Offset(size.width - thumbW - padding, thumbOffset),
+                                        size = Size(thumbW, thumbH),
+                                        cornerRadius = CornerRadius(thumbW / 2f, thumbW / 2f)
+                                    )
+                                }
+                            }
+                    ) {
+                        androidx.compose.foundation.layout.Column(
+                            modifier = Modifier
+                                .verticalScroll(menuScroll)
+                                .padding(end = 6.dp)
+                        ) {
+                            cats.forEach { c ->
+                                DropdownMenuItem(text = { Text(c.name) }, onClick = {
+                                    viewModel.updateCategory(c.name)
+                                    catExpanded = false
+                                })
+                            }
+                        }
+                    }
                 }
-                androidx.compose.material3.Divider()
-                DropdownMenuItem(text = { Text("Add new category…") }, onClick = {
-                    catExpanded = false
-                    showAddCat = true
-                })
+            }
+            // Center-aligned + button outside the field, matching text field height and radius
+            androidx.compose.material3.FilledTonalButton(
+                onClick = { showAddCat = true },
+                modifier = Modifier.height(56.dp),
+                shape = androidx.compose.material3.MaterialTheme.shapes.small,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add category")
             }
         }
 
@@ -166,12 +245,11 @@ fun AddExpenseScreen(
                     )
                 },
                 confirmButton = {
-                    androidx.compose.material3.TextButton(onClick = {
+                    val canAdd = newCat.trim().isNotEmpty()
+                    androidx.compose.material3.TextButton(enabled = canAdd, onClick = {
                         val trimmed = newCat.trim()
-                        if (trimmed.isNotEmpty()) {
-                            catScope.launch { categoriesViewModel.add(trimmed) }
-                            viewModel.updateCategory(trimmed)
-                        }
+                        catScope.launch { categoriesViewModel.add(trimmed) }
+                        viewModel.updateCategory(trimmed)
                         newCat = ""
                         showAddCat = false
                     }) { Text("OK") }
@@ -319,3 +397,5 @@ fun AddExpenseScreen(
         }
     }
 }
+}
+
