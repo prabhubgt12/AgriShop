@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Share/Export titles and headers (Hindi) -->
+    <string name="app_title_with_group">सिंपल स्प्लिट — %1$s</string>
+    <string name="share_transactions">लेन-देन:</string>
+    <string name="share_transactions_header">तारीख | भुगतानकर्ता | श्रेणी | विवरण | राशि</string>
+    <string name="share_total">कुल:</string>
+    <string name="share_members">सदस्य:</string>
+    <string name="share_members_header">सदस्य | भुगतान राशि | साझा खर्च | बकाया राशि</string>
+    <string name="share_summary_chooser">सारांश साझा करें</string>
+    <string name="share_export_chooser">निर्यात साझा करें</string>
+
+    <!-- PDF headers -->
+    <string name="pdf_transactions_title">लेन-देन</string>
+    <string name="pdf_header_date">तारीख</string>
+    <string name="pdf_header_paid_by">भुगतानकर्ता</string>
+    <string name="pdf_header_category">श्रेणी</string>
+    <string name="pdf_header_description">विवरण</string>
+    <string name="pdf_header_amount">राशि</string>
+    <string name="pdf_members_title">सदस्य</string>
+    <string name="pdf_header_member">सदस्य</string>
+    <string name="pdf_header_paid">भुगतान</string>
+    <string name="pdf_header_deposit">जमा</string>
+    <string name="pdf_header_exp_share">खर्च शेयर</string>
+    <string name="pdf_header_due_amount">बकाया राशि</string>
+
+    <!-- Excel sheet names and headers -->
+    <string name="excel_sheet_transactions">लेन-देन</string>
+    <string name="excel_sheet_members">सदस्य</string>
+    <string name="excel_header_total">कुल</string>
+</resources>

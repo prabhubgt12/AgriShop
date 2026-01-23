@@ -59,6 +59,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,10 +90,10 @@ fun AddExpenseScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (ui.editingExpenseId != null) "Edit Expense" else "Add Expense") },
+                title = { Text(if (ui.editingExpenseId != null) stringResource(id = com.ledge.splitbook.R.string.edit_expense) else stringResource(id = com.ledge.splitbook.R.string.add_expense)) },
                 navigationIcon = {
                     IconButton(onClick = onDone) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = com.ledge.splitbook.R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -113,14 +114,14 @@ fun AddExpenseScreen(
             OutlinedTextField(
                 value = ui.note,
                 onValueChange = { viewModel.updateNote(it) },
-                label = { Text("Description") },
+                label = { Text(stringResource(id = com.ledge.splitbook.R.string.description)) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
         OutlinedTextField(
             value = ui.amount,
             onValueChange = { viewModel.updateAmount(it) },
-            label = { Text("Amount") },
+            label = { Text(stringResource(id = com.ledge.splitbook.R.string.amount)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -132,7 +133,7 @@ fun AddExpenseScreen(
                 value = ui.paidByName,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Paid by") },
+                label = { Text(stringResource(id = com.ledge.splitbook.R.string.paid_by)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .menuAnchor()
@@ -140,7 +141,7 @@ fun AddExpenseScreen(
             )
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.widthIn(min = 300.dp)) {
                 Text(
-                    text = "Select Member",
+                    text = stringResource(id = com.ledge.splitbook.R.string.select_member),
                     style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
                 )
@@ -165,7 +166,7 @@ fun AddExpenseScreen(
                     value = ui.category,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Category") },
+                    label = { Text(stringResource(id = com.ledge.splitbook.R.string.category)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catExpanded) },
                     modifier = Modifier
                         .menuAnchor()
@@ -178,7 +179,7 @@ fun AddExpenseScreen(
                 ) {
                     // Title
                     Text(
-                        text = "Select Category",
+                        text = stringResource(id = com.ledge.splitbook.R.string.select_category),
                         style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
                     )
@@ -228,19 +229,19 @@ fun AddExpenseScreen(
                 shape = androidx.compose.material3.MaterialTheme.shapes.small,
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add category")
+                Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(id = com.ledge.splitbook.R.string.add_category))
             }
         }
 
         if (showAddCat) {
             AlertDialog(
                 onDismissRequest = { showAddCat = false },
-                title = { Text("Add New Category") },
+                title = { Text(stringResource(id = com.ledge.splitbook.R.string.add_new_category)) },
                 text = {
                     OutlinedTextField(
                         value = newCat,
                         onValueChange = { newCat = it },
-                        label = { Text("Enter category name") },
+                        label = { Text(stringResource(id = com.ledge.splitbook.R.string.enter_category_name)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 },
@@ -252,9 +253,9 @@ fun AddExpenseScreen(
                         viewModel.updateCategory(trimmed)
                         newCat = ""
                         showAddCat = false
-                    }) { Text("OK") }
+                    }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) }
                 },
-                dismissButton = { androidx.compose.material3.TextButton(onClick = { showAddCat = false }) { Text("Cancel") } }
+                dismissButton = { androidx.compose.material3.TextButton(onClick = { showAddCat = false }) { Text(stringResource(id = com.ledge.splitbook.R.string.cancel)) } }
             )
         }
 
@@ -280,13 +281,13 @@ fun AddExpenseScreen(
         OutlinedTextField(
             value = ui.date,
             onValueChange = { viewModel.updateDate(it) },
-            label = { Text("Date (YYYY-MM-DD)") },
+            label = { Text(stringResource(id = com.ledge.splitbook.R.string.date_ymd)) },
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             singleLine = true,
             trailingIcon = {
                 IconButton(onClick = openDatePicker) {
-                    Icon(Icons.Filled.CalendarMonth, contentDescription = "Pick date")
+                    Icon(Icons.Filled.CalendarMonth, contentDescription = stringResource(id = com.ledge.splitbook.R.string.pick_date))
                 }
             }
         )
@@ -294,7 +295,7 @@ fun AddExpenseScreen(
         // Simplified split controls
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = ui.shareByAll, onCheckedChange = { viewModel.toggleShareByAll(it) })
-            Text("Expense share by all")
+            Text(stringResource(id = com.ledge.splitbook.R.string.expense_share_by_all))
         }
 
         if (!ui.shareByAll) {
@@ -303,10 +304,10 @@ fun AddExpenseScreen(
             ExposedDropdownMenuBox(expanded = selOpen, onExpandedChange = { selOpen = !selOpen }) {
                 val selectedCount = ui.selectedMemberIds.size
                 OutlinedTextField(
-                    value = if (selectedCount == 0) "Select members" else "$selectedCount selected",
+                    value = if (selectedCount == 0) stringResource(id = com.ledge.splitbook.R.string.select_members) else stringResource(id = com.ledge.splitbook.R.string.selected_count, selectedCount),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Select Person") },
+                    label = { Text(stringResource(id = com.ledge.splitbook.R.string.select_person)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = selOpen) },
                     modifier = Modifier
                         .menuAnchor()
@@ -334,7 +335,7 @@ fun AddExpenseScreen(
                     OutlinedTextField(
                         value = ui.customAmounts[m.id] ?: "",
                         onValueChange = { viewModel.updateCustomAmount(m.id, it) },
-                        label = { Text("${m.name} amount") },
+                        label = { Text(m.name + " " + stringResource(id = com.ledge.splitbook.R.string.amount)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -342,7 +343,7 @@ fun AddExpenseScreen(
                     OutlinedTextField(
                         value = ui.percentages[m.id] ?: "",
                         onValueChange = { viewModel.updatePercentage(m.id, it) },
-                        label = { Text("%") },
+                        label = { Text(stringResource(id = com.ledge.splitbook.R.string.percent_sign)) },
                         modifier = Modifier.weight(0.6f),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -352,7 +353,7 @@ fun AddExpenseScreen(
 
             // Helper note
             Text(
-                "Note: Enter amounts that total the expense or percentages that sum to 100% to enable Save.",
+                stringResource(id = com.ledge.splitbook.R.string.note_amounts_or_percentages),
                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall
             )
 
@@ -369,13 +370,13 @@ fun AddExpenseScreen(
             val valid = if (sumPctR > 0.0) kotlin.math.abs(sumPctR - 100.0) <= 0.01 else kotlin.math.abs(sumAmtR - totalR) <= 0.01
             val infoColor = if (valid) Color(0xFF16A34A) else Color(0xFFDC2626)
             Text(
-                "Amounts: %.2f/%.2f • Percent: %.2f%%".format(sumAmtR, totalR, sumPctR),
+                stringResource(id = com.ledge.splitbook.R.string.amounts_percent_format, sumAmtR, totalR, sumPctR),
                 color = infoColor,
                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall
             )
         } else {
             Text(
-                "Split equally among ${ui.members.size} members",
+                stringResource(id = com.ledge.splitbook.R.string.split_equally_among, ui.members.size),
                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall
             )
         }
@@ -387,13 +388,13 @@ fun AddExpenseScreen(
                     if (activity != null && !settings.removeAds) AdsManager.tryShow(activity)
                     onDone()
                 })
-            }, enabled = ui.canSave) { Text("Save") }
+            }, enabled = ui.canSave) { Text(stringResource(id = com.ledge.splitbook.R.string.save)) }
         }
         Spacer(modifier = Modifier.height(80.dp))
 
         if (ui.members.isEmpty()) {
-            Text("No members yet. Adding two sample members for quick start…")
-            Button(onClick = { viewModel.addSampleMembers() }) { Text("Add Sample Members") }
+            Text(stringResource(id = com.ledge.splitbook.R.string.no_members_hint))
+            Button(onClick = { viewModel.addSampleMembers() }) { Text(stringResource(id = com.ledge.splitbook.R.string.add_sample_members)) }
         }
     }
 }

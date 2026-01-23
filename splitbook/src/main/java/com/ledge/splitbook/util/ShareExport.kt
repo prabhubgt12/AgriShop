@@ -30,6 +30,7 @@ data class MemberSummary(
 object ShareExport {
 
     fun buildTextSummary(
+        context: Context,
         groupName: String,
         members: List<MemberEntity>,
         expenses: List<ExpenseEntity>,
@@ -38,11 +39,11 @@ object ShareExport {
     ): String {
         val byId = members.associateBy { it.id }
         val sb = StringBuilder()
-        sb.appendLine("Simple Split — $groupName")
+        sb.appendLine("Simple Split — " + groupName)
         sb.appendLine()
         // 1) Transactions list
-        sb.appendLine("Transactions:")
-        sb.appendLine("Date | Paid By | Category | Description | Amount")
+        sb.appendLine(context.getString(com.ledge.splitbook.R.string.share_transactions))
+        sb.appendLine(context.getString(com.ledge.splitbook.R.string.share_transactions_header))
         var total = 0.0
         expenses.forEach { e ->
             val date = DateFormats.formatExpenseDate(e.createdAt)
@@ -51,11 +52,11 @@ object ShareExport {
             total += e.amount
             sb.appendLine("$date | $payer | ${e.category} | ${notes} | ${formatAmount(e.amount, currency)}")
         }
-        sb.appendLine("Total: ${formatAmount(total, currency)}")
+        sb.appendLine(context.getString(com.ledge.splitbook.R.string.share_total) + " " + formatAmount(total, currency))
         sb.appendLine()
         // 2) Members details
-        sb.appendLine("Members:")
-        sb.appendLine("Member | Amount Paid | Expense Shared | Due Amount")
+        sb.appendLine(context.getString(com.ledge.splitbook.R.string.share_members))
+        sb.appendLine(context.getString(com.ledge.splitbook.R.string.share_members_header))
         memberSummaries.forEach { ms ->
             val name = byId[ms.memberId]?.name ?: "—"
             sb.appendLine("$name | ${formatAmount(ms.amountPaid, currency)} | ${formatAmount(ms.expenseShared, currency)} | ${formatAmount(ms.dueAmount, currency)}")
@@ -68,7 +69,7 @@ object ShareExport {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
         }
-        context.startActivity(Intent.createChooser(intent, "Share summary"))
+        context.startActivity(Intent.createChooser(intent, context.getString(com.ledge.splitbook.R.string.share_summary_chooser)))
     }
 
     fun exportPdf(
@@ -158,9 +159,15 @@ object ShareExport {
             }
         }
         // Title
-        drawTitle("Simple Split — $groupName")
+        drawTitle("Simple Split — " + groupName)
         // Transactions table
-        val txHeaders = listOf("Date", "Paid By", "Category", "Description", "Amount")
+        val txHeaders = listOf(
+            context.getString(com.ledge.splitbook.R.string.pdf_header_date),
+            context.getString(com.ledge.splitbook.R.string.pdf_header_paid_by),
+            context.getString(com.ledge.splitbook.R.string.pdf_header_category),
+            context.getString(com.ledge.splitbook.R.string.pdf_header_description),
+            context.getString(com.ledge.splitbook.R.string.pdf_header_amount)
+        )
         var total = 0.0
         val txRows = expenses.map { e ->
             total += e.amount
@@ -181,11 +188,17 @@ object ShareExport {
         val totalTop = y
         val rowH = 22f
         canvas.drawRect(left, totalTop - 16f, right, totalTop + 8f, totalBg)
-        canvas.drawText("Total:", left + 6f, totalTop, totalText)
+        canvas.drawText(context.getString(com.ledge.splitbook.R.string.share_total), left + 6f, totalTop, totalText)
         canvas.drawText(formatAmount(total, currency), right - 120f, totalTop, totalText)
         y += rowH + 10f
         // Members table
-        val msHeaders = listOf("Member", "Paid", "Deposit", "Exp Share", "Due Amount")
+        val msHeaders = listOf(
+            context.getString(com.ledge.splitbook.R.string.pdf_header_member),
+            context.getString(com.ledge.splitbook.R.string.pdf_header_paid),
+            context.getString(com.ledge.splitbook.R.string.pdf_header_deposit),
+            context.getString(com.ledge.splitbook.R.string.pdf_header_exp_share),
+            context.getString(com.ledge.splitbook.R.string.pdf_header_due_amount)
+        )
         val msRows = memberSummaries.map { ms ->
             val deposit = byId[ms.memberId]?.deposit ?: 0.0
             listOf(
@@ -222,12 +235,12 @@ object ShareExport {
         FileOutputStream(file).use { fos ->
             val wb = Workbook(fos, "Simple Split", "1.0")
             // Transactions sheet (FastExcel uses 0-based row/col indices)
-            val tx = wb.newWorksheet("Transactions")
-            tx.value(0, 0, "Date")
-            tx.value(0, 1, "Paid By")
-            tx.value(0, 2, "Category")
-            tx.value(0, 3, "Description")
-            tx.value(0, 4, "Amount")
+            val tx = wb.newWorksheet(context.getString(com.ledge.splitbook.R.string.excel_sheet_transactions))
+            tx.value(0, 0, context.getString(com.ledge.splitbook.R.string.pdf_header_date))
+            tx.value(0, 1, context.getString(com.ledge.splitbook.R.string.pdf_header_paid_by))
+            tx.value(0, 2, context.getString(com.ledge.splitbook.R.string.pdf_header_category))
+            tx.value(0, 3, context.getString(com.ledge.splitbook.R.string.pdf_header_description))
+            tx.value(0, 4, context.getString(com.ledge.splitbook.R.string.pdf_header_amount))
             val byId = members.associateBy { it.id }
             var total = 0.0
             expenses.forEachIndexed { idx, e ->
@@ -240,7 +253,7 @@ object ShareExport {
                 total += e.amount
             }
             val totalRow = expenses.size + 1
-            tx.value(totalRow, 3, "Total")
+            tx.value(totalRow, 3, context.getString(com.ledge.splitbook.R.string.excel_header_total))
             tx.value(totalRow, 4, total)
             // Style as table: borders, header fill/bold, total row highlight
             val lastDataRow = totalRow - 1
@@ -277,12 +290,12 @@ object ShareExport {
             tx.width(4, 12.0)
 
             // Members sheet (0-based)
-            val ms = wb.newWorksheet("Members")
-            ms.value(0, 0, "Member")
-            ms.value(0, 1, "Amount Paid")
-            ms.value(0, 2, "Deposit")
-            ms.value(0, 3, "Expense Shared")
-            ms.value(0, 4, "Due Amount")
+            val ms = wb.newWorksheet(context.getString(com.ledge.splitbook.R.string.excel_sheet_members))
+            ms.value(0, 0, context.getString(com.ledge.splitbook.R.string.pdf_header_member))
+            ms.value(0, 1, context.getString(com.ledge.splitbook.R.string.amount_spent))
+            ms.value(0, 2, context.getString(com.ledge.splitbook.R.string.pdf_header_deposit))
+            ms.value(0, 3, context.getString(com.ledge.splitbook.R.string.expense_by).replace("by", "Shared"))
+            ms.value(0, 4, context.getString(com.ledge.splitbook.R.string.pdf_header_due_amount))
             memberSummaries.forEachIndexed { idx, s ->
                 val row = idx + 1
                 ms.value(row, 0, byId[s.memberId]?.name ?: "")
@@ -324,6 +337,6 @@ object ShareExport {
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "Share export"))
+        context.startActivity(Intent.createChooser(intent, context.getString(com.ledge.splitbook.R.string.share_export_chooser)))
     }
 }

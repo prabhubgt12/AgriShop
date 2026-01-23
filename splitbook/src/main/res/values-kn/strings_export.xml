@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Share/Export titles and headers (Kannada) -->
+    <string name="app_title_with_group">ಸಿಂಪಲ್ ಸ್ಪ್ಲಿಟ್ — %1$s</string>
+    <string name="share_transactions">ವಹಿವಾಟುಗಳು:</string>
+    <string name="share_transactions_header">ದಿನಾಂಕ | ಪಾವತಿ ಮಾಡಿದವರು | ವರ್ಗ | ವಿವರಣೆ | ಮೊತ್ತ</string>
+    <string name="share_total">ಒಟ್ಟು:</string>
+    <string name="share_members">ಸದಸ್ಯರು:</string>
+    <string name="share_members_header">ಸದಸ್ಯ | ಪಾವತಿಸಿದ ಮೊತ್ತ | ಹಂಚಿದ ವೆಚ್ಚ | ಬಾಕಿ ಮೊತ್ತ</string>
+    <string name="share_summary_chooser">ಸಾರಾಂಶ ಹಂಚಿಕೆ</string>
+    <string name="share_export_chooser">ರಫ್ತು ಹಂಚಿಕೆ</string>
+
+    <!-- PDF headers -->
+    <string name="pdf_transactions_title">ವಹಿವಾಟುಗಳು</string>
+    <string name="pdf_header_date">ದಿನಾಂಕ</string>
+    <string name="pdf_header_paid_by">ಪಾವತಿ ಮಾಡಿದವರು</string>
+    <string name="pdf_header_category">ವರ್ಗ</string>
+    <string name="pdf_header_description">ವಿವರಣೆ</string>
+    <string name="pdf_header_amount">ಮೊತ್ತ</string>
+    <string name="pdf_members_title">ಸದಸ್ಯರು</string>
+    <string name="pdf_header_member">ಸದಸ್ಯ</string>
+    <string name="pdf_header_paid">ಪಾವತಿಸಿದ</string>
+    <string name="pdf_header_deposit">ಠೇವಣಿ</string>
+    <string name="pdf_header_exp_share">ವೆಚ್ಚ ಹಂಚಿಕೆ</string>
+    <string name="pdf_header_due_amount">ಬಾಕಿ ಮೊತ್ತ</string>
+
+    <!-- Excel sheet names and headers -->
+    <string name="excel_sheet_transactions">ವಹಿವಾಟುಗಳು</string>
+    <string name="excel_sheet_members">ಸದಸ್ಯರು</string>
+    <string name="excel_header_total">ಒಟ್ಟು</string>
+</resources>

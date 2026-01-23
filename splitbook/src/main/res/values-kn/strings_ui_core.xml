@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amounts_percent_format">ಮೊತ್ತ: %1$.2f / %2$.2f • ಶೇಕಡಾ: %3$.0f%%</string>
+    <string name="split_equally_among">%1$d ಸದಸ್ಯರ ನಡುವೆ ಸಮವಾಗಿ ಹಂಚಿಕೆ</string>
+    <string name="no_members_hint">ಇನ್ನೂ ಸದಸ್ಯರನ್ನು ಸೇರಿಸಲಾಗಿಲ್ಲ.</string>
+    <string name="add_sample_members">ಮಾದರಿ ಸದಸ್ಯರನ್ನು ಸೇರಿಸಿ</string>
+</resources>

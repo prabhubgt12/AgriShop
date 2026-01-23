@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Share/Export titles and headers (Tamil) -->
+    <string name="app_title_with_group">சிம்பிள் ஸ்ப்லிட் — %1$s</string>
+    <string name="share_transactions">பரிவர்த்தனைகள்:</string>
+    <string name="share_transactions_header">தேதி | கட்டியவர் | வகை | விளக்கம் | தொகை</string>
+    <string name="share_total">மொத்தம்:</string>
+    <string name="share_members">உறுப்பினர்கள்:</string>
+    <string name="share_members_header">உறுப்பினர் | கட்டிய தொகை | பகிர்ந்த செலவு | நிலுவை</string>
+    <string name="share_summary_chooser">சுருக்கத்தை பகிர்</string>
+    <string name="share_export_chooser">ஏற்றுமதியை பகிர்</string>
+
+    <!-- PDF headers -->
+    <string name="pdf_transactions_title">பரிவர்த்தனைகள்</string>
+    <string name="pdf_header_date">தேதி</string>
+    <string name="pdf_header_paid_by">கட்டியவர்</string>
+    <string name="pdf_header_category">வகை</string>
+    <string name="pdf_header_description">விவரம்</string>
+    <string name="pdf_header_amount">தொகை</string>
+    <string name="pdf_members_title">உறுப்பினர்கள்</string>
+    <string name="pdf_header_member">உறுப்பினர்</string>
+    <string name="pdf_header_paid">கட்டியது</string>
+    <string name="pdf_header_deposit">வைப்பு</string>
+    <string name="pdf_header_exp_share">செலவு பகிர்வு</string>
+    <string name="pdf_header_due_amount">நிலுவை</string>
+
+    <!-- Excel sheet names and headers -->
+    <string name="excel_sheet_transactions">பரிவர்த்தனைகள்</string>
+    <string name="excel_sheet_members">உறுப்பினர்கள்</string>
+    <string name="excel_header_total">மொத்தம்</string>
+</resources>

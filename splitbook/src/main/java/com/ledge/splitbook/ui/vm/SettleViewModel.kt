@@ -216,7 +216,7 @@ class SettleViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val ok = memberRepo.removeMemberIfUnused(gid, memberId)
             if (!ok) {
-                _ui.value = _ui.value.copy(error = "Cannot remove: used in expenses")
+                _ui.value = _ui.value.copy(error = "REMOVE_USED")
             }
         }
     }

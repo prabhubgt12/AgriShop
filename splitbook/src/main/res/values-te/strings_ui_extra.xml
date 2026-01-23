@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add">జోడించు</string>
+    <!-- back, save, cancel, delete, ok exist in values-te/strings.xml -->
+    <string name="create">సృష్టించు</string>
+    <string name="remove">తొలగించు</string>
+    <string name="total">మొత్తం</string>
+    <string name="admin_label">అడ్మిన్</string>
+
+    <string name="cd_menu">మెను</string>
+    <string name="cd_back">వెనుకు</string>
+    <string name="cd_add">జోడించు</string>
+    <string name="cd_add_member">సభ్యుని జోడించు</string>
+    <string name="cd_more">ఇంకా ఎంపికలు</string>
+    <string name="cd_rename">పేరు మార్చు</string>
+    <string name="cd_remove">తొలగించు</string>
+
+    <string name="category_list_title">వర్గాల జాబితా</string>
+    <string name="no_categories_message">ఎటువంటి వర్గాలు లేవు. జోడించడానికి + నొక్కండి.</string>
+    <string name="rename">పేరు మార్చు</string>
+    <string name="delete_item">తొలగించు</string>
+    <string name="rename_category_title">వర్గం పేరును మార్చండి</string>
+    <string name="category_name_label">వర్గం పేరు</string>
+    <string name="add_new_category_title">కొత్త వర్గాన్ని జోడించండి</string>
+    <string name="enter_category_name_label">వర్గం పేరును నమోదు చేయండి</string>
+
+    <string name="groups_title">సింపుల్ స్ప్లిట్</string>
+    <string name="menu_manage_category">వర్గం నిర్వహణ</string>
+    <string name="menu_settings">అమరికలు</string>
+    <string name="menu_remove_ads">ప్రకటనలను తొలగించు</string>
+    <string name="menu_rate_it">రేట్ చేయండి</string>
+    <string name="fab_new_group">కొత్త గ్రూప్</string>
+    <string name="no_groups_message">ఇంకా గ్రూపులు లేవు. కొత్తదాన్ని సృష్టించడానికి + నొక్కండి.</string>
+    <string name="edit_group">గ్రూప్ ఎడిట్ చేయండి</string>
+    <string name="delete_group">గ్రూప్ తొలగించండి</string>
+    <string name="edit_group_title">గ్రూప్ ఎడిట్ చేయండి</string>
+    <string name="group_name_label">గ్రూప్ పేరు</string>
+    <string name="delete_group_title">గ్రూప్ తొలగించండి</string>
+    <string name="delete_group_message">ఇది గ్రూప్ మరియు దాని అన్ని డేటాను తొలగిస్తుంది. ఈ చర్యను తిరస్కరించలేరు.</string>
+    <string name="create_group_title">గ్రూప్ సృష్టించండి</string>
+    <string name="choose_icon">ఐకాన్ ఎంచుకోండి:</string>
+
+    <string name="members_title">సభ్యులు</string>
+    <string name="members_admin_suffix">%1$s (అడ్మిన్)</string>
+    <string name="members_rename_title">సభ్యుని పేరు మార్చండి</string>
+    <string name="members_new_name_label">కొత్త పేరు</string>
+    <string name="remove_member_title">సభ్యుని తొలగించండి</string>
+    <string name="remove_member_message">ఈ సభ్యుని తొలగించాలా? ఖర్చుల్లో ఉపయోగించని సభ్యులను మాత్రమే తొలగించవచ్చు.</string>
+    <string name="cannot_remove_used">తొలగించలేదు: ఖర్చుల్లో ఉపయోగించబడింది</string>
+</resources>

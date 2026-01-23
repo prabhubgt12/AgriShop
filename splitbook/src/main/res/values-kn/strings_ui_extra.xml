@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add">ಸೇರಿಸಿ</string>
+    <!-- back, save, cancel, delete, ok already exist in values-kn/strings.xml -->
+    <string name="create">ರಚಿಸಿ</string>
+    <string name="remove">ತೆಗೆದುಹಾಕಿ</string>
+    <string name="total">ಒಟ್ಟು</string>
+    <string name="admin_label">ನಿರ್ವಾಹಕ</string>
+
+    <string name="cd_menu">ಮೆನು</string>
+    <string name="cd_back">ಹಿಂದೆ</string>
+    <string name="cd_add">ಸೇರಿಸಿ</string>
+    <string name="cd_add_member">ಸದಸ್ಯರನ್ನು ಸೇರಿಸಿ</string>
+    <string name="cd_more">ಹೆಚ್ಚು ಆಯ್ಕೆಗಳು</string>
+    <string name="cd_rename">ಹೆಸರನ್ನು ಬದಲಿಸಿ</string>
+    <string name="cd_remove">ತೆಗೆದುಹಾಕಿ</string>
+
+    <string name="category_list_title">ವರ್ಗಗಳ ಪಟ್ಟಿ</string>
+    <string name="no_categories_message">ಯಾವುದೇ ವರ್ಗಗಳಿಲ್ಲ. ಸೇರಿಸಲು + ಒತ್ತಿ.</string>
+    <string name="rename">ಹೆಸರನ್ನು ಬದಲಿಸಿ</string>
+    <string name="delete_item">ಅಳಿಸಿ</string>
+    <string name="rename_category_title">ವರ್ಗದ ಹೆಸರನ್ನು ಬದಲಿಸಿ</string>
+    <string name="category_name_label">ವರ್ಗದ ಹೆಸರು</string>
+    <string name="add_new_category_title">ಹೊಸ ವರ್ಗ ಸೇರಿಸಿ</string>
+    <string name="enter_category_name_label">ವರ್ಗದ ಹೆಸರನ್ನು ನಮೂದಿಸಿ</string>
+
+    <string name="groups_title">ಸಿಂಪಲ್ ಸ್ಪ್ಲಿಟ್</string>
+    <string name="menu_manage_category">ವರ್ಗವನ್ನು ನಿರ್ವಹಿಸಿ</string>
+    <string name="menu_settings">ಸೆಟ್ಟಿಂಗ್ಗಳು</string>
+    <string name="menu_remove_ads">ಜಾಹೀರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಿ</string>
+    <string name="menu_rate_it">ರೇಟ್ ಮಾಡಿ</string>
+    <string name="fab_new_group">ಹೊಸ ಗುಂಪು</string>
+    <string name="no_groups_message">ಯಾವುದೇ ಗುಂಪಿಲ್ಲ. ಹೊಸದನ್ನು ರಚಿಸಲು + ಒತ್ತಿ.</string>
+    <string name="edit_group">ಗುಂಪನ್ನು ಸಂಪಾದಿಸಿ</string>
+    <string name="delete_group">ಗುಂಪನ್ನು ಅಳಿಸಿ</string>
+    <string name="edit_group_title">ಗುಂಪನ್ನು ಸಂಪಾದಿಸಿ</string>
+    <string name="group_name_label">ಗುಂಪಿನ ಹೆಸರು</string>
+    <string name="delete_group_title">ಗುಂಪನ್ನು ಅಳಿಸಿ</string>
+    <string name="delete_group_message">ಇದು ಗುಂಪು ಮತ್ತು ಅದರ ಎಲ್ಲಾ ಡೇಟಾವನ್ನು ಅಳಿಸುತ್ತದೆ. ಈ ಕ್ರಿಯೆಯನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="create_group_title">ಗುಂಪು ರಚಿಸಿ</string>
+    <string name="choose_icon">ಐಕಾನ್ ಆಯ್ಕೆ ಮಾಡಿ:</string>
+
+    <string name="members_title">ಸದಸ್ಯರು</string>
+    <string name="members_admin_suffix">%1$s (ನಿರ್ವಾಹಕ)</string>
+    <string name="members_rename_title">ಸದಸ್ಯರ ಹೆಸರನ್ನು ಬದಲಿಸಿ</string>
+    <string name="members_new_name_label">ಹೊಸ ಹೆಸರು</string>
+    <string name="remove_member_title">ಸದಸ್ಯರನ್ನು ತೆಗೆದುಹಾಕಿ</string>
+    <string name="remove_member_message">ಈ ಸದಸ್ಯರನ್ನು ತೆಗೆದುಹಾಕಬೇಕೇ? ಖರ್ಚುಗಳಲ್ಲಿ ಬಳಸದ ಸದಸ್ಯರನ್ನಷ್ಟೇ ತೆಗೆದುಹಾಕಬಹುದು.</string>
+    <string name="cannot_remove_used">ತೆಗೆದುಹಾಕಲಾಗುವುದಿಲ್ಲ: ಖರ್ಚುಗಳಲ್ಲಿ ಬಳಸಲಾಗಿದೆ</string>
+</resources>

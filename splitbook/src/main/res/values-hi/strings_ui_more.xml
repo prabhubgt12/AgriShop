@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="group">समूह</string>
+    <string name="group_with_id">समूह #%1$d</string>
+    <string name="share_as_text">टेक्स्ट के रूप में साझा करें</string>
+    <string name="export_pdf">PDF निर्यात</string>
+    <string name="export_excel">Excel निर्यात</string>
+    <string name="action_not_allowed">यह क्रिया अनुमति नहीं है</string>
+    <string name="members">सदस्य</string>
+    <string name="add_member">सदस्य जोड़ें</string>
+    <string name="admin">प्रशासक</string>
+    <string name="add_expense_for_member">सदस्य के लिए खर्च जोड़ें</string>
+    <string name="expense_chart">खर्च चार्ट</string>
+    <string name="member">सदस्य</string>
+    <string name="all">सभी</string>
+    <string name="from_label">से</string>
+    <string name="to_label">को</string>
+
+    <!-- Settings -->
+    <string name="theme">थीम</string>
+    <string name="dark_mode">डार्क मोड</string>
+    <string name="use_dark_theme">डार्क थीम का उपयोग करें</string>
+    <string name="google_backup">गूगल बैकअप</string>
+    <string name="not_signed_in">साइन इन नहीं है</string>
+    <string name="account">खाता</string>
+    <string name="sign_out">साइन आउट</string>
+    <string name="sign_in">साइन इन</string>
+    <string name="last_backup">अंतिम बैकअप</string>
+    <string name="restoring">पुनर्स्थापित हो रहा है...</string>
+    <string name="restore">पुनर्स्थापित करें</string>
+    <string name="backing_up">बैकअप हो रहा है...</string>
+    <string name="backup_now">अभी बैकअप लें</string>
+    <string name="never">कभी नहीं</string>
+    <string name="remove_ads">ऐड्स हटाएं</string>
+    <string name="ads_removed">विज्ञापन हटाए गए हैं</string>
+    <string name="remove_ads_purchase">विज्ञापन हटाने के लिए एक बार खरीदें</string>
+    <string name="buy_remove_ads">विज्ञापन हटाने की खरीदें</string>
+    <string name="thank_you">धन्यवाद</string>
+    <string name="premium_title">प्रीमियम</string>
+    <string name="ads_enabled_desc">विज्ञापन चालू हैं। स्थायी रूप से हटाने के लिए खरीदें।</string>
+    <string name="confirm_backup">बैकअप की पुष्टि करें</string>
+    <string name="confirm_backup_message">यह ड्राइव पर बैकअप बनाएगा और समान नाम वाले मौजूदा बैकअप को अधिलेखित कर सकता है। जारी रखें?</string>
+    <string name="confirm_restore">रीस्टोर की पुष्टि करें</string>
+    <string name="confirm_restore_message">यह चयनित बैकअप से आपके वर्तमान डेटा को अधिलेखित कर देगा। जारी रखें?</string>
+
+    <!-- Add/Edit Member dialog labels -->
+    <string name="member_name">सदस्य का नाम</string>
+    <string name="deposit_amount_optional">जमा राशि (वैकल्पिक)</string>
+    <string name="set_as_admin">एडमिन बनाएं</string>
+    <string name="set_as_admin_required">एडमिन बनाएं (आवश्यक)</string>
+    <string name="deposit_ignored_for_admin">एडमिन के लिए जमा को अनदेखा किया जाएगा।</string>
+    <string name="make_admin">एडमिन बनाएं</string>
+    <string name="make_admin_message">यह सदस्य एडमिन बना दिया जाएगा। इस सदस्य की कोई भी मौजूदा जमा राशि हटा दी जाएगी और अनदेखा की जाएगी। जारी रखें?</string>
+
+    <!-- Metrics labels (Settle details) -->
+    <string name="amount_share_by">साझा की गई राशि</string>
+    <string name="group_deposit">समूह जमा</string>
+    <string name="deposit_amount">जमा राशि</string>
+    <string name="due_refund">देय/रिफंड</string>
+
+    <!-- Settle buttons and UPI dialog -->
+    <string name="mark_as_paid">भुगतान के रूप में चिह्नित करें</string>
+    <string name="pay_via_upi">UPI से भुगतान करें</string>
+    <string name="upi_id_vpa">UPI आईडी (VPA)</string>
+    <string name="payee_name">प्राप्तकर्ता का नाम</string>
+    <string name="open_upi">UPI खोलें</string>
+</resources>

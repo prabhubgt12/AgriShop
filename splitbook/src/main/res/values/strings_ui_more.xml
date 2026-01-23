@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Additional safe UI strings to avoid corrupted base file -->
+    <string name="group">Group</string>
+    <string name="group_with_id">Group #%1$d</string>
+    <string name="share_as_text">Share as text</string>
+    <string name="export_pdf">Export PDF</string>
+    <string name="export_excel">Export Excel</string>
+    <string name="action_not_allowed">Action not allowed</string>
+    <string name="members">Members</string>
+    <string name="add_member">Add member</string>
+    <string name="admin">Admin</string>
+    <string name="add_expense_for_member">Add expense for member</string>
+    <string name="expense_chart">Expense chart</string>
+    <string name="member">Member</string>
+    <string name="all">All</string>
+    <string name="from_label">From</string>
+    <string name="to_label">To</string>
+
+    <!-- Settings strings -->
+    <string name="theme">Theme</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="use_dark_theme">Use dark theme</string>
+    <string name="google_backup">Google Backup</string>
+    <string name="not_signed_in">Not signed in</string>
+    <string name="account">Account</string>
+    <string name="sign_out">Sign out</string>
+    <string name="sign_in">Sign in</string>
+    <string name="last_backup">Last backup</string>
+    <string name="restoring">Restoring...</string>
+    <string name="restore">Restore</string>
+    <string name="backing_up">Backing up...</string>
+    <string name="backup_now">Backup now</string>
+    <string name="never">Never</string>
+    <string name="remove_ads">Remove ads</string>
+    <string name="ads_removed">Ads are removed</string>
+    <string name="remove_ads_purchase">One-time purchase to remove ads</string>
+    <string name="buy_remove_ads">Buy remove ads</string>
+    <string name="thank_you">Thank you</string>
+    <string name="premium_title">Premium</string>
+    <string name="ads_enabled_desc">Ads enabled. Purchase to remove permanently.</string>
+    <string name="confirm_backup">Confirm backup</string>
+    <string name="confirm_backup_message">This will create a backup on Drive and may overwrite existing backups with the same name. Continue?</string>
+    <string name="confirm_restore">Confirm restore</string>
+    <string name="confirm_restore_message">This will overwrite your current data with the selected backup. Continue?</string>
+
+    <!-- Add/Edit Member dialog labels -->
+    <string name="member_name">Member name</string>
+    <string name="deposit_amount_optional">Deposit amount (optional)</string>
+    <string name="set_as_admin">Set as Admin</string>
+    <string name="set_as_admin_required">Set as Admin (required)</string>
+    <string name="deposit_ignored_for_admin">Deposit will be ignored for admin.</string>
+    <string name="make_admin">Make Admin</string>
+    <string name="make_admin_message">This member will become admin. Any existing deposit for this member will be removed and ignored. Continue?</string>
+
+    <!-- Metrics labels (Settle details) -->
+    <string name="amount_share_by">Amount Share By</string>
+    <string name="group_deposit">Group Deposit</string>
+    <string name="deposit_amount">Deposit Amount</string>
+    <string name="due_refund">Due/Refund</string>
+</resources>

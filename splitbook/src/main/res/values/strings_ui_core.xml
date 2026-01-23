@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core UI strings (safe file to avoid corrupted base) -->
+    <!-- Add/Edit Expense -->
+    <string name="add_expense">Add Expense</string>
+    <string name="edit_expense">Edit Expense</string>
+    <string name="description">Description</string>
+    <string name="amount">Amount</string>
+    <string name="paid_by">Paid By</string>
+    <string name="select_member">Select member</string>
+    <string name="category">Category</string>
+    <string name="select_category">Select category</string>
+    <string name="add_category">Add category</string>
+    <string name="add_new_category">Add New Category</string>
+    <string name="enter_category_name">Enter category name</string>
+    <string name="date_ymd">Date (YYYY-MM-DD)</string>
+    <string name="pick_date">Pick date</string>
+    <string name="expense_share_by_all">Share equally with all</string>
+    <string name="select_members">Select members</string>
+    <string name="selected_count">%1 selected</string>
+    <string name="select_person">Select person</string>
+    <string name="percent_sign">%</string>
+    <string name="note_amounts_or_percentages">Enter amounts or percentages</string>
+    <string name="amounts_percent_format">Amounts: %1$.2f / %2$.2f • Percent: %3$.0f%%</string>
+    <string name="split_equally_among">Split equally among %1 members</string>
+    <string name="no_members_hint">No members added yet.</string>
+    <string name="add_sample_members">Add sample members</string>
+
+    <!-- Transactions / Common fields -->
+    <string name="total_amount">Total Amount</string>
+    <string name="uncategorized">Uncategorized</string>
+    <string name="more">More</string>
+    <string name="date">Date</string>
+    <string name="edit">Edit</string>
+    <string name="close">Close</string>
+    <string name="delete_transaction_q">Delete transaction?</string>
+    <string name="action_cannot_be_undone">This action cannot be undone.</string>
+    <string name="expense_by">Expense by</string>
+    <string name="shared_by">Shared by</string>
+    <string name="amount_spent">Amount Spent</string>
+    <string name="due_amount">Due Amount</string>
+
+    <!-- Settings -->
+    <string name="backup_completed">Backup completed.</string>
+    <string name="language">Language</string>
+    <string name="select_language">Select language</string>
+    <string name="currency">Currency</string>
+    <string name="select_currency">Select currency</string>
+    <string name="show_currency_symbol">Show currency symbol</string>
+
+    <!-- Settle / Settle Details -->
+    <string name="settle_up">Settle Up</string>
+    <string name="all_settled">All settled</string>
+    <string name="no_pending_transfers">No pending transfers</string>
+    <string name="mark_as_paid">Mark as paid</string>
+    <string name="pay_via_upi">Pay via UPI</string>
+    <string name="upi_id_vpa">UPI ID (VPA)</string>
+    <string name="payee_name">Payee name</string>
+    <string name="open_upi">Open UPI</string>
+
+    <!-- Split-by labels -->
+    <string name="split_by_all">All</string>
+    <string name="split_by_category">Category</string>
+    <string name="split_by_date">Date</string>
+    <string name="split_by_member">Member</string>
+
+    <!-- Misc for settlement note -->
+    <string name="settlement_note">%1 settlement</string>
+</resources>

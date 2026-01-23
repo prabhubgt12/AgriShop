@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="group">గుంపు</string>
+    <string name="group_with_id">గుంపు #%1$d</string>
+    <string name="share_as_text">పాఠ్యంగా పంచుకోండి</string>
+    <string name="export_pdf">PDF ఎగుమతి</string>
+    <string name="export_excel">Excel ఎగుమతి</string>
+    <string name="action_not_allowed">చర్య అనుమతించబడలేదు</string>
+    <string name="members">సభ్యులు</string>
+    <string name="add_member">సభ్యుని జోడించు</string>
+    <string name="admin">అడ్మిన్</string>
+    <string name="add_expense_for_member">సభ్యుని కోసం ఖర్చు జోడించు</string>
+    <string name="expense_chart">ఖర్చు చార్ట్</string>
+    <string name="member">సభ్యుడు</string>
+    <string name="all">అన్ని</string>
+    <string name="from_label">నుండి</string>
+    <string name="to_label">కు</string>
+    <string name="mark_as_paid">చెల్లించినట్లు గుర్తించండి</string>
+    <string name="pay_via_upi">UPI ద్వారా చెల్లించండి</string>
+    <string name="upi_id_vpa">UPI ID (VPA)</string>
+    <string name="payee_name">గ్రహీత పేరు</string>
+    <string name="open_upi">UPI తెరవండి</string>
+
+    <!-- Settings -->
+    <string name="theme">థీమ్</string>
+    <string name="dark_mode">డార్క్ మోడ్</string>
+    <string name="use_dark_theme">డార్క్ థీమ్ ఉపయోగించండి</string>
+    <string name="google_backup">Google బ్యాకప్</string>
+    <string name="not_signed_in">సైన్ ఇన్ కాలేదు</string>
+    <string name="account">ఖాతా</string>
+    <string name="sign_out">సైన్ అవుట్</string>
+    <string name="sign_in">సైన్ ఇన్</string>
+    <string name="last_backup">చివరి బ్యాకప్</string>
+    <string name="restoring">పునరుద్ధరిస్తోంది...</string>
+    <string name="restore">పునరుద్ధరించు</string>
+    <string name="backing_up">బ్యాకప్ తీసుకుంటోంది...</string>
+    <string name="backup_now">ఇప్పుడే బ్యాకప్ చేయండి</string>
+    <string name="never">ఎప్పుడూ కాదు</string>
+    <string name="remove_ads">యాడ్స్ తొలగించు</string>
+    <string name="ads_removed">ప్రకటనలు తొలగించబడ్డాయి</string>
+    <string name="remove_ads_purchase">ప్రకటనలను తొలగించేందుకు ఒకసారి కొనుగోలు</string>
+    <string name="buy_remove_ads">ప్రకటనల తొలగింపు కొనుగోలు చేయండి</string>
+    <string name="thank_you">ధన్యవాదాలు</string>
+    <string name="premium_title">ప్రీమియం</string>
+    <string name="ads_enabled_desc">యాడ్స్ ఆన్‌లో ఉన్నాయి. శాశ్వతంగా తీసేయడానికి కొనండి.</string>
+    <string name="confirm_backup">బ్యాకప్ నిర్ధారించండి</string>
+    <string name="confirm_backup_message">ఇది డ్రైవ్‌లో బ్యాకప్ సృష్టిస్తుంది మరియు అదే పేరుతో ఉన్న బ్యాకప్‌ను మళ్లీ వ్రాయవచ్చు. కొనసాగాలా?</string>
+    <string name="confirm_restore">రీస్టోర్‌ను నిర్ధారించండి</string>
+    <string name="confirm_restore_message">ఇది ఎంపిక చేసిన బ్యాకప్‌తో మీ ప్రస్తుత డేటాను మళ్లీ వ్రాస్తుంది. కొనసాగాలా?</string>
+
+    <!-- Add/Edit Member dialog labels -->
+    <string name="member_name">సభ్యుని పేరు</string>
+    <string name="deposit_amount_optional">డిపాజిట్ మొత్తం (ఐచ్ఛికం)</string>
+    <string name="set_as_admin">అడ్మిన్‌గా సెట్ చేయండి</string>
+    <string name="set_as_admin_required">అడ్మిన్‌గా సెట్ చేయండి (అవసరం)</string>
+    <string name="deposit_ignored_for_admin">అడ్మిన్ కోసం డిపాజిట్ పరిగణలోకి తీసుకోబడదు.</string>
+    <string name="make_admin">అడ్మిన్ చేయండి</string>
+    <string name="make_admin_message">ఈ సభ్యుడు అడ్మిన్ అవుతాడు. ఈ సభ్యునికి ఉన్న డిపాజిట్ తొలగించబడుతుంది మరియు పక్కన పెట్టబడుతుంది. కొనసాగాలా?</string>
+
+    <!-- Metrics labels (Settle details) -->
+    <string name="amount_share_by">పంచుకున్న మొత్తం</string>
+    <string name="group_deposit">గ్రూప్ డిపాజిట్</string>
+    <string name="deposit_amount">డిపాజిట్ మొత్తం</string>
+    <string name="due_refund">బకాయి/రిఫండ్</string>
+</resources>

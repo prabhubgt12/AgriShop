@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun AddMemberDialog(
@@ -24,25 +25,27 @@ fun AddMemberDialog(
     initialName: String = "",
     initialDeposit: String = "",
     nameReadOnly: Boolean = false,
-    confirmLabel: String = "Add",
+    confirmLabel: String? = null,
     showAdminOption: Boolean = false,
     adminRequired: Boolean = false,
-    title: String = "Add Member",
+    title: String? = null,
     initialIsAdmin: Boolean = false
 ) {
     var name by remember { mutableStateOf(initialName) }
     var deposit by remember { mutableStateOf(initialDeposit) }
     var isAdmin by remember { mutableStateOf(if (adminRequired) true else initialIsAdmin) }
     var showAdminWarn by remember { mutableStateOf(false) }
+    val resolvedTitle = title ?: stringResource(id = com.ledge.splitbook.R.string.add_member)
+    val resolvedConfirm = confirmLabel ?: stringResource(id = com.ledge.splitbook.R.string.add)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = { Text(resolvedTitle) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Member name") },
+                    label = { Text(stringResource(id = com.ledge.splitbook.R.string.member_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = nameReadOnly
                 )
@@ -58,7 +61,7 @@ fun AddMemberDialog(
                                 else -> parts[0] + "." + parts.drop(1).joinToString("").replace(".", "")
                             }
                         },
-                        label = { Text("Deposit amount (optional)") },
+                        label = { Text(stringResource(id = com.ledge.splitbook.R.string.deposit_amount_optional)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -77,24 +80,27 @@ fun AddMemberDialog(
                             }
                             isAdmin = next
                         })
-                        Text(if (adminRequired) "Set as Admin (required)" else "Set as Admin")
+                        Text(if (adminRequired) stringResource(id = com.ledge.splitbook.R.string.set_as_admin_required) else stringResource(id = com.ledge.splitbook.R.string.set_as_admin))
                     }
                     if (isAdmin) {
-                        Text("Deposit will be ignored for admin.", color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(id = com.ledge.splitbook.R.string.deposit_ignored_for_admin), color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onAdd(name, deposit, isAdmin) }) { Text(confirmLabel) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = {
+            val canAdd = name.trim().isNotEmpty()
+            TextButton(enabled = canAdd, onClick = { onAdd(name, deposit, isAdmin) }) { Text(resolvedConfirm) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(id = com.ledge.splitbook.R.string.cancel)) } }
     )
 
     if (showAdminWarn) {
         AlertDialog(
             onDismissRequest = { showAdminWarn = false },
-            title = { Text("Make Admin") },
-            text = { Text("This member will become admin. Any existing deposit for this member will be removed and ignored. Continue?") },
-            confirmButton = { TextButton(onClick = { showAdminWarn = false }) { Text("OK") } },
+            title = { Text(stringResource(id = com.ledge.splitbook.R.string.make_admin)) },
+            text = { Text(stringResource(id = com.ledge.splitbook.R.string.make_admin_message)) },
+            confirmButton = { TextButton(onClick = { showAdminWarn = false }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) } },
             dismissButton = {}
         )
     }

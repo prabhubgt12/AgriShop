@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string name="add">जोड़ें</string>
+    <string name="save">सहेजें</string>
+    <!-- cancel, delete, back already exist in values-hi/strings.xml -->
+    <string name="ok">ठीक है</string>
+    <string name="create">बनाएँ</string>
+    <string name="remove">हटाएँ</string>
+    <string name="total">कुल</string>
+    <string name="admin_label">प्रशासक</string>
+
+    <string name="cd_menu">मेनू</string>
+    <string name="cd_back">वापस</string>
+    <string name="cd_add">जोड़ें</string>
+    <string name="cd_add_member">सदस्य जोड़ें</string>
+    <string name="cd_more">अधिक विकल्प</string>
+    <string name="cd_rename">नाम बदलें</string>
+    <string name="cd_remove">हटाएँ</string>
+
+    <string name="category_list_title">श्रेणी सूची</string>
+    <string name="no_categories_message">कोई श्रेणियाँ नहीं। जोड़ने के लिए + दबाएँ।</string>
+    <string name="rename">नाम बदलें</string>
+    <string name="delete_item">हटाएं</string>
+    <string name="rename_category_title">श्रेणी का नाम बदलें</string>
+    <string name="category_name_label">श्रेणी का नाम</string>
+    <string name="add_new_category_title">नई श्रेणी जोड़ें</string>
+    <string name="enter_category_name_label">श्रेणी का नाम दर्ज करें</string>
+
+    <string name="groups_title">सिंपल स्प्लिट</string>
+    <string name="menu_manage_category">श्रेणी प्रबंधित करें</string>
+    <string name="menu_settings">सेटिंग्स</string>
+    <string name="menu_remove_ads">विज्ञापन हटाएँ</string>
+    <string name="menu_rate_it">रेट करें</string>
+    <string name="fab_new_group">नया समूह</string>
+    <string name="no_groups_message">अभी कोई समूह नहीं। नया बनाने के लिए + दबाएँ।</string>
+    <string name="edit_group">समूह संपादित करें</string>
+    <string name="delete_group">समूह हटाएँ</string>
+    <string name="edit_group_title">समूह संपादित करें</string>
+    <string name="group_name_label">समूह का नाम</string>
+    <string name="delete_group_title">समूह हटाएँ</string>
+    <string name="delete_group_message">यह समूह और उसके सभी डेटा को हटा देगा। यह क्रिया पूर्ववत नहीं की जा सकती।</string>
+    <string name="create_group_title">समूह बनाएँ</string>
+    <string name="choose_icon">आइकन चुनें:</string>
+
+    <string name="members_title">सदस्य</string>
+    <string name="members_admin_suffix">%1$s (प्रशासक)</string>
+    <string name="members_rename_title">सदस्य का नाम बदलें</string>
+    <string name="members_new_name_label">नया नाम</string>
+    <string name="remove_member_title">सदस्य हटाएँ</string>
+    <string name="remove_member_message">क्या आप इस सदस्य को हटाना चाहते हैं? केवल वे सदस्य हटाए जा सकते हैं जो खर्चों में उपयोग नहीं हुए हैं।</string>
+    <string name="cannot_remove_used">हटाया नहीं जा सकता: खर्चों में उपयोग किया गया है</string>
+</resources>

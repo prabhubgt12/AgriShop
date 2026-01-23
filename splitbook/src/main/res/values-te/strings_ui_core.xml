@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amounts_percent_format">మొత్తం: %1$.2f / %2$.2f • శాతం: %3$.0f%%</string>
+    <string name="split_equally_among">%1$d సభ్యుల మధ్య సమానంగా పంచండి</string>
+    <string name="no_members_hint">ఇప్పటికీ ఎలాంటి సభ్యులు జోడించలేదు.</string>
+    <string name="add_sample_members">నమూనా సభ్యులను జోడించండి</string>
+</resources>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="group">குழு</string>
+    <string name="group_with_id">குழு #%1$d</string>
+    <string name="share_as_text">உரையாக பகிர்</string>
+    <string name="export_pdf">PDF ஏற்றுமதி</string>
+    <string name="export_excel">Excel ஏற்றுமதி</string>
+    <string name="action_not_allowed">இந்த செயல் அனுமதிக்கப்படவில்லை</string>
+    <string name="members">உறுப்பினர்கள்</string>
+    <string name="add_member">உறுப்பினரைச் சேர்க்க</string>
+    <string name="admin">நிர்வாகி</string>
+    <string name="add_expense_for_member">உறுப்பினருக்கு செலவு சேர்க்க</string>
+    <string name="expense_chart">செலவு வரைபடம்</string>
+    <string name="member">உறுப்பினர்</string>
+    <string name="all">அனைத்தும்</string>
+    <string name="from_label">இருந்து</string>
+    <string name="to_label">க்கு</string>
+    <string name="mark_as_paid">செலுத்தப்பட்டது என்று குறிக்கவும்</string>
+    <string name="pay_via_upi">UPI மூலம் செலுத்தவும்</string>
+    <string name="upi_id_vpa">UPI ஐடி (VPA)</string>
+    <string name="payee_name">பெறுநரின் பெயர்</string>
+    <string name="open_upi">UPI திறக்க</string>
+
+    <!-- Settings -->
+    <string name="theme">தீம்</string>
+    <string name="dark_mode">டார்க் மோடு</string>
+    <string name="use_dark_theme">டார்க் தீமைக் பயன்படுத்தவும்</string>
+    <string name="google_backup">Google காப்புப்பிரதி</string>
+    <string name="not_signed_in">உள்நுழையவில்லை</string>
+    <string name="account">கணக்கு</string>
+    <string name="sign_out">வெளியேறு</string>
+    <string name="sign_in">உள்நுழை</string>
+    <string name="last_backup">கடைசி காப்புப்பிரதி</string>
+    <string name="restoring">மீட்டெடுக்கப்படுகிறது...</string>
+    <string name="restore">மீட்டெடுக்கவும்</string>
+    <string name="backing_up">காப்புப்பிரதி எடுக்கப்படுகிறது...</string>
+    <string name="backup_now">இப்போது காப்புப்பிரதி எடுக்கவும்</string>
+    <string name="never">ஒருபோதும் இல்லை</string>
+    <string name="remove_ads">அட்ஸ் நீக்கு</string>
+    <string name="ads_removed">விளம்பரங்கள் நீக்கப்பட்டுள்ளன</string>
+    <string name="remove_ads_purchase">விளம்பரங்களை நீக்க ஒருமுறை வாங்குதல்</string>
+    <string name="buy_remove_ads">விளம்பர நீக்கத்தை வாங்கவும்</string>
+    <string name="thank_you">நன்றி</string>
+    <string name="premium_title">ப்ரீமியம்</string>
+    <string name="ads_enabled_desc">விளம்பரங்கள் இயங்குகின்றன. நிரந்தரமாக நீக்க வாங்கவும்.</string>
+    <string name="confirm_backup">காப்புப்பிரதியை உறுதிப்படுத்தவும்</string>
+    <string name="confirm_backup_message">இது டிரைவில் காப்புப்பிரதியை உருவாக்கும் மற்றும் அதே பெயரில் உள்ள காப்புப்பிரதியை மேலெழுதக்கூடும். தொடரவா?</string>
+    <string name="confirm_restore">மீட்டெடுப்பை உறுதிப்படுத்தவும்</string>
+    <string name="confirm_restore_message">இது தேர்ந்தெடுத்த காப்புப்பிரதியால் உங்கள் தற்போதைய தரவு மேலெழுதப்படும். தொடரவா?</string>
+
+    <!-- Add/Edit Member dialog labels -->
+    <string name="member_name">உறுப்பினரின் பெயர்</string>
+    <string name="deposit_amount_optional">வைப்பு தொகை (விருப்பம்)</string>
+    <string name="set_as_admin">நிர்வாகியாக அமைக்கவும்</string>
+    <string name="set_as_admin_required">நிர்வாகியாக அமைக்கவும் (தேவையானது)</string>
+    <string name="deposit_ignored_for_admin">நிர்வாகிக்கு வைப்பு கணக்கில் எடுத்துக்கொள்ளப்படாது.</string>
+    <string name="make_admin">நிர்வாகியாக மாற்றவும்</string>
+    <string name="make_admin_message">இந்த உறுப்பினர் நிர்வாகியாக மாற்றப்படுவார். இந்த உறுப்பினருக்கான ஏதேனும் உள்ள வைப்பு நீக்கப்படும் மற்றும் புறக்கணிக்கப்படும். தொடரவா?</string>
+
+    <!-- Metrics labels (Settle details) -->
+    <string name="amount_share_by">பகிரப்பட்ட தொகை</string>
+    <string name="group_deposit">குழு வைப்பு</string>
+    <string name="deposit_amount">வைப்பு தொகை</string>
+    <string name="due_refund">செலுத்த வேண்டியது/திருப்பிச் செலுத்து</string>
+</resources>

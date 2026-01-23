@@ -47,6 +47,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
 import androidx.compose.material3.LocalMinimumTouchTargetEnforcement
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -73,7 +74,7 @@ fun TransactionsScreen(
     val currency = settings.currency
     var detailsForId by remember { mutableStateOf<Long?>(null) }
     var confirmDeleteForId by remember { mutableStateOf<Long?>(null) }
-    // Split-by filter shared between AppBar and body (default to All)
+    // Split-by filter shared between AppBar and body (default to All). Internal values: All/Category/Date/Member
     var splitBy by remember { mutableStateOf("All") }
 
     Scaffold(
@@ -91,12 +92,24 @@ fun TransactionsScreen(
                                 contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
-                            Text(splitBy, color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary)
+                            val splitLabel = when (splitBy) {
+                                "Date" -> stringResource(id = com.ledge.splitbook.R.string.date)
+                                "Member" -> stringResource(id = com.ledge.splitbook.R.string.member)
+                                "Category" -> stringResource(id = com.ledge.splitbook.R.string.category)
+                                else -> stringResource(id = com.ledge.splitbook.R.string.all)
+                            }
+                            Text(splitLabel, color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary)
                             androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = ddOpen)
                         }
                         DropdownMenu(expanded = ddOpen, onDismissRequest = { ddOpen = false }) {
                             listOf("All", "Category", "Date", "Member").forEach { option ->
-                                DropdownMenuItem(text = { Text(option) }, onClick = { ddOpen = false; splitBy = option })
+                                val label = when (option) {
+                                    "Date" -> stringResource(id = com.ledge.splitbook.R.string.date)
+                                    "Member" -> stringResource(id = com.ledge.splitbook.R.string.member)
+                                    "Category" -> stringResource(id = com.ledge.splitbook.R.string.category)
+                                    else -> stringResource(id = com.ledge.splitbook.R.string.all)
+                                }
+                                DropdownMenuItem(text = { Text(label) }, onClick = { ddOpen = false; splitBy = option })
                             }
                         }
                     }
@@ -146,8 +159,9 @@ fun TransactionsScreen(
 
                     // Left: previous title at extreme start, tap to go prev
                     if (prev != null) {
+                        val prevLabel = if (prev == "All") stringResource(id = com.ledge.splitbook.R.string.all) else prev
                         Text(
-                            prev,
+                            prevLabel,
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                             maxLines = 1,
                             textAlign = TextAlign.Start,
@@ -159,8 +173,9 @@ fun TransactionsScreen(
 
                     // Center: current title with white underline
                     Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                        val currLabel = if (curr == "All") stringResource(id = com.ledge.splitbook.R.string.all) else curr
                         Text(
-                            curr,
+                            currLabel,
                             fontWeight = FontWeight.SemiBold,
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
                             maxLines = 1,
@@ -174,8 +189,9 @@ fun TransactionsScreen(
                     }
                     // Right: next title at extreme end, tap to go next
                     if (next != null) {
+                        val nextLabel = if (next == "All") stringResource(id = com.ledge.splitbook.R.string.all) else next
                         Text(
-                            next,
+                            nextLabel,
                             color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                             maxLines = 1,
                             textAlign = TextAlign.End,
@@ -206,7 +222,7 @@ fun TransactionsScreen(
                                     modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Total Amount", fontWeight = FontWeight.SemiBold, color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
+                                    Text(stringResource(id = com.ledge.splitbook.R.string.total_amount), fontWeight = FontWeight.SemiBold, color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
                                     Text(formatAmount(groupTotal, currency), fontWeight = FontWeight.SemiBold, color = androidx.compose.material3.MaterialTheme.colorScheme.primary)
                                 }
                                 // Divider between total and list to appear as one card
@@ -236,7 +252,7 @@ fun TransactionsScreen(
                                                 Text(pretty, style = androidx.compose.material3.MaterialTheme.typography.bodySmall, color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant)
                                             }
                                             Text(
-                                                "Category: ${e.category.ifBlank { "Uncategorized" }}",
+                                                stringResource(id = com.ledge.splitbook.R.string.category) + ": " + (e.category.ifBlank { stringResource(id = com.ledge.splitbook.R.string.uncategorized) }),
                                                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                                                 color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -257,14 +273,14 @@ fun TransactionsScreen(
                                                 ) {
                                                     Icon(
                                                         Icons.Default.MoreVert,
-                                                        contentDescription = "More",
+                                                        contentDescription = stringResource(id = com.ledge.splitbook.R.string.more),
                                                         modifier = Modifier.size(18.dp)
                                                     )
                                                 }
                                             }
                                             DropdownMenu(expanded = overflowOpen, onDismissRequest = { overflowOpen = false }) {
-                                                DropdownMenuItem(text = { Text("Edit") }, onClick = { overflowOpen = false; onEdit(e.id) })
-                                                DropdownMenuItem(text = { Text("Delete") }, onClick = { overflowOpen = false; confirmDeleteForId = e.id })
+                                                DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.edit)) }, onClick = { overflowOpen = false; onEdit(e.id) })
+                                                DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.delete)) }, onClick = { overflowOpen = false; confirmDeleteForId = e.id })
                                             }
                                         }
                                     }
@@ -296,16 +312,16 @@ fun TransactionsScreen(
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                            Text("Amount")
+                            Text(stringResource(id = com.ledge.splitbook.R.string.amount))
                             Text(formatAmount(e.amount, currency))
                         }
-                        e.createdAt?.let { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Date"); Text(it) } }
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Category"); Text(e.category) }
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Expense by"); Text(payer) }
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Shared by"); Text(sharedBy.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }) }
+                        e.createdAt?.let { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(id = com.ledge.splitbook.R.string.date)); Text(it) } }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(id = com.ledge.splitbook.R.string.category)); Text(e.category) }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(id = com.ledge.splitbook.R.string.expense_by)); Text(payer) }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(id = com.ledge.splitbook.R.string.shared_by)); Text(sharedBy.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }) }
                     }
                 },
-                confirmButton = { TextButton(onClick = { detailsForId = null }) { Text("Close") } }
+                confirmButton = { TextButton(onClick = { detailsForId = null }) { Text(stringResource(id = com.ledge.splitbook.R.string.close)) } }
             )
         } else {
             detailsForId = null
@@ -317,16 +333,16 @@ fun TransactionsScreen(
     if (delId != null) {
         AlertDialog(
             onDismissRequest = { confirmDeleteForId = null },
-            title = { Text("Delete transaction?") },
-            text = { Text("This action cannot be undone.") },
+            title = { Text(stringResource(id = com.ledge.splitbook.R.string.delete_transaction_q)) },
+            text = { Text(stringResource(id = com.ledge.splitbook.R.string.action_cannot_be_undone)) },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteExpense(delId)
                     confirmDeleteForId = null
                     onDelete(delId)
-                }) { Text("Delete") }
+                }) { Text(stringResource(id = com.ledge.splitbook.R.string.delete)) }
             },
-            dismissButton = { TextButton(onClick = { confirmDeleteForId = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { confirmDeleteForId = null }) { Text(stringResource(id = com.ledge.splitbook.R.string.cancel)) } }
         )
     }
 }

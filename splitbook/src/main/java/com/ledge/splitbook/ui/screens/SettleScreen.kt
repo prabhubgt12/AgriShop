@@ -70,6 +70,7 @@ import com.ledge.splitbook.ui.vm.SettingsViewModel
 import com.ledge.splitbook.util.formatAmount
 import com.ledge.splitbook.ui.components.AddMemberDialog
 import kotlin.math.abs
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,18 +102,19 @@ fun SettleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (groupName.isNotBlank()) groupName else "Group") },
+                title = { Text(if (groupName.isNotBlank()) groupName else stringResource(id = com.ledge.splitbook.R.string.group)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = com.ledge.splitbook.R.string.back)) }
                 },
                 actions = {
                     var menuOpen by remember { mutableStateOf(false) }
-                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = "Menu") }
+                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(id = com.ledge.splitbook.R.string.more)) }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                        DropdownMenuItem(text = { Text("Share as Text") }, onClick = {
+                        DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.share_as_text)) }, onClick = {
                             menuOpen = false
-                            val groupName = "Group ${ui.groupId}"
+                            val groupName = context.getString(com.ledge.splitbook.R.string.group_with_id, ui.groupId)
                             val summary = ShareExport.buildTextSummary(
+                                context = context,
                                 groupName = groupName,
                                 members = ui.members,
                                 expenses = ui.expenses,
@@ -121,9 +123,9 @@ fun SettleScreen(
                             )
                             ShareExport.shareText(context, summary)
                         })
-                        DropdownMenuItem(text = { Text("Export PDF") }, onClick = {
+                        DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.export_pdf)) }, onClick = {
                             menuOpen = false
-                            val groupName = "Group ${ui.groupId}"
+                            val groupName = context.getString(com.ledge.splitbook.R.string.group_with_id, ui.groupId)
                             val uri = ShareExport.exportPdf(
                                 context = context,
                                 groupName = groupName,
@@ -134,9 +136,9 @@ fun SettleScreen(
                             )
                             ShareExport.shareFile(context, uri, "application/pdf")
                         })
-                        DropdownMenuItem(text = { Text("Export Excel") }, onClick = {
+                        DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.export_excel)) }, onClick = {
                             menuOpen = false
-                            val groupName = "Group ${ui.groupId}"
+                            val groupName = context.getString(com.ledge.splitbook.R.string.group_with_id, ui.groupId)
                             val uri = ShareExport.exportExcel(
                                 context = context,
                                 groupName = groupName,
@@ -151,11 +153,15 @@ fun SettleScreen(
 
     // Error alert for operations like delete not allowed
     if (ui.error != null) {
+        val msg = when (ui.error) {
+            "REMOVE_USED" -> stringResource(id = com.ledge.splitbook.R.string.cannot_remove_used)
+            else -> ui.error ?: ""
+        }
         AlertDialog(
             onDismissRequest = { viewModel.clearError() },
-            title = { Text("Action not allowed") },
-            text = { Text(ui.error ?: "") },
-            confirmButton = { TextButton(onClick = { viewModel.clearError() }) { Text("OK") } }
+            title = { Text(stringResource(id = com.ledge.splitbook.R.string.action_not_allowed)) },
+            text = { Text(msg) },
+            confirmButton = { TextButton(onClick = { viewModel.clearError() }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) } }
         )
     }
 
@@ -212,13 +218,13 @@ fun SettleScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Members",
+                                stringResource(id = com.ledge.splitbook.R.string.members),
                                 style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                                 color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Add member",
+                                contentDescription = stringResource(id = com.ledge.splitbook.R.string.add_member),
                                 modifier = Modifier
                                     .size(24.dp)
                                     .clickable { showAddMember = true }
@@ -235,7 +241,7 @@ fun SettleScreen(
                                 androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                     AvatarCircle(name = m.name)
                                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Text(if (m.isAdmin) "${m.name} (Admin)" else m.name, fontWeight = FontWeight.Medium)
+                                        Text(if (m.isAdmin) m.name + " (" + stringResource(id = com.ledge.splitbook.R.string.admin) + ")" else m.name, fontWeight = FontWeight.Medium)
                                         val summary = ui.memberSummaries.firstOrNull { it.memberId == m.id }
                                         val paid = summary?.amountPaid ?: 0.0
                                         val shared = summary?.expenseShared ?: 0.0
@@ -244,15 +250,15 @@ fun SettleScreen(
                                         val due = dueBase + paid - shared
                                         val dueColor = if (due >= 0) Color(0xFF16A34A) else Color(0xFFDC2626)
                                         Text(
-                                            "Due Amount: ${formatAmount(kotlin.math.abs(due), currency).let { if (due >= 0) "+$it" else "-$it" }}",
+                                            stringResource(id = com.ledge.splitbook.R.string.due_amount) + ": " + (formatAmount(kotlin.math.abs(due), currency).let { if (due >= 0) "+$it" else "-$it" }),
                                             color = dueColor,
                                             style = androidx.compose.material3.MaterialTheme.typography.bodySmall
                                         )
                                         val paidStr = formatAmount(paid, currency)
-                                        Text("Amount Spent: $paidStr", style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                                        Text(stringResource(id = com.ledge.splitbook.R.string.amount_spent) + ": " + paidStr, style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
                                     }
                                 }
-                                IconButton(onClick = { onAddExpense(m.id) }) { Icon(Icons.Default.Add, contentDescription = "Add expense for member") }
+                                IconButton(onClick = { onAddExpense(m.id) }) { Icon(Icons.Default.Add, contentDescription = stringResource(id = com.ledge.splitbook.R.string.add_expense_for_member)) }
                             }
                             if (idx != ui.members.lastIndex) {
                                 Divider(modifier = Modifier.padding(vertical = 8.dp))
@@ -280,7 +286,7 @@ fun SettleScreen(
                             val total = ui.expenses.sumOf { it.amount }
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
-                                    "Total",
+                                    stringResource(id = com.ledge.splitbook.R.string.total),
                                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -305,20 +311,30 @@ fun SettleScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Expense Chart")
+                                Text(stringResource(id = com.ledge.splitbook.R.string.expense_chart))
                                 androidx.compose.foundation.layout.Box(modifier = Modifier) {
                                     androidx.compose.material3.TextButton(
                                         onClick = { ddOpen = true },
                                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                                     ) {
-                                        Text(splitBy)
+                                        val splitLabel = when (splitBy) {
+                                            "Date" -> stringResource(id = com.ledge.splitbook.R.string.date)
+                                            "Member" -> stringResource(id = com.ledge.splitbook.R.string.member)
+                                            else -> stringResource(id = com.ledge.splitbook.R.string.category)
+                                        }
+                                        Text(splitLabel)
                                         androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = ddOpen)
                                     }
                                     androidx.compose.material3.DropdownMenu(expanded = ddOpen, onDismissRequest = { ddOpen = false }) {
-                                        listOf("Category", "Date", "Member").forEach { option ->
+                                        val options = listOf(
+                                            "Category" to stringResource(id = com.ledge.splitbook.R.string.category),
+                                            "Date" to stringResource(id = com.ledge.splitbook.R.string.date),
+                                            "Member" to stringResource(id = com.ledge.splitbook.R.string.member)
+                                        )
+                                        options.forEach { (value, label) ->
                                             androidx.compose.material3.DropdownMenuItem(
-                                                text = { Text(option) },
-                                                onClick = { splitBy = option; ddOpen = false }
+                                                text = { Text(label) },
+                                                onClick = { splitBy = value; ddOpen = false }
                                             )
                                         }
                                     }
@@ -329,7 +345,7 @@ fun SettleScreen(
                             val groups = when (splitBy) {
                                 "Date" -> ui.expenses.groupBy { it.createdAt ?: "—" }
                                 "Member" -> ui.expenses.groupBy { byId[it.paidByMemberId]?.name ?: "—" }
-                                else -> ui.expenses.groupBy { it.category.ifBlank { "Uncategorized" } }
+                                else -> ui.expenses.groupBy { it.category.ifBlank { stringResource(id = com.ledge.splitbook.R.string.uncategorized) } }
                             }
                             val totals = groups.mapValues { (_, list) -> list.sumOf { it.amount } }
                             val grand = totals.values.sum()
@@ -374,7 +390,7 @@ fun SettleScreen(
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(formatAmount(grand, currency), fontWeight = FontWeight.Medium)
-                                        Text("Total", style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
+                                        Text(stringResource(id = com.ledge.splitbook.R.string.total), style = androidx.compose.material3.MaterialTheme.typography.bodySmall)
                                     }
                                 }
                                 // Legend below chart, compact text
@@ -417,9 +433,9 @@ fun SettleScreen(
                             val transfersCount = pendingTransfers.size
                             val totalToSettle = pendingTransfers.sumOf { it.amount }
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text("Settle Up")
+                                Text(stringResource(id = com.ledge.splitbook.R.string.settle_up))
                                 Text(
-                                    "Transfers: ${transfersCount} • Amount: ${formatAmount(totalToSettle, currency)}",
+                                    stringResource(id = com.ledge.splitbook.R.string.total) + ": " + formatAmount(totalToSettle, currency),
                                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                                     color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -464,20 +480,21 @@ fun SettleScreen(
                     // Metrics
                     Column(modifier = Modifier.padding(vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Amount Spent")
+                            Text(stringResource(id = com.ledge.splitbook.R.string.amount_spent))
                             Text(formatAmount(paid, currency))
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Amount Share By")
+                            Text(stringResource(id = com.ledge.splitbook.R.string.amount_share_by))
                             Text(formatAmount(shared, currency))
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(if (m.isAdmin) "Group Deposit" else "Deposit Amount")
+                            val depLabel = if (m.isAdmin) stringResource(id = com.ledge.splitbook.R.string.group_deposit) else stringResource(id = com.ledge.splitbook.R.string.deposit_amount)
+                            Text(depLabel)
                             Text(formatAmount(dep, currency), color = Color(0xFF2563EB))
                         }
                         val dueColor = if (due >= 0) Color(0xFF16A34A) else Color(0xFFDC2626)
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Due/Refund")
+                            Text(stringResource(id = com.ledge.splitbook.R.string.due_refund))
                             val dueLabel = formatAmount(kotlin.math.abs(due), currency).let { if (due >= 0) "+$it" else "-$it" }
                             Text(dueLabel, color = dueColor, fontWeight = FontWeight.Medium)
                         }
@@ -497,18 +514,18 @@ fun SettleScreen(
                         enabled = !m.isAdmin,
                         modifier = Modifier.weight(1f),
                         onClick = { editMember = m; detailsMember = null }
-                    ) { Text("EDIT", maxLines = 1) }
+                    ) { Text(stringResource(id = com.ledge.splitbook.R.string.edit), maxLines = 1) }
                     androidx.compose.material3.VerticalDivider(modifier = Modifier.height(24.dp))
                     TextButton(
                         modifier = Modifier.weight(1f),
                         onClick = { detailsMember = null }
-                    ) { Text("CLOSE", maxLines = 1) }
+                    ) { Text(stringResource(id = com.ledge.splitbook.R.string.close), maxLines = 1) }
                     androidx.compose.material3.VerticalDivider(modifier = Modifier.height(24.dp))
                     TextButton(
                         enabled = !m.isAdmin,
                         modifier = Modifier.weight(1f),
                         onClick = { viewModel.removeMember(m.id); detailsMember = null }
-                    ) { Text("DELETE", maxLines = 1) }
+                    ) { Text(stringResource(id = com.ledge.splitbook.R.string.delete), maxLines = 1) }
                 }
             }
         )
@@ -534,10 +551,10 @@ fun SettleScreen(
             initialName = m.name,
             initialDeposit = if (m.deposit == 0.0) "" else String.format("%.2f", m.deposit),
             nameReadOnly = true,
-            confirmLabel = "Save",
+            confirmLabel = stringResource(id = com.ledge.splitbook.R.string.save),
             showAdminOption = true,
             adminRequired = m.isAdmin,
-            title = "Edit Member",
+            title = stringResource(id = com.ledge.splitbook.R.string.edit) + " " + stringResource(id = com.ledge.splitbook.R.string.member),
             initialIsAdmin = m.isAdmin
         )
     }
@@ -545,11 +562,11 @@ fun SettleScreen(
     if (upiDialog != null) {
         AlertDialog(
             onDismissRequest = { upiDialog = null },
-            title = { Text("Pay via UPI") },
+            title = { Text(stringResource(id = com.ledge.splitbook.R.string.pay_via_upi)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = vpa, onValueChange = { vpa = it }, label = { Text("UPI ID (VPA)") })
-                    OutlinedTextField(value = payeeName, onValueChange = { payeeName = it }, label = { Text("Payee name") })
+                    OutlinedTextField(value = vpa, onValueChange = { vpa = it }, label = { Text(stringResource(id = com.ledge.splitbook.R.string.upi_id_vpa)) })
+                    OutlinedTextField(value = payeeName, onValueChange = { payeeName = it }, label = { Text(stringResource(id = com.ledge.splitbook.R.string.payee_name)) })
                 }
             },
             confirmButton = {
@@ -559,9 +576,9 @@ fun SettleScreen(
                     val intent = Intent(Intent.ACTION_VIEW, uri)
                     context.startActivity(intent)
                     upiDialog = null
-                }) { Text("Open UPI") }
+                }) { Text(stringResource(id = com.ledge.splitbook.R.string.open_upi)) }
             },
-            dismissButton = { TextButton(onClick = { upiDialog = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { upiDialog = null }) { Text(stringResource(id = com.ledge.splitbook.R.string.cancel)) } }
         )
     }
 
@@ -594,8 +611,8 @@ fun AvatarCircle(name: String) {
 @Composable
 private fun RowActions(onMarkPaid: () -> Unit, onPayUpi: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        FilledTonalButton(onClick = onMarkPaid, modifier = Modifier.fillMaxWidth()) { Text("Mark as Paid") }
-        OutlinedButton(onClick = onPayUpi, modifier = Modifier.fillMaxWidth()) { Text("Pay via UPI") }
+        FilledTonalButton(onClick = onMarkPaid, modifier = Modifier.fillMaxWidth()) { Text(stringResource(id = com.ledge.splitbook.R.string.mark_as_paid)) }
+        OutlinedButton(onClick = onPayUpi, modifier = Modifier.fillMaxWidth()) { Text(stringResource(id = com.ledge.splitbook.R.string.pay_via_upi)) }
     }
 }
 

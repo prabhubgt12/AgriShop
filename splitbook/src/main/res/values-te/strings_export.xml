@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Share/Export titles and headers (Telugu) -->
+    <string name="app_title_with_group">సింపుల్ స్ప్లిట్ — %1$s</string>
+    <string name="share_transactions">లావాదేవీలు:</string>
+    <string name="share_transactions_header">తేదీ | చెల్లించినవారు | వర్గం | వివరణ | మొత్తం</string>
+    <string name="share_total">మొత్తం:</string>
+    <string name="share_members">సభ్యులు:</string>
+    <string name="share_members_header">సభ్యుడు | చెల్లించిన మొత్తం | పంచుకున్న ఖర్చు | బకాయి</string>
+    <string name="share_summary_chooser">సారాంశాన్ని పంచుకోండి</string>
+    <string name="share_export_chooser">ఎగుమతిని పంచుకోండి</string>
+
+    <!-- PDF headers -->
+    <string name="pdf_transactions_title">లావాదేవీలు</string>
+    <string name="pdf_header_date">తేదీ</string>
+    <string name="pdf_header_paid_by">చెల్లించినవారు</string>
+    <string name="pdf_header_category">వర్గం</string>
+    <string name="pdf_header_description">వివరణ</string>
+    <string name="pdf_header_amount">మొత్తం</string>
+    <string name="pdf_members_title">సభ్యులు</string>
+    <string name="pdf_header_member">సభ్యుడు</string>
+    <string name="pdf_header_paid">చెల్లించిన</string>
+    <string name="pdf_header_deposit">డిపాజిట్</string>
+    <string name="pdf_header_exp_share">ఖర్చు భాగస్వామ్యం</string>
+    <string name="pdf_header_due_amount">బకాయి</string>
+
+    <!-- Excel sheet names and headers -->
+    <string name="excel_sheet_transactions">లావాదేవీలు</string>
+    <string name="excel_sheet_members">సభ్యులు</string>
+    <string name="excel_header_total">మొత్తం</string>
+</resources>

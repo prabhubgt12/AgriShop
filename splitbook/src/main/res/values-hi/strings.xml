@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simple Split</string>
+    <string name="unlock_to_continue">आगे बढ़ने के लिए अनलॉक करें</string>
+    <!-- Settings -->
+    <string name="settings">सेटिंग्स</string>
+    <string name="language">भाषा</string>
+    <string name="select_language">भाषा चुनें</string>
+    <string name="currency">मुद्रा</string>
+    <string name="select_currency">मुद्रा चुनें</string>
+    <string name="show_currency_symbol">मुद्रा चिन्ह दिखाएँ</string>
+    <string name="backup_completed">बैकअप पूरा हुआ।</string>
+
+    <!-- Common actions -->
+    <string name="edit">संपादित करें</string>
+    <string name="delete">हटाएँ</string>
+    <string name="close">बंद करें</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="more">अधिक</string>
+    <string name="back">वापस</string>
+
+    <!-- Transactions -->
+    <string name="total_amount">कुल राशि</string>
+    <string name="category">श्रेणी</string>
+    <string name="amount">राशि</string>
+    <string name="date">तिथि</string>
+    <string name="expense_by">खर्च किसने किया</string>
+    <string name="shared_by">किसके बीच बाँटा गया</string>
+    <string name="uncategorized">बिना श्रेणी</string>
+    <string name="delete_transaction_q">लेन-देन हटाएँ?</string>
+    <string name="action_cannot_be_undone">यह क्रिया वापस नहीं ली जा सकती।</string>
+</resources>

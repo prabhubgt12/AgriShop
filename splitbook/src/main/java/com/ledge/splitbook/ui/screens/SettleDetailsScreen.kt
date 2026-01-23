@@ -18,6 +18,9 @@ import com.ledge.splitbook.domain.SettlementLogic
 import com.ledge.splitbook.util.buildUpiUri
 import com.ledge.splitbook.ui.vm.SettleViewModel
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.stringResource
+import com.ledge.splitbook.ui.vm.SettingsViewModel
+import com.ledge.splitbook.util.formatAmount
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,14 +33,17 @@ fun SettleDetailsScreen(
     LaunchedEffect(groupId) { viewModel.load(groupId) }
     val ui by viewModel.ui.collectAsState()
     val context = LocalContext.current
+    val settingsVm: SettingsViewModel = hiltViewModel()
+    val settings by settingsVm.ui.collectAsState()
+    val currency = settings.currency
 
     var upiDialog by remember { mutableStateOf<SettlementLogic.Transfer?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (groupName.isNotBlank()) "$groupName • Settle Up" else "Settle Up") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") } },
+                title = { Text(if (groupName.isNotBlank()) "$groupName • " + stringResource(id = com.ledge.splitbook.R.string.settle_up) else stringResource(id = com.ledge.splitbook.R.string.settle_up)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = com.ledge.splitbook.R.string.back)) } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -66,8 +72,8 @@ fun SettleDetailsScreen(
             if (ui.transfers.isEmpty()) {
                 item {
                     Column(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("All settled!", style = MaterialTheme.typography.titleMedium)
-                        Text("There are no pending transfers for this group.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(id = com.ledge.splitbook.R.string.all_settled), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(id = com.ledge.splitbook.R.string.no_pending_transfers), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             } else {
@@ -75,11 +81,13 @@ fun SettleDetailsScreen(
                     items = ui.transfers,
                     key = { t -> "${t.fromMemberId}-${t.toMemberId}-${String.format("%.2f", t.amount)}" }
                 ) { t ->
-                    val from = ui.members.firstOrNull { it.id == t.fromMemberId }?.name ?: "From"
-                    val to = ui.members.firstOrNull { it.id == t.toMemberId }?.name ?: "To"
+                    val from = ui.members.firstOrNull { it.id == t.fromMemberId }?.name
+                        ?: stringResource(id = com.ledge.splitbook.R.string.from_label)
+                    val to = ui.members.firstOrNull { it.id == t.toMemberId }?.name
+                        ?: stringResource(id = com.ledge.splitbook.R.string.to_label)
                     Card(elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(6.dp)) {
                         Column(modifier = Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("$from → $to: ₹${String.format("%.2f", t.amount)}")
+                            Text("$from → $to: " + formatAmount(t.amount, currency))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 // Use a filled button with primary container for strong contrast on cards
                                 Button(
@@ -90,8 +98,8 @@ fun SettleDetailsScreen(
                                         containerColor = MaterialTheme.colorScheme.primary,
                                         contentColor = MaterialTheme.colorScheme.onPrimary
                                     )
-                                ) { Text("Mark as Paid") }
-                                OutlinedButton(onClick = { upiDialog = t }) { Text("Pay via UPI") }
+                                ) { Text(stringResource(id = com.ledge.splitbook.R.string.mark_as_paid)) }
+                                OutlinedButton(onClick = { upiDialog = t }) { Text(stringResource(id = com.ledge.splitbook.R.string.pay_via_upi)) }
                             }
                         }
                     }
@@ -124,14 +132,14 @@ private fun UpiDialog(
     var payee by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Pay via UPI") },
+        title = { Text(stringResource(id = com.ledge.splitbook.R.string.pay_via_upi)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = vpa, onValueChange = { vpa = it }, label = { Text("UPI ID (VPA)") })
-                OutlinedTextField(value = payee, onValueChange = { payee = it }, label = { Text("Payee name") })
+                OutlinedTextField(value = vpa, onValueChange = { vpa = it }, label = { Text(stringResource(id = com.ledge.splitbook.R.string.upi_id_vpa)) })
+                OutlinedTextField(value = payee, onValueChange = { payee = it }, label = { Text(stringResource(id = com.ledge.splitbook.R.string.payee_name)) })
             }
         },
-        confirmButton = { TextButton(onClick = { onOpen(vpa, payee) }) { Text("Open UPI") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = { onOpen(vpa, payee) }) { Text(stringResource(id = com.ledge.splitbook.R.string.open_upi)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(id = com.ledge.splitbook.R.string.cancel)) } }
     )
 }

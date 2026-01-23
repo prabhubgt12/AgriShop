@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simple Split</string>
+    <string name="unlock_to_continue">தொடர தாளைத் திறக்கவும்</string>
+
+    <!-- Settings -->
+    <string name="settings">அமைப்புகள்</string>
+    <string name="language">மொழி</string>
+    <string name="select_language">மொழியைத் தேர்ந்தெடுக்கவும்</string>
+    <string name="currency">நாணயம்</string>
+    <string name="select_currency">நாணயத்தைத் தேர்ந்தெடுக்கவும்</string>
+    <string name="show_currency_symbol">நாணய சின்னத்தை காட்டு</string>
+    <string name="backup_completed">காப்புப்பிரதி முடிந்தது.</string>
+
+    <!-- Common actions -->
+    <string name="edit">திருத்து</string>
+    <string name="delete">அழிக்க</string>
+    <string name="close">மூடு</string>
+    <string name="cancel">ரத்து</string>
+    <string name="more">மேலும்</string>
+    <string name="back">பின் செல்ல</string>
+    <string name="save">சேமிக்க</string>
+    <string name="ok">சரி</string>
+
+    <!-- Transactions / common fields -->
+    <string name="total_amount">மொத்த தொகை</string>
+    <string name="category">வகை</string>
+    <string name="amount">தொகை</string>
+    <string name="date">தேதி</string>
+    <string name="expense_by">யார் செலவு செய்தார்</string>
+    <string name="shared_by">யாருடன் பகிரப்பட்டது</string>
+    <string name="uncategorized">வகைப்படுத்தப்படாதது</string>
+    <string name="delete_transaction_q">பரிவர்த்தனையை நீக்கவா?</string>
+    <string name="action_cannot_be_undone">இந்த நடவடிக்கையை மாற்ற முடியாது.</string>
+
+    <!-- Add/Edit Expense -->
+    <string name="add_expense">செலவைச் சேர்க்க</string>
+    <string name="edit_expense">செலவைத் திருத்து</string>
+    <string name="description">விளக்கம்</string>
+    <string name="paid_by">பணம் செலுத்தியவர்</string>
+    <string name="select_member">உறுப்பினரைத் தேர்ந்தெடுக்கவும்</string>
+    <string name="category_select">வகைத் தேர்வு</string>
+    <string name="select_category">வகையைத் தேர்வுசெய்க</string>
+    <string name="add_category">வகை சேர்க்க</string>
+    <string name="add_new_category">புதிய வகை சேர்க்க</string>
+    <string name="enter_category_name">வகை பெயரை உள்ளிடவும்</string>
+    <string name="date_ymd">தேதி (YYYY-MM-DD)</string>
+    <string name="pick_date">தேதியைத் தேர்ந்தெடுக்கவும்</string>
+    <string name="expense_share_by_all">அனைவரிடமும் பகிர்</string>
+    <string name="select_members">உறுப்பினர்களைத் தேர்ந்தெடுக்கவும்</string>
+    <string name="selected_count">%1$d தேர்ந்தெடுக்கப்பட்டது</string>
+    <string name="select_person">நபரைத் தேர்ந்தெடுக்கவும்</string>
+    <string name="percent_sign">%</string>
+    <string name="note_amounts_or_percentages">தொகைகள் அல்லது சதவீதங்களை உள்ளிடவும்</string>
+
+    <!-- Summaries -->
+    <string name="amount_spent">செலவிட்ட தொகை</string>
+    <string name="due_amount">நிலுவை தொகை</string>
+</resources>

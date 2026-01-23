@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="group">ಗುಂಪು</string>
+    <string name="group_with_id">ಗುಂಪು #%1$d</string>
+    <string name="share_as_text">ಪಠ್ಯವಾಗಿ ಹಂಚಿಕೆ</string>
+    <string name="export_pdf">PDF ರಫ್ತು</string>
+    <string name="export_excel">Excel ರಫ್ತು</string>
+    <string name="action_not_allowed">ಕ್ರಿಯೆಗೆ ಅನುಮತಿ ಇಲ್ಲ</string>
+    <string name="members">ಸದಸ್ಯರು</string>
+    <string name="add_member">ಸದಸ್ಯರನ್ನು ಸೇರಿಸಿ</string>
+    <string name="admin">ನಿರ್ವಾಹಕ</string>
+    <string name="add_expense_for_member">ಸದಸ್ಯರಿಗೆ ವೆಚ್ಚ ಸೇರಿಸಿ</string>
+    <string name="expense_chart">ವೆಚ್ಚ ಚಾರ್ಟ್</string>
+    <string name="member">ಸದಸ್ಯ</string>
+    <string name="all">ಎಲ್ಲಾ</string>
+    <string name="from_label">ಇಂದ</string>
+    <string name="to_label">ಗೆ</string>
+    <string name="mark_as_paid">ಪಾವತಿಸಿದಂತೆ ಗುರುತಿಸಿ</string>
+    <string name="pay_via_upi">ಯುಪಿಐ ಮೂಲಕ ಪಾವತಿಸಿ</string>
+    <string name="upi_id_vpa">ಯುಪಿಐ ಐಡಿ (VPA)</string>
+    <string name="payee_name">ಪಾವತಿದಾರರ ಹೆಸರು</string>
+    <string name="open_upi">ಯುಪಿಐ ತೆರೆಯಿರಿ</string>
+
+    <!-- Settings -->
+    <string name="theme">ಥೀಮ್</string>
+    <string name="dark_mode">ಡಾರ್ಕ್ ಮೋಡ್</string>
+    <string name="use_dark_theme">ಡಾರ್ಕ್ ಥೀಮ್ ಬಳಸಿ</string>
+    <string name="google_backup">ಗೂಗಲ್ ಬ್ಯಾಕಪ್</string>
+    <string name="not_signed_in">ಸೈನ್ ಇನ್ ಆಗಿಲ್ಲ</string>
+    <string name="account">ಖಾತೆ</string>
+    <string name="sign_out">ಸೈನ್ ಔಟ್</string>
+    <string name="sign_in">ಸೈನ್ ಇನ್</string>
+    <string name="last_backup">ಕೊನೆಯ ಬ್ಯಾಕಪ್</string>
+    <string name="restoring">ಪುನಃಸ್ಥಾಪಿಸಲಾಗುತ್ತಿದೆ...</string>
+    <string name="restore">ಪುನಃಸ್ಥಾಪಿಸಿ</string>
+    <string name="backing_up">ಬ್ಯಾಕಪ್ ಮಾಡಲಾಗುತ್ತಿದೆ...</string>
+    <string name="backup_now">ಈಗ ಬ್ಯಾಕಪ್ ಮಾಡಿ</string>
+    <string name="never">ಎಂದಿಗೂ ಇಲ್ಲ</string>
+    <string name="remove_ads">ಜಾಹಿರಾತು ತೆಗೆ</string>
+    <string name="ads_removed">ಜಾಹಿರಾತುಗಳು ತೆಗೆದುಹಾಕಲಾಗಿದೆ</string>
+    <string name="remove_ads_purchase">ಜಾಹಿರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕಲು ಒಂದೇ ಸಲದ ಖರೀದಿ</string>
+    <string name="buy_remove_ads">ಜಾಹಿರಾತುಗಳನ್ನು ತೆಗೆದುಹಾಕುವದನ್ನು ಖರೀದಿಸಿ</string>
+    <string name="thank_you">ಧನ್ಯವಾದಗಳು</string>
+    <string name="premium_title">ಪ್ರೀಮಿಯಂ</string>
+    <string name="ads_enabled_desc">ಜಾಹೀರಾತುಗಳು ಸಕ್ರಿಯವಾಗಿವೆ. ಶಾಶ್ವತವಾಗಿ ತೆಗೆದುಹಾಕಲು ಖರೀದಿಸಿ.</string>
+    <string name="confirm_backup">ಬ್ಯಾಕಪ್ ದೃಢೀಕರಿಸಿ</string>
+    <string name="confirm_backup_message">ಇದು ಡ್ರೈವ್‌ನಲ್ಲಿ ಬ್ಯಾಕಪ್ ರಚಿಸುತ್ತದೆ ಮತ್ತು ಅದೇ ಹೆಸರಿನ ಬ್ಯಾಕಪ್ ಅನ್ನು ಮರುಬರೆಯಬಹುದು. ಮುಂದುವರೆಯೇ?</string>
+    <string name="confirm_restore">ಪುನಃಸ್ಥಾಪನೆ ದೃಢೀಕರಿಸಿ</string>
+    <string name="confirm_restore_message">ಇದು ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಡೇಟಾವನ್ನು ಆಯ್ಕೆ ಮಾಡಿದ ಬ್ಯಾಕಪ್‌ನಿಂದ ಮರುಬರೆಯುತ್ತದೆ. ಮುಂದುವರೆಯೇ?</string>
+
+    <!-- Add/Edit Member dialog labels -->
+    <string name="member_name">ಸದಸ್ಯರ ಹೆಸರು</string>
+    <string name="deposit_amount_optional">ಠೇವಣಿ ಮೊತ್ತ (ಐಚ್ಛಿಕ)</string>
+    <string name="set_as_admin">ನಿರ್ವಾಹಕರಾಗಿ ಸಿದ್ಧಗೊಳಿಸಿ</string>
+    <string name="set_as_admin_required">ನಿರ್ವಾಹಕರಾಗಿ ಸಿದ್ಧಗೊಳಿಸಿ (ಕಡ್ಡಾಯ)</string>
+    <string name="deposit_ignored_for_admin">ನಿರ್ವಾಹಕರಿಗೆ ಠೇವಣಿ ಪರಿಗಣಿಸಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="make_admin">ನಿರ್ವಾಹಕರಾಗಿಸಿ</string>
+    <string name="make_admin_message">ಈ ಸದಸ್ಯರನ್ನು ನಿರ್ವಾಹಕರನ್ನಾಗಿಸಲಾಗುತ್ತದೆ. ಈ ಸದಸ್ಯರ ಯಾವುದೇ ಈಗಿನ ಠೇವಣಿ ತೆಗೆದುಹಾಕಲ್ಪಡುತ್ತದೆ ಮತ್ತು ನಿರ್ಲಕ್ಷ್ಯ ಮಾಡಲಾಗುತ್ತದೆ. ಮುಂದುವರೆಯೇ?</string>
+
+    <!-- Metrics labels (Settle details) -->
+    <string name="amount_share_by">ಹಂಚಿಕೊಂಡ ಮೊತ್ತ</string>
+    <string name="group_deposit">ಗುಂಪಿನ ಠೇವಣಿ</string>
+    <string name="deposit_amount">ಠೇವಣಿ ಮೊತ್ತ</string>
+    <string name="due_refund">ಬಾಕಿ/ರಿಫಂಡ್</string>
+</resources>

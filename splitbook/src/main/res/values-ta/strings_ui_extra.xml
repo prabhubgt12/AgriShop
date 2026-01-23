@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add">சேர்க்க</string>
+    <!-- back, save, cancel, delete, ok exist in values-ta/strings.xml -->
+    <string name="create">உருவாக்கு</string>
+    <string name="remove">அகற்று</string>
+    <string name="total">மொத்தம்</string>
+    <string name="admin_label">நிர்வாகி</string>
+
+    <string name="cd_menu">மெனு</string>
+    <string name="cd_back">பின் செல்ல</string>
+    <string name="cd_add">சேர்க்க</string>
+    <string name="cd_add_member">உறுப்பினரைச் சேர்க்க</string>
+    <string name="cd_more">மேலும் விருப்பங்கள்</string>
+    <string name="cd_rename">பெயர் மாற்று</string>
+    <string name="cd_remove">அகற்று</string>
+
+    <string name="category_list_title">வகைப்பட்டியல்</string>
+    <string name="no_categories_message">வகைகள் இல்லை. சேர்க்க + அழுத்தவும்.</string>
+    <string name="rename">பெயர் மாற்று</string>
+    <string name="delete_item">அழிக்க</string>
+    <string name="rename_category_title">வகையின் பெயர் மாற்றம்</string>
+    <string name="category_name_label">வகை பெயர்</string>
+    <string name="add_new_category_title">புதிய வகை சேர்க்க</string>
+    <string name="enter_category_name_label">வகை பெயரை உள்ளிடவும்</string>
+
+    <string name="groups_title">சிம்பிள் ஸ்ப்லிட்</string>
+    <string name="menu_manage_category">வகையை நிர்வகிக்க</string>
+    <string name="menu_settings">அமைப்புகள்</string>
+    <string name="menu_remove_ads">விளம்பரங்களை அகற்று</string>
+    <string name="menu_rate_it">மதிப்பிடு</string>
+    <string name="fab_new_group">புதிய குழு</string>
+    <string name="no_groups_message">இன்னும் குழுக்கள் இல்லை. புதிதாக உருவாக்க + அழுத்தவும்.</string>
+    <string name="edit_group">குழுவைத் திருத்து</string>
+    <string name="delete_group">குழுவை நீக்கு</string>
+    <string name="edit_group_title">குழுவைத் திருத்து</string>
+    <string name="group_name_label">குழு பெயர்</string>
+    <string name="delete_group_title">குழுவை நீக்கு</string>
+    <string name="delete_group_message">இது குழுவையும் அதன் அனைத்து தரவுகளையும் நீக்கும். இந்த செயலை மாற்ற முடியாது.</string>
+    <string name="create_group_title">குழுவை உருவாக்கு</string>
+    <string name="choose_icon">ஐகானை தேர்வுசெய்க:</string>
+
+    <string name="members_title">உறுப்பினர்கள்</string>
+    <string name="members_admin_suffix">%1$s (நிர்வாகி)</string>
+    <string name="members_rename_title">உறுப்பினரின் பெயர் மாற்றம்</string>
+    <string name="members_new_name_label">புதிய பெயர்</string>
+    <string name="remove_member_title">உறுப்பினரை அகற்று</string>
+    <string name="remove_member_message">இந்த உறுப்பினரை அகற்ற வேண்டுமா? செலவுகளில் பயன்படுத்தப்படாத உறுப்பினர்களை மட்டுமே அகற்றலாம்.</string>
+    <string name="cannot_remove_used">அகற்ற முடியாது: செலவுகளில் பயன்படுத்தப்பட்டுள்ளது</string>
+</resources>

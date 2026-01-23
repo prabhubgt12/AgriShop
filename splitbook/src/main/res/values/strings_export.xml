@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Share/Export titles and headers -->
+    <string name="app_title_with_group">Simple Split — %1$s</string>
+    <string name="share_transactions">Transactions:</string>
+    <string name="share_transactions_header">Date | Paid By | Category | Description | Amount</string>
+    <string name="share_total">Total:</string>
+    <string name="share_members">Members:</string>
+    <string name="share_members_header">Member | Amount Paid | Expense Shared | Due Amount</string>
+    <string name="share_summary_chooser">Share summary</string>
+    <string name="share_export_chooser">Share export</string>
+
+    <!-- PDF headers -->
+    <string name="pdf_transactions_title">Transactions</string>
+    <string name="pdf_header_date">Date</string>
+    <string name="pdf_header_paid_by">Paid By</string>
+    <string name="pdf_header_category">Category</string>
+    <string name="pdf_header_description">Description</string>
+    <string name="pdf_header_amount">Amount</string>
+    <string name="pdf_members_title">Members</string>
+    <string name="pdf_header_member">Member</string>
+    <string name="pdf_header_paid">Paid</string>
+    <string name="pdf_header_deposit">Deposit</string>
+    <string name="pdf_header_exp_share">Exp Share</string>
+    <string name="pdf_header_due_amount">Due Amount</string>
+
+    <!-- Excel sheet names and headers -->
+    <string name="excel_sheet_transactions">Transactions</string>
+    <string name="excel_sheet_members">Members</string>
+    <string name="excel_header_total">Total</string>
+</resources>

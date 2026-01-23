@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.res.stringResource
+import com.ledge.splitbook.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,10 +39,10 @@ fun CategoriesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Category List") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") } },
+                title = { Text(stringResource(R.string.category_list_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back)) } },
                 actions = {
-                    IconButton(onClick = { showAdd = true }) { Icon(Icons.Default.Add, contentDescription = "Add") }
+                    IconButton(onClick = { showAdd = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add)) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -53,7 +55,7 @@ fun CategoriesScreen(
     ) { padding ->
         if (categories.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No categories. Tap + to add.")
+                Text(stringResource(R.string.no_categories_message))
             }
         } else {
             // Compact stacked card containing the full list, with thin dividers
@@ -91,11 +93,11 @@ fun CategoriesScreen(
                                             }
                                         }
                                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                                            DropdownMenuItem(text = { Text("Rename") }, onClick = {
+                                            DropdownMenuItem(text = { Text(stringResource(R.string.rename)) }, onClick = {
                                                 menuOpen = false
                                                 showRename = true
                                             })
-                                            DropdownMenuItem(text = { Text("Delete") }, onClick = {
+                                            DropdownMenuItem(text = { Text(stringResource(R.string.delete_item)) }, onClick = {
                                                 menuOpen = false
                                                 scope.launch { viewModel.delete(cat.id) }
                                             })
@@ -107,12 +109,12 @@ fun CategoriesScreen(
                                 if (showRename) {
                                     AlertDialog(
                                         onDismissRequest = { showRename = false },
-                                        title = { Text("Rename Category") },
+                                        title = { Text(stringResource(R.string.rename_category_title)) },
                                         text = {
                                             OutlinedTextField(
                                                 value = newName,
                                                 onValueChange = { newName = it },
-                                                label = { Text("Category name") },
+                                                label = { Text(stringResource(R.string.category_name_label)) },
                                                 modifier = Modifier.fillMaxWidth()
                                             )
                                         },
@@ -122,9 +124,9 @@ fun CategoriesScreen(
                                                 val trimmed = newName.trim()
                                                 scope.launch { viewModel.rename(cat.id, trimmed) }
                                                 showRename = false
-                                            }) { Text("Save") }
+                                            }) { Text(stringResource(R.string.save)) }
                                         },
-                                        dismissButton = { TextButton(onClick = { showRename = false }) { Text("Cancel") } }
+                                        dismissButton = { TextButton(onClick = { showRename = false }) { Text(stringResource(R.string.cancel)) } }
                                     )
                                 }
                             }
@@ -138,12 +140,12 @@ fun CategoriesScreen(
     if (showAdd) {
         AlertDialog(
             onDismissRequest = { showAdd = false },
-            title = { Text("Add New Category") },
+            title = { Text(stringResource(R.string.add_new_category_title)) },
             text = {
                 OutlinedTextField(
                     value = input,
                     onValueChange = { input = it },
-                    label = { Text("Enter category name") },
+                    label = { Text(stringResource(R.string.enter_category_name_label)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -154,9 +156,9 @@ fun CategoriesScreen(
                     scope.launch { viewModel.add(trimmed) }
                     input = ""
                     showAdd = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showAdd = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { showAdd = false }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 }

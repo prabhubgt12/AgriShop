@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Clean base strings (keep minimal to avoid duplicate keys) -->
     <string name="app_name">Simple Split</string>
     <string name="unlock_to_continue">Unlock to continue</string>
 </resources>

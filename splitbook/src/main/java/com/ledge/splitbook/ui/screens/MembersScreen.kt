@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.splitbook.ui.vm.MembersViewModel
 import com.ledge.splitbook.ui.components.AddMemberDialog
+import androidx.compose.ui.res.stringResource
+import com.ledge.splitbook.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,9 +59,9 @@ fun MembersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Members") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Back") } },
-                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add member") } },
+                title = { Text(stringResource(R.string.members_title)) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back)) } },
+                actions = { IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_member)) } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                     titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
@@ -77,20 +79,29 @@ fun MembersScreen(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             MemberAvatar(name = m.name)
-                            Text(if (m.isAdmin) "${m.name} (Admin)" else m.name)
+                            Text(if (m.isAdmin) stringResource(R.string.members_admin_suffix, m.name) else m.name)
                         }
                         Row {
                             IconButton(onClick = {
                                 renameDialog = m.id
                                 renameText = TextFieldValue(m.name)
-                            }, enabled = !m.isAdmin) { Icon(Icons.Default.Edit, contentDescription = "Rename") }
-                            IconButton(onClick = { removeDialog = m.id }, enabled = !m.isAdmin) { Icon(Icons.Default.Delete, contentDescription = "Remove") }
+                            }, enabled = !m.isAdmin) { Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_rename)) }
+                            IconButton(onClick = { removeDialog = m.id }, enabled = !m.isAdmin) { Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_remove)) }
                         }
                     }
                 }
             }
             if (ui.message.isNotBlank()) {
-                Text(ui.message)
+                val msg = when (ui.message) {
+                    "REMOVE_USED" -> stringResource(R.string.cannot_remove_used)
+                    else -> stringResource(R.string.action_not_allowed)
+                }
+                AlertDialog(
+                    onDismissRequest = { viewModel.clearMessage() },
+                    title = { Text(stringResource(R.string.action_not_allowed)) },
+                    text = { Text(msg) },
+                    confirmButton = { TextButton(onClick = { viewModel.clearMessage() }) { Text(stringResource(R.string.ok)) } }
+                )
             }
         }
     }
@@ -113,32 +124,32 @@ fun MembersScreen(
     if (renameDialog != null) {
         AlertDialog(
             onDismissRequest = { renameDialog = null },
-            title = { Text("Rename member") },
-            text = { OutlinedTextField(value = renameText, onValueChange = { renameText = it }, label = { Text("New name") }) },
+            title = { Text(stringResource(R.string.members_rename_title)) },
+            text = { OutlinedTextField(value = renameText, onValueChange = { renameText = it }, label = { Text(stringResource(R.string.members_new_name_label)) }) },
             confirmButton = {
                 TextButton(onClick = {
                     val id = renameDialog ?: return@TextButton
                     viewModel.rename(id, renameText.text.trim())
                     renameDialog = null
-                }) { Text("Save") }
+                }) { Text(stringResource(R.string.save)) }
             },
-            dismissButton = { TextButton(onClick = { renameDialog = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { renameDialog = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 
     if (removeDialog != null) {
         AlertDialog(
             onDismissRequest = { removeDialog = null },
-            title = { Text("Remove member") },
-            text = { Text("Remove this member? Only members not used in expenses can be removed.") },
+            title = { Text(stringResource(R.string.remove_member_title)) },
+            text = { Text(stringResource(R.string.remove_member_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     val id = removeDialog ?: return@TextButton
                     viewModel.remove(id)
                     removeDialog = null
-                }) { Text("Remove") }
+                }) { Text(stringResource(R.string.remove)) }
             },
-            dismissButton = { TextButton(onClick = { removeDialog = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { removeDialog = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 

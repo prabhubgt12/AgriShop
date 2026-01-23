@@ -40,14 +40,14 @@ class MembersViewModel @Inject constructor(
         if (gid == 0L) return
         viewModelScope.launch {
             membersRepo.addMember(gid, name, deposit, isAdmin)
-            _ui.value = _ui.value.copy(message = "Added $name")
+            _ui.value = _ui.value.copy(message = "ADDED")
         }
     }
 
     fun rename(memberId: Long, newName: String) {
         viewModelScope.launch {
             membersRepo.renameMember(memberId, newName)
-            _ui.value = _ui.value.copy(message = "Renamed")
+            _ui.value = _ui.value.copy(message = "RENAMED")
         }
     }
 
@@ -55,7 +55,11 @@ class MembersViewModel @Inject constructor(
         val gid = _ui.value.groupId
         viewModelScope.launch {
             val ok = membersRepo.removeMemberIfUnused(gid, memberId)
-            _ui.value = _ui.value.copy(message = if (ok) "Removed" else "Cannot remove: used in expenses")
+            _ui.value = _ui.value.copy(message = if (ok) "REMOVED" else "REMOVE_USED")
         }
+    }
+
+    fun clearMessage() {
+        _ui.value = _ui.value.copy(message = "")
     }
 }

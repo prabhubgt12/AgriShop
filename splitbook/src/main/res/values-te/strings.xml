@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simple Split</string>
+    <string name="unlock_to_continue">కొనసాగించడానికి అన్‌లాక్ చేయండి</string>
+
+    <!-- Settings -->
+    <string name="settings">అమరికలు</string>
+    <string name="language">భాష</string>
+    <string name="select_language">భాషను ఎంచుకోండి</string>
+    <string name="currency">కరెన్సీ</string>
+    <string name="select_currency">కరెన్సీని ఎంచుకోండి</string>
+    <string name="show_currency_symbol">కరెన్సీ చిహ్నాన్ని చూపించు</string>
+    <string name="backup_completed">బ్యాకప్ పూర్తయ్యింది.</string>
+
+    <!-- Common actions -->
+    <string name="edit">మార్చు</string>
+    <string name="delete">తొలగించు</string>
+    <string name="close">మూసివేయి</string>
+    <string name="cancel">రద్దు</string>
+    <string name="more">మరిన్ని</string>
+    <string name="back">వెనుకు</string>
+    <string name="save">సేవ్ చేయి</string>
+    <string name="ok">సరే</string>
+
+    <!-- Transactions / common fields -->
+    <string name="total_amount">మొత్తం మొత్తం</string>
+    <string name="category">వర్గం</string>
+    <string name="amount">మొత్తం</string>
+    <string name="date">తేదీ</string>
+    <string name="expense_by">ఎవరు ఖర్చు చేశారు</string>
+    <string name="shared_by">ఎవరితో పంచుకున్నారు</string>
+    <string name="uncategorized">వర్గీకరించని</string>
+    <string name="delete_transaction_q">లావాదేవీని తొలగించాలా?</string>
+    <string name="action_cannot_be_undone">ఈ చర్యను తిరిగి తీసుకోలేము.</string>
+
+    <!-- Add/Edit Expense -->
+    <string name="add_expense">ఖర్చు జోడించు</string>
+    <string name="edit_expense">ఖర్చును సవరించు</string>
+    <string name="description">వివరణ</string>
+    <string name="paid_by">చెల్లించినవారు</string>
+    <string name="select_member">సభ్యుని ఎంచుకోండి</string>
+    <string name="category_select">వర్గం ఎంపిక</string>
+    <string name="select_category">వర్గాన్ని ఎంచుకోండి</string>
+    <string name="add_category">వర్గం జోడించు</string>
+    <string name="add_new_category">కొత్త వర్గం జోడించు</string>
+    <string name="enter_category_name">వర్గం పేరును నమోదు చేయండి</string>
+    <string name="date_ymd">తేదీ (YYYY-MM-DD)</string>
+    <string name="pick_date">తేదీని ఎంచుకోండి</string>
+    <string name="expense_share_by_all">అందరితో పంచుకోండి</string>
+    <string name="select_members">సభ్యులను ఎంచుకోండి</string>
+    <string name="selected_count">%1$d ఎంపికయ్యారు</string>
+    <string name="select_person">వ్యక్తిని ఎంచుకోండి</string>
+    <string name="percent_sign">%</string>
+    <string name="note_amounts_or_percentages">మొత్తాలు లేదా శాతాలను నమోదు చేయండి</string>
+
+    <!-- Summaries -->
+    <string name="amount_spent">ఖర్చు చేసిన మొత్తం</string>
+    <string name="due_amount">బకాయి మొత్తం</string>
+</resources>

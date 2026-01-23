@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simple Split</string>
+    <string name="unlock_to_continue">ಮುಂದುವರಿಸಲು ಅನ್ಲಾಕ್ ಮಾಡಿ</string>
+
+    <!-- Settings -->
+    <string name="settings">ಸೆಟ್ಟಿಂಗ್ಗಳು</string>
+    <string name="language">ಭಾಷೆ</string>
+    <string name="select_language">ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="currency">ಕರೆನ್ಸಿ</string>
+    <string name="select_currency">ಕರೆನ್ಸಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="show_currency_symbol">ಕರೆನ್ಸಿ ಚಿಹ್ನೆಯನ್ನು ತೋರಿಸಿ</string>
+    <string name="backup_completed">ಬ್ಯಾಕಪ್ ಪೂರ್ಣವಾಗಿದೆ.</string>
+
+    <!-- Common actions -->
+    <string name="edit">ಸಂಪಾದಿಸಿ</string>
+    <string name="delete">ಅಳಿಸಿ</string>
+    <string name="close">ಮುಚ್ಚಿ</string>
+    <string name="cancel">ರದ್ದು</string>
+    <string name="more">ಹೆಚ್ಚು</string>
+    <string name="back">ಹಿಂದೆ</string>
+    <string name="save">ಸೇವ್ ಮಾಡಿ</string>
+    <string name="ok">ಸರಿ</string>
+
+    <!-- Transactions / common fields -->
+    <string name="total_amount">ಒಟ್ಟು ಮೊತ್ತ</string>
+    <string name="category">ವರ್ಗ</string>
+    <string name="amount">ಮೊತ್ತ</string>
+    <string name="date">ದಿನಾಂಕ</string>
+    <string name="expense_by">ಯಾರು ಖರ್ಚು ಮಾಡಿದ್ದಾರೆ</string>
+    <string name="shared_by">ಯಾರ ನಡುವೆ ಹಂಚಲಾಗಿದೆ</string>
+    <string name="uncategorized">ವರ್ಗೀಕರಿಸದ</string>
+    <string name="delete_transaction_q">ವಹಿವಾಟನ್ನು ಅಳಿಸಬೇಕೇ?</string>
+    <string name="action_cannot_be_undone">ಈ ಕ್ರಮವನ್ನು ಹಿಂದಕ್ಕೆ ತೆಗೆದುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ.</string>
+
+    <!-- Add/Edit Expense -->
+    <string name="add_expense">ವೆಚ್ಚ ಸೇರಿಸಿ</string>
+    <string name="edit_expense">ವೆಚ್ಚ ಸಂಪಾದಿಸಿ</string>
+    <string name="description">ವಿವರಣೆ</string>
+    <string name="paid_by">ಪಾವತಿಸಿದವರು</string>
+    <string name="select_member">ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="category_select">ವರ್ಗ ಆಯ್ಕೆ</string>
+    <string name="select_category">ವರ್ಗವನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="add_category">ವರ್ಗ ಸೇರಿಸಿ</string>
+    <string name="add_new_category">ಹೊಸ ವರ್ಗ ಸೇರಿಸಿ</string>
+    <string name="enter_category_name">ವರ್ಗದ ಹೆಸರನ್ನು ನಮೂದಿಸಿ</string>
+    <string name="date_ymd">ದಿನಾಂಕ (YYYY-MM-DD)</string>
+    <string name="pick_date">ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="expense_share_by_all">ಎಲ್ಲರ ನಡುವೆ ಹಂಚಿ</string>
+    <string name="select_members">ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="selected_count">%1$d ಆಯ್ಕೆ ಮಾಡಲಾಗಿದೆ</string>
+    <string name="select_person">ವ್ಯಕ್ತಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="percent_sign">%</string>
+    <string name="note_amounts_or_percentages">ಮೊತ್ತಗಳನ್ನು ಅಥವಾ ಶೇಕಡಾವಾರಿಯನ್ನು ನಮೂದಿಸಿ</string>
+
+    <!-- Summaries -->
+    <string name="amount_spent">ಖರ್ಚಾದ ಮೊತ್ತ</string>
+    <string name="due_amount">ಬಾಕಿ ಮೊತ್ತ</string>
+</resources>

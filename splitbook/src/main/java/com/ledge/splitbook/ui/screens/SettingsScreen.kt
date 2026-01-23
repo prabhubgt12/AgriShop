@@ -39,6 +39,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import android.app.Activity
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -60,8 +61,10 @@ fun SettingsScreen(
     var darkMode by remember(settings.darkMode) { mutableStateOf(settings.darkMode) }
     var language by remember(settings.language) { mutableStateOf(settings.language) }
     var currency by remember(settings.currency) { mutableStateOf(settings.currency) }
-    val languageOptions = listOf("English", "Hindi")
-    val currencyOptions = listOf("INR ₹", "USD $", "EUR €")
+    var showCurrencySymbol by remember(settings.showCurrencySymbol) { mutableStateOf(settings.showCurrencySymbol) }
+    val languageOptions = listOf("English", "Hindi", "Kannada", "Tamil", "Telugu")
+    // Top 10 commonly used currencies (by code) for quick selection
+    val currencyOptions = listOf("INR", "USD", "EUR", "GBP", "JPY", "CNY", "AUD", "CAD", "SGD", "AED")
     var langExpanded by remember { mutableStateOf(false) }
     var currExpanded by remember { mutableStateOf(false) }
     val backupUi by backupViewModel.ui.collectAsState()
@@ -116,14 +119,20 @@ fun SettingsScreen(
     LaunchedEffect(backupUi.isRunning, backupUi.runningOp, backupUi.error, pendingBackupToast) {
         if (pendingBackupToast && !backupUi.isRunning && backupUi.runningOp == null && backupUi.error == null) {
             pendingBackupToast = false
-            Toast.makeText(context, "Backup completed.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(com.ledge.splitbook.R.string.backup_completed), Toast.LENGTH_SHORT).show()
         }
+    }
+
+    // Keep global currency formatter in sync
+    LaunchedEffect(currency, showCurrencySymbol) {
+        val code = currency.takeWhile { !it.isWhitespace() }.ifBlank { currency }
+        com.ledge.splitbook.util.CurrencyFormatter.setConfig(code, showCurrencySymbol)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(id = com.ledge.splitbook.R.string.settings)) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = null) } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
@@ -143,10 +152,10 @@ fun SettingsScreen(
             item {
                 OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Theme")
+                        Text(stringResource(id = com.ledge.splitbook.R.string.theme))
                         ListItem(
-                            headlineContent = { Text("Dark Mode") },
-                            supportingContent = { Text("Use dark theme") },
+                            headlineContent = { Text(stringResource(id = com.ledge.splitbook.R.string.dark_mode)) },
+                            supportingContent = { Text(stringResource(id = com.ledge.splitbook.R.string.use_dark_theme)) },
                             trailingContent = { Switch(checked = darkMode, onCheckedChange = { checked -> darkMode = checked; viewModel.setDarkMode(checked) }) }
                         )
                     }
@@ -156,16 +165,16 @@ fun SettingsScreen(
             item {
                 OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("Google Backup")
-                        val email = backupUi.accountEmail ?: "Not signed in"
+                        Text(stringResource(id = com.ledge.splitbook.R.string.google_backup))
+                        val email = backupUi.accountEmail ?: stringResource(id = com.ledge.splitbook.R.string.not_signed_in)
                         ListItem(
-                            headlineContent = { Text("Account") },
+                            headlineContent = { Text(stringResource(id = com.ledge.splitbook.R.string.account)) },
                             supportingContent = { Text(email) },
                             trailingContent = {
                                 if (backupUi.signedIn) {
-                                    TextButton(onClick = { backupViewModel.signOut() }) { Text("Sign out") }
+                                    TextButton(onClick = { backupViewModel.signOut() }) { Text(stringResource(id = com.ledge.splitbook.R.string.sign_out)) }
                                 } else {
-                                    TextButton(onClick = { signInLauncher.launch(backupViewModel.getSignInIntent()) }) { Text("Sign in") }
+                                    TextButton(onClick = { signInLauncher.launch(backupViewModel.getSignInIntent()) }) { Text(stringResource(id = com.ledge.splitbook.R.string.sign_in)) }
                                 }
                             }
                         )
@@ -175,20 +184,20 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Last backup")
+                                Text(stringResource(id = com.ledge.splitbook.R.string.last_backup))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     TextButton(
                                         enabled = backupUi.signedIn && !backupUi.isRunning,
                                         onClick = { showRestoreConfirm = true }
-                                    ) { Text(if (backupUi.isRunning && backupUi.runningOp == "restore") "Restoring..." else "Restore") }
+                                    ) { Text(if (backupUi.isRunning && backupUi.runningOp == "restore") stringResource(id = com.ledge.splitbook.R.string.restoring) else stringResource(id = com.ledge.splitbook.R.string.restore)) }
                                     TextButton(
                                         enabled = backupUi.signedIn && !backupUi.isRunning,
                                         onClick = { showBackupConfirm = true }
-                                    ) { Text(if (backupUi.isRunning && backupUi.runningOp == "backup") "Backing up..." else "Backup now") }
+                                    ) { Text(if (backupUi.isRunning && backupUi.runningOp == "backup") stringResource(id = com.ledge.splitbook.R.string.backing_up) else stringResource(id = com.ledge.splitbook.R.string.backup_now)) }
                                 }
                             }
                             Text(
-                                text = backupUi.lastBackupTime ?: "Never",
+                                text = backupUi.lastBackupTime ?: stringResource(id = com.ledge.splitbook.R.string.never),
                                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                                 color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 2.dp)
@@ -203,35 +212,51 @@ fun SettingsScreen(
 
             item {
                 OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text("Remove Ads")
-                        ListItem(
-                            headlineContent = { Text(if (settings.removeAds) "Ads are removed" else "One-time purchase to remove ads") },
-                            trailingContent = {
-                                val context = androidx.compose.ui.platform.LocalContext.current
-                                if (!settings.removeAds) {
-                                    TextButton(onClick = {
-                                        val act = (context as? android.app.Activity)
-                                        if (act != null) billingViewModel.purchaseRemoveAds(act)
-                                    }) { Text("Buy remove ads") }
-                                } else {
-                                    TextButton(onClick = {}) { Text("Thank you") }
-                                }
-                            }
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(id = com.ledge.splitbook.R.string.premium_title), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                        Text(
+                            if (settings.removeAds)
+                                stringResource(id = com.ledge.splitbook.R.string.ads_removed)
+                            else
+                                stringResource(id = com.ledge.splitbook.R.string.ads_enabled_desc),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val context = androidx.compose.ui.platform.LocalContext.current
+                            if (!settings.removeAds) {
+                                androidx.compose.material3.FilledTonalButton(onClick = {
+                                    val act = (context as? android.app.Activity)
+                                    if (act != null) billingViewModel.purchaseRemoveAds(act)
+                                }) { Text(stringResource(id = com.ledge.splitbook.R.string.remove_ads)) }
+                            } else {
+                                androidx.compose.material3.AssistChip(
+                                    onClick = {},
+                                    enabled = false,
+                                    label = { Text(stringResource(id = com.ledge.splitbook.R.string.thank_you)) }
+                                )
+                            }
+                        }
 
-                        Text("Language")
+                        Text(stringResource(id = com.ledge.splitbook.R.string.language))
                         ExposedDropdownMenuBox(expanded = langExpanded, onExpandedChange = { langExpanded = !langExpanded }) {
                             OutlinedTextField(
                                 value = language,
                                 onValueChange = {},
                                 readOnly = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Select language") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(),
+                                label = { Text(stringResource(id = com.ledge.splitbook.R.string.select_language)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = langExpanded) },
                                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                             )
-                            DropdownMenu(expanded = langExpanded, onDismissRequest = { langExpanded = false }) {
+                            ExposedDropdownMenu(expanded = langExpanded, onDismissRequest = { langExpanded = false }) {
                                 languageOptions.forEach { opt ->
                                     DropdownMenuItem(text = { Text(opt) }, onClick = {
                                         language = opt
@@ -244,27 +269,50 @@ fun SettingsScreen(
 
                         HorizontalDivider()
 
-                        Text("Currency")
+                        Text(stringResource(id = com.ledge.splitbook.R.string.currency))
                         ExposedDropdownMenuBox(expanded = currExpanded, onExpandedChange = { currExpanded = !currExpanded }) {
                             OutlinedTextField(
                                 value = currency,
                                 onValueChange = {},
                                 readOnly = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Select currency") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(),
+                                label = { Text(stringResource(id = com.ledge.splitbook.R.string.select_currency)) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = currExpanded) },
                                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                             )
-                            DropdownMenu(expanded = currExpanded, onDismissRequest = { currExpanded = false }) {
-                                currencyOptions.forEach { opt ->
-                                    DropdownMenuItem(text = { Text(opt) }, onClick = {
-                                        currency = opt
-                                        viewModel.setCurrency(opt)
+                            ExposedDropdownMenu(expanded = currExpanded, onDismissRequest = { currExpanded = false }) {
+                                currencyOptions.forEach { code ->
+                                    val label = when (code) {
+                                        "INR" -> "INR (₹)"
+                                        "USD" -> "USD ($)"
+                                        "EUR" -> "EUR (€)"
+                                        "GBP" -> "GBP (£)"
+                                        "JPY" -> "JPY (¥)"
+                                        "CNY" -> "CNY (¥)"
+                                        "AUD" -> "AUD (A$)"
+                                        "CAD" -> "CAD (C$)"
+                                        "SGD" -> "SGD (S$)"
+                                        "AED" -> "AED"
+                                        else -> code
+                                    }
+                                    DropdownMenuItem(text = { Text(label) }, onClick = {
+                                        currency = code
+                                        viewModel.setCurrency(code)
                                         currExpanded = false
                                     })
                                 }
                             }
                         }
+                        // Show currency symbol toggle
+                        androidx.compose.material3.ListItem(
+                            headlineContent = { Text(stringResource(id = com.ledge.splitbook.R.string.show_currency_symbol)) },
+                            trailingContent = { androidx.compose.material3.Switch(checked = showCurrencySymbol, onCheckedChange = { enabled ->
+                                showCurrencySymbol = enabled
+                                viewModel.setShowCurrencySymbol(enabled)
+                            }) }
+                        )
                     }
                 }
             }
@@ -275,16 +323,16 @@ fun SettingsScreen(
     if (showBackupConfirm) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showBackupConfirm = false },
-            title = { Text("Confirm backup") },
-            text = { Text("This will create a backup on Drive and may overwrite existing backups with the same name. Continue?") },
+            title = { Text(stringResource(id = com.ledge.splitbook.R.string.confirm_backup)) },
+            text = { Text(stringResource(id = com.ledge.splitbook.R.string.confirm_backup_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showBackupConfirm = false
                     pendingBackupToast = true
                     backupViewModel.backupNow()
-                }) { Text("OK") }
+                }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showBackupConfirm = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { showBackupConfirm = false }) { Text(stringResource(id = com.ledge.splitbook.R.string.cancel)) } }
         )
     }
 
@@ -292,16 +340,16 @@ fun SettingsScreen(
     if (showRestoreConfirm) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showRestoreConfirm = false },
-            title = { Text("Confirm restore") },
-            text = { Text("This will overwrite your current data with the selected backup. Continue?") },
+            title = { Text(stringResource(id = com.ledge.splitbook.R.string.confirm_restore)) },
+            text = { Text(stringResource(id = com.ledge.splitbook.R.string.confirm_restore_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showRestoreConfirm = false
                     pendingRestart = true
                     backupViewModel.restoreLatest()
-                }) { Text("OK") }
+                }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showRestoreConfirm = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { showRestoreConfirm = false }) { Text(stringResource(id = com.ledge.splitbook.R.string.cancel)) } }
         )
     }
 

@@ -18,13 +18,15 @@ class SettingsRepository @Inject constructor(
         val DARK_MODE = booleanPreferencesKey("dark_mode")
         val LANGUAGE = stringPreferencesKey("language")
         val CURRENCY = stringPreferencesKey("currency")
+        val SHOW_CURRENCY_SYMBOL = booleanPreferencesKey("show_currency_symbol")
         val REMOVE_ADS = booleanPreferencesKey("remove_ads")
     }
 
     data class Settings(
         val darkMode: Boolean = false,
         val language: String = "English",
-        val currency: String = "INR ₹",
+        val currency: String = "INR",
+        val showCurrencySymbol: Boolean = true,
         val removeAds: Boolean = false,
     )
 
@@ -32,7 +34,8 @@ class SettingsRepository @Inject constructor(
         Settings(
             darkMode = pref[Keys.DARK_MODE] ?: false,
             language = pref[Keys.LANGUAGE] ?: "English",
-            currency = pref[Keys.CURRENCY] ?: "INR ₹",
+            currency = pref[Keys.CURRENCY] ?: "INR",
+            showCurrencySymbol = pref[Keys.SHOW_CURRENCY_SYMBOL] ?: true,
             removeAds = pref[Keys.REMOVE_ADS] ?: false,
         )
     }
@@ -47,6 +50,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setCurrency(value: String) {
         dataStore.edit { it[Keys.CURRENCY] = value }
+    }
+
+    suspend fun setShowCurrencySymbol(enabled: Boolean) {
+        dataStore.edit { it[Keys.SHOW_CURRENCY_SYMBOL] = enabled }
     }
 
     suspend fun setRemoveAds(enabled: Boolean) {

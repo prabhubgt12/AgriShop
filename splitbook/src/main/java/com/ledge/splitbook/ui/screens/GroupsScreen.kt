@@ -62,6 +62,9 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.ledge.splitbook.BuildConfig
 import kotlinx.coroutines.delay
+import androidx.compose.ui.res.stringResource
+import com.ledge.splitbook.R
+import androidx.activity.compose.BackHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,28 +94,34 @@ fun GroupsScreen(
     Scaffold(
         topBar = {
             var menuOpen by remember { mutableStateOf(false) }
+            var menuReady by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                // Small debounce to avoid race when returning from another screen
+                delay(250)
+                menuReady = true
+            }
             TopAppBar(
-                title = { Text("Simple Split") },
+                title = { Text(stringResource(R.string.groups_title)) },
                 navigationIcon = {
                     Box {
-                        IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.Menu, contentDescription = "Menu") }
+                        IconButton(enabled = menuReady, onClick = { menuOpen = true }) { Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.cd_menu)) }
                         val context = LocalContext.current
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             DropdownMenuItem(
                                 leadingIcon = { Icon(Icons.Default.List, contentDescription = null) },
-                                text = { Text("Manage Category") }, onClick = {
+                                text = { Text(stringResource(R.string.menu_manage_category)) }, onClick = {
                                 menuOpen = false
                                 onOpenCategories()
                             })
                             DropdownMenuItem(
                                 leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                                text = { Text("Settings") }, onClick = {
+                                text = { Text(stringResource(R.string.menu_settings)) }, onClick = {
                                 menuOpen = false
                                 onOpenSettings()
                             })
                             DropdownMenuItem(
                                 leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
-                                text = { Text("Remove Ads") },
+                                text = { Text(stringResource(R.string.menu_remove_ads)) },
                                 enabled = !settings.removeAds,
                                 onClick = {
                                     menuOpen = false
@@ -123,7 +132,7 @@ fun GroupsScreen(
                             
                             DropdownMenuItem(
                                 leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
-                                text = { Text("Rate It") }, onClick = {
+                                text = { Text(stringResource(R.string.menu_rate_it)) }, onClick = {
                                 menuOpen = false
                                 val pkg = context.packageName
                                 val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
@@ -147,9 +156,11 @@ fun GroupsScreen(
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
+            // Ensure hardware back closes an open (possibly invisible) menu popup
+            BackHandler(enabled = menuOpen) { menuOpen = false }
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = { showCreate = true }, icon = { Icon(Icons.Default.Add, null) }, text = { Text("New group") })
+            ExtendedFloatingActionButton(onClick = { showCreate = true }, icon = { Icon(Icons.Default.Add, null) }, text = { Text(stringResource(R.string.fab_new_group)) })
         },
         bottomBar = {
             if (!settings.removeAds) {
@@ -176,7 +187,7 @@ fun GroupsScreen(
                     .padding(padding),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
-            ) { Text("No groups yet. Tap + to create.", textAlign = TextAlign.Center) }
+            ) { Text(stringResource(R.string.no_groups_message), textAlign = TextAlign.Center) }
         } else {
             LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(items = groups, key = { it.id }) { g ->
@@ -200,7 +211,7 @@ fun GroupsScreen(
                                 Text(text = "${g.icon ?: "👥"}  ${g.name}", style = MaterialTheme.typography.titleMedium)
                                 androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        "Total",
+                                        stringResource(R.string.total),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -211,17 +222,17 @@ fun GroupsScreen(
                                 }
                             }
                             Box(modifier = Modifier) {
-                                IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = "More") }
+                                IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.cd_more)) }
                                 DropdownMenu(
                                     expanded = menuOpen,
                                     onDismissRequest = { menuOpen = false }
                                 ) {
-                                    DropdownMenuItem(text = { Text("Edit group") }, onClick = {
+                                    DropdownMenuItem(text = { Text(stringResource(R.string.edit_group)) }, onClick = {
                                         menuOpen = false
                                         newName = g.name
                                         showRename = true
                                     })
-                                    DropdownMenuItem(text = { Text("Delete group") }, onClick = {
+                                    DropdownMenuItem(text = { Text(stringResource(R.string.delete_group)) }, onClick = {
                                         menuOpen = false
                                         showDelete = true
                                     })
@@ -233,13 +244,13 @@ fun GroupsScreen(
                     if (showRename) {
                         AlertDialog(
                             onDismissRequest = { showRename = false },
-                            title = { Text("Edit Group") },
+                            title = { Text(stringResource(R.string.edit_group_title)) },
                             text = {
                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedTextField(
                                         value = newName,
                                         onValueChange = { newName = it },
-                                        label = { Text("Group name") },
+                                        label = { Text(stringResource(R.string.group_name_label)) },
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
@@ -251,24 +262,24 @@ fun GroupsScreen(
                                         viewModel.renameGroup(g.id, trimmed)
                                         showRename = false
                                     }
-                                }) { Text("Save") }
+                                }) { Text(stringResource(R.string.save)) }
                             },
-                            dismissButton = { TextButton(onClick = { showRename = false }) { Text("Cancel") } }
+                            dismissButton = { TextButton(onClick = { showRename = false }) { Text(stringResource(R.string.cancel)) } }
                         )
                     }
 
                     if (showDelete) {
                         AlertDialog(
                             onDismissRequest = { showDelete = false },
-                            title = { Text("Delete Group") },
-                            text = { Text("This will delete the group and all its data. This action cannot be undone.") },
+                            title = { Text(stringResource(R.string.delete_group_title)) },
+                            text = { Text(stringResource(R.string.delete_group_message)) },
                             confirmButton = {
                                 TextButton(onClick = {
                                     viewModel.deleteGroup(g.id)
                                     showDelete = false
-                                }) { Text("Delete") }
+                                }) { Text(stringResource(R.string.delete)) }
                             },
-                            dismissButton = { TextButton(onClick = { showDelete = false }) { Text("Cancel") } }
+                            dismissButton = { TextButton(onClick = { showDelete = false }) { Text(stringResource(R.string.cancel)) } }
                         )
                     }
                 }
@@ -279,18 +290,18 @@ fun GroupsScreen(
     if (showCreate) {
         AlertDialog(
             onDismissRequest = { showCreate = false },
-            title = { Text("Create Group") },
+            title = { Text(stringResource(R.string.create_group_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Group name") },
+                        label = { Text(stringResource(R.string.group_name_label)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     // simple icon picker as text buttons
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Choose icon:")
+                        Text(stringResource(R.string.choose_icon))
                         androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             iconOptions.forEach { opt ->
                                 TextButton(onClick = { icon = opt }) { Text(if (icon == opt) "[$opt]" else opt) }
@@ -309,9 +320,9 @@ fun GroupsScreen(
                             onOpenGroup(gid, trimmed)
                         }
                     }
-                }) { Text("Create") }
+                }) { Text(stringResource(R.string.create)) }
             },
-            dismissButton = { TextButton(onClick = { showCreate = false }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { showCreate = false }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 }

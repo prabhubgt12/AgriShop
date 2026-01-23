@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="amounts_percent_format">राशि: %1$.2f / %2$.2f • प्रतिशत: %3$.0f%%</string>
+    <string name="split_equally_among">%1$d सदस्यों में बराबर बाँटें</string>
+    <string name="no_members_hint">अभी तक कोई सदस्य नहीं जोड़ा गया है।</string>
+    <string name="add_sample_members">नमूना सदस्य जोड़ें</string>
+</resources>
