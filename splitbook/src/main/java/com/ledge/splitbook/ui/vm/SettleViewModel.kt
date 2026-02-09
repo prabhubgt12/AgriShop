@@ -38,6 +38,8 @@ class SettleViewModel @Inject constructor(
         val nets: Map<Long, Double> = emptyMap(),
         val transfers: List<SettlementLogic.Transfer> = emptyList(),
         val memberSummaries: List<com.ledge.splitbook.util.MemberSummary> = emptyList(),
+        val uniqueMemberNames: List<String> = emptyList(),
+        val isUniqueNamesLoading: Boolean = false,
         val isLoading: Boolean = false,
         val error: String? = null,
     )
@@ -83,6 +85,16 @@ class SettleViewModel @Inject constructor(
         observeJob = null
         loadedGroupId = null
         load(gid)
+    }
+
+    fun loadUniqueMemberNames() {
+        if (_ui.value.isUniqueNamesLoading) return
+        if (_ui.value.uniqueMemberNames.isNotEmpty()) return
+        _ui.value = _ui.value.copy(isUniqueNamesLoading = true)
+        viewModelScope.launch(Dispatchers.IO) {
+            val names = memberRepo.getAllUniqueMemberNames()
+            _ui.value = _ui.value.copy(uniqueMemberNames = names, isUniqueNamesLoading = false)
+        }
     }
 
     private fun recompute() {

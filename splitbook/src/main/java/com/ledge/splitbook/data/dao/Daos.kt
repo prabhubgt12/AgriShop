@@ -74,6 +74,9 @@ interface MemberDao {
 
     @Query("UPDATE members SET isAdmin = 0 WHERE groupId = :groupId AND isAdmin = 1")
     suspend fun clearAdmin(groupId: Long)
+
+    @Query("SELECT DISTINCT name FROM members ORDER BY name COLLATE NOCASE ASC")
+    suspend fun getAllUniqueMemberNames(): List<String>
 }
 
 @Dao

@@ -13,6 +13,7 @@
     <string name="cd_menu">मेनू</string>
     <string name="cd_back">वापस</string>
     <string name="cd_add">जोड़ें</string>
+    <string name="cd_quick_add_members">त्वरित सदस्य जोड़ें</string>
     <string name="cd_add_member">सदस्य जोड़ें</string>
     <string name="cd_more">अधिक विकल्प</string>
     <string name="cd_rename">नाम बदलें</string>
@@ -44,6 +45,9 @@
     <string name="choose_icon">आइकन चुनें:</string>
 
     <string name="members_title">सदस्य</string>
+    <string name="quick_add_members_title">त्वरित जोड़ें</string>
+    <string name="quick_add_members_note">पहले उपयोग किए गए सदस्यों से जोड़ें।</string>
+    <string name="quick_add_members_empty">जोड़ने के लिए कोई सदस्य नहीं है।</string>
     <string name="members_admin_suffix">%1$s (प्रशासक)</string>
     <string name="members_rename_title">सदस्य का नाम बदलें</string>
     <string name="members_new_name_label">नया नाम</string>

@@ -74,6 +74,9 @@ class MemberRepository @Inject constructor(
     private val splitDao: ExpenseSplitDao,
 ) {
     fun observeMembers(groupId: Long): Flow<List<MemberEntity>> = memberDao.observeByGroup(groupId)
+
+    suspend fun getAllUniqueMemberNames(): List<String> = memberDao.getAllUniqueMemberNames()
+
     suspend fun addMember(groupId: Long, name: String, deposit: Double = 0.0, isAdmin: Boolean = false): Long =
         memberDao.insert(
             MemberEntity(

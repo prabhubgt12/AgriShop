@@ -17,12 +17,12 @@
     <string name="pick_date">Pick date</string>
     <string name="expense_share_by_all">Share equally with all</string>
     <string name="select_members">Select members</string>
-    <string name="selected_count">%1 selected</string>
+    <string name="selected_count">%1$s selected</string>
     <string name="select_person">Select person</string>
     <string name="percent_sign">%</string>
     <string name="note_amounts_or_percentages">Enter amounts or percentages</string>
     <string name="amounts_percent_format">Amounts: %1$.2f / %2$.2f • Percent: %3$.0f%%</string>
-    <string name="split_equally_among">Split equally among %1 members</string>
+    <string name="split_equally_among">Split equally among %1$s members</string>
     <string name="no_members_hint">No members added yet.</string>
     <string name="add_sample_members">Add sample members</string>
 
@@ -65,5 +65,5 @@
     <string name="split_by_member">Member</string>
 
     <!-- Misc for settlement note -->
-    <string name="settlement_note">%1 settlement</string>
+    <string name="settlement_note">%1$s settlement</string>
 </resources>

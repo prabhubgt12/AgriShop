@@ -10,6 +10,7 @@
     <string name="cd_menu">మెను</string>
     <string name="cd_back">వెనుకు</string>
     <string name="cd_add">జోడించు</string>
+    <string name="cd_quick_add_members">త్వరితంగా సభ్యులను జోడించు</string>
     <string name="cd_add_member">సభ్యుని జోడించు</string>
     <string name="cd_more">ఇంకా ఎంపికలు</string>
     <string name="cd_rename">పేరు మార్చు</string>
@@ -41,6 +42,9 @@
     <string name="choose_icon">ఐకాన్ ఎంచుకోండి:</string>
 
     <string name="members_title">సభ్యులు</string>
+    <string name="quick_add_members_title">త్వరితంగా జోడించు</string>
+    <string name="quick_add_members_note">మునుపు ఉపయోగించిన సభ్యుల నుండి జోడించు.</string>
+    <string name="quick_add_members_empty">జోడించడానికి సభ్యులు లేరు.</string>
     <string name="members_admin_suffix">%1$s (అడ్మిన్)</string>
     <string name="members_rename_title">సభ్యుని పేరు మార్చండి</string>
     <string name="members_new_name_label">కొత్త పేరు</string>

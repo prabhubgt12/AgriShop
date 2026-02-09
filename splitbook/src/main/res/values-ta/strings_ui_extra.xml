@@ -10,6 +10,7 @@
     <string name="cd_menu">மெனு</string>
     <string name="cd_back">பின் செல்ல</string>
     <string name="cd_add">சேர்க்க</string>
+    <string name="cd_quick_add_members">விரைவு உறுப்பினர்களைச் சேர்க்க</string>
     <string name="cd_add_member">உறுப்பினரைச் சேர்க்க</string>
     <string name="cd_more">மேலும் விருப்பங்கள்</string>
     <string name="cd_rename">பெயர் மாற்று</string>
@@ -41,6 +42,9 @@
     <string name="choose_icon">ஐகானை தேர்வுசெய்க:</string>
 
     <string name="members_title">உறுப்பினர்கள்</string>
+    <string name="quick_add_members_title">விரைவு சேர்க்க</string>
+    <string name="quick_add_members_note">முன்பு பயன்படுத்திய உறுப்பினர்களிலிருந்து சேர்க்க.</string>
+    <string name="quick_add_members_empty">சேர்க்க உறுப்பினர்கள் இல்லை.</string>
     <string name="members_admin_suffix">%1$s (நிர்வாகி)</string>
     <string name="members_rename_title">உறுப்பினரின் பெயர் மாற்றம்</string>
     <string name="members_new_name_label">புதிய பெயர்</string>

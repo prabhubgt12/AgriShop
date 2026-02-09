@@ -38,9 +38,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -85,6 +88,7 @@ fun SettleScreen(
     viewModel: SettleViewModel = hiltViewModel()
 ) {
     LaunchedEffect(groupId) { viewModel.load(groupId) }
+    LaunchedEffect(groupId) { viewModel.loadUniqueMemberNames() }
     val ui by viewModel.ui.collectAsState()
     val context = LocalContext.current
     val settingsViewModel: SettingsViewModel = hiltViewModel()
@@ -93,6 +97,7 @@ fun SettleScreen(
 
     var upiDialog by remember { mutableStateOf<SettlementLogic.Transfer?>(null) }
     var showAddMember by remember { mutableStateOf(false) }
+    var showQuickAddMember by remember { mutableStateOf(false) }
     var detailsMember by remember { mutableStateOf<com.ledge.splitbook.data.entity.MemberEntity?>(null) }
     var editMember by remember { mutableStateOf<com.ledge.splitbook.data.entity.MemberEntity?>(null) }
     var vpa by remember { mutableStateOf(TextFieldValue("")) }
@@ -222,13 +227,25 @@ fun SettleScreen(
                                 style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                                 color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = stringResource(id = com.ledge.splitbook.R.string.add_member),
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable { showAddMember = true }
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Download,
+                                    contentDescription = stringResource(id = com.ledge.splitbook.R.string.cd_quick_add_members),
+                                    modifier = Modifier
+                                        .size(22.dp)
+                                        .clickable { showQuickAddMember = true }
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = stringResource(id = com.ledge.splitbook.R.string.add_member),
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clickable { showAddMember = true }
+                                )
+                            }
                         }
                         androidx.compose.material3.HorizontalDivider()
                         val totalDepositsByMembers = ui.members.filter { !it.isAdmin }.sumOf { it.deposit }
@@ -446,6 +463,97 @@ fun SettleScreen(
                 }
             }
         }
+    }
+
+    if (showQuickAddMember) {
+        val existingNames = remember(ui.members) {
+            ui.members.map { it.name.trim() }.filter { it.isNotEmpty() }.toSet()
+        }
+        val candidates = remember(ui.uniqueMemberNames, existingNames) {
+            ui.uniqueMemberNames
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .filter { it !in existingNames }
+        }
+        val hasAdmin = ui.members.any { it.isAdmin }
+        val selected = remember(candidates) { mutableStateMapOf<String, Boolean>() }
+        LaunchedEffect(candidates) {
+            candidates.forEach { name ->
+                if (!selected.containsKey(name)) selected[name] = false
+            }
+        }
+
+        AlertDialog(
+            onDismissRequest = { showQuickAddMember = false },
+            title = { Text(stringResource(com.ledge.splitbook.R.string.quick_add_members_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(com.ledge.splitbook.R.string.quick_add_members_note))
+
+                    when {
+                        ui.isUniqueNamesLoading -> {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+
+                        candidates.isEmpty() -> {
+                            Text(stringResource(com.ledge.splitbook.R.string.quick_add_members_empty))
+                        }
+
+                        else -> {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(candidates) { name ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Checkbox(
+                                            checked = selected[name] == true,
+                                            onCheckedChange = { checked -> selected[name] = checked }
+                                        )
+                                        Text(name)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                val chosen = selected.filterValues { it }.keys.toList()
+                TextButton(
+                    enabled = chosen.isNotEmpty() && !ui.isUniqueNamesLoading,
+                    onClick = {
+                        val trimmed = chosen.map { it.trim() }.filter { it.isNotEmpty() }
+                        if (trimmed.isNotEmpty()) {
+                            if (!hasAdmin) {
+                                val first = trimmed.first()
+                                viewModel.addMember(first, 0.0, true)
+                                trimmed.drop(1).forEach { n -> viewModel.addMember(n, 0.0, false) }
+                            } else {
+                                trimmed.forEach { n -> viewModel.addMember(n, 0.0, false) }
+                            }
+                        }
+                        showQuickAddMember = false
+                    }
+                ) {
+                    Text(stringResource(com.ledge.splitbook.R.string.add))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showQuickAddMember = false }) {
+                    Text(stringResource(com.ledge.splitbook.R.string.cancel))
+                }
+            }
+        )
     }
 
     // Member details dialog (beautified header, colored amounts, action buttons with dividers)
