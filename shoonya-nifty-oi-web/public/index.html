@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shoonya NIFTY OI Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="title">NIFTY Option Chain (OI)</div>
+        <div class="sub">Local dashboard • 5s updates</div>
+      </div>
+      <div class="actions">
+        <button id="startBtn">Start</button>
+        <button id="stopBtn" class="secondary">Stop</button>
+        <button id="refreshBtn">Refresh</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="cardTitle">Login (SMS OTP)</div>
+        <div class="loginRow">
+          <input id="otpInput" class="otpInput" placeholder="Enter OTP" inputmode="numeric" />
+          <button id="loginBtn" class="secondary">Login</button>
+        </div>
+        <div id="loginStatus" class="loginStatus">Not logged in</div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">Suggestion</div>
+        <div id="suggestion" class="suggestion">-</div>
+        <div id="confidence" class="confidence">-</div>
+        <div id="reasons" class="reasons"></div>
+        <div id="error" class="error"></div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">Underlying</div>
+        <div class="kv">
+          <div class="k">LTP</div><div id="underLtp" class="v">-</div>
+          <div class="k">Symbol</div><div id="underSym" class="v">-</div>
+          <div class="k">Token</div><div id="underToken" class="v">-</div>
+          <div class="k">ATM</div><div id="atm" class="v">-</div>
+          <div class="k">Support (Put max OI)</div><div id="support" class="v">-</div>
+          <div class="k">Resistance (Call max OI)</div><div id="resistance" class="v">-</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">ITM OI (Top 10)</div>
+        <div class="kv">
+          <div class="k">CE ITM OI Sum</div><div id="ceItmOiSum" class="v">-</div>
+          <div class="k">PE ITM OI Sum</div><div id="peItmOiSum" class="v">-</div>
+          <div class="k">CE/PE Ratio</div><div id="cePeRatio" class="v">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card tableCard">
+      <div class="cardTitle">Option Chain</div>
+      <div class="tableWrap">
+        <table id="chainTable">
+          <thead>
+            <tr>
+              <th>Strike</th>
+              <th>CE LTP</th>
+              <th>CE OI</th>
+              <th>CE ΔOI</th>
+              <th>PE ΔOI</th>
+              <th>PE OI</th>
+              <th>PE LTP</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
