@@ -158,20 +158,18 @@ fun HomeScreen(
                         }) { Text(text = stringResource(R.string.remove_ads)) }
                     }
                 }
-                // Native ad card only when ad is ready
+                // Native ad only when ad is ready
                 if (nativeLoaded) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                            NativeAdvancedAd(
-                                modifier = Modifier.fillMaxWidth(),
-                                onLoadState = { loaded -> nativeLoaded = loaded }
-                            )
-                        }
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = stringResource(R.string.ad_label),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        NativeAdvancedAd(
+                            modifier = Modifier.fillMaxWidth(),
+                            onLoadState = { loaded -> nativeLoaded = loaded }
+                        )
                     }
                 } else {
                     // Start loading and avoid rendering the card until ready

@@ -53,6 +53,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.ads.BannerAd
 import android.graphics.Paint
+import com.google.android.gms.ads.AdSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +75,7 @@ fun AccountsScreen(
     var accountName by remember { mutableStateOf("") }
     var openBalanceText by remember { mutableStateOf("") }
     val ctx = LocalContext.current
+    var bannerLoaded by remember { mutableStateOf(false) }
     var confirmDeleteFor by remember { mutableStateOf<Int?>(null) }
     var renameFor by remember { mutableStateOf<Int?>(null) }
     var renameText by remember { mutableStateOf("") }
@@ -93,12 +95,28 @@ fun AccountsScreen(
         contentWindowInsets = WindowInsets.systemBars
     ) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize()) {
+            val showBanner = !hasRemoveAds && !showAdd
+
+            val bannerHeightDp = remember(showBanner, bannerLoaded) {
+                if (!showBanner) 0f else {
+                    val dm = ctx.resources.displayMetrics
+                    val widthDp = (dm.widthPixels / dm.density).toInt()
+                    val size = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, widthDp)
+                    (size.getHeightInPixels(ctx) / dm.density)
+                }
+            }
+            val bannerHeight = bannerHeightDp.dp
             // List content
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(12.dp),
+                    .padding(padding),
+                contentPadding = PaddingValues(
+                    start = 12.dp,
+                    end = 12.dp,
+                    top = 12.dp,
+                    bottom = if (showBanner) bannerHeight else 12.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (showSummary) {
@@ -329,10 +347,6 @@ fun AccountsScreen(
                         }
                     }
                 }
-                }
-                // Bottom spacer so banner doesn't cover list content
-                if (!hasRemoveAds) {
-                    item { Spacer(Modifier.height(84.dp)) }
                 }
             }
 
@@ -610,22 +624,37 @@ fun AccountsScreen(
             val edge = 16.dp
             val topInsetPx = with(density) { WindowInsets.statusBars.getTop(this).toFloat() }
             val bottomInsetPx = with(density) { WindowInsets.navigationBars.getBottom(this).toFloat() }
+            val bannerReservePx = with(density) { if (showBanner) (bannerHeight + 12.dp).toPx() else 0f }
             val maxX = with(density) { (maxWidth - fabSize - edge).toPx() }
-            val maxY = with(density) { (maxHeight - fabSize - edge).toPx() } - bottomInsetPx
+            val maxY = with(density) { (maxHeight - fabSize - edge).toPx() } - bottomInsetPx - bannerReservePx
             val minX = with(density) { edge.toPx() }
             val minY = topInsetPx + with(density) { edge.toPx() }
             var offsetX by remember(maxWidth, maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf(maxX.coerceAtLeast(minX)) }
             var offsetY by remember(maxWidth, maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf(maxY.coerceAtLeast(minY)) }
+
+            LaunchedEffect(minY, maxY) {
+                offsetY = offsetY.coerceIn(minY, maxY)
+            }
+
+            LaunchedEffect(hasRemoveAds) {
+                if (hasRemoveAds) {
+                    offsetX = maxX.coerceAtLeast(minX)
+                    offsetY = maxY.coerceAtLeast(minY)
+                }
+            }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.navigationBars)
             ) {
-                if (!hasRemoveAds) {
-                    BannerAd(modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth())
+                if (showBanner) {
+                    BannerAd(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth(),
+                        onLoadState = { ok -> bannerLoaded = ok }
+                    )
                 }
                 FloatingActionButton(
                     onClick = { showAdd = true },

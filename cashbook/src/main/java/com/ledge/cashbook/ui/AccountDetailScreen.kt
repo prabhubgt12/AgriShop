@@ -65,6 +65,7 @@ import com.ledge.cashbook.util.ExcelShare
 import com.ledge.cashbook.ads.BannerAd
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.gms.ads.AdSize
 import coil.compose.AsyncImage
 import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.foundation.clickable
@@ -1127,11 +1128,21 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             // Divider above footer for separation
             HorizontalDivider()
             // Sticky totals footer (outside list)
+            val showBanner = !hasRemoveAds && !showAdd
+            val bannerHeightDp = remember(showBanner, bannerLoaded) {
+                if (!showBanner) 0f else {
+                    val dm = ctx.resources.displayMetrics
+                    val widthDp = (dm.widthPixels / dm.density).toInt()
+                    val size = AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, widthDp)
+                    (size.getHeightInPixels(ctx) / dm.density)
+                }
+            }
+            val bannerHeight = bannerHeightDp.dp
             Row(
                 Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface)
-                    .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+                    .then(if (!showBanner) Modifier.windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)) else Modifier)
                     .padding(vertical = 6.dp, horizontal = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1209,26 +1220,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     }
                 }
             }
-            // Reserve space below summary only after ad loads and ads not removed
-            if (!hasRemoveAds && bannerLoaded) {
-                Spacer(Modifier.height(60.dp))
-            }
-            }
-            // Bottom banner overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-            ) {
-                if (!hasRemoveAds) {
-                    BannerAd(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth(),
-                        adUnitId = "ca-app-pub-2556604347710668/8804283822",
-                        onLoadState = { ok -> bannerLoaded = ok }
-                    )
-                }
+            if (showBanner) {
+                BannerAd(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
+                    adUnitId = "ca-app-pub-2556604347710668/8804283822",
+                    onLoadState = { ok -> bannerLoaded = ok }
+                )
             }
         }
     }
@@ -1441,4 +1440,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             }
         }
     }
+}
+
 }
