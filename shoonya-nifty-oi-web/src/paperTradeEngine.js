@@ -405,7 +405,7 @@ function createPaperTradeState() {
     productType: 'M',
     qtyMode: 'QTY',
     lots: 1,
-    qtyPerLot: 50,
+    qtyPerLot: 65,
     orderQty: 1,
     directionOverride: 'AUTO',
     selectedMode: 'AUTO',
