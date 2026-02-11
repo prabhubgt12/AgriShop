@@ -24,7 +24,7 @@
     <string name="label_name_with_value">பெயர்: %1$s</string>
     <string name="label_type_with_value">வகை: %1$s</string>
     <string name="label_principal_with_value">முதல்தொகை: %1$s</string>
-    <string name="label_rate_with_value">விகிதம்: %1$s%% %2$s</string>
+    <string name="label_rate_with_value">விகிதம்: %1$s</string>
     <string name="label_from_with_value">இருந்து: %1$s</string>
     <string name="label_interest_till_now_with_value">இன்றுவரை வட்டி: %1$s</string>
     <string name="label_total_with_value">மொத்தம்: %1$s</string>
@@ -55,10 +55,17 @@
     <string name="emi_calculator">EMI கணக்கீடு</string>
     <string name="sip">எஸ்‌ஐபி</string>
     <string name="sip_calculator">எஸ்‌ஐபி கணக்கீடு</string>
+    <string name="rd_book">ஆர்‌டி புத்தகம்</string>
 
     <!-- Calculator labels -->
     <string name="label_principal_generic">முதல்தொகை</string>
     <string name="label_rate_per_month">விகிதம் (%/மாதம்)</string>
+    <string name="rate_mode_rupee">ரூபாய்</string>
+    <string name="rate_mode_percentage">சதவீதம்</string>
+    <string name="interest_calc_rate_rupee_monthly_label">விகிதம் (ரூபாயில்)</string>
+    <string name="interest_calc_rate_percentage_yearly_label">விகிதம் (% ஆண்டு)</string>
+    <string name="rate_display_rupee_monthly">%1$s%% / மாதம்</string>
+    <string name="rate_display_percentage_yearly">%1$s%% / ஆண்டு</string>
     <string name="dates">தேதிகள்</string>
     <string name="duration">காலநிலை</string>
     <string name="from">இருந்து</string>
@@ -220,6 +227,32 @@
     <!-- Add/Edit Dialog extras -->
     <string name="update">புதுப்பி</string>
     <string name="save">சேமி</string>
+    <string name="loading">ஏற்றுகிறது…</string>
+
+    <string name="add_rd">ஆர்‌டி சேர்</string>
+    <string name="edit_rd">ஆர்‌டி திருத்து</string>
+    <string name="rd_name">ஆர்‌டி பெயர்</string>
+    <string name="rd_installment_amount">தவணை தொகை</string>
+    <string name="rd_annual_rate">வட்டி விகிதம் (% ஆண்டு)</string>
+    <string name="rd_tenure">காலம்</string>
+    <string name="rd_start_date">தொடக்க தேதி</string>
+    <string name="rd_auto_pay">ஆட்டோ பே</string>
+    <string name="rd_auto_pay_hint">பாக்கி தவணைகளை தானாகவே செலுத்தப்பட்டது என குறிக்கும்</string>
+    <string name="rd_summary">சுருக்கம்</string>
+    <string name="rd_schedule">தவணை பட்டியல்</string>
+    <string name="rd_mark_paid">செலுத்தப்பட்டது</string>
+    <string name="rd_status_paid">செலுத்தப்பட்டது</string>
+    <string name="rd_status_due">பாக்கி</string>
+    <string name="rd_status_upcoming">வரவிருக்கும்</string>
+    <string name="rd_due_date_value">பாக்கி: %1$s</string>
+    <string name="rd_paid_amount_value">செலுத்தியது: %1$s</string>
+    <string name="rd_rate_value">விகிதம்: %1$s%% (ஆண்டு)</string>
+    <string name="rd_start_date_value">தொடக்கம்: %1$s</string>
+    <string name="rd_installment_value">தவணை: %1$s</string>
+    <string name="rd_total_deposited_value">ஜமா: %1$s</string>
+    <string name="rd_accrued_interest_value">வட்டி: %1$s</string>
+    <string name="rd_total_value_value">மொத்தம்: %1$s</string>
+    <string name="rd_delete_confirm">இந்த ஆர்‌டியை நீக்கவா?</string>
     <string name="edit_entry">பதிவை திருத்து</string>
     <string name="add_to_book">புத்தகத்தில் சேர்</string>
     <string name="lend">கொடுத்தது</string>
@@ -229,10 +262,14 @@
     <string name="name_required">பெயர் தேவையானது</string>
     <string name="interest_type">வட்டி வகை</string>
     <string name="rate_basis">விகிதத்தின் அடிப்படை</string>
+    <string name="rate_basis_rupee">ரூபாய்</string>
+    <string name="rate_basis_percentage">சதவீதம்</string>
     <string name="duration_type">கூட்டு காலம்</string>
     <string name="principal_amount">முதல்தொகை</string>
     <string name="enter_valid_number">செல்லுபடியாகும் எண்ணை உள்ளிடவும்</string>
     <string name="interest_rate_percent">வட்டி விகிதம் (%)</string>
+    <string name="interest_rate_rupee_monthly">வட்டி விகிதம் (ரூபாய் மாதாந்திரம்)</string>
+    <string name="interest_rate_percentage_yearly">வட்டி விகிதம் (% வருடாந்திரம்)</string>
     <string name="pick">தேர்வு செய்</string>
     <string name="notes_optional">குறிப்புகள்</string>
     <string name="phone">தொலைபேசி</string>

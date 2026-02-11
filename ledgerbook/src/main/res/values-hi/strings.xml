@@ -11,7 +11,7 @@
     <string name="label_name_with_value">नाम: %1$s</string>
     <string name="label_type_with_value">प्रकार: %1$s</string>
     <string name="label_principal_with_value">मूलधन: %1$s</string>
-    <string name="label_rate_with_value">दर: %1$s%% %2$s</string>
+    <string name="label_rate_with_value">दर: %1$s</string>
     <string name="label_from_with_value">प्रारंभ: %1$s</string>
     <string name="label_interest_till_now_with_value">अब तक ब्याज: %1$s</string>
     <string name="label_total_with_value">कुल: %1$s</string>
@@ -104,6 +104,12 @@
     <string name="interest_calculator">ब्याज कैलकुलेटर</string>
     <string name="label_principal_generic">मूलधन</string>
     <string name="label_rate_per_month">दर (%/माह)</string>
+    <string name="rate_mode_rupee">रुपये</string>
+    <string name="rate_mode_percentage">प्रतिशत</string>
+    <string name="interest_calc_rate_rupee_monthly_label">दर (रुपये में)</string>
+    <string name="interest_calc_rate_percentage_yearly_label">दर (% वार्षिक)</string>
+    <string name="rate_display_rupee_monthly">%1$s%% / माह</string>
+    <string name="rate_display_percentage_yearly">%1$s%% / वर्ष</string>
     <string name="dates">तिथियाँ</string>
     <string name="duration">अवधि</string>
     <string name="from">से</string>
@@ -123,6 +129,7 @@
     <!-- SIP Calculator (Hindi) -->
     <string name="sip">एसआईपी</string>
     <string name="sip_calculator">एसआईपी कैलकुलेटर</string>
+    <string name="rd_book">आरडी बुक</string>
     <string name="monthly_investment">मासिक निवेश</string>
     <string name="yearly_investment">वार्षिक निवेश</string>
     <string name="sip_expected_return">Exp Return (प्रतिवर्ष %)</string>
@@ -157,6 +164,32 @@
     <!-- Add/Edit Dialog -->
     <string name="update">अपडेट</string>
     <string name="save">सहेजें</string>
+    <string name="loading">लोड हो रहा है…</string>
+
+    <string name="add_rd">आरडी जोड़ें</string>
+    <string name="edit_rd">आरडी संपादित करें</string>
+    <string name="rd_name">आरडी नाम</string>
+    <string name="rd_installment_amount">किस्त राशि</string>
+    <string name="rd_annual_rate">ब्याज दर (% वार्षिक)</string>
+    <string name="rd_tenure">अवधि</string>
+    <string name="rd_start_date">प्रारंभ तिथि</string>
+    <string name="rd_auto_pay">ऑटो पे</string>
+    <string name="rd_auto_pay_hint">देय किस्तों को अपने आप भुगतान के रूप में चिह्नित करे</string>
+    <string name="rd_summary">सारांश</string>
+    <string name="rd_schedule">किस्त सूची</string>
+    <string name="rd_mark_paid">भुगतान चिह्नित करें</string>
+    <string name="rd_status_paid">भुगतान</string>
+    <string name="rd_status_due">देय</string>
+    <string name="rd_status_upcoming">आगामी</string>
+    <string name="rd_due_date_value">देय: %1$s</string>
+    <string name="rd_paid_amount_value">भुगतान: %1$s</string>
+    <string name="rd_rate_value">दर: %1$s%% (वार्षिक)</string>
+    <string name="rd_start_date_value">प्रारंभ: %1$s</string>
+    <string name="rd_installment_value">किस्त: %1$s</string>
+    <string name="rd_total_deposited_value">जमा: %1$s</string>
+    <string name="rd_accrued_interest_value">ब्याज: %1$s</string>
+    <string name="rd_total_value_value">कुल: %1$s</string>
+    <string name="rd_delete_confirm">इस आरडी को हटाएं?</string>
     <string name="edit_entry">एंट्री संपादित करें</string>
     <string name="add_to_book">बुक में जोड़ें</string>
     <string name="lend">उधार दें</string>
@@ -166,10 +199,14 @@
     <string name="name_required">नाम आवश्यक है</string>
     <string name="interest_type">ब्याज प्रकार</string>
     <string name="rate_basis">दर का आधार</string>
+    <string name="rate_basis_rupee">रुपये</string>
+    <string name="rate_basis_percentage">प्रतिशत</string>
     <string name="duration_type">चक्रवृद्धि अवधि</string>
     <string name="principal_amount">मूलधन राशि</string>
     <string name="enter_valid_number">मान्य संख्या दर्ज करें</string>
     <string name="interest_rate_percent">ब्याज दर (%)</string>
+    <string name="interest_rate_rupee_monthly">ब्याज दर (रुपये प्रति माह)</string>
+    <string name="interest_rate_percentage_yearly">ब्याज दर (% वार्षिक)</string>
     <string name="pick">चुनें</string>
     <string name="notes_optional">नोट्स</string>
     <string name="phone">फ़ोन</string>

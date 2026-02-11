@@ -67,6 +67,7 @@ import com.ledge.ledgerbook.billing.MonetizationViewModel
 import com.ledge.ledgerbook.ads.BannerAd
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import com.ledge.ledgerbook.util.CurrencyFormatter
+import com.ledge.ledgerbook.util.InterestRateFormatter
 import com.ledge.ledgerbook.util.PdfShareUtils
 import com.ledge.ledgerbook.util.NumberToWords
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -108,17 +109,13 @@ private fun buildShareText(
         "BORROW" -> ctx.getString(R.string.borrow)
         else -> toCamel(vm.type)
     }
-    val basisLabel = when (vm.rateBasis.uppercase()) {
-        "MONTHLY" -> ctx.getString(R.string.monthly)
-        "YEARLY" -> ctx.getString(R.string.yearly)
-        else -> toCamel(vm.rateBasis)
-    }
+    val rateLabel = InterestRateFormatter.format(vm.rate, vm.rateBasis)
     return buildString {
         appendLine(ctx.getString(R.string.ledger_entry_title))
         appendLine(ctx.getString(R.string.label_name_with_value, vm.name))
         appendLine(ctx.getString(R.string.label_type_with_value, typeLabel))
         appendLine(ctx.getString(R.string.label_principal_with_value, CurrencyFormatter.format(vm.principal)))
-        appendLine(ctx.getString(R.string.label_rate_with_value, vm.rate.toString(), basisLabel))
+        appendLine(ctx.getString(R.string.label_rate_with_value, rateLabel))
         appendLine(ctx.getString(R.string.label_from_with_value, sdf.format(java.util.Date(vm.fromDateMillis))))
         appendLine(ctx.getString(R.string.label_interest_till_now_with_value, CurrencyFormatter.format(vm.accrued)))
         appendLine(ctx.getString(R.string.label_total_with_value, CurrencyFormatter.format(vm.total)))
@@ -730,8 +727,8 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         Spacer(Modifier.height(8.dp))
                         val basis = (e.period ?: "MONTHLY").uppercase()
                         val basisValue = when (basis) {
-                            "MONTHLY" -> stringResource(R.string.monthly)
-                            "YEARLY" -> stringResource(R.string.yearly)
+                            "MONTHLY" -> stringResource(R.string.rate_basis_rupee)
+                            "YEARLY" -> stringResource(R.string.rate_basis_percentage)
                             else -> toCamel(basis)
                         }
                         LabelValue(label = stringResource(R.string.rate_basis), value = basisValue)
@@ -747,7 +744,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         Spacer(Modifier.height(8.dp))
                         LabelValue(label = stringResource(R.string.label_principal_generic), value = CurrencyFormatter.formatInr(e.principal))
                         Spacer(Modifier.height(8.dp))
-                        LabelValue(label = stringResource(R.string.interest_rate_percent), value = "${e.rateRupees}%")
+                        LabelValue(label = stringResource(R.string.interest_rate), value = InterestRateFormatter.format(e.rateRupees, e.period))
                         Spacer(Modifier.height(8.dp))
                         LabelValue(label = stringResource(R.string.from_date), value = SimpleDateFormat("dd/MM/yyyy").format(Date(e.fromDate)))
                         // Extract phone from notes (line starting with 'Phone:') and show as tappable
@@ -1652,12 +1649,7 @@ private fun LedgerRow(
                         leadingIcon = Icons.Outlined.Payments
                     )
                     Box(Modifier.weight(1f)) {
-                        val basisLabel = when (vm.rateBasis.uppercase()) {
-                            "MONTHLY" -> stringResource(R.string.monthly)
-                            "YEARLY" -> stringResource(R.string.yearly)
-                            else -> toCamel(vm.rateBasis)
-                        }
-                        LabelValue(label = stringResource(R.string.interest_rate), value = "${vm.rate}% ${basisLabel}")
+                        LabelValue(label = stringResource(R.string.interest_rate), value = InterestRateFormatter.format(vm.rate, vm.rateBasis))
                         if (!topBarVisible) {
                             // Move 3-dots here when header row is hidden (grouping mode)
                             Box(Modifier.fillMaxWidth()) {

@@ -203,25 +203,26 @@ private fun OptionItem(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
     onClick: () -> Unit
 ) {
     Column(
         modifier = modifier
             .clickable { onClick() }
-            .padding(12.dp),
+            .padding(if (compact) 8.dp else 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = title,
-            modifier = Modifier.size(36.dp),
+            modifier = Modifier.size(if (compact) 26.dp else 36.dp),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(if (compact) 4.dp else 6.dp))
         Text(
             title,
-            style = MaterialTheme.typography.labelMedium,
+            style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -533,6 +534,7 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     onOpenLoanBook: () -> Unit,
     onOpenEmi: () -> Unit,
+    onOpenRdBook: () -> Unit,
     onRequestLogout: () -> Unit
 ) {
     // Back from home should finish activity (app-only logout)
@@ -576,76 +578,92 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(Modifier.padding(12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OptionItem(
-                    title = stringResource(R.string.title_khata_book),
-                    icon = Icons.Default.Book,
-                    modifier = Modifier.weight(1f),
-                    onClick = { onOpenLedger() }
-                )
-                OptionItem(
-                    title = stringResource(R.string.loan_book),
-                    icon = Icons.Default.AccountBalance,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        if (!hasRemoveAds) {
-                            val activity = context as? Activity
-                            if (activity != null) {
-                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/9525003390") {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    Modifier
+                        .padding(12.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OptionItem(
+                        title = stringResource(R.string.title_khata_book),
+                        icon = Icons.Default.Book,
+                        modifier = Modifier.weight(1f),
+                        compact = true,
+                        onClick = { onOpenLedger() }
+                    )
+                    OptionItem(
+                        title = stringResource(R.string.loan_book),
+                        icon = Icons.Default.AccountBalance,
+                        modifier = Modifier.weight(1f),
+                        compact = true,
+                        onClick = {
+                            if (!hasRemoveAds) {
+                                val activity = context as? Activity
+                                if (activity != null) {
+                                    InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/9525003390") {
+                                        onOpenLoanBook()
+                                    }
+                                } else {
                                     onOpenLoanBook()
                                 }
                             } else {
                                 onOpenLoanBook()
                             }
-                        } else {
-                            onOpenLoanBook()
                         }
-                    }
-                )
-                OptionItem(
-                    title = stringResource(R.string.emi_calculator),
-                    icon = Icons.Default.Calculate,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        if (!hasRemoveAds) {
-                            val activity = context as? Activity
-                            if (activity != null) {
-                                InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/7361874486") {
+                    )
+                    OptionItem(
+                        title = stringResource(R.string.emi_calculator),
+                        icon = Icons.Default.Calculate,
+                        modifier = Modifier.weight(1f),
+                        compact = true,
+                        onClick = {
+                            if (!hasRemoveAds) {
+                                val activity = context as? Activity
+                                if (activity != null) {
+                                    InterstitialAds.showWithUnit(activity, "ca-app-pub-2556604347710668/7361874486") {
+                                        onOpenEmi()
+                                    }
+                                } else {
                                     onOpenEmi()
                                 }
                             } else {
                                 onOpenEmi()
                             }
-                        } else {
-                            onOpenEmi()
                         }
-                    }
-                )
-                OptionItem(
-                    title = stringResource(R.string.settings_title),
-                    icon = Icons.Default.Settings,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        if (!hasRemoveAds) {
-                            val activity = context as? Activity
-                            if (activity != null) {
-                                InterstitialAds.showIfAvailable(activity) { onOpenSettings() }
+                    )
+                    OptionItem(
+                        title = stringResource(R.string.rd_book),
+                        icon = Icons.Default.AccountBalance,
+                        modifier = Modifier.weight(1f),
+                        compact = true,
+                        onClick = { onOpenRdBook() }
+                    )
+                    OptionItem(
+                        title = stringResource(R.string.settings_title),
+                        icon = Icons.Default.Settings,
+                        modifier = Modifier.weight(1f),
+                        compact = true,
+                        onClick = {
+                            if (!hasRemoveAds) {
+                                val activity = context as? Activity
+                                if (activity != null) {
+                                    InterstitialAds.showIfAvailable(activity) { onOpenSettings() }
+                                } else {
+                                    onOpenSettings()
+                                }
                             } else {
                                 onOpenSettings()
                             }
-                        } else {
-                            onOpenSettings()
                         }
-                    }
-                )
+                    )
+                }
             }
-        }
 
         if (!hasRemoveAds) {
             BannerAd(
@@ -728,6 +746,9 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
     var principal by remember { mutableStateOf("") }
     var ratePerMonth by remember { mutableStateOf("") }
 
+    // Rate mode: true = Rupee (monthly amount), false = Percentage (annual %)
+    var rateModeRupee by remember { mutableStateOf(true) }
+
     // Mode: true = Dates, false = Duration
     var useDates by remember { mutableStateOf(true) }
 
@@ -761,6 +782,8 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
     }
     fun fmtNo(v: Double): String = CurrencyFormatter.formatNoDecimals(v, currencyCode, showCurrencySymbol)
 
+    val ctx = LocalContext.current
+
     val df = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ENGLISH)
 
     Card(
@@ -774,6 +797,20 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
             Text(stringResource(R.string.interest_calculator), style = MaterialTheme.typography.titleLarge)
             // Compact minimum height to align fields with chips without breaking focus
             val compactHeight = 40.dp
+
+            // Toggle: Rupee / Percentage
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = rateModeRupee,
+                    onClick = { rateModeRupee = true },
+                    label = { Text(stringResource(R.string.rate_mode_rupee)) }
+                )
+                FilterChip(
+                    selected = !rateModeRupee,
+                    onClick = { rateModeRupee = false },
+                    label = { Text(stringResource(R.string.rate_mode_percentage)) }
+                )
+            }
 
             // Principal & Rate
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -794,7 +831,16 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
                 OutlinedTextField(
                     value = ratePerMonth,
                     onValueChange = { ratePerMonth = it.filter { ch -> ch.isDigit() || ch == '.' } },
-                    label = { Text(stringResource(R.string.label_rate_per_month), style = MaterialTheme.typography.labelSmall) },
+                    label = {
+                        Text(
+                            if (rateModeRupee) {
+                                stringResource(R.string.interest_calc_rate_rupee_monthly_label)
+                            } else {
+                                stringResource(R.string.interest_calc_rate_percentage_yearly_label)
+                            },
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = compactHeight),
@@ -987,6 +1033,7 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
                     // Clear all
                     principal = ""
                     ratePerMonth = ""
+                    rateModeRupee = true
                     fromDateText = ""
                     toDateText = ""
                     yearsText = ""
@@ -1000,7 +1047,7 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
                 }, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.clear)) }
                 Button(onClick = {
                     val p = principal.toDoubleOrNull() ?: 0.0
-                    val rM = ratePerMonth.toDoubleOrNull() ?: 0.0
+                    val enteredRate = ratePerMonth.toDoubleOrNull() ?: 0.0
 
                     // duration calculation
                     val (years, months, days) = if (useDates) {
@@ -1021,19 +1068,34 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
                     }
 
                     val totalMonths = years * 12 + months + (days / 30.0)
-                    val rateM = rM / 100.0
-                    val interest = if (simpleInterest) {
-                        p * rateM * totalMonths
-                    } else {
-                        if (compoundType == CompoundType.Monthly) {
-                            // Monthly compounding using entered monthly rate
-                            p * ((1 + rateM).pow(totalMonths) - 1)
+                    val yearsFraction = totalMonths / 12.0
+                    val interest = if (rateModeRupee) {
+                        // "Rupee" mode is just a label: treat entered value as % per month (old behavior)
+                        val rateMonthly = enteredRate / 100.0
+                        if (simpleInterest) {
+                            p * rateMonthly * totalMonths
                         } else {
-                            // Yearly compounding: use NOMINAL annual rate from monthly input
-                            // Example: 2%/mo => 24%/yr; 2 years on 1000 => 1000 * ((1+0.24)^2 - 1) ≈ 537.60
-                            val yearsFraction = totalMonths / 12.0
-                            val nominalRateY = 12.0 * rateM
-                            p * ((1 + nominalRateY).pow(yearsFraction) - 1)
+                            if (compoundType == CompoundType.Monthly) {
+                                // Monthly compounding with monthly % input
+                                p * ((1 + rateMonthly).pow(totalMonths) - 1)
+                            } else {
+                                // Yearly compounding: use NOMINAL annual rate from monthly input
+                                val nominalRateY = 12.0 * rateMonthly
+                                p * ((1 + nominalRateY).pow(yearsFraction) - 1)
+                            }
+                        }
+                    } else {
+                        // Percentage mode: treat entered value as % per year
+                        val rateY = enteredRate / 100.0
+                        if (simpleInterest) {
+                            p * rateY * yearsFraction
+                        } else {
+                            if (compoundType == CompoundType.Monthly) {
+                                val rateMonthly = rateY / 12.0
+                                p * ((1 + rateMonthly).pow(totalMonths) - 1)
+                            } else {
+                                p * ((1 + rateY).pow(yearsFraction) - 1)
+                            }
                         }
                     }
 
@@ -1041,7 +1103,11 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
 
                     resultDuration = "${years}y ${months}m ${days}d"
                     resultPrincipal = fmtNo(p)
-                    resultRate = "%.2f%%/mo".format(rM)
+                    resultRate = if (rateModeRupee) {
+                        ctx.getString(R.string.rate_display_rupee_monthly, "%.2f".format(enteredRate))
+                    } else {
+                        ctx.getString(R.string.rate_display_percentage_yearly, "%.2f".format(enteredRate))
+                    }
                     resultInterest = fmtNo(interest)
                     resultTotal = fmtNo(total)
                     onCalculated()

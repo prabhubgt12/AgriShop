@@ -199,21 +199,6 @@ fun LedgerAddEditScreen(
                         label = { Text(stringResource(R.string.compound)) }
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.rate_basis), style = MaterialTheme.typography.labelMedium)
-                Spacer(Modifier.height(4.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FilterChip(
-                        selected = period == "MONTHLY",
-                        onClick = { period = "MONTHLY" },
-                        label = { Text(stringResource(R.string.monthly)) }
-                    )
-                    FilterChip(
-                        selected = period == "YEARLY",
-                        onClick = { period = "YEARLY" },
-                        label = { Text(stringResource(R.string.yearly)) }
-                    )
-                }
 
                 if (interestType.equals("COMPOUND", true)) {
                     Spacer(Modifier.height(8.dp))
@@ -259,13 +244,36 @@ fun LedgerAddEditScreen(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
+                Text(stringResource(R.string.rate_basis), style = MaterialTheme.typography.labelMedium)
+                Spacer(Modifier.height(4.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    FilterChip(
+                        selected = period == "MONTHLY",
+                        onClick = { period = "MONTHLY" },
+                        label = { Text(stringResource(R.string.rate_basis_rupee)) }
+                    )
+                    FilterChip(
+                        selected = period == "YEARLY",
+                        onClick = { period = "YEARLY" },
+                        label = { Text(stringResource(R.string.rate_basis_percentage)) }
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = rateRupees,
                     onValueChange = { input ->
                         // Allow only digits and a decimal point; disallow negatives
                         rateRupees = input.filter { ch -> ch.isDigit() || ch == '.' }
                     },
-                    label = { Text(stringResource(R.string.interest_rate_percent)) },
+                    label = {
+                        Text(
+                            if (period == "MONTHLY") {
+                                stringResource(R.string.interest_rate_rupee_monthly)
+                            } else {
+                                stringResource(R.string.interest_rate_percentage_yearly)
+                            }
+                        )
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = rateRupees.isNotEmpty() && !rateValid,

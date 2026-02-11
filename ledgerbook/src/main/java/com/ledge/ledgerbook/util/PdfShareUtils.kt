@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import androidx.core.content.FileProvider
 import com.ledge.ledgerbook.ui.LedgerViewModel
+import com.ledge.ledgerbook.util.InterestRateFormatter
 import com.ledge.ledgerbook.R
 import java.io.File
 import java.io.FileOutputStream
@@ -65,13 +66,7 @@ object PdfShareUtils {
         }
         summaryLine(context.getString(R.string.label_type), typeValue)
         summaryLine(context.getString(R.string.label_principal), CurrencyFormatter.format(item.principal))
-        // Localized rate basis (MONTHLY/YEARLY)
-        val basisValue = when (item.rateBasis?.uppercase()) {
-            "MONTHLY" -> context.getString(R.string.monthly)
-            "YEARLY" -> context.getString(R.string.yearly)
-            else -> item.rateBasis?.let { toCamel(it) } ?: ""
-        }
-        summaryLine(context.getString(R.string.label_rate), "${item.rate}% $basisValue")
+        summaryLine(context.getString(R.string.label_rate), InterestRateFormatter.format(item.rate, item.rateBasis))
         summaryLine(context.getString(R.string.label_from), item.dateStr)
         summaryLine(context.getString(R.string.label_interest), CurrencyFormatter.format(item.accrued))
         summaryLine(context.getString(R.string.label_total), CurrencyFormatter.format(item.total))
@@ -176,15 +171,10 @@ object PdfShareUtils {
             rows.forEach { r ->
                 ensureSpace(22f)
                 x = startX
-                val rowBasis = when (r.rateBasis.uppercase()) {
-                    "MONTHLY" -> context.getString(R.string.monthly)
-                    "YEARLY" -> context.getString(R.string.yearly)
-                    else -> toCamel(r.rateBasis)
-                }
                 val values = listOf(
                     r.dateStr,
                     CurrencyFormatter.format(r.principal),
-                    "${r.rate}% $rowBasis",
+                    InterestRateFormatter.format(r.rate, r.rateBasis),
                     CurrencyFormatter.format(r.accrued),
                     CurrencyFormatter.format(r.total),
                 )

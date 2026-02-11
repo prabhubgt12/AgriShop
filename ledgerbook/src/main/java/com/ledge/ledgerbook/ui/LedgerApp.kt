@@ -14,18 +14,23 @@ import com.ledge.ledgerbook.ui.settings.SettingsScreen
 import com.ledge.ledgerbook.ui.loan.LoanAddScreen
 import com.ledge.ledgerbook.ui.loan.LoanDetailScreen
 import com.ledge.ledgerbook.ui.loan.LoanListScreen
+import com.ledge.ledgerbook.ui.rd.RdAddScreen
+import com.ledge.ledgerbook.ui.rd.RdDetailScreen
+import com.ledge.ledgerbook.ui.rd.RdListScreen
 
 @Composable
 fun LedgerApp(onRequestLogout: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         var screen by remember { mutableStateOf("home") }
         var selectedLoanId by remember { mutableStateOf<Long?>(null) }
+        var selectedRdId by remember { mutableStateOf<Long?>(null) }
         when (screen) {
             "home" -> HomeScreen(
                 onOpenLedger = { screen = "list" },
                 onOpenSettings = { screen = "settings" },
                 onOpenLoanBook = { screen = "loan" },
                 onOpenEmi = { screen = "emi" },
+                onOpenRdBook = { screen = "rd" },
                 onRequestLogout = onRequestLogout
             )
             "list" -> {
@@ -59,6 +64,30 @@ fun LedgerApp(onRequestLogout: () -> Unit) {
                     loanId = selectedLoanId ?: -1L,
                     onBack = { screen = "loan" },
                     onEdit = { id -> selectedLoanId = id; screen = "loan_add" }
+                )
+            }
+            "rd" -> {
+                BackHandler(enabled = true) { screen = "home" }
+                RdListScreen(
+                    onBack = { screen = "home" },
+                    onAdd = { selectedRdId = null; screen = "rd_add" },
+                    onOpenDetail = { id -> selectedRdId = id; screen = "rd_detail" }
+                )
+            }
+            "rd_add" -> {
+                BackHandler(enabled = true) { screen = "rd" }
+                RdAddScreen(
+                    onBack = { screen = "rd" },
+                    onSaved = { id -> selectedRdId = id; screen = "rd_detail" },
+                    rdId = selectedRdId
+                )
+            }
+            "rd_detail" -> {
+                BackHandler(enabled = true) { screen = "rd" }
+                RdDetailScreen(
+                    rdId = selectedRdId ?: -1L,
+                    onBack = { screen = "rd" },
+                    onEdit = { id -> selectedRdId = id; screen = "rd_add" }
                 )
             }
         }

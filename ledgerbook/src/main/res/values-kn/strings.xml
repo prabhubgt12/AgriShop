@@ -11,7 +11,7 @@
     <string name="label_name_with_value">ಹೆಸರು: %1$s</string>
     <string name="label_type_with_value">ಪ್ರಕಾರ: %1$s</string>
     <string name="label_principal_with_value">ಅಸಲು ಮೊತ್ತ: %1$s</string>
-    <string name="label_rate_with_value">ದರ: %1$s%% %2$s</string>
+    <string name="label_rate_with_value">ದರ: %1$s</string>
     <string name="label_from_with_value">ಇಂದ: %1$s</string>
     <string name="label_interest_till_now_with_value">ಇಲ್ಲಿವರೆಗೆ ಬಡ್ಡಿ: %1$s</string>
     <string name="label_total_with_value">ಒಟ್ಟು: %1$s</string>
@@ -105,6 +105,12 @@
     <string name="interest_calculator">ಬಡ್ಡಿ ಗಣಕ</string>
     <string name="label_principal_generic">ಅಸಲು ಮೊತ್ತ</string>
     <string name="label_rate_per_month">ದರ (%/ತಿಂಗಳು)</string>
+    <string name="rate_mode_rupee">ರೂಪಾಯಿ</string>
+    <string name="rate_mode_percentage">ಶೇಕಡಾ</string>
+    <string name="interest_calc_rate_rupee_monthly_label">ದರ (ರೂಪಾಯಿಯಲ್ಲಿ)</string>
+    <string name="interest_calc_rate_percentage_yearly_label">ದರ (% ವಾರ್ಷಿಕ)</string>
+    <string name="rate_display_rupee_monthly">%1$s%% / ತಿಂಗಳು</string>
+    <string name="rate_display_percentage_yearly">%1$s%% / ವರ್ಷ</string>
     <string name="dates">ದಿನಾಂಕಗಳು</string>
     <string name="duration">ಅವಧಿ</string>
     <string name="from">ಇಂದ</string>
@@ -137,10 +143,9 @@
     <string name="interest">ಬಡ್ಡಿ</string>
 
     <!-- SIP Calculator (Kannada) -->
-    <string name="sip">ಎಸ್
-ಐಪಿ</string>
-    <string name="sip_calculator">ಎಸ್
-ಐಪಿ ಕ್ಯಾಲ್ಕುಲೇಟರ್</string>
+    <string name="sip">ಎಸ್‌ಐಪಿ</string>
+    <string name="sip_calculator">ಎಸ್‌ಐಪಿ ಕ್ಯಾಲ್ಕುಲೇಟರ್</string>
+    <string name="rd_book">ಆರ್‌ಡಿ ಪುಸ್ತಕ</string>
     <string name="monthly_investment">ತಿಂಗಳ ಹೂಡಿಕೆ</string>
     <string name="yearly_investment">ವಾರ್ಷಿಕ ಹೂಡಿಕೆ</string>
     <string name="sip_expected_return">ಅಂದಾಜು ವಾಪಸು (ಪ್ರ.ವ %)</string>
@@ -202,6 +207,32 @@
     <!-- Add/Edit Dialog -->
     <string name="update">ನವೀಕರಿಸಿ</string>
     <string name="save">ಉಳಿಸಿ</string>
+    <string name="loading">ಲೋಡ್ ಆಗುತ್ತಿದೆ…</string>
+
+    <string name="add_rd">ಆರ್‌ಡಿ ಸೇರಿಸಿ</string>
+    <string name="edit_rd">ಆರ್‌ಡಿ ಸಂಪಾದಿಸಿ</string>
+    <string name="rd_name">ಆರ್‌ಡಿ ಹೆಸರು</string>
+    <string name="rd_installment_amount">ಕಂತು ಮೊತ್ತ</string>
+    <string name="rd_annual_rate">ಬಡ್ಡಿ ದರ (% ವಾರ್ಷಿಕ)</string>
+    <string name="rd_tenure">ಅವಧಿ</string>
+    <string name="rd_start_date">ಪ್ರಾರಂಭ ದಿನಾಂಕ</string>
+    <string name="rd_auto_pay">ಆಟೋ ಪೇ</string>
+    <string name="rd_auto_pay_hint">ಬಾಕಿ ಕಂತುಗಳನ್ನು ಸ್ವಯಂವಾಗಿ ಪಾವತಿಸಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸುತ್ತದೆ</string>
+    <string name="rd_summary">ಸಾರಾಂಶ</string>
+    <string name="rd_schedule">ಕಂತು ಪಟ್ಟಿ</string>
+    <string name="rd_mark_paid">ಪಾವತಿಸಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸಿ</string>
+    <string name="rd_status_paid">ಪಾವತಿ</string>
+    <string name="rd_status_due">ಬಾಕಿ</string>
+    <string name="rd_status_upcoming">ಮುಂದಿನದು</string>
+    <string name="rd_due_date_value">ಬಾಕಿ: %1$s</string>
+    <string name="rd_paid_amount_value">ಪಾವತಿ: %1$s</string>
+    <string name="rd_rate_value">ದರ: %1$s%% (ವಾರ್ಷಿಕ)</string>
+    <string name="rd_start_date_value">ಪ್ರಾರಂಭ: %1$s</string>
+    <string name="rd_installment_value">ಕಂತು: %1$s</string>
+    <string name="rd_total_deposited_value">ಜಮಾ: %1$s</string>
+    <string name="rd_accrued_interest_value">ಬಡ್ಡಿ: %1$s</string>
+    <string name="rd_total_value_value">ಒಟ್ಟು: %1$s</string>
+    <string name="rd_delete_confirm">ಈ ಆರ್‌ಡಿಯನ್ನು ಅಳಿಸಬೇಕೆ?</string>
     <string name="edit_entry">ದಾಖಲೆ ನವೀಕರಿಸಿ</string>
     <string name="add_to_book">ಪುಸ್ತಕಕ್ಕೆ ಸೇರಿಸಿ</string>
     <string name="lend">ಸಾಲ ಕೊಟ್ಟದ್ದು</string>
@@ -211,10 +242,14 @@
     <string name="name_required">ಹೆಸರು ಅಗತ್ಯವಿದೆ</string>
     <string name="interest_type">ಬಡ್ಡಿ ಪ್ರಕಾರ</string>
     <string name="rate_basis">ದರ ಆಧಾರ</string>
+    <string name="rate_basis_rupee">ರೂಪಾಯಿ</string>
+    <string name="rate_basis_percentage">ಶೇಕಡಾ</string>
     <string name="duration_type">ಚಕ್ರಬಡ್ಡಿ ಅವಧಿ</string>
     <string name="principal_amount">ಅಸಲು ಮೊತ್ತ</string>
     <string name="enter_valid_number">ಮಾನ್ಯ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ</string>
     <string name="interest_rate_percent">ಬಡ್ಡಿ ದರ (%)</string>
+    <string name="interest_rate_rupee_monthly">ಬಡ್ಡಿ ದರ (ತಿಂಗಳಿಗೆ ರೂಪಾಯಿಯಲ್ಲಿ)</string>
+    <string name="interest_rate_percentage_yearly">ಬಡ್ಡಿ ದರ (% ವಾರ್ಷಿಕ)</string>
     <string name="pick">ಆರಿಸಿ</string>
     <string name="notes_optional">ಟಿಪ್ಪಣಿಗಳು</string>
     <string name="phone">ಫೋನ್</string>
