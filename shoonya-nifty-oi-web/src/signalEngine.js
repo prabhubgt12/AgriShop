@@ -30,42 +30,73 @@ function scoreUnwind(leg) {
   return 0;
 }
 
-function computeSuggestion(snapshot, prevSnapshot) {
-  if (!snapshot || !prevSnapshot) {
-    return { action: 'NO_TRADE', confidence: 0, reasons: ['Need at least two snapshots for ΔOI-based signals'] };
+function computeSuggestion(snapshotHistory, opts = {}) {
+  const windowMs = isNum(opts.windowMs) ? opts.windowMs : 60_000;
+  const widthStrikes = isNum(opts.widthStrikes) ? opts.widthStrikes : 4;
+  const minScore = isNum(opts.minScore) ? opts.minScore : 2;
+
+  if (!Array.isArray(snapshotHistory) || snapshotHistory.length < 2) {
+    return {
+      action: 'NO_TRADE',
+      confidence: 0,
+      reasons: ['Need at least two snapshots for ΔOI-based signals'],
+      window: { count: Array.isArray(snapshotHistory) ? snapshotHistory.length : 0, fromTs: null, toTs: null, windowMs },
+    };
   }
 
-  const rows = nearAtmRows(snapshot, 4);
+  const latest = snapshotHistory[snapshotHistory.length - 1];
+  const toTs = latest?.ts ?? null;
+  const fromCutoff = isNum(toTs) ? (toTs - windowMs) : null;
+  const windowSnaps = fromCutoff !== null
+    ? snapshotHistory.filter((s) => isNum(s?.ts) && s.ts >= fromCutoff)
+    : snapshotHistory;
 
-  const ceBuildup = sum(rows.map((r) => scoreBuildup(r.ce)));
-  const peBuildup = sum(rows.map((r) => scoreBuildup(r.pe)));
-  const ceUnwind = sum(rows.map((r) => scoreUnwind(r.ce)));
-  const peUnwind = sum(rows.map((r) => scoreUnwind(r.pe)));
+  if (windowSnaps.length < 2) {
+    return {
+      action: 'NO_TRADE',
+      confidence: 0,
+      reasons: ['Need more snapshots inside window'],
+      window: { count: windowSnaps.length, fromTs: null, toTs, windowMs },
+    };
+  }
+
+  let ceBuildup = 0;
+  let peBuildup = 0;
+  let ceUnwind = 0;
+  let peUnwind = 0;
+
+  for (const s of windowSnaps) {
+    const rows = nearAtmRows(s, widthStrikes);
+    ceBuildup += sum(rows.map((r) => scoreBuildup(r.ce)));
+    peBuildup += sum(rows.map((r) => scoreBuildup(r.pe)));
+    ceUnwind += sum(rows.map((r) => scoreUnwind(r.ce)));
+    peUnwind += sum(rows.map((r) => scoreUnwind(r.pe)));
+  }
 
   // Bullish bias when CE buildup is stronger and PE is unwinding
   const bullishScore = ceBuildup + peUnwind - peBuildup;
   const bearishScore = peBuildup + ceUnwind - ceBuildup;
 
-  const under = snapshot.underlying?.ltp;
-  const atm = snapshot.atmStrike;
-  const support = snapshot.levels?.supportStrike;
-  const resist = snapshot.levels?.resistanceStrike;
+  const under = latest?.underlying?.ltp;
+  const atm = latest?.atmStrike;
+  const support = latest?.levels?.supportStrike;
+  const resist = latest?.levels?.resistanceStrike;
 
   const reasons = [];
+  reasons.push(`Window snapshots: ${windowSnaps.length}`);
   reasons.push(`Near-ATM CE long buildup count: ${ceBuildup}`);
   reasons.push(`Near-ATM PE long buildup count: ${peBuildup}`);
-
-  const minScore = 2; // tune later
+  reasons.push(`Under: ${isNum(under) ? under.toFixed(2) : under} • ATM: ${isNum(atm) ? atm : atm}`);
 
   let action = 'NO_TRADE';
   let confidence = 0;
 
   if (bullishScore >= minScore && under >= atm) {
     // Guardrail: avoid buying CE right at resistance
-    const nearResist = resist !== null && Math.abs(resist - under) <= 50;
+    const nearResist = resist !== null && isNum(under) && Math.abs(resist - under) <= 50;
     if (!nearResist) {
       action = 'BUY_CE';
-      confidence = Math.min(100, Math.round(40 + bullishScore * 15));
+      confidence = Math.min(100, Math.round(40 + bullishScore * 10));
       reasons.push(`Bullish score: ${bullishScore.toFixed(2)}`);
       if (support !== null) reasons.push(`Support (max Put OI): ${support}`);
       if (resist !== null) reasons.push(`Resistance (max Call OI): ${resist}`);
@@ -74,10 +105,10 @@ function computeSuggestion(snapshot, prevSnapshot) {
     }
   } else if (bearishScore >= minScore && under <= atm) {
     // Guardrail: avoid buying PE right at support
-    const nearSupport = support !== null && Math.abs(under - support) <= 50;
+    const nearSupport = support !== null && isNum(under) && Math.abs(under - support) <= 50;
     if (!nearSupport) {
       action = 'BUY_PE';
-      confidence = Math.min(100, Math.round(40 + bearishScore * 15));
+      confidence = Math.min(100, Math.round(40 + bearishScore * 10));
       reasons.push(`Bearish score: ${bearishScore.toFixed(2)}`);
       if (support !== null) reasons.push(`Support (max Put OI): ${support}`);
       if (resist !== null) reasons.push(`Resistance (max Call OI): ${resist}`);
@@ -87,9 +118,17 @@ function computeSuggestion(snapshot, prevSnapshot) {
   } else {
     reasons.push(`Bullish score: ${bullishScore.toFixed(2)}`);
     reasons.push(`Bearish score: ${bearishScore.toFixed(2)}`);
+    if (bullishScore >= minScore && !(under >= atm)) reasons.push('BUY_CE blocked: underlying is below ATM');
+    if (bearishScore >= minScore && !(under <= atm)) reasons.push('BUY_PE blocked: underlying is above ATM');
   }
 
-  return { action, confidence, reasons };
+  const fromTs = windowSnaps[0]?.ts ?? null;
+  return {
+    action,
+    confidence,
+    reasons,
+    window: { count: windowSnaps.length, fromTs, toTs, windowMs },
+  };
 }
 
 module.exports = {
