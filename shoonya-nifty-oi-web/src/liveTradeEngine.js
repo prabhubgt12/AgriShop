@@ -136,20 +136,19 @@ async function stepLiveTrade(ctx) {
       return { ...live, current: updated, lastDecision: { ts: latest.ts, action: 'ERROR', reasons: ['place_order not available for exit'] } };
     }
 
-    const resExit = await client.place_order(
-      'S',
-      paper.productType,
-      updated.exchange,
-      updated.tsym,
-      updated.qty,
-      0,
-      'MKT',
-      0,
-      null,
-      'DAY',
-      'NO',
-      `exit_${exit.reason}`,
-    );
+    const resExit = await client.place_order({
+      buy_or_sell: 'S',
+      product_type: paper.productType,
+      exchange: updated.exchange,
+      tradingsymbol: updated.tsym,
+      quantity: updated.qty,
+      discloseqty: 0,
+      price_type: 'MKT',
+      price: 0,
+      trigger_price: 0,
+      retention: 'DAY',
+      remarks: `exit_${exit.reason}`,
+    });
 
     if (!resExit || resExit.stat !== 'Ok') {
       return {
@@ -204,20 +203,19 @@ async function stepLiveTrade(ctx) {
   const quantity = Number.isFinite(qty) ? qty : 1;
   const productType = typeof paper.productType === 'string' ? paper.productType : 'M';
 
-  const res = await client.place_order(
-    buyOrSell,
-    productType,
+  const res = await client.place_order({
+    buy_or_sell: buyOrSell,
+    product_type: productType,
     exchange,
     tradingsymbol,
     quantity,
-    0,
-    'MKT',
-    0,
-    null,
-    'DAY',
-    'NO',
-    `auto_${entryDecision.mode || 'LIVE'}`,
-  );
+    discloseqty: 0,
+    price_type: 'MKT',
+    price: 0,
+    trigger_price: 0,
+    retention: 'DAY',
+    remarks: `auto_${entryDecision.mode || 'LIVE'}`,
+  });
 
   if (!res || res.stat !== 'Ok') {
     return {

@@ -58,6 +58,7 @@
         <div class="loginRow" style="margin-top: 6px;">
           <button id="forceEnterBtn" class="secondary">Force Entry</button>
           <button id="forceExitBtn" class="secondary">Force Exit</button>
+          <button id="liveResyncBtn" class="secondary">Resync LIVE</button>
         </div>
         <div class="loginRow" style="margin-top: 10px; align-items: center;">
           <div class="k" style="min-width: 70px;">Exec</div>
@@ -109,6 +110,7 @@
           <div class="k">Mode</div><div id="tradeMode" class="v">-</div>
           <div class="k">Trade</div><div id="tradeInstrument" class="v">-</div>
           <div class="k">Entry</div><div id="tradeEntry" class="v">-</div>
+          <div class="k">LTP</div><div id="tradeLtp" class="v">-</div>
           <div class="k">Peak</div><div id="tradePeak" class="v">-</div>
           <div class="k">SL</div><div id="tradeSl" class="v">-</div>
           <div class="k">Live PnL</div><div id="tradePnl" class="v">-</div>
@@ -120,9 +122,13 @@
       <div class="card">
         <div class="cardTitle">ITM OI (Top 10)</div>
         <div class="kv">
+          <div class="k">Overall Signal</div><div id="itmOiSignal" class="v">-</div>
           <div class="k">CE ITM OI Sum</div><div id="ceItmOiSum" class="v">-</div>
           <div class="k">PE ITM OI Sum</div><div id="peItmOiSum" class="v">-</div>
           <div class="k">CE/PE Ratio</div><div id="cePeRatio" class="v">-</div>
+          <div class="k">CE ITM ΔOI Sum</div><div id="ceItmDOiSum" class="v">-</div>
+          <div class="k">PE ITM ΔOI Sum</div><div id="peItmDOiSum" class="v">-</div>
+          <div class="k">CEΔOI/PEΔOI Ratio</div><div id="cePeDOiRatio" class="v">-</div>
         </div>
       </div>
     </div>

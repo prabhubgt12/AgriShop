@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const dotenv = require('dotenv');
 
@@ -13,6 +14,8 @@ const {
   forceEnterPaperTrade,
   forceExitPaperTrade,
   computeEntryDecision,
+  computeDirectionSignal,
+  selectInstrument,
   normalizeOrderQty,
   normalizeProductType,
 } = require('./src/paperTradeEngine');
@@ -26,6 +29,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const port = parseInt(process.env.PORT || '3000', 10);
 const pollSeconds = parseInt(process.env.POLL_SECONDS || '5', 10);
 const windowSeconds = parseInt(process.env.WINDOW_SECONDS || '60', 10);
+
+const LIVE_STATE_PATH = path.join(__dirname, '.data', 'liveState.json');
 
 const state = {
   client: null,
@@ -45,6 +50,41 @@ const state = {
     imei: process.env.SHOONYA_IMEI,
   },
 };
+
+function safeReadJson(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const raw = fs.readFileSync(filePath, 'utf8');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (_e) {
+    return null;
+  }
+}
+
+function safeWriteJson(filePath, obj) {
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(obj, null, 2), 'utf8');
+    return true;
+  } catch (_e) {
+    return false;
+  }
+}
+
+function persistLiveState() {
+  safeWriteJson(LIVE_STATE_PATH, { live: state.live, savedAt: Date.now() });
+}
+
+function tryRestoreLiveState() {
+  const data = safeReadJson(LIVE_STATE_PATH);
+  if (!data || !data.live) return false;
+  if (!data.live.current || (data.live.current.status !== 'OPEN' && data.live.current.status !== 'EXITING')) return false;
+  state.live = { ...createLiveTradeState(), ...data.live };
+  return true;
+}
+
+tryRestoreLiveState();
 
 function ensureClient() {
   if (state.client) return;
@@ -117,6 +157,10 @@ async function updateOnce() {
       snapshotHistory: state.snapshotHistory,
       entryDecision,
     });
+
+    if (state.live && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
+      persistLiveState();
+    }
   }
 
   state.lastSnapshot = snapshot;
@@ -280,11 +324,116 @@ app.post('/api/paper/exit-config', (req, res) => {
 
 app.post('/api/paper/force-enter', (_req, res) => {
   if (state.paper.tradeMode === 'LIVE') {
-    res.status(400).json({
-      ok: false,
-      error: 'Force Entry is PAPER-only. Switch Exec to PAPER to use Force Entry, or Arm LIVE and wait for a signal in LIVE mode.',
-      paper: state.paper,
-    });
+    (async () => {
+      try {
+        if (state.live && state.live.current && state.live.current.status === 'OPEN') {
+          res.status(400).json({ ok: false, error: 'LIVE trade already OPEN. Force Exit it before forcing a new entry.', paper: state.paper, live: state.live });
+          return;
+        }
+        const liveEnabled = String(process.env.ENABLE_LIVE_TRADING || '').toLowerCase() === 'true';
+        if (!liveEnabled) {
+          res.status(400).json({ ok: false, error: 'LIVE trading is disabled. Set ENABLE_LIVE_TRADING=true in .env to allow it.', paper: state.paper });
+          return;
+        }
+        if (!state.paper.liveArmed) {
+          res.status(400).json({ ok: false, error: 'LIVE not armed. Click Arm LIVE first.', paper: state.paper });
+          return;
+        }
+        if (!state.client || typeof state.client.place_order !== 'function') {
+          res.status(400).json({ ok: false, error: 'Shoonya client.place_order not available.', paper: state.paper });
+          return;
+        }
+
+        const latest = Array.isArray(state.snapshotHistory) ? state.snapshotHistory[state.snapshotHistory.length - 1] : null;
+        if (!latest) {
+          res.status(400).json({ ok: false, error: 'No snapshot available.', paper: state.paper });
+          return;
+        }
+
+        const selectedMode = state.paper.selectedMode || 'AUTO';
+        const effectiveMode = selectedMode === 'AUTO' ? (state.paper.effectiveMode || 'NORMAL') : selectedMode;
+        const { direction } = computeDirectionSignal(state.snapshotHistory, effectiveMode, state.paper);
+        const inst = selectInstrument(latest, effectiveMode, direction || 'BULL');
+        if (!inst) {
+          res.status(400).json({ ok: false, error: 'Instrument selection failed.', paper: state.paper });
+          return;
+        }
+
+        const row = (latest?.rows || []).find((r) => r && r.strike === inst.strike);
+        const leg = inst.type === 'CE' ? row?.ce : row?.pe;
+        const tradingsymbol = leg?.tsym;
+        if (!tradingsymbol) {
+          res.status(400).json({ ok: false, error: `TradingSymbol missing for ${inst.strike} ${inst.type}`, paper: state.paper });
+          return;
+        }
+
+        const qty = typeof state.paper.orderQty === 'number' ? state.paper.orderQty : Number(state.paper.orderQty);
+        const quantity = Number.isFinite(qty) ? qty : 1;
+        const productType = typeof state.paper.productType === 'string' ? state.paper.productType : 'M';
+
+        const resp = await state.client.place_order({
+          buy_or_sell: 'B',
+          product_type: productType,
+          exchange: 'NFO',
+          tradingsymbol,
+          quantity,
+          discloseqty: 0,
+          price_type: 'MKT',
+          price: 0,
+          trigger_price: 0,
+          retention: 'DAY',
+          remarks: `forced_${effectiveMode}`,
+        });
+
+        if (!resp || resp.stat !== 'Ok') {
+          res.status(500).json({ ok: false, error: `LIVE entry order failed: ${JSON.stringify(resp || 'Unknown error')}`, paper: state.paper });
+          return;
+        }
+
+        const orderno = resp.norenordno || resp.orderno || resp.order_no || null;
+        const entryPrice = typeof leg?.ltp === 'number' ? leg.ltp : null;
+        const slPrice = (() => {
+          if (typeof entryPrice !== 'number' || entryPrice <= 0) return null;
+          if (effectiveMode === 'EXPIRY') return entryPrice * 0.75;
+          if (effectiveMode === 'NORMAL') return entryPrice * 0.70;
+          if (effectiveMode === 'BIG_RALLY') return entryPrice * 0.60;
+          return entryPrice * 0.70;
+        })();
+        const opened = {
+          id: `live_forced_${Date.now()}`,
+          status: 'OPEN',
+          mode: effectiveMode,
+          strike: inst.strike,
+          optType: inst.type,
+          tsym: tradingsymbol,
+          exchange: 'NFO',
+          qty: quantity,
+          entryTs: Date.now(),
+          entryOrderNo: orderno,
+          entryPrice,
+          peakPrice: entryPrice,
+          slPrice,
+          exitTs: null,
+          exitPrice: null,
+          exitReason: null,
+          exitOrderNo: null,
+          pnl: null,
+        };
+
+        state.live.current = opened;
+        state.live.history = [...(state.live.history || []), opened].slice(-50);
+        state.live.lastDecision = { ts: Date.now(), action: 'FORCED_ENTRY', reasons: ['FORCED_ENTRY'] };
+        persistLiveState();
+        res.json({ ok: true, paper: state.paper, live: state.live, order: resp });
+      } catch (e) {
+        res.status(500).json({
+          ok: false,
+          error: e && e.message ? e.message : String(e || 'Unknown error'),
+          stack: e && e.stack ? e.stack : null,
+          paper: state.paper,
+        });
+      }
+    })();
     return;
   }
   const out = forceEnterPaperTrade(state.paper, state.snapshotHistory);
@@ -298,11 +447,63 @@ app.post('/api/paper/force-enter', (_req, res) => {
 
 app.post('/api/paper/force-exit', (_req, res) => {
   if (state.paper.tradeMode === 'LIVE') {
-    res.status(400).json({
-      ok: false,
-      error: 'Force Exit is PAPER-only. Switch Exec to PAPER to use Force Exit. LIVE exits are handled automatically by SL/Target, or you can add a dedicated LIVE manual exit.',
-      paper: state.paper,
-    });
+    (async () => {
+      try {
+        const liveEnabled = String(process.env.ENABLE_LIVE_TRADING || '').toLowerCase() === 'true';
+        if (!liveEnabled) {
+          res.status(400).json({ ok: false, error: 'LIVE trading is disabled. Set ENABLE_LIVE_TRADING=true in .env to allow it.', paper: state.paper });
+          return;
+        }
+        if (!state.client || typeof state.client.place_order !== 'function') {
+          res.status(400).json({ ok: false, error: 'Shoonya client.place_order not available.', paper: state.paper });
+          return;
+        }
+        if (!state.live.current || state.live.current.status !== 'OPEN') {
+          res.status(400).json({ ok: false, error: 'No open LIVE trade to exit.', paper: state.paper, live: state.live });
+          return;
+        }
+
+        const t = state.live.current;
+        const resp = await state.client.place_order({
+          buy_or_sell: 'S',
+          product_type: state.paper.productType || 'M',
+          exchange: t.exchange || 'NFO',
+          tradingsymbol: t.tsym,
+          quantity: t.qty,
+          discloseqty: 0,
+          price_type: 'MKT',
+          price: 0,
+          trigger_price: 0,
+          retention: 'DAY',
+          remarks: 'forced_exit',
+        });
+
+        if (!resp || resp.stat !== 'Ok') {
+          res.status(500).json({ ok: false, error: `LIVE exit order failed: ${JSON.stringify(resp || 'Unknown error')}`, paper: state.paper, live: state.live });
+          return;
+        }
+
+        const closed = {
+          ...t,
+          status: 'CLOSED',
+          exitTs: Date.now(),
+          exitReason: 'FORCED_EXIT',
+          exitOrderNo: resp.norenordno || resp.orderno || resp.order_no || null,
+        };
+        state.live.current = closed;
+        state.live.history = [...(state.live.history || []), closed].slice(-50);
+        state.live.lastDecision = { ts: Date.now(), action: 'FORCED_EXIT', reasons: ['FORCED_EXIT'] };
+        persistLiveState();
+        res.json({ ok: true, paper: state.paper, live: state.live, order: resp });
+      } catch (e) {
+        res.status(500).json({
+          ok: false,
+          error: e && e.message ? e.message : String(e || 'Unknown error'),
+          stack: e && e.stack ? e.stack : null,
+          paper: state.paper,
+        });
+      }
+    })();
     return;
   }
   const out = forceExitPaperTrade(state.paper, state.snapshotHistory, 'FORCED_EXIT');
@@ -341,6 +542,15 @@ app.get('/api/snapshot', (_req, res) => {
   }
 
   res.json({ ok: true, snapshot: state.lastSnapshot, lastError: state.lastError, paper: state.paper, live: state.live });
+});
+
+app.post('/api/live/resync', (_req, res) => {
+  const ok = tryRestoreLiveState();
+  if (!ok) {
+    res.status(404).json({ ok: false, error: 'No saved OPEN/EXITING LIVE trade found to resync.', live: state.live, paper: state.paper });
+    return;
+  }
+  res.json({ ok: true, live: state.live, paper: state.paper });
 });
 
 app.listen(port, () => {

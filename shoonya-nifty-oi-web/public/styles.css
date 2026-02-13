@@ -26,6 +26,9 @@ button.secondary { background: #1a2447; }
 .v.pnlPos { color: #35d07f; }
 .v.pnlNeg { color: #ff7b7b; }
 .v.pnlZero { color: #c7cff5; }
+.v.signalBull { color: #35d07f; }
+.v.signalBear { color: #ff7b7b; }
+.v.signalNeutral { color: #c7cff5; }
 .tableCard { padding: 0; overflow: hidden; }
 .tableCard .cardTitle { padding: 14px; margin: 0; border-bottom: 1px solid #1d2a56; }
 .tableWrap { overflow: auto; max-height: 540px; }

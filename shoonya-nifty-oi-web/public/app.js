@@ -12,6 +12,7 @@ const elSnapshotMeta = document.getElementById('snapshotMeta');
 const elTradeMode = document.getElementById('tradeMode');
 const elTradeInstrument = document.getElementById('tradeInstrument');
 const elTradeEntry = document.getElementById('tradeEntry');
+const elTradeLtp = document.getElementById('tradeLtp');
 const elTradePeak = document.getElementById('tradePeak');
 const elTradeSl = document.getElementById('tradeSl');
 const elTradePnl = document.getElementById('tradePnl');
@@ -27,6 +28,7 @@ const modeBigBtn = document.getElementById('modeBigBtn');
 
 const forceEnterBtn = document.getElementById('forceEnterBtn');
 const forceExitBtn = document.getElementById('forceExitBtn');
+const liveResyncBtn = document.getElementById('liveResyncBtn');
 
 const exitStyleSel = document.getElementById('exitStyleSel');
 const targetPctRange = document.getElementById('targetPctRange');
@@ -55,6 +57,10 @@ const elResistance = document.getElementById('resistance');
 const elCeItmOiSum = document.getElementById('ceItmOiSum');
 const elPeItmOiSum = document.getElementById('peItmOiSum');
 const elCePeRatio = document.getElementById('cePeRatio');
+const elCeItmDOiSum = document.getElementById('ceItmDOiSum');
+const elPeItmDOiSum = document.getElementById('peItmDOiSum');
+const elCePeDOiRatio = document.getElementById('cePeDOiRatio');
+const elItmOiSignal = document.getElementById('itmOiSignal');
 
 const tableBody = document.querySelector('#chainTable tbody');
 
@@ -202,8 +208,8 @@ function setRiskControls(paper) {
   if (tradesTodayLabel) tradesTodayLabel.textContent = `${todayNorm}/${maxNorm}`;
 
   const isLive = tm === 'LIVE';
-  if (forceEnterBtn) forceEnterBtn.disabled = isLive;
-  if (forceExitBtn) forceExitBtn.disabled = isLive;
+  if (forceEnterBtn) forceEnterBtn.disabled = false;
+  if (forceExitBtn) forceExitBtn.disabled = false;
 
   const qty = typeof paper?.orderQty === 'number' ? paper.orderQty : Number(paper?.orderQty);
   const qtyNorm = Number.isFinite(qty) ? qty : 1;
@@ -230,14 +236,21 @@ async function postForceEnter() {
   const res = await fetch('/api/paper/force-enter', { method: 'POST' });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Force entry failed');
-  return data.paper;
+  return data;
 }
 
 async function postForceExit() {
   const res = await fetch('/api/paper/force-exit', { method: 'POST' });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Force exit failed');
-  return data.paper;
+  return data;
+}
+
+async function postLiveResync() {
+  const res = await fetch('/api/live/resync', { method: 'POST' });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'LIVE resync failed');
+  return data;
 }
 
 async function postExitConfig(exitStyle, targetPct) {
@@ -281,7 +294,13 @@ function render(snapshot, lastError, paper, live) {
     setExitControls(paper);
     elTradeMode.textContent = `${paper.selectedMode} (effective: ${paper.effectiveMode})`;
 
-    const t = paper.currentTrade;
+    if (paper.tradeMode === 'LIVE') {
+      const liveOpen = !!(live && live.current && live.current.status === 'OPEN');
+      if (forceEnterBtn) forceEnterBtn.disabled = liveOpen;
+      if (forceExitBtn) forceExitBtn.disabled = !liveOpen;
+    }
+
+    const t = paper.tradeMode === 'LIVE' ? live?.current : paper.currentTrade;
     if (t && t.status === 'OPEN') {
       const ltp = (() => {
         const row = (snapshot?.rows || []).find(r => r.strike === t.strike);
@@ -292,6 +311,7 @@ function render(snapshot, lastError, paper, live) {
 
       elTradeInstrument.textContent = `${t.strike} ${t.optType}`;
       elTradeEntry.textContent = fmtNum(t.entryPrice);
+      if (elTradeLtp) elTradeLtp.textContent = fmtNum(ltp);
       elTradePeak.textContent = fmtNum(t.peakPrice);
       elTradeSl.textContent = fmtNum(t.slPrice);
       elTradePnl.textContent = pnl === null ? '-' : fmtSigned(pnl);
@@ -303,12 +323,16 @@ function render(snapshot, lastError, paper, live) {
       else elTradePnl.classList.add('pnlZero');
 
       elTradeNote.innerHTML = '';
+      if (paper.tradeMode === 'LIVE' && live && live.current) {
+        elTradeNote.innerHTML = `<div><b>LIVE Order</b>: ${live.current.entryOrderNo || '-'}</div>`;
+      }
       if (paper.tradeMode === 'LIVE' && live && live.lastDecision) {
-        elTradeNote.innerHTML = `<div><b>LIVE</b>: ${live.lastDecision.action || '-'}</div>`;
+        elTradeNote.innerHTML += `<div style="margin-top:6px;"><b>LIVE</b>: ${live.lastDecision.action || '-'}</div>`;
       }
     } else if (t && t.status === 'CLOSED') {
       elTradeInstrument.textContent = `${t.strike} ${t.optType}`;
       elTradeEntry.textContent = fmtNum(t.entryPrice);
+      if (elTradeLtp) elTradeLtp.textContent = '-';
       elTradePeak.textContent = fmtNum(t.peakPrice);
       elTradeSl.textContent = fmtNum(t.slPrice);
       elTradePnl.textContent = fmtNum(t.pnl);
@@ -326,6 +350,7 @@ function render(snapshot, lastError, paper, live) {
     } else {
       elTradeInstrument.textContent = '-';
       elTradeEntry.textContent = '-';
+      if (elTradeLtp) elTradeLtp.textContent = '-';
       elTradePeak.textContent = '-';
       elTradeSl.textContent = '-';
       elTradePnl.textContent = '-';
@@ -348,6 +373,7 @@ function render(snapshot, lastError, paper, live) {
     elTradeMode.textContent = '-';
     elTradeInstrument.textContent = '-';
     elTradeEntry.textContent = '-';
+    if (elTradeLtp) elTradeLtp.textContent = '-';
     elTradePeak.textContent = '-';
     elTradeSl.textContent = '-';
     elTradePnl.textContent = '-';
@@ -364,9 +390,20 @@ function render(snapshot, lastError, paper, live) {
   elResistance.textContent = fmtNum(snapshot?.levels?.resistanceStrike);
 
   const itm = snapshot?.itmOiStats;
+  if (elItmOiSignal) {
+    const sig = itm && typeof itm.signal === 'string' ? itm.signal : '';
+    elItmOiSignal.textContent = sig || '-';
+    elItmOiSignal.classList.remove('signalBull', 'signalBear', 'signalNeutral');
+    if (sig === 'BULLISH') elItmOiSignal.classList.add('signalBull');
+    else if (sig === 'BEARISH') elItmOiSignal.classList.add('signalBear');
+    else if (sig) elItmOiSignal.classList.add('signalNeutral');
+  }
   elCeItmOiSum.textContent = itm && itm.ceItmOiSum !== null ? fmtNum(itm.ceItmOiSum) : '-';
   elPeItmOiSum.textContent = itm && itm.peItmOiSum !== null ? fmtNum(itm.peItmOiSum) : '-';
   elCePeRatio.textContent = itm && itm.ceOverPe !== null ? itm.ceOverPe.toFixed(2) : '-';
+  if (elCeItmDOiSum) elCeItmDOiSum.textContent = itm && itm.ceItmDOiSum !== null ? fmtSigned(itm.ceItmDOiSum) : '-';
+  if (elPeItmDOiSum) elPeItmDOiSum.textContent = itm && itm.peItmDOiSum !== null ? fmtSigned(itm.peItmDOiSum) : '-';
+  if (elCePeDOiRatio) elCePeDOiRatio.textContent = itm && itm.ceDOiOverPeDOi !== null ? itm.ceDOiOverPeDOi.toFixed(2) : '-';
 
   tableBody.innerHTML = '';
   const rows = snapshot?.rows || [];
@@ -416,8 +453,37 @@ modeNormalBtn?.addEventListener('click', async () => { try { await postPaperMode
 modeExpiryBtn?.addEventListener('click', async () => { try { await postPaperMode('EXPIRY'); await refresh(); } catch (e) { elError.textContent = e && e.message ? e.message : String(e); } });
 modeBigBtn?.addEventListener('click', async () => { try { await postPaperMode('BIG_RALLY'); await refresh(); } catch (e) { elError.textContent = e && e.message ? e.message : String(e); } });
 
-forceEnterBtn?.addEventListener('click', async () => { try { await postForceEnter(); await refresh(); } catch (e) { elError.textContent = e && e.message ? e.message : String(e); } });
-forceExitBtn?.addEventListener('click', async () => { try { await postForceExit(); await refresh(); } catch (e) { elError.textContent = e && e.message ? e.message : String(e); } });
+forceEnterBtn?.addEventListener('click', async () => {
+  try {
+    elError.textContent = '';
+    const out = await postForceEnter();
+    elError.textContent = out && out.order ? `LIVE entry order placed: ${(out.order.norenordno || out.order.orderno || out.order.order_no || '-')}` : 'Force entry placed.';
+    await refresh();
+  } catch (e) {
+    elError.textContent = e && e.message ? e.message : String(e);
+  }
+});
+forceExitBtn?.addEventListener('click', async () => {
+  try {
+    elError.textContent = '';
+    const out = await postForceExit();
+    elError.textContent = out && out.order ? `LIVE exit order placed: ${(out.order.norenordno || out.order.orderno || out.order.order_no || '-')}` : 'Force exit placed.';
+    await refresh();
+  } catch (e) {
+    elError.textContent = e && e.message ? e.message : String(e);
+  }
+});
+
+liveResyncBtn?.addEventListener('click', async () => {
+  try {
+    elError.textContent = '';
+    await postLiveResync();
+    elError.textContent = 'LIVE trade resynced from saved state.';
+    await refresh();
+  } catch (e) {
+    elError.textContent = e && e.message ? e.message : String(e);
+  }
+});
 
 exitStyleSel?.addEventListener('change', async () => {
   try {

@@ -544,6 +544,8 @@ module.exports = {
   forceEnterPaperTrade,
   forceExitPaperTrade,
   computeEntryDecision,
+  computeDirectionSignal,
+  selectInstrument,
   normalizeOrderQty,
   normalizeProductType,
 };

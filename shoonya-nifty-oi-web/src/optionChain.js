@@ -61,29 +61,103 @@ function computeDelta(now, prev) {
   return { dOi, dLtp, dVol };
 }
 
-function computeItmOiStats(rows, underlyingLtp, topN = 10) {
+function computeItmOiStats(rows, underlyingLtp, eachSide = 5) {
   const ltp = Number(underlyingLtp);
-  if (!Number.isFinite(ltp)) {
-    return { topN, ceItmOiSum: null, peItmOiSum: null, ceOverPe: null, peOverCe: null };
+  if (!Number.isFinite(ltp) || !Array.isArray(rows) || rows.length === 0) {
+    const topN = eachSide * 2 + 1;
+    return {
+      topN,
+      ceItmOiSum: null,
+      peItmOiSum: null,
+      ceOverPe: null,
+      peOverCe: null,
+      ceItmDOiSum: null,
+      peItmDOiSum: null,
+      ceDOiOverPeDOi: null,
+      peDOiOverCeDOi: null,
+      signal: null,
+    };
   }
 
-  const ceItm = rows
-    .filter((r) => Number.isFinite(r.strike) && r.strike < ltp && r.ce && r.ce.oi !== null)
-    .sort((a, b) => Math.abs(ltp - a.strike) - Math.abs(ltp - b.strike))
-    .slice(0, topN);
+  const sorted = rows
+    .filter((r) => Number.isFinite(r.strike))
+    .slice()
+    .sort((a, b) => a.strike - b.strike);
 
-  const peItm = rows
-    .filter((r) => Number.isFinite(r.strike) && r.strike > ltp && r.pe && r.pe.oi !== null)
-    .sort((a, b) => Math.abs(ltp - a.strike) - Math.abs(ltp - b.strike))
-    .slice(0, topN);
+  if (sorted.length === 0) {
+    const topN = eachSide * 2 + 1;
+    return {
+      topN,
+      ceItmOiSum: null,
+      peItmOiSum: null,
+      ceOverPe: null,
+      peOverCe: null,
+      ceItmDOiSum: null,
+      peItmDOiSum: null,
+      ceDOiOverPeDOi: null,
+      peDOiOverCeDOi: null,
+      signal: null,
+    };
+  }
 
-  const ceItmOiSum = ceItm.reduce((s, r) => s + (Number(r.ce.oi) || 0), 0);
-  const peItmOiSum = peItm.reduce((s, r) => s + (Number(r.pe.oi) || 0), 0);
+  let atmIdx = 0;
+  let best = Infinity;
+  for (let i = 0; i < sorted.length; i += 1) {
+    const d = Math.abs(sorted[i].strike - ltp);
+    if (d < best) {
+      best = d;
+      atmIdx = i;
+    }
+  }
+
+  const start = Math.max(0, atmIdx - eachSide);
+  const end = Math.min(sorted.length - 1, atmIdx + eachSide);
+  const window = sorted.slice(start, end + 1);
+
+  const ceItmOiSum = window.reduce((s, r) => s + (r.ce && r.ce.oi !== null ? (Number(r.ce.oi) || 0) : 0), 0);
+  const peItmOiSum = window.reduce((s, r) => s + (r.pe && r.pe.oi !== null ? (Number(r.pe.oi) || 0) : 0), 0);
+
+  const ceItmDOiSum = window.reduce((s, r) => s + (r.ce && r.ce.dOi !== null ? (Number(r.ce.dOi) || 0) : 0), 0);
+  const peItmDOiSum = window.reduce((s, r) => s + (r.pe && r.pe.dOi !== null ? (Number(r.pe.dOi) || 0) : 0), 0);
 
   const ceOverPe = peItmOiSum > 0 ? ceItmOiSum / peItmOiSum : null;
   const peOverCe = ceItmOiSum > 0 ? peItmOiSum / ceItmOiSum : null;
 
-  return { topN, ceItmOiSum, peItmOiSum, ceOverPe, peOverCe };
+  const ceDOiOverPeDOi = peItmDOiSum !== 0 ? ceItmDOiSum / peItmDOiSum : null;
+  const peDOiOverCeDOi = ceItmDOiSum !== 0 ? peItmDOiSum / ceItmDOiSum : null;
+  const topN = window.length;
+
+  // Overall signal heuristic (ΔOI first, fallback to total OI):
+  // - If PE ΔOI dominates -> bullish (put writing / support build-up)
+  // - If CE ΔOI dominates -> bearish (call writing / resistance build-up)
+  // - If ΔOI is too small/noisy, use total OI dominance.
+  let signal = 'NEUTRAL';
+  const dOiDiff = peItmDOiSum - ceItmDOiSum;
+  const dOiAbsMax = Math.max(Math.abs(peItmDOiSum), Math.abs(ceItmDOiSum));
+  const dOiThreshold = Math.max(25000, dOiAbsMax * 0.25);
+  if (Number.isFinite(dOiDiff) && Math.abs(dOiDiff) >= dOiThreshold) {
+    signal = dOiDiff > 0 ? 'BULLISH' : 'BEARISH';
+  } else {
+    const oiDiff = peItmOiSum - ceItmOiSum;
+    const oiAbsMax = Math.max(Math.abs(peItmOiSum), Math.abs(ceItmOiSum));
+    const oiThreshold = Math.max(100000, oiAbsMax * 0.15);
+    if (Number.isFinite(oiDiff) && Math.abs(oiDiff) >= oiThreshold) {
+      signal = oiDiff > 0 ? 'BULLISH' : 'BEARISH';
+    }
+  }
+
+  return {
+    topN,
+    ceItmOiSum,
+    peItmOiSum,
+    ceOverPe,
+    peOverCe,
+    ceItmDOiSum,
+    peItmDOiSum,
+    ceDOiOverPeDOi,
+    peDOiOverCeDOi,
+    signal,
+  };
 }
 
 async function buildNiftyChainSnapshot(api, opts, prevSnapshot) {
@@ -164,7 +238,7 @@ async function buildNiftyChainSnapshot(api, opts, prevSnapshot) {
     }
   }
 
-  const itmOiStats = computeItmOiStats(rows, underQuote.ltp, 10);
+  const itmOiStats = computeItmOiStats(rows, underQuote.ltp, 5);
 
   return {
     id: nanoid(),
