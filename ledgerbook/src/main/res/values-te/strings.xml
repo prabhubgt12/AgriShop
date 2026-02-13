@@ -281,5 +281,10 @@
     
     <!-- Loan delete confirmation -->
     <string name="delete_loan_confirm">ఈ లోన్ ప్రొఫైల్‌ను నిజంగా తొలగించాలా? దీన్ని తిరిగి చేసుకోలేరు.</string>
-    
+    <!-- Auto backup -->
+    <string name="auto_backup_label">స్వయంచాలక బ్యాకప్ (రోజువారీ)</string>
+    <string name="auto_backup_enabled_msg">స్వయంచాలక బ్యాకప్ ప్రారంభించబడింది</string>
+    <string name="auto_backup_disabled_msg">స్వయంచాలక బ్యాకప్ ఆపబడింది</string>
+    <string name="sign_in_required">స్వయంచాలక బ్యాకప్ ప్రారంభించడానికి దయచేసి సైన్ ఇన్ చేయండి</string>
+    <string name="restore_restart_toast">పునరుద్ధరణ పూర్తైంది. మార్పులను వర్తింపజేయడానికి అప్లికేషన్ ఇప్పుడు పునఃప్రారంభం అవుతుంది.</string>
 </resources>

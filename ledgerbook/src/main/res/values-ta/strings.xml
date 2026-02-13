@@ -277,4 +277,10 @@
 
     <!-- Loan delete confirmation -->
     <string name="delete_loan_confirm">இந்த கடன் சுயவிவரத்தை நிச்சயமாக அழிக்கவா? இதை மாற்ற இயலும் இல்லை.</string>
+    <!-- Auto backup -->
+    <string name="auto_backup_label">தானியங்கு காப்பு (தினசரி)</string>
+    <string name="auto_backup_enabled_msg">தானியங்கு காப்பு இயக்கப்பட்டது</string>
+    <string name="auto_backup_disabled_msg">தானியங்கு காப்பு முடக்கப்பட்டது</string>
+    <string name="sign_in_required">தானியங்கு காப்பை இயக்க குறித்து உள்நுழையவும்</string>
+    <string name="restore_restart_toast">மீட்டமைவு முடிந்தது. மாற்றங்களைப் பயன்படுத்த செயலி இப்போது மறுதொடக்கம் செய்யும்.</string>
 </resources>

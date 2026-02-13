@@ -280,4 +280,10 @@
     <string name="delete_entry_confirm">ಈ ದಾಖಲೆಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವೇ? ಇದರ ಪಾವತಿಗಳೂ ಅಳಿಸಲಾಗುತ್ತದೆ. ಈ ಕ್ರಿಯೆಯನ್ನು ಹಿಂತೆಗೆದುಕೊಳ್ಳಲಾಗುವುದಿಲ್ಲ.</string>
     <string name="no_payments_yet">ಇನ್ನೂ ಯಾವುದೇ ಪಾವತಿಗಳಿಲ್ಲ.</string>
     <string name="no_payments_pending">ಯಾವುದೇ ಪಾವತಿಗಳು ಬಾಕಿ ಇಲ್ಲ</string>
+    <!-- Auto backup -->
+    <string name="auto_backup_label">ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕ್‌ಅಪ್ (ದೈನಂದಿನ)</string>
+    <string name="auto_backup_enabled_msg">ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕ್‌ಅಪ್ ಸಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ</string>
+    <string name="auto_backup_disabled_msg">ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕ್‌ಅಪ್ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ</string>
+    <string name="sign_in_required">ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕ್‌ಅಪ್ ಸಕ್ರಿಯಗೊಳಿಸಲು ದಯವಿಟ್ಟು ಸೈನ್ ಇನ್ ಮಾಡಿ</string>
+    <string name="restore_restart_toast">ಮರುಸ್ಥಾಪನೆ ಪೂರ್ಣಗೊಂಡಿದೆ. ಬದಲಾವಣೆಗಳನ್ನು ಅನ್ವಯಿಸಲು ಅಪ್ಲಿಕೇಶನ್ ಈಗ ಮರುಪ್ರಾರಂಭವಾಗುತ್ತದೆ.</string>
 </resources>

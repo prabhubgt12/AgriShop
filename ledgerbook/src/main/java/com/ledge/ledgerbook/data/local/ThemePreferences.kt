@@ -23,6 +23,7 @@ class ThemePreferences @Inject constructor(
         // Thresholds (in days)
         val OVERDUE_DAYS: Preferences.Key<Int> = intPreferencesKey("overdue_days")
         val DUE_SOON_WINDOW_DAYS: Preferences.Key<Int> = intPreferencesKey("due_soon_window_days")
+        val AUTO_BACKUP_ENABLED: Preferences.Key<Boolean> = booleanPreferencesKey("auto_backup_enabled")
     }
 
     fun themeModeFlow(defaultMode: Int = 0): Flow<Int> =
@@ -51,6 +52,14 @@ class ThemePreferences @Inject constructor(
         context.ledgerDataStore.data.map { prefs -> prefs[Keys.DUE_SOON_WINDOW_DAYS] ?: default }
     suspend fun setDueSoonWindowDays(days: Int) {
         context.ledgerDataStore.edit { it[Keys.DUE_SOON_WINDOW_DAYS] = days }
+    }
+
+    // Auto backup setting
+    fun autoBackupEnabledFlow(default: Boolean = false): Flow<Boolean> =
+        context.ledgerDataStore.data.map { prefs -> prefs[Keys.AUTO_BACKUP_ENABLED] ?: default }
+
+    suspend fun setAutoBackupEnabled(enabled: Boolean) {
+        context.ledgerDataStore.edit { it[Keys.AUTO_BACKUP_ENABLED] = enabled }
     }
 
 }

@@ -24,6 +24,7 @@ import com.ledge.ledgerbook.BuildConfig
 import com.google.api.services.drive.model.File
 import com.ledge.ledgerbook.data.backup.BackupManager
 import com.ledge.ledgerbook.data.backup.DriveClient
+import com.ledge.ledgerbook.data.backup.AutoBackupScheduler
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
 import com.ledge.ledgerbook.MainActivity
 import kotlinx.coroutines.launch
@@ -304,6 +305,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
             item { Text(stringResource(R.string.backup_and_sync), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             // Single toggle Sign in/Sign out with status
             item {
+                val accountEmail = if (signedInState) DriveClient.getAccountEmail(context) ?: "Unknown" else null
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = {
                         val act = activity ?: return@Button
@@ -316,7 +318,12 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                             signInLauncher.launch(DriveClient.getSignInIntent(act))
                         }
                     }) { Text(if (signedInState) stringResource(R.string.sign_out) else stringResource(R.string.sign_in)) }
-                    Text(if (signedInState) stringResource(R.string.gd_connected) else stringResource(R.string.gd_not_connected))
+                    Column {
+                        Text(if (signedInState) stringResource(R.string.gd_connected) else stringResource(R.string.gd_not_connected))
+                        if (signedInState && accountEmail != null) {
+                            Text(accountEmail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
             }
             // Last backup info
@@ -324,6 +331,31 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 if (signedInState) {
                     val label = lastBackupDisplay ?: stringResource(R.string.never_label)
                     Text(text = stringResource(R.string.last_backup_label, label), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            // Auto backup toggle
+            item {
+                val autoBackupEnabled by themeViewModel.autoBackupEnabled.collectAsState()
+                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.auto_backup_label))
+                    Switch(
+                        checked = autoBackupEnabled,
+                        onCheckedChange = { enabled ->
+                            themeViewModel.setAutoBackupEnabled(enabled)
+                            val act = activity
+                            if (enabled) {
+                                if (signedInState && act != null) {
+                                    AutoBackupScheduler.schedule(act)
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.auto_backup_enabled_msg)) }
+                                } else {
+                                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.sign_in_required)) }
+                                }
+                            } else if (act != null) {
+                                AutoBackupScheduler.cancel(act)
+                                scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.auto_backup_disabled_msg)) }
+                            }
+                        }
+                    )
                 }
             }
             // Backup/Restore buttons with progress, confirm dialogs and snackbar
@@ -390,15 +422,26 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                                 if (ok) context.getString(R.string.restore_complete) else (DriveClient.lastError() ?: context.getString(R.string.restore_failed))
                             } else context.getString(R.string.no_backups_found)
                             isWorking = false
-                            snackbarHostState.showSnackbar(msg)
+                            // Only show snackbar for errors, not for successful restores (toast handles that)
+                            if (!ok) {
+                                snackbarHostState.showSnackbar(msg)
+                            }
                             lastBackupDisplay = fetchLbLastBackupTime()
                             if (ok) {
                                 val act = activity
                                 if (act != null) {
+                                    // Show immediate restart message
+                                    Toast.makeText(act, act.getString(R.string.restore_restart_toast), Toast.LENGTH_SHORT).show()
+                                    
                                     val ctx = act.applicationContext
                                     val restartIntent = Intent(ctx, MainActivity::class.java).apply {
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                                     }
+                                    
+                                    // Immediate restart approach like SplitBook
+                                    ctx.startActivity(restartIntent)
+                                    
+                                    // Schedule backup restart as fallback
                                     val pi = PendingIntent.getActivity(
                                         ctx,
                                         0,
@@ -406,12 +449,15 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                                         PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
                                     )
                                     val am = ctx.getSystemService(AlarmManager::class.java)
-                                    am?.setExact(
-                                        AlarmManager.ELAPSED_REALTIME,
-                                        SystemClock.elapsedRealtime() + 200,
-                                        pi
-                                    )
+                                    val triggerAt = SystemClock.elapsedRealtime() + 1200
+                                    try {
+                                        am?.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                                    } catch (_: Throwable) {
+                                        am?.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                                    }
+                                    
                                     act.finishAffinity()
+                                    try { Thread.sleep(200) } catch (_: Throwable) {}
                                     android.os.Process.killProcess(android.os.Process.myPid())
                                 }
                             }

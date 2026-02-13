@@ -37,6 +37,10 @@ class ThemeViewModel @Inject constructor(
     val dueSoonWindowDays: StateFlow<Int> = prefs.dueSoonWindowDaysFlow(30)
         .stateIn(viewModelScope, SharingStarted.Eagerly, 30)
 
+    // Auto backup setting
+    val autoBackupEnabled: StateFlow<Boolean> = prefs.autoBackupEnabledFlow(false)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     fun setThemeMode(mode: Int) {
         viewModelScope.launch { prefs.setThemeMode(mode) }
     }
@@ -51,5 +55,9 @@ class ThemeViewModel @Inject constructor(
 
     fun setDueSoonWindowDays(days: Int) {
         viewModelScope.launch { prefs.setDueSoonWindowDays(days) }
+    }
+
+    fun setAutoBackupEnabled(enabled: Boolean) {
+        viewModelScope.launch { prefs.setAutoBackupEnabled(enabled) }
     }
 }

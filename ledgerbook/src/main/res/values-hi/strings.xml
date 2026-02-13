@@ -254,4 +254,10 @@
     <string name="due_soon_with_count">शीघ्र देय %1$d</string>
     <string name="overdue_with_count_paren">विलंबित (%1$d)</string>
     <string name="due_soon_with_count_paren">शीघ्र देय (%1$d)</string>
+    <!-- Auto backup -->
+    <string name="auto_backup_label">ऑटो बैकअप (दैनिक)</string>
+    <string name="auto_backup_enabled_msg">ऑटो बैकअप सक्षम</string>
+    <string name="auto_backup_disabled_msg">ऑटो बैकअप अक्षम</string>
+    <string name="sign_in_required">ऑटो बैकअप सक्षम करने के लिए कृपया साइन इन करें</string>
+    <string name="restore_restart_toast">रीस्टोर पूरा। ऐप अब परिवर्तनों को लागू करने के लिए पुनः प्रारंभ हो जाएगा।</string>
 </resources>

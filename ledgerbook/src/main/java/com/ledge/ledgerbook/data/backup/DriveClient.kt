@@ -25,6 +25,10 @@ object DriveClient {
     fun isSignedIn(context: Context): Boolean = GoogleSignIn.getLastSignedInAccount(context) != null && driveService != null
     fun lastError(): String? = lastErrorMessage
 
+    fun getAccountEmail(context: Context): String? {
+        return GoogleSignIn.getLastSignedInAccount(context)?.email
+    }
+
     fun tryInitFromLastAccount(context: Context): Boolean {
         return try {
             val account = GoogleSignIn.getLastSignedInAccount(context)
