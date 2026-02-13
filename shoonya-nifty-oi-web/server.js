@@ -2,9 +2,9 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const dotenv = require('dotenv');
-
+ 
 dotenv.config({ path: path.join(__dirname, '.env') });
-
+ 
 const { createShoonyaClient } = require('./src/shoonyaClient');
 const { buildNiftyChainSnapshot } = require('./src/optionChain');
 const { computeSuggestion } = require('./src/signalEngine');
@@ -19,19 +19,19 @@ const {
   normalizeOrderQty,
   normalizeProductType,
 } = require('./src/paperTradeEngine');
-
+ 
 const { stepLiveTrade, createLiveTradeState } = require('./src/liveTradeEngine');
-
+ 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
+ 
 const port = parseInt(process.env.PORT || '3000', 10);
 const pollSeconds = parseInt(process.env.POLL_SECONDS || '5', 10);
 const windowSeconds = parseInt(process.env.WINDOW_SECONDS || '60', 10);
-
+ 
 const LIVE_STATE_PATH = path.join(__dirname, '.data', 'liveState.json');
-
+ 
 const state = {
   client: null,
   loggedIn: false,
@@ -50,7 +50,7 @@ const state = {
     imei: process.env.SHOONYA_IMEI,
   },
 };
-
+ 
 function safeReadJson(filePath) {
   try {
     if (!fs.existsSync(filePath)) return null;
@@ -61,7 +61,7 @@ function safeReadJson(filePath) {
     return null;
   }
 }
-
+ 
 function safeWriteJson(filePath, obj) {
   try {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -71,11 +71,11 @@ function safeWriteJson(filePath, obj) {
     return false;
   }
 }
-
+ 
 function persistLiveState() {
   safeWriteJson(LIVE_STATE_PATH, { live: state.live, savedAt: Date.now() });
 }
-
+ 
 function tryRestoreLiveState() {
   const data = safeReadJson(LIVE_STATE_PATH);
   if (!data || !data.live) return false;
@@ -83,64 +83,35 @@ function tryRestoreLiveState() {
   state.live = { ...createLiveTradeState(), ...data.live };
   return true;
 }
-
+ 
 tryRestoreLiveState();
-
+ 
 async function tryResyncFromShoonya() {
   if (!state.loggedIn || !state.client) return false;
   try {
-    console.log('Resync: Querying order book...');
     const orders = await state.client.get_orderbook();
-    console.log('Resync: Orders length:', orders?.length);
-    if (orders && orders.length > 0) console.log('Resync: First order:', JSON.stringify(orders[0], null, 2));
-    if (!orders || !Array.isArray(orders)) {
-      console.log('Resync: No orders or not array');
-      return false;
-    }
+    if (!orders || !Array.isArray(orders)) return false;
     const appOrders = orders.filter(o => o.remarks && (o.remarks.startsWith('forced_') || o.remarks.startsWith('auto_')) && o.status === 'COMPLETE' && o.trantype === 'B');
-    console.log('Resync: App orders length:', appOrders.length);
-    if (appOrders.length > 0) console.log('Resync: First app order:', JSON.stringify(appOrders[0], null, 2));
-    if (appOrders.length === 0) {
-      console.log('Resync: No app orders found');
-      return false;
-    }
+    if (appOrders.length === 0) return false;
     // Assume first one
     const order = appOrders[0];
-    console.log('Resync: Getting trade book for orderno:', order.norenordno);
     const trades = await state.client.get_tradebook();
-    console.log('Resync: All trades length:', trades?.length);
-    if (trades && trades.length > 0) console.log('Resync: Sample trades:', JSON.stringify(trades.slice(0, 2), null, 2));
     const orderTrades = trades.filter(t => t.norenordno === order.norenordno);
-    console.log('Resync: Order trades length:', orderTrades.length);
-    if (orderTrades.length > 0) console.log('Resync: First order trade:', JSON.stringify(orderTrades[0], null, 2));
-    if (!trades || !Array.isArray(trades) || orderTrades.length === 0) {
-      console.log('Resync: No trades for order');
-      return false;
-    }
+    if (!trades || !Array.isArray(trades) || orderTrades.length === 0) return false;
     const trade = orderTrades[0];
     const entryPrice = parseFloat(trade.avgprc);
-    console.log('Resync: Entry price:', entryPrice);
-    if (!entryPrice || entryPrice <= 0) {
-      console.log('Resync: Invalid entry price');
-      return false;
-    }
+    if (!entryPrice || entryPrice <= 0) return false;
     const mode = (order.remarks.split('_')[1] || 'NORMAL').toUpperCase();
-    console.log('Resync: Mode:', mode);
     let slPrice;
     if (mode === 'EXPIRY') slPrice = entryPrice * 0.75;
     else if (mode === 'NORMAL') slPrice = entryPrice * 0.7;
     else if (mode === 'BIG_RALLY') slPrice = entryPrice * 0.6;
     else slPrice = entryPrice * 0.7;
-    console.log('Resync: SL price:', slPrice);
     const tsymMatch = order.tsym.match(/([CP])(\d+)$/);
-    console.log('Resync: Tysm match:', tsymMatch);
-    if (!tsymMatch) {
-      console.log('Resync: No tsym match');
-      return false;
-    }
+    if (!tsymMatch) return false;
     const optType = tsymMatch[1] === 'C' ? 'CE' : 'PE';
-    const strike = parseInt(tsymMatch[1] === 'C' ? tsymMatch[2] : tsymMatch[2]);
-    console.log('Resync: Strike:', strike, 'OptType:', optType);
+    const strike = parseInt(tsymMatch[2]);
+    const qty = parseInt(order.qty);
     const tradeObj = {
       id: `resynced_${Date.now()}`,
       status: 'OPEN',
@@ -149,7 +120,7 @@ async function tryResyncFromShoonya() {
       optType,
       tsym: order.tsym,
       exchange: order.exch,
-      qty: parseInt(order.qty),
+      qty,
       entryTs: Date.now(),
       entryOrderNo: order.norenordno,
       entryPrice,
@@ -162,19 +133,31 @@ async function tryResyncFromShoonya() {
       pnl: null,
     };
     state.live = { ...createLiveTradeState(), current: tradeObj };
-    console.log('Resync: Success, trade reconstructed');
+    // Restore paper config to match
+    state.paper.tradeMode = 'LIVE';
+    state.paper.liveArmed = true;
+    state.paper.selectedMode = mode;
+    state.paper.orderQty = qty;
+    state.paper.productType = order.prd;
+    state.paper.qtyMode = 'QTY';
+    state.paper.lots = 1;
+    state.paper.qtyPerLot = qty;
+    state.paper.directionOverride = 'AUTO';
+    state.paper.exitStyle = 'TRAILING';
+    state.paper.targetPct = 30;
+    state.paper.maxTradesPerDay = 3;
     return true;
   } catch (e) {
     console.error('Resync from Shoonya failed:', e);
     return false;
   }
 }
-
+ 
 function ensureClient() {
   if (state.client) return;
   state.client = createShoonyaClient({});
 }
-
+ 
 async function loginWithOtp(otp) {
   ensureClient();
   const params = {
@@ -185,7 +168,7 @@ async function loginWithOtp(otp) {
     api_secret: state.auth.api_secret,
     imei: state.auth.imei,
   };
-
+ 
   const missing = Object.entries(params)
     .filter(([k, v]) => !v && k !== 'twoFA')
     .map(([k]) => k);
@@ -195,41 +178,41 @@ async function loginWithOtp(otp) {
   if (!otp) {
     throw new Error('OTP is required (Shoonya factor2)');
   }
-
+ 
   const res = await state.client.login(params);
   if (!res || res.stat !== 'Ok') {
     state.loggedIn = false;
     throw new Error(`Shoonya login failed: ${JSON.stringify(res)}`);
   }
-
+ 
   state.loggedIn = true;
 }
-
+ 
 async function updateOnce() {
   if (!state.loggedIn) throw new Error('Not logged in. Call /api/login with OTP.');
-
+ 
   const snapshot = await buildNiftyChainSnapshot(state.client, {
     strikeStep: parseInt(process.env.STRIKE_STEP || '50', 10),
     strikesEachSide: parseInt(process.env.STRIKES_EACH_SIDE || '8', 10),
   }, state.lastSnapshot);
-
+ 
   // Maintain history for window-based suggestion
   state.snapshotHistory.push(snapshot);
   const maxKeep = Math.max(2, Math.ceil((Math.max(1, windowSeconds) / Math.max(1, pollSeconds)) * 2));
   if (state.snapshotHistory.length > maxKeep) {
     state.snapshotHistory = state.snapshotHistory.slice(-maxKeep);
   }
-
+ 
   snapshot.suggestion = computeSuggestion(state.snapshotHistory, {
     windowMs: Math.max(1, windowSeconds) * 1000,
     widthStrikes: 4,
     minScore: 2,
   });
-
+ 
   if (state.paper && state.paper.enabled) {
     state.paper = stepPaperTrade(state.paper, state.snapshotHistory, state.paper.selectedMode);
   }
-
+ 
   // LIVE execution (safe gated by env + UI)
   const liveEnabled = String(process.env.ENABLE_LIVE_TRADING || '').toLowerCase() === 'true';
   if (liveEnabled && state.paper && state.paper.tradeMode === 'LIVE') {
@@ -241,21 +224,21 @@ async function updateOnce() {
       snapshotHistory: state.snapshotHistory,
       entryDecision,
     });
-
+ 
     if (state.live && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
       persistLiveState();
     }
   }
-
+ 
   state.lastSnapshot = snapshot;
   state.lastError = null;
 }
-
+ 
 async function startPolling() {
   if (state.polling) return;
   if (!state.loggedIn) throw new Error('Not logged in. Call /api/login with OTP first.');
   state.polling = true;
-
+ 
   const loop = async () => {
     try {
       await updateOnce();
@@ -263,11 +246,11 @@ async function startPolling() {
       state.lastError = e && e.message ? e.message : String(e);
     }
   };
-
+ 
   await loop();
   state.pollTimer = setInterval(loop, Math.max(1, pollSeconds) * 1000);
 }
-
+ 
 function stopPolling() {
   if (state.pollTimer) {
     clearInterval(state.pollTimer);
@@ -275,11 +258,11 @@ function stopPolling() {
   }
   state.polling = false;
 }
-
+ 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, loggedIn: state.loggedIn, polling: state.polling, lastError: state.lastError });
 });
-
+ 
 app.post('/api/live/resync', async (_req, res) => {
   const ok = await tryResyncFromShoonya();
   if (!ok) {
@@ -288,7 +271,7 @@ app.post('/api/live/resync', async (_req, res) => {
   }
   res.json({ ok: true, live: state.live, paper: state.paper });
 });
-
+ 
 app.post('/api/login', async (req, res) => {
   try {
     const otp = req.body && typeof req.body.otp === 'string' ? req.body.otp.trim() : '';
@@ -298,7 +281,7 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
   }
 });
-
+ 
 app.post('/api/start', async (_req, res) => {
   try {
     await startPolling();
@@ -307,7 +290,7 @@ app.post('/api/start', async (_req, res) => {
     res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
   }
 });
-
+ 
 app.post('/api/stop', (_req, res) => {
   try {
     stopPolling();
@@ -316,16 +299,16 @@ app.post('/api/stop', (_req, res) => {
     res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
   }
 });
-
+ 
 app.get('/api/paper', (_req, res) => {
   res.json({ ok: true, paper: state.paper });
 });
-
+ 
 app.post('/api/paper/risk-config', (req, res) => {
   const maxTradesRaw = req.body ? req.body.maxTradesPerDay : undefined;
   const maxTradesNum = typeof maxTradesRaw === 'number' ? maxTradesRaw : Number(maxTradesRaw);
   const maxTradesPerDay = Number.isFinite(maxTradesNum) ? Math.max(1, Math.min(50, Math.round(maxTradesNum))) : state.paper.maxTradesPerDay;
-
+ 
   const modeRaw = req.body && typeof req.body.tradeMode === 'string' ? req.body.tradeMode.trim().toUpperCase() : state.paper.tradeMode;
   const tradeMode = modeRaw === 'LIVE' ? 'LIVE' : 'PAPER';
   const liveEnabled = String(process.env.ENABLE_LIVE_TRADING || '').toLowerCase() === 'true';
@@ -333,30 +316,30 @@ app.post('/api/paper/risk-config', (req, res) => {
     res.status(400).json({ ok: false, error: 'LIVE trading is disabled. Set ENABLE_LIVE_TRADING=true in .env to allow it.', paper: state.paper });
     return;
   }
-
+ 
   state.paper.maxTradesPerDay = maxTradesPerDay;
   state.paper.tradeMode = tradeMode;
   res.json({ ok: true, paper: state.paper, liveEnabled });
 });
-
+ 
 app.post('/api/paper/order-config', (req, res) => {
   const body = req.body || {};
   const productRaw = body.productType;
-
+ 
   const qtyModeRaw = typeof body.qtyMode === 'string' ? body.qtyMode.trim().toUpperCase() : state.paper.qtyMode;
   const qtyMode = qtyModeRaw === 'LOTS' ? 'LOTS' : 'QTY';
-
+ 
   const lotsRaw = body.lots;
   const qtyPerLotRaw = body.qtyPerLot;
   const qtyRaw = body.orderQty;
-
+ 
   const lots = normalizeOrderQty(lotsRaw);
   const qtyPerLot = normalizeOrderQty(qtyPerLotRaw);
-
+ 
   const effectiveQty = qtyMode === 'LOTS'
     ? normalizeOrderQty(lots * qtyPerLot)
     : normalizeOrderQty(qtyRaw);
-
+ 
   state.paper.qtyMode = qtyMode;
   state.paper.lots = lots;
   state.paper.qtyPerLot = qtyPerLot;
