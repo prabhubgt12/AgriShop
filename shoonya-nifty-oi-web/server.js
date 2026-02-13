@@ -86,6 +86,90 @@ function tryRestoreLiveState() {
 
 tryRestoreLiveState();
 
+async function tryResyncFromShoonya() {
+  if (!state.loggedIn || !state.client) return false;
+  try {
+    console.log('Resync: Querying order book...');
+    const orders = await state.client.get_orderbook();
+    console.log('Resync: Orders length:', orders?.length);
+    if (orders && orders.length > 0) console.log('Resync: First order:', JSON.stringify(orders[0], null, 2));
+    if (!orders || !Array.isArray(orders)) {
+      console.log('Resync: No orders or not array');
+      return false;
+    }
+    const appOrders = orders.filter(o => o.remarks && (o.remarks.startsWith('forced_') || o.remarks.startsWith('auto_')) && o.status === 'COMPLETE' && o.trantype === 'B');
+    console.log('Resync: App orders length:', appOrders.length);
+    if (appOrders.length > 0) console.log('Resync: First app order:', JSON.stringify(appOrders[0], null, 2));
+    if (appOrders.length === 0) {
+      console.log('Resync: No app orders found');
+      return false;
+    }
+    // Assume first one
+    const order = appOrders[0];
+    console.log('Resync: Getting trade book for orderno:', order.norenordno);
+    const trades = await state.client.get_tradebook();
+    console.log('Resync: All trades length:', trades?.length);
+    if (trades && trades.length > 0) console.log('Resync: Sample trades:', JSON.stringify(trades.slice(0, 2), null, 2));
+    const orderTrades = trades.filter(t => t.norenordno === order.norenordno);
+    console.log('Resync: Order trades length:', orderTrades.length);
+    if (orderTrades.length > 0) console.log('Resync: First order trade:', JSON.stringify(orderTrades[0], null, 2));
+    if (!trades || !Array.isArray(trades) || orderTrades.length === 0) {
+      console.log('Resync: No trades for order');
+      return false;
+    }
+    const trade = orderTrades[0];
+    const entryPrice = parseFloat(trade.avgprc);
+    console.log('Resync: Entry price:', entryPrice);
+    if (!entryPrice || entryPrice <= 0) {
+      console.log('Resync: Invalid entry price');
+      return false;
+    }
+    const mode = (order.remarks.split('_')[1] || 'NORMAL').toUpperCase();
+    console.log('Resync: Mode:', mode);
+    let slPrice;
+    if (mode === 'EXPIRY') slPrice = entryPrice * 0.75;
+    else if (mode === 'NORMAL') slPrice = entryPrice * 0.7;
+    else if (mode === 'BIG_RALLY') slPrice = entryPrice * 0.6;
+    else slPrice = entryPrice * 0.7;
+    console.log('Resync: SL price:', slPrice);
+    const tsymMatch = order.tsym.match(/([CP])(\d+)$/);
+    console.log('Resync: Tysm match:', tsymMatch);
+    if (!tsymMatch) {
+      console.log('Resync: No tsym match');
+      return false;
+    }
+    const optType = tsymMatch[1] === 'C' ? 'CE' : 'PE';
+    const strike = parseInt(tsymMatch[1] === 'C' ? tsymMatch[2] : tsymMatch[2]);
+    console.log('Resync: Strike:', strike, 'OptType:', optType);
+    const tradeObj = {
+      id: `resynced_${Date.now()}`,
+      status: 'OPEN',
+      mode,
+      strike,
+      optType,
+      tsym: order.tsym,
+      exchange: order.exch,
+      qty: parseInt(order.qty),
+      entryTs: Date.now(),
+      entryOrderNo: order.norenordno,
+      entryPrice,
+      peakPrice: entryPrice,
+      slPrice,
+      exitTs: null,
+      exitPrice: null,
+      exitReason: null,
+      exitOrderNo: null,
+      pnl: null,
+    };
+    state.live = { ...createLiveTradeState(), current: tradeObj };
+    console.log('Resync: Success, trade reconstructed');
+    return true;
+  } catch (e) {
+    console.error('Resync from Shoonya failed:', e);
+    return false;
+  }
+}
+
 function ensureClient() {
   if (state.client) return;
   state.client = createShoonyaClient({});
@@ -194,6 +278,15 @@ function stopPolling() {
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, loggedIn: state.loggedIn, polling: state.polling, lastError: state.lastError });
+});
+
+app.post('/api/live/resync', async (_req, res) => {
+  const ok = await tryResyncFromShoonya();
+  if (!ok) {
+    res.status(404).json({ ok: false, error: 'No app-placed LIVE trade found to resync from Shoonya.', live: state.live, paper: state.paper });
+    return;
+  }
+  res.json({ ok: true, live: state.live, paper: state.paper });
 });
 
 app.post('/api/login', async (req, res) => {
@@ -544,16 +637,14 @@ app.get('/api/snapshot', (_req, res) => {
   res.json({ ok: true, snapshot: state.lastSnapshot, lastError: state.lastError, paper: state.paper, live: state.live });
 });
 
-app.post('/api/live/resync', (_req, res) => {
-  const ok = tryRestoreLiveState();
-  if (!ok) {
-    res.status(404).json({ ok: false, error: 'No saved OPEN/EXITING LIVE trade found to resync.', live: state.live, paper: state.paper });
-    return;
-  }
-  res.json({ ok: true, live: state.live, paper: state.paper });
-});
-
 app.listen(port, () => {
   console.log(`Shoonya NIFTY OI web app running at http://localhost:${port}`);
   console.log('Create a .env from .env.example, then POST /api/start (UI does this automatically).');
+  console.log('Registered routes:');
+  app._router.stack.forEach((r) => {
+    if (r.route && r.route.path) {
+      const methods = Object.keys(r.route.methods).join(',').toUpperCase();
+      console.log(`  ${methods} ${r.route.path}`);
+    }
+  });
 });
