@@ -273,7 +273,7 @@ function render(snapshot, lastError, paper, live) {
   } else {
     elSnapshotMeta.textContent = `Updated: ${fmtTime(snapshot?.ts)}`;
   }
-  elReasons.innerHTML = sug?.reasons?.length ? sug.reasons.map(r => `<div>${r}</div>`).join('') : '';
+  elReasons.innerHTML = sug?.reasons?.length ? sug.reasons.map(r => `<div>${String(r || '')}</div>`).join('') : '';
 
   if (paper) {
     setModeButtons(paper.selectedMode);
@@ -335,7 +335,7 @@ function render(snapshot, lastError, paper, live) {
       const dec = paper.lastDecision;
       const decText = dec && dec.reasons && dec.reasons.length
         ? `<div><b>Last Decision</b>: ${dec.action || '-'} (${dec.mode || '-'})</div>`
-          + dec.reasons.map(r => `<div>${r}</div>`).join('')
+          + dec.reasons.map(r => `<div>${String(r || '')}</div>`).join('')
         : '';
       elTradeNote.innerHTML = `No trade yet${decText ? '<div style="margin-top:6px;">' + decText + '</div>' : ''}`;
       if (paper.tradeMode === 'LIVE' && live && live.lastDecision) {
