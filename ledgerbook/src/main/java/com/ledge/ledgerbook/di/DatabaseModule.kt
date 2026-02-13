@@ -2,10 +2,13 @@ package com.ledge.ledgerbook.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.ledge.ledgerbook.data.local.AppDatabase
 import com.ledge.ledgerbook.data.local.dao.LedgerDao
 import com.ledge.ledgerbook.data.local.dao.LoanDao
 import com.ledge.ledgerbook.data.local.dao.RdDao
+import com.ledge.ledgerbook.data.local.migrations.ALL_MIGRATIONS
 import com.ledge.ledgerbook.data.repo.LedgerRepository
 import com.ledge.ledgerbook.data.repo.LoanRepository
 import com.ledge.ledgerbook.data.repo.RdRepository
@@ -26,7 +29,9 @@ object DatabaseModule {
     @Singleton
     fun provideDb(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
-            .fallbackToDestructiveMigration()
+            .addMigrations(*ALL_MIGRATIONS)
+            // Remove fallbackToDestructiveMigration to prevent data loss
+            // All versions now have proper migrations
             .build()
 
     @Provides
