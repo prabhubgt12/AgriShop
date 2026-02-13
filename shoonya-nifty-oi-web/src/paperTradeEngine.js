@@ -60,7 +60,7 @@ function selectInstrument(snapshot, mode, direction) {
   const atm = snapshot?.atmStrike;
   if (!isNum(atm)) return null;
 
-  if (mode === 'BIG_RALLY') {
+  if (mode === 'BIG_RALLY' || mode === 'NORMAL') {
     // 2-step OTM option based on direction
     if (direction === 'BEAR') {
       const strike = atm - 2 * step;
@@ -70,7 +70,7 @@ function selectInstrument(snapshot, mode, direction) {
     return { strike, type: 'CE' };
   }
 
-  // EXPIRY / NORMAL: trade ATM in the direction
+  // EXPIRY: trade ATM in the direction
   return { strike: atm, type: direction === 'BULL' ? 'CE' : 'PE' };
 }
 
