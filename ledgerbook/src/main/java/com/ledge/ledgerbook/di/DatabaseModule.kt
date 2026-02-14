@@ -50,13 +50,44 @@ object DatabaseModule {
 
 
 
-    // Migration from version 4 to 5
-    private val MIGRATION_4_5 = object : Migration(4, 5) {
+    // Migration from version 3 to 5 (smooth migration since version 4 was never released)
+    private val MIGRATION_3_5 = object : Migration(3, 5) {
 
         override fun migrate(database: SupportSQLiteDatabase) {
 
-            // Add the new autoPay column to rd_accounts table
-            database.execSQL("ALTER TABLE rd_accounts ADD COLUMN autoPay INTEGER NOT NULL DEFAULT 0")
+            // Create the rd_accounts table
+            database.execSQL("""
+                CREATE TABLE IF NOT EXISTS `rd_accounts` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `installmentAmount` REAL NOT NULL,
+                    `annualRatePercent` REAL NOT NULL,
+                    `startDateMillis` INTEGER NOT NULL,
+                    `tenureMonths` INTEGER NOT NULL,
+                    `autoPay` INTEGER NOT NULL DEFAULT 0,
+                    `isClosed` INTEGER NOT NULL,
+                    `createdAt` INTEGER NOT NULL,
+                    `updatedAt` INTEGER NOT NULL
+                )
+            """.trimIndent())
+
+            // Create the rd_deposits table
+            database.execSQL("""
+                CREATE TABLE IF NOT EXISTS `rd_deposits` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    `rdAccountId` INTEGER NOT NULL,
+                    `dueDateMillis` INTEGER NOT NULL,
+                    `paidDateMillis` INTEGER,
+                    `amountPaid` REAL NOT NULL,
+                    `note` TEXT
+                )
+            """.trimIndent())
+
+            // Create the unique index for rd_deposits
+            database.execSQL("""
+                CREATE UNIQUE INDEX IF NOT EXISTS `index_rd_deposits_rdAccountId_dueDateMillis`
+                ON `rd_deposits` (`rdAccountId`, `dueDateMillis`)
+            """.trimIndent())
 
         }
 
@@ -72,9 +103,9 @@ object DatabaseModule {
 
         Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
 
-            .addMigrations(MIGRATION_4_5)
+            .addMigrations(MIGRATION_3_5)
 
-            .fallbackToDestructiveMigrationFrom(1, 2, 3) // Only use destructive migration for versions before 4
+            .fallbackToDestructiveMigrationFrom(1, 2) // Only use destructive migration for versions before 3
 
             .build()
 
