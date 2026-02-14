@@ -50,12 +50,12 @@ object DatabaseModule {
 
 
 
-    // Migration from version 3 to 5 (smooth migration since version 4 was never released)
-    private val MIGRATION_3_5 = object : Migration(3, 5) {
+    // Migration from version 3 to 4 (add RD tables)
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
 
         override fun migrate(database: SupportSQLiteDatabase) {
 
-            // Create the rd_accounts table
+            // Create the rd_accounts table (without autoPay column for version 4)
             database.execSQL("""
                 CREATE TABLE IF NOT EXISTS `rd_accounts` (
                     `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -64,7 +64,6 @@ object DatabaseModule {
                     `annualRatePercent` REAL NOT NULL,
                     `startDateMillis` INTEGER NOT NULL,
                     `tenureMonths` INTEGER NOT NULL,
-                    `autoPay` INTEGER NOT NULL DEFAULT 0,
                     `isClosed` INTEGER NOT NULL,
                     `createdAt` INTEGER NOT NULL,
                     `updatedAt` INTEGER NOT NULL
@@ -93,6 +92,18 @@ object DatabaseModule {
 
     }
 
+    // Migration from version 4 to 5 (add autoPay column)
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+
+        override fun migrate(database: SupportSQLiteDatabase) {
+
+            // Add the autoPay column to rd_accounts table
+            database.execSQL("ALTER TABLE rd_accounts ADD COLUMN autoPay INTEGER NOT NULL DEFAULT 0")
+
+        }
+
+    }
+
 
 
     @Provides
@@ -103,9 +114,9 @@ object DatabaseModule {
 
         Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
 
-            .addMigrations(MIGRATION_3_5)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
 
-            .fallbackToDestructiveMigrationFrom(1, 2) // Only use destructive migration for versions before 3
+            .fallbackToDestructiveMigrationFrom(1, 2) // Only destructive for versions 1-2
 
             .build()
 
