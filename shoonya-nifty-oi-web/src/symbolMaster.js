@@ -114,7 +114,7 @@ async function getNiftyIndexToken(api) {
 
   const preferred = rows.find((r) => isIndex(r) && (tsymU(r) === 'NIFTY 50' || tsymU(r) === 'NIFTY50'))
     || rows.find((r) => isIndex(r) && tsymU(r) === 'NIFTY')
-    || rows.find((r) => isIndex(r) && symU(r) === 'NIFTY');
+    || rows.find((r) => isIndex(r) && symU(r) === 'NIFTY 50');
 
   if (preferred && tokenOf(preferred)) {
     return { token: tokenOf(preferred), tsym: String(preferred.tsym || preferred.Tsym || preferred.TradingSymbol || '') };
