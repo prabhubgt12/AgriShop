@@ -364,7 +364,7 @@ function render(snapshot, lastError, paper, live) {
         ? `<div><b>Last Decision</b>: ${dec.action || '-'} (${dec.mode || '-'})</div>`
           + dec.reasons.map(r => `<div>${String(r || '')}</div>`).join('')
         : '';
-      elTradeNote.innerHTML = `No trade yet${decText ? '<div style="margin-top:6px;">' + decText + '</div>' : ''}`;
+      elTradeNote.innerHTML = `No trade yet`;
       if (paper.tradeMode === 'LIVE' && live && live.lastDecision) {
         elTradeNote.innerHTML += `<div style="margin-top:6px;"><b>LIVE</b>: ${live.lastDecision.action || '-'}</div>`;
       }

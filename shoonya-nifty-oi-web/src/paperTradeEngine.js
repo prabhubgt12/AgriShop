@@ -182,45 +182,90 @@ function shouldEnter(history, mode, state) {
 
   if (mode === 'NORMAL') {
     const underNow = latest?.underlying?.ltp;
-    const vwap = latest?.underlying?.vwap;
     const atmStrike = latest?.atmStrike;
 
     if (!isNum(underNow)) return { ok: false, reasons: [...reasons, 'Underlying LTP missing'] };
 
-    // Condition 1: Nifty above VWAP (BULL) / below VWAP (BEAR)
-    const cond1 = vwap === null
-      ? true
-      : (direction === 'BULL' ? underNow > vwap : underNow < vwap);
-    reasons.push(`Nifty ${direction === 'BULL' ? '>' : '<'} VWAP: ${passFailSpan(cond1)} (LTP ${fmtNum(underNow, 2)} vs VWAP ${vwap === null ? '-' : fmtNum(vwap, 2)})`);
-
-    // Condition 2: Nifty breaks last 5-min high (BULL) / low (BEAR)
-    let extreme5 = underNow;
-    for (let i = history.length - 1; i >= 0; i -= 1) {
+    // Compute 5m extremes (excluding current)
+    let extremeHigh5 = -Infinity;
+    let extremeLow5 = Infinity;
+    for (let i = history.length - 2; i >= 0; i -= 1) {
       const s = history[i];
       if (!s || !isNum(s.ts) || s.ts < nowTs - 5 * 60_000) break;
       const ul = s.underlying?.ltp;
       if (!isNum(ul)) continue;
-      extreme5 = direction === 'BULL' ? Math.max(extreme5, ul) : Math.min(extreme5, ul);
+      extremeHigh5 = Math.max(extremeHigh5, ul);
+      extremeLow5 = Math.min(extremeLow5, ul);
     }
-    const cond2 = direction === 'BULL' ? (underNow > extreme5) : (underNow < extreme5);
-    reasons.push(`Breaks 5m ${direction === 'BULL' ? 'high' : 'low'}: ${passFailSpan(cond2)} (LTP ${fmtNum(underNow, 2)} vs 5m ${direction === 'BULL' ? 'high' : 'low'} ${fmtNum(extreme5, 2)})`);
 
-    // Condition 3: ATM option momentum
-    // BULL: ATM CE up >=15% in 5m
-    // BEAR: ATM PE up >=15% in 5m
-    const optTypeForCond = direction === 'BULL' ? 'CE' : 'PE';
-    const past5 = pickSnapshotAtOrBefore(history, nowTs - 5 * 60_000);
-    const legNowAtm = isNum(atmStrike) ? findLeg(latest, atmStrike, optTypeForCond) : null;
-    const legPastAtm = (past5 && isNum(atmStrike)) ? findLeg(past5, atmStrike, optTypeForCond) : null;
-    const chgOpt = pctChange(legNowAtm?.ltp, legPastAtm?.ltp);
-    const cond3 = chgOpt !== null && chgOpt >= 0.15;
-    reasons.push(`ATM ${optTypeForCond} >=15% (5m): ${passFailSpan(cond3)} (${fmtPct(chgOpt, 1)} | now ${fmtNum(legNowAtm?.ltp, 2)} vs 5m ${fmtNum(legPastAtm?.ltp, 2)})`);
+    const breaksHigh = underNow > extremeHigh5;
+    const breaksLow = underNow < extremeLow5;
 
-    if (!cond1 || !cond2 || !cond3) {
+    const past2 = pickSnapshotAtOrBefore(history, nowTs - 2 * 60_000);
+
+    const ceNow = isNum(atmStrike) ? findLeg(latest, atmStrike, 'CE') : null;
+    const peNow = isNum(atmStrike) ? findLeg(latest, atmStrike, 'PE') : null;
+    const cePast = (past2 && isNum(atmStrike)) ? findLeg(past2, atmStrike, 'CE') : null;
+    const pePast = (past2 && isNum(atmStrike)) ? findLeg(past2, atmStrike, 'PE') : null;
+
+    const ceChg = pctChange(ceNow?.ltp, cePast?.ltp);
+    const peChg = pctChange(peNow?.ltp, pePast?.ltp);
+
+    const ceCond = ceChg !== null && ceChg >= 0.12;
+    const peCond = peChg !== null && peChg >= 0.12;
+
+    reasons.push(`Breaks 5m high: ${passFailSpan(breaksHigh)} (LTP ${fmtNum(underNow, 2)} vs high ${fmtNum(extremeHigh5, 2)})`);
+    reasons.push(`ATM CE >=12% (2m): ${passFailSpan(ceCond)} (${fmtPct(ceChg, 1)} | now ${fmtNum(ceNow?.ltp, 2)} vs 2m ${fmtNum(cePast?.ltp, 2)})`);
+    reasons.push(`Breaks 5m low: ${passFailSpan(breaksLow)} (LTP ${fmtNum(underNow, 2)} vs low ${fmtNum(extremeLow5, 2)})`);
+    reasons.push(`ATM PE >=12% (2m): ${passFailSpan(peCond)} (${fmtPct(peChg, 1)} | now ${fmtNum(peNow?.ltp, 2)} vs 2m ${fmtNum(pePast?.ltp, 2)})`);
+
+    if (breaksHigh && ceCond) {
+      const direction = 'BULL';
+      const inst = selectInstrument(latest, mode, direction);
+      const trade = {
+        id: `paper_${latest.ts}`,
+        status: 'OPEN',
+        mode,
+        strike: inst.strike,
+        optType: inst.type,
+        qty: normalizeOrderQty(state.orderQty),
+        entryPrice: entryPrice,
+        entryTs: latest.ts,
+        peakPrice: entryPrice,
+        slPrice: initialSl(entryPrice, mode),
+        exitPrice: null,
+        exitTs: null,
+        exitReason: null,
+        pnl: 0,
+        reasons: reasons,
+        breakoutLevel: extremeHigh5,
+      };
+      return { ok: true, direction, inst, reasons };
+    } else if (breaksLow && peCond) {
+      const direction = 'BEAR';
+      const inst = selectInstrument(latest, mode, direction);
+      const trade = {
+        id: `paper_${latest.ts}`,
+        status: 'OPEN',
+        mode,
+        strike: inst.strike,
+        optType: inst.type,
+        qty: normalizeOrderQty(state.orderQty),
+        entryPrice: entryPrice,
+        entryTs: latest.ts,
+        peakPrice: entryPrice,
+        slPrice: initialSl(entryPrice, mode),
+        exitPrice: null,
+        exitTs: null,
+        exitReason: null,
+        pnl: 0,
+        reasons: reasons,
+        breakoutLevel: extremeLow5,
+      };
+      return { ok: true, direction, inst, reasons };
+    } else {
       return { ok: false, reasons: [...reasons, 'Conditions not met'] };
     }
-
-    return { ok: true, direction, inst, reasons };
   }
 
   if (mode === 'BIG_RALLY') {
@@ -307,6 +352,16 @@ function maybeExit(trade, mode, currentLtp, exitCfg) {
   if (exitStyle === 'TARGET' && isNum(trade.entryPrice) && trade.entryPrice > 0) {
     const targetPrice = trade.entryPrice * (1 + targetPct / 100);
     if (currentLtp >= targetPrice) return { reason: `TARGET_HIT_${targetPct}` };
+  }
+
+  // False breakout exit for NORMAL
+  if (trade.mode === 'NORMAL' && isNum(trade.breakoutLevel)) {
+    if (trade.optType === 'CE' && currentLtp < trade.breakoutLevel - 10) {
+      return { reason: 'FALSE_BREAKOUT' };
+    }
+    if (trade.optType === 'PE' && currentLtp > trade.breakoutLevel + 10) {
+      return { reason: 'FALSE_BREAKOUT' };
+    }
   }
 
   // SL hit
