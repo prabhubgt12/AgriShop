@@ -115,7 +115,7 @@ fun AccountsScreen(
                     start = 12.dp,
                     end = 12.dp,
                     top = 12.dp,
-                    bottom = if (showBanner) bannerHeight else 12.dp
+                    bottom = if (showBanner && bannerLoaded) bannerHeight else 12.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -624,7 +624,7 @@ fun AccountsScreen(
             val edge = 16.dp
             val topInsetPx = with(density) { WindowInsets.statusBars.getTop(this).toFloat() }
             val bottomInsetPx = with(density) { WindowInsets.navigationBars.getBottom(this).toFloat() }
-            val bannerReservePx = with(density) { if (showBanner) (bannerHeight + 12.dp).toPx() else 0f }
+            val bannerReservePx = with(density) { if (showBanner && bannerLoaded) (bannerHeight + 12.dp).toPx() else 0f }
             val maxX = with(density) { (maxWidth - fabSize - edge).toPx() }
             val maxY = with(density) { (maxHeight - fabSize - edge).toPx() } - bottomInsetPx - bannerReservePx
             val minX = with(density) { edge.toPx() }
