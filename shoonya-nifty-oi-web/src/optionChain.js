@@ -109,6 +109,7 @@ async function getQuotesChunked(api, exch, tokens, chunkSize = 10) {
     for (let j = 0; j < chunk.length; j += 1) {
       out.set(chunk[j], replies[j]);
     }
+    if (i + chunkSize < tokens.length) await new Promise(r => setTimeout(r, 200)); // Delay 200ms between chunks
   }
 
   return out;
