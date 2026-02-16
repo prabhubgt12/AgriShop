@@ -18,6 +18,7 @@ import com.ledge.cashbook.data.local.dao.CategoryDao
 import com.ledge.cashbook.data.local.dao.CategoryKeywordDao
 import com.ledge.cashbook.data.local.dao.CashDao
 import com.ledge.cashbook.data.local.entities.Category
+import com.ledge.cashbook.data.repo.CashRepository
 
 @HiltAndroidApp
 class CashBookApp : Application() {
@@ -75,6 +76,19 @@ class CashBookApp : Application() {
                 }
             }
         } catch (_: Exception) { }
+
+        // Generate any missing recurring monthly cash transactions on app open (offline-friendly).
+        try {
+            val ep = EntryPointAccessors.fromApplication(this, CategorySeedEntryPoint::class.java)
+            val cashDao = ep.cashDao()
+            val repo = CashRepository(
+                db = EntryPointAccessors.fromApplication(this, RecurringEntryPoint::class.java).db(),
+                dao = cashDao
+            )
+            runBlocking {
+                repo.generateDueRecurringTxns()
+            }
+        } catch (_: Exception) { }
     }
 }
 
@@ -90,4 +104,10 @@ interface CategorySeedEntryPoint {
     fun categoryDao(): CategoryDao
     fun categoryKeywordDao(): CategoryKeywordDao
     fun cashDao(): CashDao
+}
+
+@dagger.hilt.EntryPoint
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+interface RecurringEntryPoint {
+    fun db(): com.ledge.cashbook.data.local.AppDatabase
 }

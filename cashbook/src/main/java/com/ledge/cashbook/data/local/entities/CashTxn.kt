@@ -12,5 +12,7 @@ data class CashTxn(
     val isCredit: Boolean,
     val note: String? = null,
     val attachmentUri: String? = null,
-    val category: String? = null
+    val category: String? = null,
+    /** If generated from or linked to a recurring rule, its id. */
+    val recurringId: Int? = null
 )

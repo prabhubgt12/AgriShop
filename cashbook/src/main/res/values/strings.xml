@@ -179,4 +179,10 @@
     <string name="categories_enable_note">To use categories in transactions, enable the category feature in Settings.</string>
     <string name="show_category_in_list_label">Show category in transaction list</string>
 
+    <!-- Recurring transactions -->
+    <string name="repeat_monthly_toggle">Repeat every month</string>
+    <string name="recurring_monthly_until_stopped">This entry will repeat every month until you stop it.</string>
+    <string name="stop_recurring">Stop recurring</string>
+    <string name="recurring_stopped_label">This was part of a recurring transaction (now stopped).</string>
+
 </resources>

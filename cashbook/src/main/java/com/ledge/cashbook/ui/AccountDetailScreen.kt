@@ -159,6 +159,11 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
 
+    // Recurring toggle state (add dialog) – monthly, no end date
+    var addRecurring by remember { mutableStateOf(false) }
+    // For edit dialog, remember whether this txn belongs to an active recurring rule.
+    var editRecurring by remember { mutableStateOf(false) }
+
     // Derived filter state and filtered transactions for reuse across top bar, list and footer
     val isFiltered = remember(filterStart, filterEnd) { filterStart != null || filterEnd != null }
     val filteredTxns = remember(txns, filterStart, filterEnd) {
@@ -436,6 +441,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         editDateMillis = pendingAction.date
                         editAttachmentUri = pendingAction.attachmentUri
                         editCategory = pendingAction.category ?: ""
+                        editRecurring = pendingAction.recurringId != null
                         actionTxn = null
                     }) { Text(stringResource(R.string.edit)) }
                     TextButton(onClick = { confirmDeleteTxn = pendingAction; actionTxn = null }) { Text(stringResource(R.string.delete)) }
@@ -448,6 +454,19 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Edit transaction dialog
     val toEdit = editTxn
     if (toEdit != null) {
+        // Refresh whether the linked recurring rule is still active whenever this dialog opens
+        LaunchedEffect(toEdit.recurringId) {
+            val id = toEdit.recurringId
+            editRecurring = if (id != null) {
+                try {
+                    vm.isRecurringActive(id)
+                } catch (_: Exception) {
+                    false
+                }
+            } else {
+                false
+            }
+        }
         val editAmountValid = remember(editAmount) { editAmount.toDoubleOrNull()?.let { it > 0 } == true }
         val editNoteValid = remember(editNote) { editNote.isNotBlank() }
         AlertDialog(
@@ -505,6 +524,30 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         onValueChange = { editNote = it },
                         label = { Text(stringResource(R.string.particular)) }
                     )
+                    // Recurring info: show only inside edit dialog; no list indicators
+                    if (toEdit.recurringId != null) {
+                        if (editRecurring) {
+                            Text(
+                                text = stringResource(R.string.recurring_monthly_until_stopped),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            TextButton(
+                                onClick = {
+                                    vm.stopRecurring(toEdit)
+                                    editRecurring = false
+                                }
+                            ) {
+                                Text(stringResource(R.string.stop_recurring))
+                            }
+                        } else {
+                            Text(
+                                text = stringResource(R.string.recurring_stopped_label),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                     val es = editSuggestion
                     if (es != null && editCategory.isBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1243,6 +1286,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             userSetAddCategory = false
             addSuggestion = null
             autoSetAddCategory = false
+            addRecurring = false
         }
     }
     // (moved declarations above)
@@ -1299,6 +1343,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                 dateMillis = System.currentTimeMillis()
                 addAttachmentUri = null
                 addCategory = ""
+                addRecurring = false
             },
             confirmButton = {
                 TextButton(
@@ -1306,7 +1351,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     onClick = {
                         val amt = amount.toDoubleOrNull() ?: 0.0
                         if (amt <= 0 || note.isBlank()) return@TextButton
-                        vm.addTxn(dateMillis, amt, isCredit, note, addAttachmentUri, addCategory.ifBlank { null })
+                        vm.addTxn(dateMillis, amt, isCredit, note, addAttachmentUri, addCategory.ifBlank { null }, makeRecurring = addRecurring)
                         showAdd = false
                         isCredit = true
                         amount = ""
@@ -1314,6 +1359,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         dateMillis = System.currentTimeMillis()
                         addAttachmentUri = null
                         addCategory = ""
+                        addRecurring = false
                     }
                 ) { Text(stringResource(R.string.save)) }
             },
@@ -1359,6 +1405,16 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         onValueChange = { note = it },
                         label = { Text(stringResource(R.string.particular)) }
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Switch(checked = addRecurring, onCheckedChange = { addRecurring = it })
+                        Text(
+                            text = stringResource(R.string.repeat_monthly_toggle),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                     val asugg = addSuggestion
                     if (asugg != null && addCategory.isBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

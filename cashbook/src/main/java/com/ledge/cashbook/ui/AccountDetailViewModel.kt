@@ -34,10 +34,22 @@ class AccountDetailViewModel @Inject constructor(
 
     fun load(id: Int) { _accountId.value = id }
 
-    fun addTxn(date: Long, amount: Double, isCredit: Boolean, note: String?, attachmentUri: String?, category: String?) {
+    fun addTxn(
+        date: Long,
+        amount: Double,
+        isCredit: Boolean,
+        note: String?,
+        attachmentUri: String?,
+        category: String?,
+        makeRecurring: Boolean
+    ) {
         val id = _accountId.value ?: return
         viewModelScope.launch(Dispatchers.IO) {
-            repo.addTxn(id, date, amount, isCredit, note, attachmentUri, category)
+            if (makeRecurring) {
+                repo.addTxnWithMonthlyRecurring(id, date, amount, isCredit, note, attachmentUri, category)
+            } else {
+                repo.addTxn(id, date, amount, isCredit, note, attachmentUri, category)
+            }
         }
     }
 
@@ -52,6 +64,14 @@ class AccountDetailViewModel @Inject constructor(
             repo.updateTxn(updated)
         }
     }
+
+    fun stopRecurring(txn: CashTxn) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.stopRecurringFor(txn)
+        }
+    }
+
+    suspend fun isRecurringActive(recurringId: Int): Boolean = repo.isRecurringActive(recurringId)
 
     // Selection state for bulk actions
     private val _selection = MutableStateFlow<Set<Int>>(emptySet())

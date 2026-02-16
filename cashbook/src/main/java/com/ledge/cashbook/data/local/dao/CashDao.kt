@@ -3,6 +3,7 @@ package com.ledge.cashbook.data.local.dao
 import androidx.room.*
 import com.ledge.cashbook.data.local.entities.CashAccount
 import com.ledge.cashbook.data.local.entities.CashTxn
+import com.ledge.cashbook.data.local.entities.RecurringTxn
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -61,4 +62,27 @@ interface CashDao {
     // Distinct category strings currently used in transactions
     @Query("SELECT DISTINCT category FROM cash_txns WHERE category IS NOT NULL AND TRIM(category) != ''")
     suspend fun distinctCategories(): List<String>
+
+    // --- Recurring transactions (monthly, no end date) ---
+
+    @Insert
+    suspend fun insertRecurring(rule: RecurringTxn): Long
+
+    @Update
+    suspend fun updateRecurring(rule: RecurringTxn)
+
+    @Query("SELECT * FROM recurring_txns WHERE isActive = 1")
+    suspend fun activeRecurring(): List<RecurringTxn>
+
+    @Query("SELECT * FROM recurring_txns WHERE id = :id")
+    suspend fun getRecurring(id: Int): RecurringTxn?
+
+    @Query("SELECT COUNT(*) FROM cash_txns WHERE recurringId = :recurringId AND date = :date")
+    suspend fun countRecurringTxnOn(recurringId: Int, date: Long): Int
+
+    @Query("UPDATE cash_txns SET recurringId = :recurringId WHERE id = :id")
+    suspend fun setTxnRecurringId(id: Int, recurringId: Int?)
+
+    @Query("SELECT isActive FROM recurring_txns WHERE id = :id")
+    suspend fun isRecurringActive(id: Int): Boolean?
 }
