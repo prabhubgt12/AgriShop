@@ -48,6 +48,7 @@ const armLiveBtn = document.getElementById('armLiveBtn');
 const directionSel = document.getElementById('directionSel');
 
 const elUnderLtp = document.getElementById('underLtp');
+const elUnderVwap = document.getElementById('underVwap');
 const elUnderSym = document.getElementById('underSym');
 const elUnderToken = document.getElementById('underToken');
 const elAtm = document.getElementById('atm');
@@ -61,6 +62,7 @@ const elCeItmDOiSum = document.getElementById('ceItmDOiSum');
 const elPeItmDOiSum = document.getElementById('peItmDOiSum');
 const elCePeDOiRatio = document.getElementById('cePeDOiRatio');
 const elItmOiSignal = document.getElementById('itmOiSignal');
+const elConditionStatus = document.getElementById('conditionStatus');
 
 const tableBody = document.querySelector('#chainTable tbody');
 
@@ -382,7 +384,16 @@ function render(snapshot, lastError, paper, live) {
     elTradeNote.innerHTML = '';
   }
 
+  if (elConditionStatus) {
+    const dec = paper?.lastDecision;
+    const arr = Array.isArray(dec?.reasons) ? dec.reasons : [];
+    elConditionStatus.innerHTML = arr.length
+      ? arr.map((r) => `<div>${String(r || '')}</div>`).join('')
+      : '<div>-</div>';
+  }
+
   elUnderLtp.textContent = fmtNum(snapshot?.underlying?.ltp);
+  if (elUnderVwap) elUnderVwap.textContent = fmtNum(snapshot?.underlying?.vwap);
   elUnderSym.textContent = snapshot?.underlying?.tsym || '-';
   elUnderToken.textContent = snapshot?.underlying?.token || '-';
   elAtm.textContent = fmtNum(snapshot?.atmStrike);

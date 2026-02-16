@@ -20,6 +20,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; background: #666; }
 .suggestion { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
 .confidence { font-size: 13px; color: #c7cff5; margin-bottom: 8px; }
 .reasons { font-size: 12px; color: #aab2d5; line-height: 1.5; }
+.pass { color: #35d07f; }
+.fail { color: #ff7b7b; }
 .error { margin-top: 10px; font-size: 12px; color: #ff7b7b; white-space: pre-wrap; }
 .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .k { font-size: 12px; color: #aab2d5; }

@@ -1,17 +1,26 @@
 const path = require('path');
+const fs = require('fs');
 
 function requireShoonyaSdk() {
-  // Provide the official SDK path via env var (recommended):
-  //   SHOONYA_SDK_PATH=D:\\Shoonya\\ShoonyaApi-js
-  // The code expects: <SHOONYA_SDK_PATH>\lib\RestApi.js
-  const envPath = process.env.SHOONYA_SDK_PATH;
+  const localRestApi = path.join(__dirname, '..', 'shoonya-sdk', 'lib', 'RestApi.js');
 
-  const resolvedPath = envPath
-    ? path.join(envPath, 'lib', 'RestApi')
-    : path.join(__dirname, '..', 'shoonya-sdk', 'lib', 'RestApi');
+  let exists = false;
+  try {
+    exists = fs.existsSync(localRestApi);
+  } catch (_) {
+    exists = false;
+  }
 
+  if (!exists) {
+    throw new Error(
+      `Shoonya SDK not found at:\n- ${localRestApi}\n` +
+        `Fix by copying/cloning ShoonyaApi-js into ./shoonya-sdk (so that ./shoonya-sdk/lib/RestApi.js exists).`
+    );
+  }
+
+  const requireTarget = localRestApi.replace(/\.js$/i, '');
   // eslint-disable-next-line import/no-dynamic-require, global-require
-  return require(resolvedPath);
+  return require(requireTarget);
 }
 
 function createShoonyaClient() {

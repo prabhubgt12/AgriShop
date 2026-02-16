@@ -2,6 +2,10 @@ function isNum(x) {
   return typeof x === 'number' && !Number.isNaN(x);
 }
 
+ function passFailSpan(ok) {
+   return `<span class="${ok ? 'pass' : 'fail'}">${ok ? 'yes' : 'no'}</span>`;
+ }
+
 function normalizeOrderQty(v) {
   const n = typeof v === 'number' ? v : Number(v);
   if (!Number.isFinite(n)) return 1;
@@ -60,13 +64,23 @@ function selectInstrument(snapshot, mode, direction) {
   const atm = snapshot?.atmStrike;
   if (!isNum(atm)) return null;
 
-  if (mode === 'BIG_RALLY' || mode === 'NORMAL') {
+  if (mode === 'BIG_RALLY') {
     // 2-step OTM option based on direction
     if (direction === 'BEAR') {
       const strike = atm - 2 * step;
       return { strike, type: 'PE' };
     }
     const strike = atm + 2 * step;
+    return { strike, type: 'CE' };
+  }
+
+  if (mode === 'NORMAL') {
+    // 1-step OTM option based on direction
+    if (direction === 'BEAR') {
+      const strike = atm - 1 * step;
+      return { strike, type: 'PE' };
+    }
+    const strike = atm + 1 * step;
     return { strike, type: 'CE' };
   }
 
@@ -77,6 +91,18 @@ function selectInstrument(snapshot, mode, direction) {
 function pctChange(now, then) {
   if (!isNum(now) || !isNum(then) || then <= 0) return null;
   return (now - then) / then;
+}
+
+function fmtNum(x, digits = 2) {
+  if (!isNum(x)) return '-';
+  const d = Number(digits);
+  if (!Number.isFinite(d) || d < 0) return String(x);
+  return x.toFixed(d);
+}
+
+function fmtPct(p, digits = 1) {
+  if (!isNum(p)) return '-';
+  return `${(p * 100).toFixed(digits)}%`;
 }
 
 function pickSnapshotAtOrBefore(history, ts) {
@@ -155,10 +181,46 @@ function shouldEnter(history, mode, state) {
   }
 
   if (mode === 'NORMAL') {
-    // Require 20–30% move in 5 min
-    if (chg === null) return { ok: false, reasons: [...reasons, 'Not enough data for 5-min price change'] };
-    if (chg >= 0.25) return { ok: true, direction, inst, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% >= 25%`] };
-    return { ok: false, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% < 25%`] };
+    const underNow = latest?.underlying?.ltp;
+    const vwap = latest?.underlying?.vwap;
+    const atmStrike = latest?.atmStrike;
+
+    if (!isNum(underNow)) return { ok: false, reasons: [...reasons, 'Underlying LTP missing'] };
+
+    // Condition 1: Nifty above VWAP (BULL) / below VWAP (BEAR)
+    const cond1 = vwap === null
+      ? true
+      : (direction === 'BULL' ? underNow > vwap : underNow < vwap);
+    reasons.push(`Nifty ${direction === 'BULL' ? '>' : '<'} VWAP: ${passFailSpan(cond1)} (LTP ${fmtNum(underNow, 2)} vs VWAP ${vwap === null ? '-' : fmtNum(vwap, 2)})`);
+
+    // Condition 2: Nifty breaks last 5-min high (BULL) / low (BEAR)
+    let extreme5 = underNow;
+    for (let i = history.length - 1; i >= 0; i -= 1) {
+      const s = history[i];
+      if (!s || !isNum(s.ts) || s.ts < nowTs - 5 * 60_000) break;
+      const ul = s.underlying?.ltp;
+      if (!isNum(ul)) continue;
+      extreme5 = direction === 'BULL' ? Math.max(extreme5, ul) : Math.min(extreme5, ul);
+    }
+    const cond2 = direction === 'BULL' ? (underNow > extreme5) : (underNow < extreme5);
+    reasons.push(`Breaks 5m ${direction === 'BULL' ? 'high' : 'low'}: ${passFailSpan(cond2)} (LTP ${fmtNum(underNow, 2)} vs 5m ${direction === 'BULL' ? 'high' : 'low'} ${fmtNum(extreme5, 2)})`);
+
+    // Condition 3: ATM option momentum
+    // BULL: ATM CE up >=15% in 5m
+    // BEAR: ATM PE up >=15% in 5m
+    const optTypeForCond = direction === 'BULL' ? 'CE' : 'PE';
+    const past5 = pickSnapshotAtOrBefore(history, nowTs - 5 * 60_000);
+    const legNowAtm = isNum(atmStrike) ? findLeg(latest, atmStrike, optTypeForCond) : null;
+    const legPastAtm = (past5 && isNum(atmStrike)) ? findLeg(past5, atmStrike, optTypeForCond) : null;
+    const chgOpt = pctChange(legNowAtm?.ltp, legPastAtm?.ltp);
+    const cond3 = chgOpt !== null && chgOpt >= 0.15;
+    reasons.push(`ATM ${optTypeForCond} >=15% (5m): ${passFailSpan(cond3)} (${fmtPct(chgOpt, 1)} | now ${fmtNum(legNowAtm?.ltp, 2)} vs 5m ${fmtNum(legPastAtm?.ltp, 2)})`);
+
+    if (!cond1 || !cond2 || !cond3) {
+      return { ok: false, reasons: [...reasons, 'Conditions not met'] };
+    }
+
+    return { ok: true, direction, inst, reasons };
   }
 
   if (mode === 'BIG_RALLY') {
