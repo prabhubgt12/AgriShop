@@ -225,6 +225,26 @@ async function stepLiveTrade(ctx) {
   }
 
   const orderno = res.norenordno || res.orderno || res.order_no || null;
+
+  // Confirm order fill
+  if (orderno) {
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds for potential fill
+    try {
+      const trades = await client.get_tradebook();
+      const entryTrades = trades.filter(t => t.norenordno === orderno);
+      if (!trades || !Array.isArray(trades) || entryTrades.length === 0) {
+        return {
+          ...live,
+          lastDecision: { ts: latest.ts, action: 'ERROR', reasons: ['Entry order placed but not filled within 2s', `OrderNo: ${orderno}`] },
+        };
+      }
+    } catch (e) {
+      return {
+        ...live,
+        lastDecision: { ts: latest.ts, action: 'ERROR', reasons: ['Failed to confirm entry order fill', e && e.message ? e.message : String(e)] },
+      };
+    }
+  }
   const opened = {
     id: `live_${latest.ts}`,
     status: 'OPEN',
