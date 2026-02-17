@@ -34,6 +34,12 @@ class AccountDetailViewModel @Inject constructor(
 
     fun load(id: Int) { _accountId.value = id }
 
+    fun generateRecurringTransactions() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.generateDueRecurringTxns()
+        }
+    }
+
     fun addTxn(
         date: Long,
         amount: Double,

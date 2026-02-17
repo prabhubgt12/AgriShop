@@ -104,10 +104,9 @@ import androidx.compose.ui.focus.FocusRequester
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = false, vm: AccountDetailViewModel = hiltViewModel()) {
-    LaunchedEffect(accountId) { vm.load(accountId) }
-
-    // Generate any overdue recurring transactions when viewing this account
     LaunchedEffect(accountId) {
+        vm.load(accountId)
+        // Generate any overdue recurring transactions when viewing this account
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             vm.generateRecurringTransactions()
         }
