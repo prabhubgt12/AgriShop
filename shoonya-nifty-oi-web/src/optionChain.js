@@ -249,6 +249,7 @@ async function buildNiftyChainSnapshot(api, opts, prevSnapshot) {
   if (underQuote.ltp === null) throw new Error('Underlying LTP missing');
 
   // const vwap = await getVwap(api, 'NSE', indexToken);
+  const vwap = null;
 
   const atmStrike = roundToStep(underQuote.ltp, strikeStep);
   const strikes = buildStrikeList(atmStrike, strikeStep, strikesEachSide);
