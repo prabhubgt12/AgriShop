@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -248,21 +249,27 @@ fun AccountsScreen(
 
                                 DropdownMenu(
                                     expanded = quickAddMenuFor == acc.id,
-                                    onDismissRequest = { quickAddMenuFor = null }
+                                    onDismissRequest = { quickAddMenuFor = null },
+                                    modifier = Modifier.width(200.dp)
                                 ) {
-                                    // Menu header with title
+                                    // Enhanced menu header with bold title
                                     Text(
                                         text = "Quick Add",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                                     )
-                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                                    // Enhanced divider with better styling
+                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
                                     
                                     // Menu items with reduced padding
-                                    historyTemplates.forEachIndexed { index, (note, category) ->
+                                    historyTemplates.entries.forEachIndexed { index, entry ->
+                                        val (note, category) = entry
                                         DropdownMenuItem(
-                                            text = { Text(note) },
+                                            text = { Text(text = note) },
                                             onClick = {
                                                 selectedQuickTemplate = note
                                                 quickAddMenuFor = null
@@ -270,22 +277,12 @@ fun AccountsScreen(
                                             },
                                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp) // Reduced vertical padding
                                         )
-                                        
-                                        // Add subtle divider between items (not after the last one)
-                                        if (index < historyTemplates.size - 1) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(0.5.dp)
-                                                    .background(MaterialTheme.colorScheme.outlineVariant)
-                                            )
-                                        }
                                     }
                                 }
                             }
                             // Chart icon to open monthly comparison
                             IconButton(onClick = { chartFor = acc.id }) {
-                                Icon(Icons.Filled.PieChart, contentDescription = "Chart")
+                                Icon(Icons.Filled.BarChart, contentDescription = "Chart")
                             }
                             var menuOpen by remember(acc.id) { mutableStateOf(false) }
                             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
