@@ -84,6 +84,7 @@ fun AccountsScreen(
     var quickAddFor by remember { mutableStateOf<Int?>(null) }
     var selectedQuickTemplate by remember { mutableStateOf<String?>(null) }
     var quickAddAmount by remember { mutableStateOf("") }
+    var quickAddMenuFor by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(
@@ -226,8 +227,50 @@ fun AccountsScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             // Quick Add button
-                            IconButton(onClick = { quickAddFor = acc.id }) {
-                                Icon(Icons.Filled.Add, contentDescription = "Quick Add")
+                            Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
+                                IconButton(onClick = { quickAddMenuFor = acc.id }) {
+                                    Icon(Icons.Filled.Add, contentDescription = "Quick Add")
+                                }
+                                // Quick Add menu
+                                val accountTxns by remember(acc.id) { vm.txns(acc.id) }.collectAsState(initial = emptyList())
+                                val historyTemplates = remember(accountTxns) {
+                                    accountTxns
+                                        .filter { !it.isCredit } // Only debit transactions for common expenses
+                                        .filter { it.note?.isNotBlank() == true }
+                                        .groupBy { it.note!! } // Group by note
+                                        .mapValues { (_, txns) -> txns.first().category } // Take the most recent category for each note
+                                        .entries
+                                        .sortedByDescending { accountTxns.indexOfFirst { txn -> txn.note == it.key } } // Sort by most recent
+                                        .take(5) // Limit to 5 most recent unique notes
+                                        .associate { it.key to it.value } // Convert to map of note -> category
+                                }
+
+                                DropdownMenu(
+                                    expanded = quickAddMenuFor == acc.id,
+                                    onDismissRequest = { quickAddMenuFor = null }
+                                ) {
+                                    // Menu header with title
+                                    Text(
+                                        text = "Quick Add",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                                    
+                                    // Menu items with reduced padding
+                                    historyTemplates.forEach { (note, category) ->
+                                        DropdownMenuItem(
+                                            text = { Text(note) },
+                                            onClick = {
+                                                selectedQuickTemplate = note
+                                                quickAddMenuFor = null
+                                                quickAddFor = acc.id // Trigger amount dialog
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp) // Reduced vertical padding
+                                        )
+                                    }
+                                }
                             }
                             // Chart icon to open monthly comparison
                             IconButton(onClick = { chartFor = acc.id }) {
@@ -596,9 +639,9 @@ fun AccountsScreen(
         )
     }
 
-    // Quick Add from History dialog
+    // Quick Add from History amount dialog
     val quickAddAccountId = quickAddFor
-    if (quickAddAccountId != null) {
+    if (selectedQuickTemplate != null && quickAddAccountId != null) {
         val accountTxns by remember(quickAddAccountId) { vm.txns(quickAddAccountId) }.collectAsState(initial = emptyList())
         val historyTemplates = remember(accountTxns) {
             accountTxns
@@ -612,76 +655,55 @@ fun AccountsScreen(
                 .associate { it.key to it.value } // Convert to map of note -> category
         }
 
-        if (selectedQuickTemplate == null) {
-            // Show template selection dialog
-            AlertDialog(
-                onDismissRequest = { quickAddFor = null },
-                title = { Text("Quick Add") },
-                confirmButton = {},
-                dismissButton = { TextButton(onClick = { quickAddFor = null }) { Text(stringResource(R.string.cancel)) } },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) { // Further reduced spacing
-                        historyTemplates.forEach { (note, category) ->
-                            TextButton(
-                                onClick = { selectedQuickTemplate = note },
-                                modifier = Modifier.fillMaxWidth(),
-                                contentPadding = PaddingValues(vertical = 4.dp, horizontal = 8.dp) // Reduced padding
-                            ) {
-                                Text(note, modifier = Modifier.fillMaxWidth())
-                            }
+        // Show amount input dialog for selected template
+        AlertDialog(
+            onDismissRequest = {
+                selectedQuickTemplate = null
+                quickAddAmount = ""
+                quickAddFor = null
+            },
+            title = { Text(selectedQuickTemplate!!) },
+            confirmButton = {
+                TextButton(
+                    enabled = quickAddAmount.toDoubleOrNull()?.let { it > 0 } == true,
+                    onClick = {
+                        val amount = quickAddAmount.toDoubleOrNull() ?: 0.0
+                        if (amount > 0) {
+                            vm.addTxn(
+                                accountId = quickAddAccountId,
+                                date = System.currentTimeMillis(),
+                                amount = amount,
+                                isCredit = false, // Quick add for expenses
+                                note = selectedQuickTemplate,
+                                attachmentUri = null,
+                                category = historyTemplates[selectedQuickTemplate],
+                                makeRecurring = false
+                            )
                         }
-                    }
-                }
-            )
-        } else {
-            // Show amount input dialog for selected template
-            AlertDialog(
-                onDismissRequest = {
-                    selectedQuickTemplate = null
-                    quickAddAmount = ""
-                },
-                title = { Text(selectedQuickTemplate!!) },
-                confirmButton = {
-                    TextButton(
-                        enabled = quickAddAmount.toDoubleOrNull()?.let { it > 0 } == true,
-                        onClick = {
-                            val amount = quickAddAmount.toDoubleOrNull() ?: 0.0
-                            if (amount > 0) {
-                                vm.addTxn(
-                                    accountId = quickAddAccountId,
-                                    date = System.currentTimeMillis(),
-                                    amount = amount,
-                                    isCredit = false, // Quick add for expenses
-                                    note = selectedQuickTemplate,
-                                    attachmentUri = null,
-                                    category = historyTemplates[selectedQuickTemplate],
-                                    makeRecurring = false
-                                )
-                            }
-                            selectedQuickTemplate = null
-                            quickAddAmount = ""
-                            quickAddFor = null
-                        }
-                    ) { Text(stringResource(R.string.save)) }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
                         selectedQuickTemplate = null
                         quickAddAmount = ""
-                    }) { Text(stringResource(R.string.cancel)) }
-                },
-                text = {
-                    OutlinedTextField(
-                        value = quickAddAmount,
-                        onValueChange = { input -> quickAddAmount = input.filter { it.isDigit() || it == '.' } },
-                        label = { Text("Amount") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            )
-        }
+                        quickAddFor = null
+                    }
+                ) { Text(stringResource(R.string.save)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    selectedQuickTemplate = null
+                    quickAddAmount = ""
+                    quickAddFor = null
+                }) { Text(stringResource(R.string.cancel)) }
+            },
+            text = {
+                OutlinedTextField(
+                    value = quickAddAmount,
+                    onValueChange = { input -> quickAddAmount = input.filter { it.isDigit() || it == '.' } },
+                    label = { Text("Amount") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        )
     }
 
     // Rename account dialog
