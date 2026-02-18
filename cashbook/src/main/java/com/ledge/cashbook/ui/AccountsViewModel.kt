@@ -50,6 +50,25 @@ class AccountsViewModel @Inject constructor(
 
     fun txns(accountId: Int) = repo.txns(accountId)
 
+    fun addTxn(
+        accountId: Int,
+        date: Long,
+        amount: Double,
+        isCredit: Boolean,
+        note: String?,
+        attachmentUri: String?,
+        category: String?,
+        makeRecurring: Boolean
+    ) {
+        viewModelScope.launch {
+            if (makeRecurring) {
+                repo.addTxnWithMonthlyRecurring(accountId, date, amount, isCredit, note, attachmentUri, category)
+            } else {
+                repo.addTxn(accountId, date, amount, isCredit, note, attachmentUri, category)
+            }
+        }
+    }
+
     fun deleteAccountDeep(accountId: Int) {
         viewModelScope.launch {
             // Delete all transactions then the account itself

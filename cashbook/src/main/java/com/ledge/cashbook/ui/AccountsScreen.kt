@@ -81,6 +81,9 @@ fun AccountsScreen(
     var renameText by remember { mutableStateOf("") }
     var chartFor by remember { mutableStateOf<Int?>(null) }
     var showDueOnly by rememberSaveable { mutableStateOf(false) }
+    var quickAddFor by remember { mutableStateOf<Int?>(null) }
+    var selectedQuickTemplate by remember { mutableStateOf<String?>(null) }
+    var quickAddAmount by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(
@@ -222,6 +225,10 @@ fun AccountsScreen(
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f)
                             )
+                            // Quick Add button
+                            IconButton(onClick = { quickAddFor = acc.id }) {
+                                Icon(Icons.Filled.Add, contentDescription = "Quick Add")
+                            }
                             // Chart icon to open monthly comparison
                             IconButton(onClick = { chartFor = acc.id }) {
                                 Icon(Icons.Filled.PieChart, contentDescription = "Chart")
@@ -350,7 +357,6 @@ fun AccountsScreen(
                 }
             }
 
-    // Charts dialog (Monthly comparison + Category split) — outside LazyColumn scope
     val openChartFor = chartFor
     if (openChartFor != null) {
         val txns by remember(openChartFor) { vm.txns(openChartFor) }.collectAsState(initial = emptyList())
@@ -588,6 +594,94 @@ fun AccountsScreen(
                 }
             }
         )
+    }
+
+    // Quick Add from History dialog
+    val quickAddAccountId = quickAddFor
+    if (quickAddAccountId != null) {
+        val accountTxns by remember(quickAddAccountId) { vm.txns(quickAddAccountId) }.collectAsState(initial = emptyList())
+        val historyTemplates = remember(accountTxns) {
+            accountTxns
+                .filter { !it.isCredit } // Only debit transactions for common expenses
+                .filter { it.note?.isNotBlank() == true }
+                .groupBy { it.note!! } // Group by note
+                .mapValues { (_, txns) -> txns.first().category } // Take the most recent category for each note
+                .entries
+                .sortedByDescending { accountTxns.indexOfFirst { txn -> txn.note == it.key } } // Sort by most recent
+                .take(5) // Limit to 5 most recent unique notes
+                .associate { it.key to it.value } // Convert to map of note -> category
+        }
+
+        if (selectedQuickTemplate == null) {
+            // Show template selection dialog
+            AlertDialog(
+                onDismissRequest = { quickAddFor = null },
+                title = { Text("Quick Add") },
+                confirmButton = {},
+                dismissButton = { TextButton(onClick = { quickAddFor = null }) { Text(stringResource(R.string.cancel)) } },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) { // Further reduced spacing
+                        historyTemplates.forEach { (note, category) ->
+                            TextButton(
+                                onClick = { selectedQuickTemplate = note },
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(vertical = 4.dp, horizontal = 8.dp) // Reduced padding
+                            ) {
+                                Text(note, modifier = Modifier.fillMaxWidth())
+                            }
+                        }
+                    }
+                }
+            )
+        } else {
+            // Show amount input dialog for selected template
+            AlertDialog(
+                onDismissRequest = {
+                    selectedQuickTemplate = null
+                    quickAddAmount = ""
+                },
+                title = { Text(selectedQuickTemplate!!) },
+                confirmButton = {
+                    TextButton(
+                        enabled = quickAddAmount.toDoubleOrNull()?.let { it > 0 } == true,
+                        onClick = {
+                            val amount = quickAddAmount.toDoubleOrNull() ?: 0.0
+                            if (amount > 0) {
+                                vm.addTxn(
+                                    accountId = quickAddAccountId,
+                                    date = System.currentTimeMillis(),
+                                    amount = amount,
+                                    isCredit = false, // Quick add for expenses
+                                    note = selectedQuickTemplate,
+                                    attachmentUri = null,
+                                    category = historyTemplates[selectedQuickTemplate],
+                                    makeRecurring = false
+                                )
+                            }
+                            selectedQuickTemplate = null
+                            quickAddAmount = ""
+                            quickAddFor = null
+                        }
+                    ) { Text(stringResource(R.string.save)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        selectedQuickTemplate = null
+                        quickAddAmount = ""
+                    }) { Text(stringResource(R.string.cancel)) }
+                },
+                text = {
+                    OutlinedTextField(
+                        value = quickAddAmount,
+                        onValueChange = { input -> quickAddAmount = input.filter { it.isDigit() || it == '.' } },
+                        label = { Text("Amount") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            )
+        }
     }
 
     // Rename account dialog
