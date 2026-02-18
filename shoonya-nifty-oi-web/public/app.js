@@ -651,6 +651,53 @@ stopBtn.addEventListener('click', async () => {
 
 refreshBtn.addEventListener('click', refresh);
 
+document.getElementById('generate-report').addEventListener('click', async () => {
+  const interval = document.getElementById('report-interval').value;
+  let from = '';
+  let to = '';
+  const now = new Date();
+  if (interval === 'day') {
+    from = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    to = now.toISOString().slice(0, 10);
+  } else if (interval === 'week') {
+    from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    to = now.toISOString().slice(0, 10);
+  } else if (interval === 'month') {
+    from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    to = now.toISOString().slice(0, 10);
+  }
+  // Set the inputs
+  document.getElementById('report-from').value = from;
+  document.getElementById('report-to').value = to;
+  const params = new URLSearchParams();
+  if (from) params.append('from', from);
+  if (to) params.append('to', to);
+  try {
+    const res = await fetch('/api/trades/report?' + params);
+    const data = await res.json();
+    if (data.ok) {
+      let html = '<table><thead><tr><th>Date</th><th>Strike</th><th>Buy Price</th><th>Sell Price</th><th>P/L</th></tr></thead><tbody>';
+      let totalPL = 0;
+      for (const trade of data.trades) {
+        const date = new Date(trade.exitTs).toLocaleDateString();
+        const strike = trade.strike;
+        const buyPrice = trade.entryPrice;
+        const sellPrice = trade.exitPrice;
+        const pnl = trade.pnl;
+        totalPL += pnl || 0;
+        const pnlClass = pnl > 0 ? 'profit' : pnl < 0 ? 'loss' : '';
+        html += `<tr><td>${date}</td><td>${strike}</td><td>${buyPrice}</td><td>${sellPrice}</td><td class="${pnlClass}">${pnl}</td></tr>`;
+      }
+      html += `</tbody></table><div>Total P/L: ${totalPL}</div>`;
+      document.getElementById('report-results').innerHTML = html;
+    } else {
+      document.getElementById('report-results').innerHTML = 'Error: ' + (data.error || 'Unknown error');
+    }
+  } catch (e) {
+    document.getElementById('report-results').innerHTML = 'Fetch error: ' + e.message;
+  }
+});
+
 (async () => {
   try {
     const health = await fetchHealth();

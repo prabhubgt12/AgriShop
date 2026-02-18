@@ -75,6 +75,40 @@ function safeWriteJson(filePath, obj) {
 function persistLiveState() {
   safeWriteJson(LIVE_STATE_PATH, { live: state.live, savedAt: Date.now() });
 }
+
+function storeTrade(trade) {
+  const filePath = path.join(__dirname, '.data', 'trades.json');
+  let trades = [];
+  if (fs.existsSync(filePath)) {
+    try {
+      trades = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (_e) {
+      trades = [];
+    }
+  }
+  trades.push(trade);
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(trades, null, 2));
+  } catch (_e) {
+    console.error('Failed to store trade:', _e);
+  }
+}
+
+function getKey(dateStr, interval) {
+  if (interval === 'all') return 'total';
+  if (interval === 'day') return dateStr.slice(0, 10);
+  if (interval === 'month') return dateStr.slice(0, 7);
+  if (interval === 'week') return getWeekStart(dateStr);
+  return 'total';
+}
+
+function getWeekStart(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const weekStart = new Date(d.setDate(diff));
+  return weekStart.toISOString().slice(0, 10);
+}
  
 function tryRestoreLiveState() {
   const data = safeReadJson(LIVE_STATE_PATH);
@@ -630,6 +664,7 @@ app.post('/api/paper/force-exit', (_req, res) => {
           exitReason: 'FORCED_EXIT',
           exitOrderNo: resp.norenordno || resp.orderno || resp.order_no || null,
         };
+        storeTrade(closed);
         state.live.current = closed;
         state.live.history = [...(state.live.history || []), closed].slice(-50);
         state.live.lastDecision = { ts: Date.now(), action: 'FORCED_EXIT', reasons: ['FORCED_EXIT'] };
@@ -682,6 +717,22 @@ app.get('/api/snapshot', (_req, res) => {
   }
 
   res.json({ ok: true, snapshot: state.lastSnapshot, lastError: state.lastError, paper: state.paper, live: state.live });
+});
+
+app.get('/api/trades/report', (req, res) => {
+  const trades = safeReadJson(path.join(__dirname, '.data', 'trades.json')) || [];
+  let filtered = trades.filter(t => t.status === 'CLOSED'); // Only closed trades
+  const from = req.query.from;
+  const to = req.query.to;
+  if (from) {
+    const fromTs = new Date(from + 'T00:00:00').getTime();
+    filtered = filtered.filter(t => t.exitTs >= fromTs);
+  }
+  if (to) {
+    const toTs = new Date(to + 'T23:59:59').getTime();
+    filtered = filtered.filter(t => t.exitTs <= toTs);
+  }
+  res.json({ ok: true, trades: filtered });
 });
 
 app.listen(port, () => {

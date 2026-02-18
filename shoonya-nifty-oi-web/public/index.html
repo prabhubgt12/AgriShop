@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shoonya NIFTY OI Dashboard</title>
+  <style>
+    .profit { color: green; }
+    .loss { color: red; }
+  </style>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -156,6 +160,25 @@
         </table>
       </div>
     </div>
+  </div>
+
+  <div class="card">
+    <h3>Trade Report</h3>
+    <div>
+      <label for="report-interval">Interval:</label>
+      <select id="report-interval">
+        <option value="all">All</option>
+        <option value="day">Day</option>
+        <option value="week">Week</option>
+        <option value="month">Month</option>
+      </select>
+      <label for="report-from">From:</label>
+      <input type="date" id="report-from">
+      <label for="report-to">To:</label>
+      <input type="date" id="report-to">
+      <button id="generate-report">Generate Report</button>
+    </div>
+    <div id="report-results"></div>
   </div>
 
   <script src="/app.js"></script>

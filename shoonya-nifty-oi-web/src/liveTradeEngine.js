@@ -171,6 +171,7 @@ async function stepLiveTrade(ctx) {
 
     // For now we mark it CLOSED immediately after sending MKT exit.
     const closed = { ...exiting, status: 'CLOSED' };
+    storeTrade(closed);
     return {
       ...live,
       current: closed,
