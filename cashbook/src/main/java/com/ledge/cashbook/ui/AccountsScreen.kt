@@ -54,6 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.ads.BannerAd
 import android.graphics.Paint
 import com.google.android.gms.ads.AdSize
+import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -259,7 +260,7 @@ fun AccountsScreen(
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
                                     
                                     // Menu items with reduced padding
-                                    historyTemplates.forEach { (note, category) ->
+                                    historyTemplates.forEachIndexed { index, (note, category) ->
                                         DropdownMenuItem(
                                             text = { Text(note) },
                                             onClick = {
@@ -269,6 +270,16 @@ fun AccountsScreen(
                                             },
                                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp) // Reduced vertical padding
                                         )
+                                        
+                                        // Add subtle divider between items (not after the last one)
+                                        if (index < historyTemplates.size - 1) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(0.5.dp)
+                                                    .background(MaterialTheme.colorScheme.outlineVariant)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -679,6 +690,7 @@ fun AccountsScreen(
                                 category = historyTemplates[selectedQuickTemplate],
                                 makeRecurring = false
                             )
+                            Toast.makeText(ctx, "Transaction added successfully", Toast.LENGTH_SHORT).show()
                         }
                         selectedQuickTemplate = null
                         quickAddAmount = ""
