@@ -176,4 +176,16 @@
     <!-- Category management labels -->
     <string name="label_keywords">कीवर्ड</string>
     <string name="prefix_keywords">कीवर्ड:</string>
+
+    <!-- Recurring transactions -->
+    <string name="repeat_monthly_toggle">हर महीने दोहराएं</string>
+    <string name="recurring_monthly_until_stopped">यह प्रविष्टि हर महीने दोहराई जाएगी जब तक आप इसे रोक नहीं देते।</string>
+    <string name="stop_recurring">दोहराना रोकें</string>
+    <string name="recurring_stopped_label">यह एक आवर्ती लेन-देन का हिस्सा था (अब रुका हुआ)।</string>
+
+    <!-- Quick Add feature -->
+    <string name="quick_add_title">त्वरित जोड़ें</string>
+    <string name="transaction_added_success">लेन-देन सफलतापूर्वक जोड़ा गया</string>
+    <string name="amount_label">राशि</string>
+
 </resources>

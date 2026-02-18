@@ -166,6 +166,17 @@
     <string name="label_keywords">முக்கியச் சொற்கள்</string>
     <string name="prefix_keywords">முக்கியச் சொற்கள்:</string>
 
+    <!-- Recurring transactions -->
+    <string name="repeat_monthly_toggle">ஒவ்வொரு மாதமும் மீண்டும் செய்ய</string>
+    <string name="recurring_monthly_until_stopped">நீங்கள் நிறுத்தும் வரை இந்த பதிவு ஒவ்வொரு மாதமும் மீண்டும் செய்யப்படும்.</string>
+    <string name="stop_recurring">மீண்டும் செய்வதை நிறுத்து</string>
+    <string name="recurring_stopped_label">இது மீண்டும் செய்யப்படும் பரிவர்த்தனையின் ஒரு பகுதியாகும் (இப்போது நிறுத்தப்பட்டது).</string>
+
+    <!-- Quick Add feature -->
+    <string name="quick_add_title">விரைவாகச் சேர்</string>
+    <string name="transaction_added_success">பரிவர்த்தனை வெற்றிகரமாக சேர்க்கப்பட்டது</string>
+    <string name="amount_label">தொகை</string>
+
     <!-- Category auto-suggest notes/labels -->
     <string name="settings_category_toggle_note">வகை புலத்தை மறைப்பது தன்னியக்க பரிந்துரைகள் மற்றும் தானியங்கி தேர்வையும் அணைக்கும்.</string>
     <string name="categories_info_note_top">விவரத்தை தட்டச்சு செய்யும் போது வகைகள் தானாகத் தேர்ந்தெடுக்கப்படலாம். பரிந்துரைகளை மேம்படுத்த ஒவ்வொரு வகைக்கும் முக்கியச் சொற்களைச் சேர்க்கவும்.</string>

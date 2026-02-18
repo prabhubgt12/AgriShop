@@ -254,7 +254,7 @@ fun AccountsScreen(
                                 ) {
                                     // Enhanced menu header with bold title
                                     Text(
-                                        text = "Quick Add",
+                                        text = stringResource(R.string.quick_add_title),
                                         style = MaterialTheme.typography.titleSmall.copy(
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 16.sp
@@ -687,7 +687,7 @@ fun AccountsScreen(
                                 category = historyTemplates[selectedQuickTemplate],
                                 makeRecurring = false
                             )
-                            Toast.makeText(ctx, "Transaction added successfully", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(ctx, ctx.getString(R.string.transaction_added_success), Toast.LENGTH_SHORT).show()
                         }
                         selectedQuickTemplate = null
                         quickAddAmount = ""
@@ -706,7 +706,7 @@ fun AccountsScreen(
                 OutlinedTextField(
                     value = quickAddAmount,
                     onValueChange = { input -> quickAddAmount = input.filter { it.isDigit() || it == '.' } },
-                    label = { Text("Amount") },
+                    label = { Text(stringResource(R.string.amount_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()

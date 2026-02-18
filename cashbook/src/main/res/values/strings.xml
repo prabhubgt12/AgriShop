@@ -185,4 +185,9 @@
     <string name="stop_recurring">Stop recurring</string>
     <string name="recurring_stopped_label">This was part of a recurring transaction (now stopped).</string>
 
+    <!-- Quick Add feature -->
+    <string name="quick_add_title">Quick Add</string>
+    <string name="transaction_added_success">Transaction added successfully</string>
+    <string name="amount_label">Amount</string>
+
 </resources>

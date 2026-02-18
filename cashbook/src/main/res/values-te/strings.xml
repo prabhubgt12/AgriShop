@@ -166,6 +166,17 @@
     <string name="label_keywords">కీవర్డ్లు</string>
     <string name="prefix_keywords">కీవర్డ్లు:</string>
 
+    <!-- Recurring transactions -->
+    <string name="repeat_monthly_toggle">ప్రతి నెలా పునరావృతం చేయి</string>
+    <string name="recurring_monthly_until_stopped">మీరు ఆపే వరకు ఈ ఎంట్రీ ప్రతి నెలా పునరావృతం అవుతుంది.</string>
+    <string name="stop_recurring">పునరావృతాన్ని ఆపు</string>
+    <string name="recurring_stopped_label">ఇది పునరావృత లావాదేవీలో ఒక భాగం (ఇప్పుడు ఆపబడింది).</string>
+
+    <!-- Quick Add feature -->
+    <string name="quick_add_title">త్వరితంగా జోడించు</string>
+    <string name="transaction_added_success">లావాదేవీ విజయవంతంగా జోడించబడింది</string>
+    <string name="amount_label">మొత్తం</string>
+
     <!-- Category auto-suggest notes/labels -->
     <string name="settings_category_toggle_note">వర్గ ఫీల్డ్‌ను దాచడం వర్గ ఆటో-సూచనలు మరియు ఆటో-ఎంపికను కూడా ఆపేస్తుంది.</string>
     <string name="categories_info_note_top">వివరాన్ని టైప్ చేస్తున్నప్పుడు వర్గాలు ఆటోగా ఎంపిక కావచ్చు. మెరుగైన సూచనల కోసం ప్రతి వర్గానికి కీవర్డ్లు జోడించండి.</string>

@@ -173,4 +173,16 @@
     <string name="add_category">ವರ್ಗವನ್ನು ಸೇರಿಸಿ</string>
     <string name="edit_category">ವರ್ಗವನ್ನು ಸಂಪಾದಿಸಿ</string>
     <string name="category_name">ವರ್ಗದ ಹೆಸರು</string>
+
+    <!-- Recurring transactions -->
+    <string name="repeat_monthly_toggle">ಪ್ರತಿ ತಿಂಗಳು ಪುನರಾವರ್ತಿಸಿ</string>
+    <string name="recurring_monthly_until_stopped">ನೀವು ನಿಲ್ಲಿಸುವವರೆಗೆ ಈ ಎಂಟ್ರಿ ಪ್ರತಿ ತಿಂಗಳು ಪುನರಾವರ್ತಿಸುತ್ತದೆ.</string>
+    <string name="stop_recurring">ಪುನರಾವರ್ತನೆ ನಿಲ್ಲಿಸಿ</string>
+    <string name="recurring_stopped_label">ಇದು ಪುನರಾವರ್ತಿತ ವಹಿವಾಟಿನ ಭಾಗವಾಗಿದ್ದು (ಈಗ ನಿಲ್ಲಿಸಲಾಗಿದೆ).</string>
+
+    <!-- Quick Add feature -->
+    <string name="quick_add_title">ತ್ವರಿತ ಸೇರಿಸಿ</string>
+    <string name="transaction_added_success">ವಹಿವಾಟು ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ</string>
+    <string name="amount_label">ಮೊತ್ತ</string>
+
 </resources>
