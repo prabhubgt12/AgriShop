@@ -250,7 +250,7 @@ fun AccountsScreen(
                                 DropdownMenu(
                                     expanded = quickAddMenuFor == acc.id,
                                     onDismissRequest = { quickAddMenuFor = null },
-                                    modifier = Modifier.width(200.dp)
+                                    modifier = Modifier.width(180.dp)
                                 ) {
                                     // Enhanced menu header with bold title
                                     Text(
