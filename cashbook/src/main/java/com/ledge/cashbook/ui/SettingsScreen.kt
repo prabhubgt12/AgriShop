@@ -239,7 +239,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     com.ledge.cashbook.util.CurrencyFormatter.setConfig(code, showSymbol)
                 }
                 var expanded by remember { mutableStateOf(false) }
-                val options = listOf("INR", "USD", "EUR", "GBP")
+                val options = listOf("INR", "USD", "EUR", "GBP", "KES", "IDR", "AUD", "CAD", "JPY")
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box {
                         OutlinedTextField(
