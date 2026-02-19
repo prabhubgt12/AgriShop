@@ -67,6 +67,7 @@ data class ExpenseEntity(
     val category: String,
     val paidByMemberId: Long,
     val note: String? = null,
+    val placeId: Long? = null,
     @ColumnInfo(defaultValue = "CURRENT_TIMESTAMP") val createdAt: String? = null
 )
 
@@ -133,4 +134,48 @@ data class SettlementEntity(
     val amount: Double,
     @ColumnInfo(defaultValue = "CURRENT_TIMESTAMP") val createdAt: String? = null,
     val status: String = "completed" // pending|completed (MVP: default completed when marked)
+)
+
+@Entity(
+    tableName = "trip_days",
+    foreignKeys = [
+        ForeignKey(
+            entity = GroupEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["groupId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("groupId")]
+)
+data class TripDayEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val groupId: Long,
+    val dayNumber: Int,
+    val date: String? = null
+)
+
+@Entity(
+    tableName = "places",
+    foreignKeys = [
+        ForeignKey(
+            entity = GroupEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["groupId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = TripDayEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["dayId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("groupId"), Index("dayId")]
+)
+data class PlaceEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val groupId: Long,
+    val dayId: Long,
+    val name: String
 )

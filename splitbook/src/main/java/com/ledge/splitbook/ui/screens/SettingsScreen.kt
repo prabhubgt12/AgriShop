@@ -84,7 +84,7 @@ fun SettingsScreen(
     LaunchedEffect(backupUi.isRunning, backupUi.runningOp, backupUi.error, pendingRestart) {
         if (pendingRestart && !backupUi.isRunning && backupUi.runningOp == null && backupUi.error == null) {
             pendingRestart = false
-            Toast.makeText(context, stringResource(com.ledge.splitbook.R.string.restore_complete_message), Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(com.ledge.splitbook.R.string.restore_complete_message), Toast.LENGTH_LONG).show()
             activity?.finishAffinity()
             android.os.Process.killProcess(android.os.Process.myPid())
         }

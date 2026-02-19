@@ -12,6 +12,7 @@ import com.ledge.splitbook.ui.screens.AddExpenseScreen
 import com.ledge.splitbook.ui.screens.GroupsScreen
 import com.ledge.splitbook.ui.screens.SettleScreen
 import com.ledge.splitbook.ui.screens.MembersScreen
+import com.ledge.splitbook.ui.screens.TripPlanScreen
 import com.ledge.splitbook.ui.screens.TransactionsScreen
 import com.ledge.splitbook.ui.screens.SettingsScreen
 import com.ledge.splitbook.ui.screens.SettleDetailsScreen
@@ -31,6 +32,11 @@ object Routes {
         val payerPart = payerId?.toString() ?: ""
         val expPart = expenseId?.toString() ?: ""
         return "addExpense/$groupId?payerId=$payerPart&expenseId=$expPart"
+    }
+    const val TRIP_PLAN = "tripPlan/{groupId}?groupName={groupName}"
+    fun tripPlan(groupId: Long, groupName: String): String {
+        val enc = URLEncoder.encode(groupName, StandardCharsets.UTF_8.toString())
+        return "tripPlan/$groupId?groupName=$enc"
     }
     const val SETTLE = "settle/{groupId}?groupName={groupName}"
     fun settle(groupId: Long, groupName: String): String {
@@ -120,8 +126,25 @@ private fun AppNavHost(navController: NavHostController) {
                 onOpenSettleDetails = { navController.navigate(Routes.settleDetails(gid, gname)) },
                 onAddExpense = { payerId -> navController.navigate(Routes.addExpense(gid, payerId)) },
                 onManageMembers = { navController.navigate(Routes.members(gid)) },
+                onOpenTripPlan = { navController.navigate(Routes.tripPlan(gid, gname)) },
                 onBack = { navController.popBackStack() },
                 viewModel = settleVm
+            )
+        }
+        composable(
+            route = Routes.TRIP_PLAN,
+            arguments = listOf(
+                navArgument("groupId") { type = NavType.LongType },
+                navArgument("groupName") { type = NavType.StringType; defaultValue = "" }
+            )
+        ) { backStackEntry ->
+            val gid = backStackEntry.arguments?.getLong("groupId") ?: 0L
+            val encName = backStackEntry.arguments?.getString("groupName") ?: ""
+            val gname = URLDecoder.decode(encName, StandardCharsets.UTF_8.toString())
+            TripPlanScreen(
+                groupId = gid,
+                groupName = gname,
+                onBack = { navController.popBackStack() }
             )
         }
         composable(

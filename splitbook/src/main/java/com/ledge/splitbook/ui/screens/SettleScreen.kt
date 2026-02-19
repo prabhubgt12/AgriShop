@@ -70,6 +70,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.ledge.splitbook.ui.vm.SettingsViewModel
+import com.ledge.splitbook.ui.vm.TripPlanViewModel
 import com.ledge.splitbook.util.formatAmount
 import com.ledge.splitbook.ui.components.AddMemberDialog
 import kotlin.math.abs
@@ -84,6 +85,7 @@ fun SettleScreen(
     onOpenTransactions: () -> Unit,
     onOpenSettleDetails: () -> Unit,
     onManageMembers: () -> Unit,
+    onOpenTripPlan: () -> Unit,
     onBack: () -> Unit,
     viewModel: SettleViewModel = hiltViewModel()
 ) {
@@ -91,9 +93,13 @@ fun SettleScreen(
     LaunchedEffect(groupId) { viewModel.loadUniqueMemberNames() }
     val ui by viewModel.ui.collectAsState()
     val context = LocalContext.current
-    val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val settingsViewModel = hiltViewModel<SettingsViewModel>()
     val settings by settingsViewModel.ui.collectAsState()
     val currency = settings.currency
+    val tripPlanViewModel = hiltViewModel<TripPlanViewModel>()
+    val tripPlanUi by tripPlanViewModel.ui.collectAsState()
+
+    LaunchedEffect(groupId) { tripPlanViewModel.loadGroup(groupId) }
 
     var upiDialog by remember { mutableStateOf<SettlementLogic.Transfer?>(null) }
     var showAddMember by remember { mutableStateOf(false) }
@@ -309,6 +315,41 @@ fun SettleScreen(
                                 )
                                 Text(
                                     formatAmount(total, currency),
+                                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            Icon(Icons.Default.ChevronRight, contentDescription = null)
+                        }
+                    }
+
+                    // Trip Plan
+                    Card(
+                        modifier = Modifier.clickable { onOpenTripPlan() },
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp)
+                    ) {
+                        androidx.compose.foundation.layout.Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            val summary = if (tripPlanUi.days.isEmpty()) {
+                                stringResource(id = com.ledge.splitbook.R.string.no_plan_added)
+                            } else {
+                                val days = tripPlanUi.days.size
+                                val places = tripPlanUi.days.sumOf { it.places.size }
+                                stringResource(id = com.ledge.splitbook.R.string.days_places, days, places)
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    stringResource(id = com.ledge.splitbook.R.string.trip_plan),
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    summary,
                                     style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Medium
                                 )

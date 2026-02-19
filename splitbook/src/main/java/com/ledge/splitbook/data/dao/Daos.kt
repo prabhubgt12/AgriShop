@@ -159,3 +159,45 @@ interface SettlementDao {
     @Query("DELETE FROM settlements WHERE groupId = :groupId")
     suspend fun deleteByGroup(groupId: Long)
 }
+
+@Dao
+interface TripDayDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(tripDay: TripDayEntity): Long
+
+    @Update
+    suspend fun update(tripDay: TripDayEntity)
+
+    @Delete
+    suspend fun delete(tripDay: TripDayEntity)
+
+    @Query("SELECT * FROM trip_days WHERE groupId = :groupId ORDER BY dayNumber ASC")
+    fun observeByGroup(groupId: Long): Flow<List<TripDayEntity>>
+
+    @Query("SELECT * FROM trip_days WHERE id = :id")
+    suspend fun getById(id: Long): TripDayEntity?
+
+    @Query("DELETE FROM trip_days WHERE groupId = :groupId")
+    suspend fun deleteByGroup(groupId: Long)
+}
+
+@Dao
+interface PlaceDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(place: PlaceEntity): Long
+
+    @Update
+    suspend fun update(place: PlaceEntity)
+
+    @Delete
+    suspend fun delete(place: PlaceEntity)
+
+    @Query("SELECT * FROM places WHERE dayId = :dayId ORDER BY id ASC")
+    fun observeByDay(dayId: Long): Flow<List<PlaceEntity>>
+
+    @Query("SELECT * FROM places WHERE id = :id")
+    suspend fun getById(id: Long): PlaceEntity?
+
+    @Query("DELETE FROM places WHERE groupId = :groupId")
+    suspend fun deleteByGroup(groupId: Long)
+}

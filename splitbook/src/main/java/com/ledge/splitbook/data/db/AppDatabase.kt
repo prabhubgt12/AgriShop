@@ -15,9 +15,11 @@ import com.ledge.splitbook.data.entity.*
         MemberEntity::class,
         ExpenseEntity::class,
         ExpenseSplitEntity::class,
-        SettlementEntity::class
+        SettlementEntity::class,
+        TripDayEntity::class,
+        PlaceEntity::class
     ],
-    version = 4,
+    version = 1,
     exportSchema = true
 )
 @TypeConverters(SplitTypeConverter::class)
@@ -28,13 +30,17 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
     abstract fun expenseSplitDao(): ExpenseSplitDao
     abstract fun settlementDao(): SettlementDao
+    abstract fun tripDayDao(): TripDayDao
+    abstract fun placeDao(): PlaceDao
 
     companion object {
         fun build(context: Context): AppDatabase = Room.databaseBuilder(
             context.applicationContext,
             AppDatabase::class.java,
             "splitbook.db"
-        ).fallbackToDestructiveMigration() // MVP; add real migrations later
+        )
+            .fallbackToDestructiveMigration()
+            .fallbackToDestructiveMigrationOnDowngrade()
             .build()
     }
 }

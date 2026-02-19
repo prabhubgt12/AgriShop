@@ -59,4 +59,15 @@
     <string name="group_deposit">Group Deposit</string>
     <string name="deposit_amount">Deposit Amount</string>
     <string name="due_refund">Due/Refund</string>
+
+    <!-- Trip Plan strings -->
+    <string name="trip_plan">Trip Plan</string>
+    <string name="no_plan_added">No plan added yet</string>
+    <string name="days_places">%d days • %d places</string>
+    <string name="add_place">Add Place</string>
+    <string name="add_day">Add Day</string>
+    <string name="set_trip_dates">Set Trip Dates</string>
+    <string name="delete_day">Delete day</string>
+    <string name="delete_place">Delete place</string>
+    <string name="no_places">No places yet</string>
 </resources>

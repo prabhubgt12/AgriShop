@@ -25,4 +25,6 @@ object AppModule {
     @Provides fun provideExpenseDao(db: AppDatabase): ExpenseDao = db.expenseDao()
     @Provides fun provideExpenseSplitDao(db: AppDatabase): ExpenseSplitDao = db.expenseSplitDao()
     @Provides fun provideSettlementDao(db: AppDatabase): SettlementDao = db.settlementDao()
+    @Provides fun provideTripDayDao(db: AppDatabase): TripDayDao = db.tripDayDao()
+    @Provides fun providePlaceDao(db: AppDatabase): PlaceDao = db.placeDao()
 }

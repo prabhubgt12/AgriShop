@@ -5,6 +5,9 @@ import com.ledge.splitbook.data.dao.*
 import com.ledge.splitbook.data.db.AppDatabase
 import com.ledge.splitbook.data.entity.*
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,6 +45,8 @@ class GroupRepository @Inject constructor(
     private val expenseDao: ExpenseDao,
     private val expenseSplitDao: ExpenseSplitDao,
     private val settlementDao: SettlementDao,
+    private val tripDayDao: TripDayDao,
+    private val placeDao: PlaceDao
 ) {
     fun observeGroups(): Flow<List<GroupEntity>> = groupDao.observeAll()
     suspend fun createGroup(name: String, icon: String? = null): Long =
@@ -61,6 +66,8 @@ class GroupRepository @Inject constructor(
             settlementDao.deleteByGroup(id)
             expenseDao.deleteByGroup(id)
             memberDao.deleteByGroup(id)
+            placeDao.deleteByGroup(id)
+            tripDayDao.deleteByGroup(id)
             groupDao.delete(current)
         }
     }
@@ -209,4 +216,61 @@ class SettlementRepository @Inject constructor(
                 status = "completed"
             )
         )
+}
+
+@Singleton
+class TripDayRepository @Inject constructor(
+    private val tripDayDao: TripDayDao
+) {
+    fun observeDays(groupId: Long): Flow<List<TripDayEntity>> = tripDayDao.observeByGroup(groupId)
+
+    suspend fun addDay(groupId: Long, dayNumber: Int, date: String? = null): Long =
+        tripDayDao.insert(TripDayEntity(groupId = groupId, dayNumber = dayNumber, date = date))
+
+    suspend fun deleteDay(id: Long) {
+        tripDayDao.getById(id)?.let { tripDayDao.delete(it) }
+    }
+}
+
+@Singleton
+class PlaceRepository @Inject constructor(
+    private val placeDao: PlaceDao
+) {
+    fun observePlaces(dayId: Long): Flow<List<PlaceEntity>> = placeDao.observeByDay(dayId)
+
+    suspend fun addPlace(groupId: Long, dayId: Long, name: String): Long =
+        placeDao.insert(PlaceEntity(groupId = groupId, dayId = dayId, name = name))
+
+    suspend fun deletePlace(id: Long) {
+        placeDao.getById(id)?.let { placeDao.delete(it) }
+    }
+}
+
+@Singleton
+class TripPlanRepository @Inject constructor(
+    private val db: AppDatabase,
+    private val tripDayDao: TripDayDao,
+    private val placeDao: PlaceDao
+) {
+    suspend fun replaceTripDays(groupId: Long, dayDates: List<LocalDate>) {
+        db.withTransaction {
+            placeDao.deleteByGroup(groupId)
+            tripDayDao.deleteByGroup(groupId)
+            dayDates.forEachIndexed { idx, date ->
+                tripDayDao.insert(
+                    TripDayEntity(
+                        groupId = groupId,
+                        dayNumber = idx + 1,
+                        date = date.toString()
+                    )
+                )
+            }
+        }
+    }
+
+    fun epochMillisToLocalDate(epochMillis: Long): LocalDate {
+        return Instant.ofEpochMilli(epochMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+    }
 }
