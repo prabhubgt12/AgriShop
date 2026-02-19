@@ -88,8 +88,8 @@ object ShareExport {
 
         val doc = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4-ish in points
-        val page = doc.startPage(pageInfo)
-        val canvas: Canvas = page.canvas
+        var page = doc.startPage(pageInfo)
+        var canvas: Canvas = page.canvas
         val paint = Paint().apply {
             color = 0xFF000000.toInt()
             textSize = 14f
@@ -106,9 +106,10 @@ object ShareExport {
             if (y + rowHeight > bottom) {
                 doc.finishPage(page)
                 val newPage = doc.startPage(pageInfo)
-                val newCanvas = newPage.canvas
-                // switch references
-                // We cannot reassign 'canvas' val; so keep rows short to avoid overflow in MVP.
+                page = newPage
+                canvas = newPage.canvas
+                y = margin
+                headerDrawer?.invoke()
             }
         }
         fun drawTitle(text: String) {
@@ -134,6 +135,7 @@ object ShareExport {
             val cellText = Paint(paint)
             val rowH = 22f
             // Header row
+            ensureSpace(rowH, rowH)
             val topH = y
             canvas.drawRect(left, topH - 16f, right, topH + 8f, headerBg)
             headers.forEachIndexed { i, h ->
@@ -147,6 +149,7 @@ object ShareExport {
             y += rowH
             // Data rows
             rows.forEach { r ->
+                ensureSpace(rowH, rowH)
                 val top = y
                 r.forEachIndexed { i, v ->
                     val tx = colXs[i] + 6f
@@ -187,11 +190,13 @@ object ShareExport {
         val right = pageInfo.pageWidth - margin
         val totalTop = y
         val rowH = 22f
+        ensureSpace(rowH, rowH)
         canvas.drawRect(left, totalTop - 16f, right, totalTop + 8f, totalBg)
         canvas.drawText(context.getString(com.ledge.splitbook.R.string.share_total), left + 6f, totalTop, totalText)
         canvas.drawText(formatAmount(total, currency), right - 120f, totalTop, totalText)
         y += rowH + 10f
         // Members table
+        ensureSpace(24f, 24f) { drawTitle("Simple Split — " + groupName) }
         val msHeaders = listOf(
             context.getString(com.ledge.splitbook.R.string.pdf_header_member),
             context.getString(com.ledge.splitbook.R.string.pdf_header_paid),

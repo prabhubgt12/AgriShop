@@ -130,7 +130,7 @@ fun SettleScreen(
                         })
                         DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.export_pdf)) }, onClick = {
                             menuOpen = false
-                            val groupName = context.getString(com.ledge.splitbook.R.string.group_with_id, ui.groupId)
+                            val groupName = groupName
                             val uri = ShareExport.exportPdf(
                                 context = context,
                                 groupName = groupName,
