@@ -227,6 +227,9 @@ async function tryResyncFromShoonya() {
     state.paper.exitStyle = 'TRAILING';
     state.paper.targetPct = 30;
     state.paper.maxTradesPerDay = 3;
+    if (tradeObj.status === 'CLOSED') {
+      storeTrade(tradeObj);
+    }
     return true;
   } catch (e) {
     console.error('Resync from Shoonya failed:', e);
