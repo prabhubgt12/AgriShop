@@ -7,10 +7,11 @@ import com.ledge.splitbook.data.repo.ExpenseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -20,7 +21,8 @@ class GroupsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val removedIds = MutableStateFlow<Set<Long>>(emptySet())
-    val groups = groupsRepo.observeGroups()
+    private val refreshTrigger = MutableStateFlow(0)
+    val groups = refreshTrigger.flatMapLatest { groupsRepo.observeGroups() }
         .combine(removedIds) { list, removed -> list.filter { it.id !in removed } }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
@@ -35,10 +37,15 @@ class GroupsViewModel @Inject constructor(
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
         }
 
+    fun refreshGroups() {
+        refreshTrigger.value += 1
+    }
+
     fun createGroup(name: String, icon: String?, onCreated: (Long) -> Unit) {
         viewModelScope.launch {
             val id = groupsRepo.createGroup(name = name, icon = icon)
             onCreated(id)
+            refreshGroups()
         }
     }
 
