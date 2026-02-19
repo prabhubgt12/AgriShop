@@ -47,6 +47,7 @@
     <string name="confirm_backup_message">ఇది డ్రైవ్‌లో బ్యాకప్ సృష్టిస్తుంది మరియు అదే పేరుతో ఉన్న బ్యాకప్‌ను మళ్లీ వ్రాయవచ్చు. కొనసాగాలా?</string>
     <string name="confirm_restore">రీస్టోర్‌ను నిర్ధారించండి</string>
     <string name="confirm_restore_message">ఇది ఎంపిక చేసిన బ్యాకప్‌తో మీ ప్రస్తుత డేటాను మళ్లీ వ్రాస్తుంది. కొనసాగాలా?</string>
+    <string name="restore_complete_message">పునరుద్ధరణ పూర్తైంది. మార్పులను వర్తింపజేయడానికి దయచేసి యాప్‌ను పునఃప్రారంభించండి.</string>
 
     <!-- Add/Edit Member dialog labels -->
     <string name="member_name">సభ్యుని పేరు</string>

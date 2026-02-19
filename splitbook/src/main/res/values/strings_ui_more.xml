@@ -43,6 +43,7 @@
     <string name="confirm_backup_message">This will create a backup on Drive and may overwrite existing backups with the same name. Continue?</string>
     <string name="confirm_restore">Confirm restore</string>
     <string name="confirm_restore_message">This will overwrite your current data with the selected backup. Continue?</string>
+    <string name="restore_complete_message">Restore is complete. Please restart the app to apply changes.</string>
 
     <!-- Add/Edit Member dialog labels -->
     <string name="member_name">Member name</string>

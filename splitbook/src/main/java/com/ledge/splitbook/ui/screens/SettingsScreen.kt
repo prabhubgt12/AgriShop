@@ -80,38 +80,13 @@ fun SettingsScreen(
     var pendingRestart by remember { mutableStateOf(false) }
     var pendingBackupToast by remember { mutableStateOf(false) }
 
-    // After a successful restore completes, show a toast and restart the app cleanly
+    // After a successful restore completes, show a toast and close the app for manual restart
     LaunchedEffect(backupUi.isRunning, backupUi.runningOp, backupUi.error, pendingRestart) {
         if (pendingRestart && !backupUi.isRunning && backupUi.runningOp == null && backupUi.error == null) {
             pendingRestart = false
-            Toast.makeText(context, "Restore is complete. The app will restart now to apply changes.", Toast.LENGTH_SHORT).show()
-            val act = activity
-            if (act != null) {
-                val ctx = act.applicationContext
-                val restartIntent = Intent(ctx, MainActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                }
-                if (restartIntent != null) {
-                    // Immediate bring-up as primary path
-                    ctx.startActivity(restartIntent)
-                    val pi = PendingIntent.getActivity(
-                        ctx,
-                        0,
-                        restartIntent,
-                        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-                    val am = ctx.getSystemService(AlarmManager::class.java)
-                    val triggerAt = SystemClock.elapsedRealtime() + 1200
-                    try {
-                        am?.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
-                    } catch (_: Throwable) {
-                        am?.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
-                    }
-                    act.finishAffinity()
-                    try { Thread.sleep(200) } catch (_: Throwable) {}
-                    android.os.Process.killProcess(android.os.Process.myPid())
-                }
-            }
+            Toast.makeText(context, stringResource(com.ledge.splitbook.R.string.restore_complete_message), Toast.LENGTH_LONG).show()
+            activity?.finishAffinity()
+            android.os.Process.killProcess(android.os.Process.myPid())
         }
     }
 

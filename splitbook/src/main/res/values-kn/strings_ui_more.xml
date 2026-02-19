@@ -47,6 +47,7 @@
     <string name="confirm_backup_message">ಇದು ಡ್ರೈವ್‌ನಲ್ಲಿ ಬ್ಯಾಕಪ್ ರಚಿಸುತ್ತದೆ ಮತ್ತು ಅದೇ ಹೆಸರಿನ ಬ್ಯಾಕಪ್ ಅನ್ನು ಮರುಬರೆಯಬಹುದು. ಮುಂದುವರೆಯೇ?</string>
     <string name="confirm_restore">ಪುನಃಸ್ಥಾಪನೆ ದೃಢೀಕರಿಸಿ</string>
     <string name="confirm_restore_message">ಇದು ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಡೇಟಾವನ್ನು ಆಯ್ಕೆ ಮಾಡಿದ ಬ್ಯಾಕಪ್‌ನಿಂದ ಮರುಬರೆಯುತ್ತದೆ. ಮುಂದುವರೆಯೇ?</string>
+    <string name="restore_complete_message">ಪುನಃಸ್ಥಾಪನೆ ಪೂರ್ಣಗೊಂಡಿದೆ. ಬದಲಾವಣೆಗಳನ್ನು ಅನ್ವಯಿಸಲು ದಯವಿಟ್ಟು ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಮರು ಪ್ರಾರಂಭಿಸಿ.</string>
 
     <!-- Add/Edit Member dialog labels -->
     <string name="member_name">ಸದಸ್ಯರ ಹೆಸರು</string>

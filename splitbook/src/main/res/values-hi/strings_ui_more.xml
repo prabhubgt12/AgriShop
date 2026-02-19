@@ -42,6 +42,7 @@
     <string name="confirm_backup_message">यह ड्राइव पर बैकअप बनाएगा और समान नाम वाले मौजूदा बैकअप को अधिलेखित कर सकता है। जारी रखें?</string>
     <string name="confirm_restore">रीस्टोर की पुष्टि करें</string>
     <string name="confirm_restore_message">यह चयनित बैकअप से आपके वर्तमान डेटा को अधिलेखित कर देगा। जारी रखें?</string>
+    <string name="restore_complete_message">रीस्टोर पूरा हो गया है। परिवर्तनों को लागू करने के लिए कृपया ऐप को पुनः प्रारंभ करें।</string>
 
     <!-- Add/Edit Member dialog labels -->
     <string name="member_name">सदस्य का नाम</string>

@@ -47,6 +47,7 @@
     <string name="confirm_backup_message">இது டிரைவில் காப்புப்பிரதியை உருவாக்கும் மற்றும் அதே பெயரில் உள்ள காப்புப்பிரதியை மேலெழுதக்கூடும். தொடரவா?</string>
     <string name="confirm_restore">மீட்டெடுப்பை உறுதிப்படுத்தவும்</string>
     <string name="confirm_restore_message">இது தேர்ந்தெடுத்த காப்புப்பிரதியால் உங்கள் தற்போதைய தரவு மேலெழுதப்படும். தொடரவா?</string>
+    <string name="restore_complete_message">மீட்டமைப்பு முடிந்தது. மாற்றங்களைப் பயன்படுத்த கட்டுபாட்டை மறுதொடக்கம் செய்யவும்.</string>
 
     <!-- Add/Edit Member dialog labels -->
     <string name="member_name">உறுப்பினரின் பெயர்</string>

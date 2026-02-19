@@ -160,7 +160,7 @@ fun GroupsScreen(
             BackHandler(enabled = menuOpen) { menuOpen = false }
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = { showCreate = true }, icon = { Icon(Icons.Default.Add, null) }, text = { Text(stringResource(R.string.fab_new_group)) })
+            FloatingActionButton(onClick = { showCreate = true }) { Icon(Icons.Default.Add, stringResource(R.string.fab_new_group)) }
         },
         bottomBar = {
             if (!settings.removeAds) {
