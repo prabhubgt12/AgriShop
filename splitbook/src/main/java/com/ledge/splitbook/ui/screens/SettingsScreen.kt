@@ -90,6 +90,10 @@ fun SettingsScreen(
         if (pendingRestart && !backupUi.isRunning && backupUi.runningOp == null && backupUi.error == null) {
             pendingRestart = false
             Toast.makeText(context, context.getString(com.ledge.splitbook.R.string.restore_complete_message), Toast.LENGTH_LONG).show()
+            val restart = Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            context.startActivity(restart)
             activity?.finishAffinity()
             android.os.Process.killProcess(android.os.Process.myPid())
         }
