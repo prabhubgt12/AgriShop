@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -59,6 +60,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ledge.splitbook.util.ShareExport
+import com.ledge.splitbook.util.TripPlanDay
 import com.ledge.splitbook.ui.vm.TripPlanViewModel
 import java.time.LocalDate
 import java.time.ZoneId
@@ -204,6 +207,38 @@ fun TripPlanScreen(
                         }
                     ) {
                         Icon(Icons.Default.DateRange, contentDescription = stringResource(id = com.ledge.splitbook.R.string.set_trip_dates))
+                    }
+
+                    IconButton(
+                        onClick = {
+                            val days = ui.days.map { d ->
+                                TripPlanDay(
+                                    dayNumber = d.dayNumber,
+                                    dateLabel = d.date?.let { raw ->
+                                        runCatching { LocalDate.parse(raw).format(dateFmt) }.getOrNull() ?: raw
+                                    },
+                                    places = d.places.map { it.name }
+                                )
+                            }
+
+                            val dateRangeLabel = if (ui.startDate != null && ui.endDate != null) {
+                                val startLabel = runCatching { LocalDate.parse(ui.startDate).format(rangeFmt) }.getOrNull() ?: ui.startDate
+                                val endLabel = runCatching { LocalDate.parse(ui.endDate).format(rangeFmt) }.getOrNull() ?: ui.endDate
+                                "$startLabel - $endLabel"
+                            } else {
+                                null
+                            }
+
+                            val uri = ShareExport.exportTripPlanPdf(
+                                context = context,
+                                groupName = groupName,
+                                days = days,
+                                dateRangeLabel = dateRangeLabel
+                            )
+                            ShareExport.shareFile(context, uri, "application/pdf")
+                        }
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = "Share Trip Plan")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

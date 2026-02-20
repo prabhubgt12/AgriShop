@@ -27,6 +27,12 @@ data class MemberSummary(
     val dueAmount: Double
 )
 
+data class TripPlanDay(
+    val dayNumber: Int,
+    val dateLabel: String?,
+    val places: List<String>
+)
+
 object ShareExport {
 
     fun buildTextSummary(
@@ -216,6 +222,138 @@ object ShareExport {
         }
         // Adjust widths to accommodate the extra Deposit column
         drawTable(msHeaders, msRows, listOf(0.26f, 0.18f, 0.14f, 0.22f, 0.20f))
+        doc.finishPage(page)
+        FileOutputStream(file).use { out -> doc.writeTo(out) }
+        doc.close()
+
+        return FileProvider.getUriForFile(context, "com.ledge.splitbook.fileprovider", file)
+    }
+
+    fun exportTripPlanPdf(
+        context: Context,
+        groupName: String,
+        days: List<TripPlanDay>,
+        dateRangeLabel: String?
+    ): Uri {
+        val df = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+        val safeGroup = groupName.replace(Regex("[^a-zA-Z0-9_ -]"), "").trim().ifBlank { "group" }
+        val fileName = "trip_plan_${safeGroup}_${LocalDateTime.now().format(df)}.pdf"
+        val dir = File(context.cacheDir, "exports")
+        if (!dir.exists()) dir.mkdirs()
+        val file = File(dir, fileName)
+
+        val doc = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
+
+        var pageNumber = 1
+        var page = doc.startPage(PdfDocument.PageInfo.Builder(pageInfo.pageWidth, pageInfo.pageHeight, pageNumber).create())
+        var canvas: Canvas = page.canvas
+
+        val margin = 40f
+        val contentWidth = pageInfo.pageWidth - (margin * 2)
+        var y = margin
+
+        val titlePaint = Paint().apply {
+            color = 0xFF000000.toInt()
+            textSize = 20f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        val subPaint = Paint().apply {
+            color = 0xFF444444.toInt()
+            textSize = 12f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+        }
+        val bodyPaint = Paint().apply {
+            color = 0xFF000000.toInt()
+            textSize = 13f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+        }
+        val sectionPaint = Paint().apply {
+            color = 0xFF6B46C1.toInt()
+        }
+        val sectionTextPaint = Paint().apply {
+            color = 0xFFFFFFFF.toInt()
+            textSize = 13f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+
+        fun finishAndStartNewPage() {
+            doc.finishPage(page)
+            pageNumber += 1
+            page = doc.startPage(PdfDocument.PageInfo.Builder(pageInfo.pageWidth, pageInfo.pageHeight, pageNumber).create())
+            canvas = page.canvas
+            y = margin
+        }
+
+        fun ensureSpace(required: Float) {
+            val bottom = pageInfo.pageHeight - margin
+            if (y + required > bottom) {
+                finishAndStartNewPage()
+            }
+        }
+
+        fun drawWrappedText(text: String, x: Float, maxWidth: Float, paint: Paint, lineHeight: Float) {
+            val words = text.split(Regex("\\s+")).filter { it.isNotBlank() }
+            if (words.isEmpty()) return
+            var line = ""
+            for (w in words) {
+                val next = if (line.isEmpty()) w else "$line $w"
+                if (paint.measureText(next) <= maxWidth) {
+                    line = next
+                } else {
+                    ensureSpace(lineHeight)
+                    canvas.drawText(line, x, y, paint)
+                    y += lineHeight
+                    line = w
+                }
+            }
+            if (line.isNotEmpty()) {
+                ensureSpace(lineHeight)
+                canvas.drawText(line, x, y, paint)
+                y += lineHeight
+            }
+        }
+
+        val totalPlaces = days.sumOf { it.places.size }
+
+        ensureSpace(72f)
+        canvas.drawText("Trip Plan", margin, y, titlePaint)
+        y += 26f
+        canvas.drawText(groupName, margin, y, subPaint)
+        y += 18f
+        canvas.drawText("${days.size} day(s) • ${totalPlaces} place(s)", margin, y, subPaint)
+        y += 16f
+        if (!dateRangeLabel.isNullOrBlank()) {
+            canvas.drawText(dateRangeLabel, margin, y, subPaint)
+            y += 16f
+        }
+        y += 10f
+
+        days.forEach { d ->
+            ensureSpace(48f)
+            val sectionTop = y
+            canvas.drawRect(margin, sectionTop - 14f, margin + contentWidth, sectionTop + 10f, sectionPaint)
+            val header = buildString {
+                append("Day ")
+                append(d.dayNumber)
+                if (!d.dateLabel.isNullOrBlank()) {
+                    append("  •  ")
+                    append(d.dateLabel)
+                }
+            }
+            canvas.drawText(header, margin + 10f, sectionTop + 3f, sectionTextPaint)
+            y += 28f
+
+            if (d.places.isEmpty()) {
+                drawWrappedText("No places", margin + 10f, contentWidth - 20f, bodyPaint, 18f)
+            } else {
+                d.places.forEach { p ->
+                    drawWrappedText("• $p", margin + 10f, contentWidth - 20f, bodyPaint, 18f)
+                }
+            }
+            y += 10f
+        }
+
         doc.finishPage(page)
         FileOutputStream(file).use { out -> doc.writeTo(out) }
         doc.close()
