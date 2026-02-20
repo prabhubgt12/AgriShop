@@ -41,6 +41,9 @@
     <string name="create_group_title">ಗುಂಪು ರಚಿಸಿ</string>
     <string name="choose_icon">ಐಕಾನ್ ಆಯ್ಕೆ ಮಾಡಿ:</string>
 
+    <!-- Settings sections -->
+    <string name="category_section_title">ವರ್ಗ</string>
+
     <string name="members_title">ಸದಸ್ಯರು</string>
     <string name="quick_add_members_title">ತ್ವರಿತ ಸೇರಿಸುವಿಕೆ</string>
     <string name="quick_add_members_note">ಹಿಂದೆ ಬಳಸಿದ ಸದಸ್ಯರ ಪಟ್ಟಿಯಿಂದ ಸೇರಿಸಿ.</string>

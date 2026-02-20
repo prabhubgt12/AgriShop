@@ -63,4 +63,17 @@
     <string name="group_deposit">ಗುಂಪಿನ ಠೇವಣಿ</string>
     <string name="deposit_amount">ಠೇವಣಿ ಮೊತ್ತ</string>
     <string name="due_refund">ಬಾಕಿ/ರಿಫಂಡ್</string>
+
+    <!-- Trip Plan -->
+    <string name="trip_plan">ಪ್ರಯಾಣ ಯೋಜನೆ</string>
+    <string name="no_plan_added">ಇನ್ನೂ ಯಾವುದೇ ಯೋಜನೆ ಸೇರಿಸಲಾಗಿಲ್ಲ</string>
+    <string name="days_places">%d ದಿನಗಳು • %d ಸ್ಥಳಗಳು</string>
+    <string name="trip_day_title">ದಿನ %1$d</string>
+    <string name="trip_plan_help">ಮೇಲಿನ ಕ್ಯಾಲೆಂಡರ್ ಐಕಾನ್‌ನಿಂದ ಪ್ರಯಾಣದ ದಿನಾಂಕಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಿ ದಿನಗಳನ್ನು ಸ್ವಯಂ ರಚಿಸಲು, ಅಥವಾ + ಒತ್ತಿ ದಿನವನ್ನು ಕೈಯಾರೆ ಸೇರಿಸಿ.</string>
+    <string name="add_place">ಸ್ಥಳ ಸೇರಿಸಿ</string>
+    <string name="add_day">ದಿನ ಸೇರಿಸಿ</string>
+    <string name="set_trip_dates">ಪ್ರಯಾಣ ದಿನಾಂಕಗಳನ್ನು ಸೆಟ್ ಮಾಡಿ</string>
+    <string name="delete_day">ದಿನ ಅಳಿಸಿ</string>
+    <string name="delete_place">ಸ್ಥಳ ಅಳಿಸಿ</string>
+    <string name="no_places">ಇನ್ನೂ ಯಾವುದೇ ಸ್ಥಳಗಳು ಸೇರಿಸಲ್ಪಟ್ಟಿಲ್ಲ</string>
 </resources>

@@ -64,6 +64,8 @@
     <string name="trip_plan">Trip Plan</string>
     <string name="no_plan_added">No plan added yet</string>
     <string name="days_places">%d days • %d places</string>
+    <string name="trip_day_title">Day %1$d</string>
+    <string name="trip_plan_help">Select trip dates from the calendar icon above to automatically create days, or tap + to add a day manually.</string>
     <string name="add_place">Add Place</string>
     <string name="add_day">Add Day</string>
     <string name="set_trip_dates">Set Trip Dates</string>

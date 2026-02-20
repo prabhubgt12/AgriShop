@@ -44,6 +44,9 @@
     <string name="create_group_title">समूह बनाएँ</string>
     <string name="choose_icon">आइकन चुनें:</string>
 
+    <!-- Settings sections -->
+    <string name="category_section_title">श्रेणी</string>
+
     <string name="members_title">सदस्य</string>
     <string name="quick_add_members_title">त्वरित जोड़ें</string>
     <string name="quick_add_members_note">पहले उपयोग किए गए सदस्यों से जोड़ें।</string>

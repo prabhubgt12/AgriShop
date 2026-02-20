@@ -53,6 +53,9 @@
     <string name="create_group_title">Create Group</string>
     <string name="choose_icon">Choose icon:</string>
 
+    <!-- Settings sections -->
+    <string name="category_section_title">Category</string>
+
     <!-- Members -->
     <string name="members_title">Members</string>
     <string name="quick_add_members_title">Quick Add</string>

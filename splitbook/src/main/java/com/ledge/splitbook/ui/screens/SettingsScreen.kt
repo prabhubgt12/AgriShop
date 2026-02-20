@@ -136,7 +136,7 @@ fun SettingsScreen(
             item {
                 OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Remove Ads", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                        Text(stringResource(id = com.ledge.splitbook.R.string.menu_remove_ads), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
                         Text(
                             if (settings.removeAds)
                                 stringResource(id = com.ledge.splitbook.R.string.ads_removed)
@@ -191,7 +191,7 @@ fun SettingsScreen(
             item {
                 OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Category", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                        Text(stringResource(id = com.ledge.splitbook.R.string.category_section_title), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
                         ListItem(
                             headlineContent = { Text(stringResource(id = com.ledge.splitbook.R.string.menu_manage_category)) },
                             leadingContent = { Icon(Icons.Default.List, contentDescription = null) },

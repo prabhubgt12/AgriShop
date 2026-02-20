@@ -59,6 +59,19 @@
     <string name="deposit_amount">जमा राशि</string>
     <string name="due_refund">देय/रिफंड</string>
 
+    <!-- Trip Plan -->
+    <string name="trip_plan">यात्रा योजना</string>
+    <string name="no_plan_added">अभी कोई योजना नहीं जोड़ी गई</string>
+    <string name="days_places">%d दिन • %d स्थान</string>
+    <string name="trip_day_title">दिन %1$d</string>
+    <string name="trip_plan_help">ऊपर दिए गए कैलेंडर आइकन से यात्रा की तिथियाँ चुनें ताकि दिन स्वतः बनें, या + दबाकर दिन मैन्युअली जोड़ें।</string>
+    <string name="add_place">स्थान जोड़ें</string>
+    <string name="add_day">दिन जोड़ें</string>
+    <string name="set_trip_dates">यात्रा तिथियाँ सेट करें</string>
+    <string name="delete_day">दिन हटाएँ</string>
+    <string name="delete_place">स्थान हटाएँ</string>
+    <string name="no_places">अभी कोई स्थान नहीं जोड़ा गया</string>
+
     <!-- Settle buttons and UPI dialog -->
     <string name="mark_as_paid">भुगतान के रूप में चिह्नित करें</string>
     <string name="pay_via_upi">UPI से भुगतान करें</string>

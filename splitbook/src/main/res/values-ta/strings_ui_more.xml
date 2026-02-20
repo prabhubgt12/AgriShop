@@ -63,4 +63,17 @@
     <string name="group_deposit">குழு வைப்பு</string>
     <string name="deposit_amount">வைப்பு தொகை</string>
     <string name="due_refund">செலுத்த வேண்டியது/திருப்பிச் செலுத்து</string>
+
+    <!-- Trip Plan -->
+    <string name="trip_plan">பயண திட்டம்</string>
+    <string name="no_plan_added">இதுவரை எந்தத் திட்டமும் சேர்க்கப்படவில்லை</string>
+    <string name="days_places">%d நாட்கள் • %d இடங்கள்</string>
+    <string name="trip_day_title">நாள் %1$d</string>
+    <string name="trip_plan_help">மேலுள்ள காலண்டர் ஐகானில் பயண தேதிகளைத் தேர்வு செய்து நாட்களை தானாக உருவாக்கலாம், அல்லது + ஐத் தட்டி ஒரு நாளை கைமுறையாகச் சேர்க்கலாம்.</string>
+    <string name="add_place">இடத்தைச் சேர்க்க</string>
+    <string name="add_day">நாள் சேர்க்க</string>
+    <string name="set_trip_dates">பயண தேதிகளை அமைக்க</string>
+    <string name="delete_day">நாளை நீக்கு</string>
+    <string name="delete_place">இடத்தை நீக்கு</string>
+    <string name="no_places">இதுவரை எந்த இடமும் சேர்க்கப்படவில்லை</string>
 </resources>

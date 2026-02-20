@@ -63,4 +63,17 @@
     <string name="group_deposit">గ్రూప్ డిపాజిట్</string>
     <string name="deposit_amount">డిపాజిట్ మొత్తం</string>
     <string name="due_refund">బకాయి/రిఫండ్</string>
+
+    <!-- Trip Plan -->
+    <string name="trip_plan">ప్రయాణ ప్రణాళిక</string>
+    <string name="no_plan_added">ఇంకా ఏ ప్రణాళికను జోడించలేదు</string>
+    <string name="days_places">%d రోజులు • %d ప్రదేశాలు</string>
+    <string name="trip_day_title">రోజు %1$d</string>
+    <string name="trip_plan_help">పై క్యాలెండర్ ఐకాన్ ద్వారా ప్రయాణ తేదీలను ఎంచుకుని రోజులను స్వయంచాలకంగా సృష్టించండి, లేదా + నొక్కి రోజును మాన్యువల్‌గా జోడించండి.</string>
+    <string name="add_place">ప్రదేశం జోడించండి</string>
+    <string name="add_day">రోజు జోడించండి</string>
+    <string name="set_trip_dates">ప్రయాణ తేదీలు సెట్ చేయండి</string>
+    <string name="delete_day">రోజు తొలగించండి</string>
+    <string name="delete_place">ప్రదేశం తొలగించండి</string>
+    <string name="no_places">ఇంకా ఎలాంటి ప్రదేశాలు జోడించలేదు</string>
 </resources>

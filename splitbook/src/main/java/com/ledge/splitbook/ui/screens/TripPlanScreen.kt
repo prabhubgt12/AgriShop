@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.splitbook.ui.vm.TripPlanViewModel
@@ -152,7 +153,12 @@ fun TripPlanScreen(
                     }
 
                     Column {
-                        Text("$groupName - ${stringResource(id = com.ledge.splitbook.R.string.trip_plan)}")
+                        Text(
+                            text = "$groupName - ${stringResource(id = com.ledge.splitbook.R.string.trip_plan)}",
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                         Text(
                             if (range != null) "$summary • $range" else summary,
                             style = MaterialTheme.typography.bodySmall,
@@ -245,7 +251,7 @@ fun TripPlanScreen(
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    "Select trip dates from the calendar icon above to automatically create days, or tap + to add a day manually.",
+                                    stringResource(id = com.ledge.splitbook.R.string.trip_plan_help),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -275,7 +281,7 @@ fun TripPlanScreen(
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         Text(
-                                            "Day ${d.dayNumber}",
+                                            stringResource(id = com.ledge.splitbook.R.string.trip_day_title, d.dayNumber),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Medium
                                         )
