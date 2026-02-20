@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +47,7 @@ import android.app.Activity
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.net.Uri
 import android.os.SystemClock
 import android.widget.Toast
 import com.ledge.splitbook.MainActivity
@@ -53,6 +57,7 @@ import androidx.compose.ui.Alignment
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenCategories: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
     backupViewModel: BackupViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel()
@@ -124,6 +129,76 @@ fun SettingsScreen(
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            item {
+                OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Remove Ads", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                        Text(
+                            if (settings.removeAds)
+                                stringResource(id = com.ledge.splitbook.R.string.ads_removed)
+                            else
+                                stringResource(id = com.ledge.splitbook.R.string.ads_enabled_desc),
+                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val ctx = androidx.compose.ui.platform.LocalContext.current
+                            if (!settings.removeAds) {
+                                androidx.compose.material3.FilledTonalButton(onClick = {
+                                    val act = (ctx as? android.app.Activity)
+                                    if (act != null) billingViewModel.purchaseRemoveAds(act)
+                                }) { Text(stringResource(id = com.ledge.splitbook.R.string.remove_ads)) }
+                            } else {
+                                androidx.compose.material3.AssistChip(
+                                    onClick = {},
+                                    enabled = false,
+                                    label = { Text(stringResource(id = com.ledge.splitbook.R.string.thank_you)) }
+                                )
+                            }
+                        }
+                        HorizontalDivider()
+                        ListItem(
+                            headlineContent = { Text(stringResource(id = com.ledge.splitbook.R.string.menu_rate_it)) },
+                            leadingContent = { Icon(Icons.Default.Star, contentDescription = null) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    val pkg = context.packageName
+                                    val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
+                                    market.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    try {
+                                        context.startActivity(market)
+                                    } catch (_: Exception) {
+                                        val web = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg"))
+                                        web.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        context.startActivity(web)
+                                    }
+                                }
+                        )
+                    }
+                }
+            }
+
+            item {
+                OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Category", style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                        ListItem(
+                            headlineContent = { Text(stringResource(id = com.ledge.splitbook.R.string.menu_manage_category)) },
+                            leadingContent = { Icon(Icons.Default.List, contentDescription = null) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenCategories() }
+                        )
+                    }
+                }
+            }
+
             item {
                 OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

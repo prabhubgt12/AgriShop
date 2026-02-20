@@ -48,6 +48,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -75,6 +76,11 @@ import com.ledge.splitbook.util.formatAmount
 import com.ledge.splitbook.ui.components.AddMemberDialog
 import kotlin.math.abs
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.ledge.splitbook.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,6 +114,11 @@ fun SettleScreen(
     var editMember by remember { mutableStateOf<com.ledge.splitbook.data.entity.MemberEntity?>(null) }
     var vpa by remember { mutableStateOf(TextFieldValue("")) }
     var payeeName by remember { mutableStateOf(TextFieldValue("")) }
+    var topMenuOpen by remember { mutableStateOf(false) }
+    var chartDdOpen by remember { mutableStateOf(false) }
+
+    val anyPopupOpen = topMenuOpen || chartDdOpen || ui.error != null || showAddMember || showQuickAddMember || detailsMember != null || editMember != null || upiDialog != null
+    val bannerVisible = !settings.removeAds && !anyPopupOpen
     // Transfers moved to a dedicated screen
 
     Scaffold(
@@ -118,11 +129,10 @@ fun SettleScreen(
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = com.ledge.splitbook.R.string.back)) }
                 },
                 actions = {
-                    var menuOpen by remember { mutableStateOf(false) }
-                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(id = com.ledge.splitbook.R.string.more)) }
-                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    IconButton(onClick = { topMenuOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(id = com.ledge.splitbook.R.string.more)) }
+                    DropdownMenu(expanded = topMenuOpen, onDismissRequest = { topMenuOpen = false }) {
                         DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.share_as_text)) }, onClick = {
-                            menuOpen = false
+                            topMenuOpen = false
                             val groupName = context.getString(com.ledge.splitbook.R.string.group_with_id, ui.groupId)
                             val summary = ShareExport.buildTextSummary(
                                 context = context,
@@ -135,7 +145,7 @@ fun SettleScreen(
                             ShareExport.shareText(context, summary)
                         })
                         DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.export_pdf)) }, onClick = {
-                            menuOpen = false
+                            topMenuOpen = false
                             val groupName = groupName
                             val uri = ShareExport.exportPdf(
                                 context = context,
@@ -148,7 +158,7 @@ fun SettleScreen(
                             ShareExport.shareFile(context, uri, "application/pdf")
                         })
                         DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.export_excel)) }, onClick = {
-                            menuOpen = false
+                            topMenuOpen = false
                             val groupName = context.getString(com.ledge.splitbook.R.string.group_with_id, ui.groupId)
                             val uri = ShareExport.exportExcel(
                                 context = context,
@@ -199,6 +209,23 @@ fun SettleScreen(
                 )
             )
         }
+        ,
+        bottomBar = {
+            if (bannerVisible) {
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding(),
+                    factory = { ctx ->
+                        AdView(ctx).apply {
+                            adUnitId = if (BuildConfig.USE_TEST_ADS) "ca-app-pub-3940256099942544/6300978111" else "ca-app-pub-2556604347710668/9615145808"
+                            setAdSize(AdSize.BANNER)
+                            loadAd(AdRequest.Builder().build())
+                        }
+                    }
+                )
+            }
+        }
     ) { padding ->
         if (ui.isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -209,11 +236,13 @@ fun SettleScreen(
         val listPadding = PaddingValues(
             start = 16.dp,
             end = 16.dp,
-            top = padding.calculateTopPadding() + 12.dp,
-            bottom = 24.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + padding.calculateBottomPadding()
+            top = 12.dp,
+            bottom = 24.dp
         )
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
             contentPadding = listPadding,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -363,7 +392,6 @@ fun SettleScreen(
                         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             // Title row with compact Split-by filter at right
                             var splitBy by remember { mutableStateOf("Category") }
-                            var ddOpen by remember { mutableStateOf(false) }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -372,7 +400,7 @@ fun SettleScreen(
                                 Text(stringResource(id = com.ledge.splitbook.R.string.expense_chart))
                                 androidx.compose.foundation.layout.Box(modifier = Modifier) {
                                     androidx.compose.material3.TextButton(
-                                        onClick = { ddOpen = true },
+                                        onClick = { chartDdOpen = true },
                                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 0.dp)
                                     ) {
                                         val splitLabel = when (splitBy) {
@@ -381,9 +409,9 @@ fun SettleScreen(
                                             else -> stringResource(id = com.ledge.splitbook.R.string.category)
                                         }
                                         Text(splitLabel)
-                                        androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = ddOpen)
+                                        androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = chartDdOpen)
                                     }
-                                    androidx.compose.material3.DropdownMenu(expanded = ddOpen, onDismissRequest = { ddOpen = false }) {
+                                    androidx.compose.material3.DropdownMenu(expanded = chartDdOpen, onDismissRequest = { chartDdOpen = false }) {
                                         val options = listOf(
                                             "Category" to stringResource(id = com.ledge.splitbook.R.string.category),
                                             "Date" to stringResource(id = com.ledge.splitbook.R.string.date),
@@ -392,7 +420,7 @@ fun SettleScreen(
                                         options.forEach { (value, label) ->
                                             androidx.compose.material3.DropdownMenuItem(
                                                 text = { Text(label) },
-                                                onClick = { splitBy = value; ddOpen = false }
+                                                onClick = { splitBy = value; chartDdOpen = false }
                                             )
                                         }
                                     }
@@ -502,6 +530,10 @@ fun SettleScreen(
                         }
                     }
                 }
+            }
+
+            if (bannerVisible) {
+                item { Spacer(modifier = Modifier.height(88.dp)) }
             }
         }
     }

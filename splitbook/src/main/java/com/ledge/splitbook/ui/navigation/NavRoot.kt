@@ -188,7 +188,10 @@ private fun AppNavHost(navController: NavHostController) {
             MembersScreen(groupId = gid, onBack = { navController.popBackStack() })
         }
         composable(Routes.SETTINGS) {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenCategories = { navController.navigate(Routes.CATEGORIES) }
+            )
         }
         composable(Routes.CATEGORIES) {
             com.ledge.splitbook.ui.screens.CategoriesScreen(onBack = { navController.popBackStack() })

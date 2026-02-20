@@ -5,12 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,7 +21,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
@@ -32,11 +30,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,24 +40,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.LocalContext
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.splitbook.ui.vm.GroupsViewModel
 import com.ledge.splitbook.ui.vm.SettingsViewModel
 import com.ledge.splitbook.util.formatAmount
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import com.ledge.splitbook.BuildConfig
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.ledge.splitbook.R
-import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,61 +80,21 @@ fun GroupsScreen(
     var icon by remember { mutableStateOf("🏖️") }
     val iconOptions = listOf("🏖️","🏠","👥","💼","🚌","🍽️","🛏️","🎉")
 
+    var overflowMenuForId by remember { mutableStateOf<Long?>(null) }
+    var renameForId by remember { mutableStateOf<Long?>(null) }
+    var deleteForId by remember { mutableStateOf<Long?>(null) }
+    var renameDraft by remember { mutableStateOf("") }
+
+    val anyPopupOpen = showCreate || overflowMenuForId != null || renameForId != null || deleteForId != null
+    val bannerVisible = !settings.removeAds && !anyPopupOpen
+
     Scaffold(
         topBar = {
-            var menuOpen by remember { mutableStateOf(false) }
-            var menuReady by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) {
-                // Small debounce to avoid race when returning from another screen
-                delay(250)
-                menuReady = true
-            }
             TopAppBar(
                 title = { Text(stringResource(R.string.groups_title)) },
                 navigationIcon = {
-                    Box {
-                        IconButton(enabled = menuReady, onClick = { menuOpen = true }) { Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.cd_menu)) }
-                        val context = LocalContext.current
-                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(
-                                leadingIcon = { Icon(Icons.Default.List, contentDescription = null) },
-                                text = { Text(stringResource(R.string.menu_manage_category)) }, onClick = {
-                                menuOpen = false
-                                onOpenCategories()
-                            })
-                            DropdownMenuItem(
-                                leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                                text = { Text(stringResource(R.string.menu_settings)) }, onClick = {
-                                menuOpen = false
-                                onOpenSettings()
-                            })
-                            DropdownMenuItem(
-                                leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
-                                text = { Text(stringResource(R.string.menu_remove_ads)) },
-                                enabled = !settings.removeAds,
-                                onClick = {
-                                    menuOpen = false
-                                    // Redirect to Settings where purchase flow lives
-                                    onOpenSettings()
-                                }
-                            )
-                            
-                            DropdownMenuItem(
-                                leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
-                                text = { Text(stringResource(R.string.menu_rate_it)) }, onClick = {
-                                menuOpen = false
-                                val pkg = context.packageName
-                                val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg"))
-                                market.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                try {
-                                    context.startActivity(market)
-                                } catch (_: Exception) {
-                                    val web = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg"))
-                                    web.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(web)
-                                }
-                            })
-                        }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.cd_menu))
                     }
                 },
                 actions = {},
@@ -156,21 +105,23 @@ fun GroupsScreen(
                     actionIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
-            // Ensure hardware back closes an open (possibly invisible) menu popup
-            BackHandler(enabled = menuOpen) { menuOpen = false }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreate = true }) { Icon(Icons.Default.Add, stringResource(R.string.fab_new_group)) }
         },
         bottomBar = {
-            if (!settings.removeAds) {
+            if (bannerVisible) {
                 AndroidView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding(),
-                    factory = { context ->
-                        AdView(context).apply {
-                            adUnitId = if (BuildConfig.USE_TEST_ADS) "ca-app-pub-3940256099942544/6300978111" else "ca-app-pub-2556604347710668/9615145808"
+                    factory = { ctx ->
+                        AdView(ctx).apply {
+                            adUnitId = if (BuildConfig.USE_TEST_ADS) {
+                                "ca-app-pub-3940256099942544/6300978111"
+                            } else {
+                                "ca-app-pub-2556604347710668/2522894276"
+                            }
                             setAdSize(AdSize.BANNER)
                             loadAd(AdRequest.Builder().build())
                         }
@@ -179,7 +130,12 @@ fun GroupsScreen(
             }
         }
     ) { padding ->
-        val contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = padding.calculateTopPadding() + 8.dp, bottom = 96.dp)
+        val contentPadding = PaddingValues(
+            start = 8.dp,
+            end = 8.dp,
+            top = 8.dp,
+            bottom = 104.dp
+        )
         if (showEmpty) {
             Column(
                 modifier = Modifier
@@ -189,12 +145,14 @@ fun GroupsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) { Text(stringResource(R.string.no_groups_message), textAlign = TextAlign.Center) }
         } else {
-            LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(items = groups, key = { it.id }) { g ->
-                    var menuOpen by remember { mutableStateOf(false) }
-                    var showRename by remember { mutableStateOf(false) }
-                    var showDelete by remember { mutableStateOf(false) }
-                    var newName by remember { mutableStateOf(g.name) }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = contentPadding,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                itemsIndexed(items = groups, key = { _, it -> it.id }) { index, g ->
                     val total by viewModel.totalForGroup(g.id).collectAsState()
                     Card(
                         onClick = { onOpenGroup(g.id, g.name) },
@@ -222,69 +180,71 @@ fun GroupsScreen(
                                 }
                             }
                             Box(modifier = Modifier) {
-                                IconButton(onClick = { menuOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.cd_more)) }
+                                IconButton(onClick = { overflowMenuForId = g.id }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.cd_more)) }
                                 DropdownMenu(
-                                    expanded = menuOpen,
-                                    onDismissRequest = { menuOpen = false }
+                                    expanded = overflowMenuForId == g.id,
+                                    onDismissRequest = { if (overflowMenuForId == g.id) overflowMenuForId = null }
                                 ) {
                                     DropdownMenuItem(text = { Text(stringResource(R.string.edit_group)) }, onClick = {
-                                        menuOpen = false
-                                        newName = g.name
-                                        showRename = true
+                                        overflowMenuForId = null
+                                        renameDraft = g.name
+                                        renameForId = g.id
                                     })
                                     DropdownMenuItem(text = { Text(stringResource(R.string.delete_group)) }, onClick = {
-                                        menuOpen = false
-                                        showDelete = true
+                                        overflowMenuForId = null
+                                        deleteForId = g.id
                                     })
                                 }
                             }
                         }
                     }
-
-                    if (showRename) {
-                        AlertDialog(
-                            onDismissRequest = { showRename = false },
-                            title = { Text(stringResource(R.string.edit_group_title)) },
-                            text = {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedTextField(
-                                        value = newName,
-                                        onValueChange = { newName = it },
-                                        label = { Text(stringResource(R.string.group_name_label)) },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(onClick = {
-                                    val trimmed = newName.trim()
-                                    if (trimmed.isNotEmpty()) {
-                                        viewModel.renameGroup(g.id, trimmed)
-                                        showRename = false
-                                    }
-                                }) { Text(stringResource(R.string.save)) }
-                            },
-                            dismissButton = { TextButton(onClick = { showRename = false }) { Text(stringResource(R.string.cancel)) } }
-                        )
-                    }
-
-                    if (showDelete) {
-                        AlertDialog(
-                            onDismissRequest = { showDelete = false },
-                            title = { Text(stringResource(R.string.delete_group_title)) },
-                            text = { Text(stringResource(R.string.delete_group_message)) },
-                            confirmButton = {
-                                TextButton(onClick = {
-                                    viewModel.deleteGroup(g.id)
-                                    showDelete = false
-                                }) { Text(stringResource(R.string.delete)) }
-                            },
-                            dismissButton = { TextButton(onClick = { showDelete = false }) { Text(stringResource(R.string.cancel)) } }
-                        )
-                    }
                 }
             }
         }
+    }
+
+    val renId = renameForId
+    if (renId != null) {
+        AlertDialog(
+            onDismissRequest = { renameForId = null },
+            title = { Text(stringResource(R.string.edit_group_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = renameDraft,
+                        onValueChange = { renameDraft = it },
+                        label = { Text(stringResource(R.string.group_name_label)) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val trimmed = renameDraft.trim()
+                    if (trimmed.isNotEmpty()) {
+                        viewModel.renameGroup(renId, trimmed)
+                        renameForId = null
+                    }
+                }) { Text(stringResource(R.string.save)) }
+            },
+            dismissButton = { TextButton(onClick = { renameForId = null }) { Text(stringResource(R.string.cancel)) } }
+        )
+    }
+
+    val delId = deleteForId
+    if (delId != null) {
+        AlertDialog(
+            onDismissRequest = { deleteForId = null },
+            title = { Text(stringResource(R.string.delete_group_title)) },
+            text = { Text(stringResource(R.string.delete_group_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteGroup(delId)
+                    deleteForId = null
+                }) { Text(stringResource(R.string.delete)) }
+            },
+            dismissButton = { TextButton(onClick = { deleteForId = null }) { Text(stringResource(R.string.cancel)) } }
+        )
     }
 
     if (showCreate) {

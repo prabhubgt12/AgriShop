@@ -37,6 +37,7 @@ class BillingRepository @Inject constructor(
     fun start() {
         if (billingClient.isReady) {
             queryProduct()
+            queryOwnedPurchases()
             return
         }
         billingClient.startConnection(object : BillingClientStateListener {
@@ -88,17 +89,19 @@ class BillingRepository @Inject constructor(
     }
 
     private fun handlePurchases(purchases: List<Purchase>) {
-        purchases.forEach { p ->
-            val ownsRemoveAds = p.products.contains(PRODUCT_REMOVE_ADS)
-            if (ownsRemoveAds) {
-                // Persist entitlement
-                CoroutineScope(Dispatchers.IO).launch { settingsRepository.setRemoveAds(true) }
-                // Acknowledge if needed
-                if (!p.isAcknowledged) {
-                    val ack = AcknowledgePurchaseParams.newBuilder().setPurchaseToken(p.purchaseToken).build()
-                    billingClient.acknowledgePurchase(ack) { /* ignore */ }
-                }
-            }
+        val ownsRemoveAds = purchases.any { p ->
+            p.products.contains(PRODUCT_REMOVE_ADS) && p.purchaseState == Purchase.PurchaseState.PURCHASED
         }
+
+        // Persist entitlement state (including clearing it after refunds)
+        CoroutineScope(Dispatchers.IO).launch { settingsRepository.setRemoveAds(ownsRemoveAds) }
+
+        // Acknowledge any unacknowledged remove_ads purchases
+        purchases
+            .filter { p -> p.products.contains(PRODUCT_REMOVE_ADS) && !p.isAcknowledged }
+            .forEach { p ->
+                val ack = AcknowledgePurchaseParams.newBuilder().setPurchaseToken(p.purchaseToken).build()
+                billingClient.acknowledgePurchase(ack) { /* ignore */ }
+            }
     }
 }

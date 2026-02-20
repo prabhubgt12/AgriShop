@@ -56,6 +56,12 @@ import kotlinx.coroutines.launch
 import com.ledge.splitbook.ui.vm.TransactionsViewModel
 import com.ledge.splitbook.ui.vm.SettingsViewModel
 import com.ledge.splitbook.util.formatAmount
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.ledge.splitbook.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -76,6 +82,11 @@ fun TransactionsScreen(
     var confirmDeleteForId by remember { mutableStateOf<Long?>(null) }
     // Split-by filter shared between AppBar and body (default to All). Internal values: All/Category/Date/Member
     var splitBy by remember { mutableStateOf("All") }
+    var splitDdOpen by remember { mutableStateOf(false) }
+    var overflowMenuForId by remember { mutableStateOf<Long?>(null) }
+
+    val anyPopupOpen = splitDdOpen || overflowMenuForId != null || detailsForId != null || confirmDeleteForId != null
+    val shouldShowAds = !settings.removeAds && !anyPopupOpen
 
     Scaffold(
         topBar = {
@@ -84,10 +95,9 @@ fun TransactionsScreen(
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = null) } },
                 actions = {
                     // Compact Split-by dropdown in AppBar (right)
-                    var ddOpen by remember { mutableStateOf(false) }
                     Box(modifier = Modifier.zIndex(1f)) {
                         androidx.compose.material3.TextButton(
-                            onClick = { ddOpen = true },
+                            onClick = { splitDdOpen = true },
                             colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
                                 contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
                             )
@@ -99,9 +109,9 @@ fun TransactionsScreen(
                                 else -> stringResource(id = com.ledge.splitbook.R.string.all)
                             }
                             Text(splitLabel, color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary)
-                            androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = ddOpen)
+                            androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = splitDdOpen)
                         }
-                        DropdownMenu(expanded = ddOpen, onDismissRequest = { ddOpen = false }) {
+                        DropdownMenu(expanded = splitDdOpen, onDismissRequest = { splitDdOpen = false }) {
                             listOf("All", "Category", "Date", "Member").forEach { option ->
                                 val label = when (option) {
                                     "Date" -> stringResource(id = com.ledge.splitbook.R.string.date)
@@ -109,7 +119,7 @@ fun TransactionsScreen(
                                     "Category" -> stringResource(id = com.ledge.splitbook.R.string.category)
                                     else -> stringResource(id = com.ledge.splitbook.R.string.all)
                                 }
-                                DropdownMenuItem(text = { Text(label) }, onClick = { ddOpen = false; splitBy = option })
+                                DropdownMenuItem(text = { Text(label) }, onClick = { splitDdOpen = false; splitBy = option })
                             }
                         }
                     }
@@ -121,6 +131,23 @@ fun TransactionsScreen(
                     actionIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
                 )
             )
+        }
+        ,
+        bottomBar = {
+            if (shouldShowAds) {
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding(),
+                    factory = { ctx ->
+                        AdView(ctx).apply {
+                            adUnitId = if (BuildConfig.USE_TEST_ADS) "ca-app-pub-3940256099942544/6300978111" else "ca-app-pub-2556604347710668/9615145808"
+                            setAdSize(AdSize.BANNER)
+                            loadAd(AdRequest.Builder().build())
+                        }
+                    }
+                )
+            }
         }
     ) { padding ->
         // Group map and keys based on Split-by selection
@@ -257,18 +284,16 @@ fun TransactionsScreen(
                                                 color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
-                                        // Amount aligned to top-right; menu below amount
+
                                         Column(horizontalAlignment = Alignment.End) {
                                             Text(
                                                 formatAmount(e.amount, currency),
-                                                // non-bold to match request
                                                 modifier = Modifier.padding(bottom = 2.dp),
                                                 style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
                                             )
-                                            var overflowOpen by remember { mutableStateOf(false) }
                                             CompositionLocalProvider(LocalMinimumTouchTargetEnforcement provides false) {
                                                 IconButton(
-                                                    onClick = { overflowOpen = true },
+                                                    onClick = { overflowMenuForId = e.id },
                                                     modifier = Modifier.size(24.dp)
                                                 ) {
                                                     Icon(
@@ -278,12 +303,28 @@ fun TransactionsScreen(
                                                     )
                                                 }
                                             }
-                                            DropdownMenu(expanded = overflowOpen, onDismissRequest = { overflowOpen = false }) {
-                                                DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.edit)) }, onClick = { overflowOpen = false; onEdit(e.id) })
-                                                DropdownMenuItem(text = { Text(stringResource(id = com.ledge.splitbook.R.string.delete)) }, onClick = { overflowOpen = false; confirmDeleteForId = e.id })
+                                            DropdownMenu(
+                                                expanded = overflowMenuForId == e.id,
+                                                onDismissRequest = { if (overflowMenuForId == e.id) overflowMenuForId = null }
+                                            ) {
+                                                DropdownMenuItem(
+                                                    text = { Text(stringResource(id = com.ledge.splitbook.R.string.edit)) },
+                                                    onClick = {
+                                                        overflowMenuForId = null
+                                                        onEdit(e.id)
+                                                    }
+                                                )
+                                                DropdownMenuItem(
+                                                    text = { Text(stringResource(id = com.ledge.splitbook.R.string.delete)) },
+                                                    onClick = {
+                                                        overflowMenuForId = null
+                                                        confirmDeleteForId = e.id
+                                                    }
+                                                )
                                             }
                                         }
                                     }
+
                                     if (index != showing.lastIndex) HorizontalDivider()
                                 }
                             }
@@ -293,10 +334,6 @@ fun TransactionsScreen(
             }
         }
     }
-
-    // No modal dialog for split-by; using app bar dropdown
-
-    // Details dialog
     val detailsId = detailsForId
     if (detailsId != null) {
         val e = ui.expenses.firstOrNull { it.id == detailsId }
