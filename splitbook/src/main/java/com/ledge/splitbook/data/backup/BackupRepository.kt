@@ -54,8 +54,12 @@ class BackupRepository @Inject constructor(
     }
 
     private fun makeBackupZip(): ByteArray? {
-        // Close Room to ensure pages are flushed and WAL checkpointed
-        runCatching { db.close() }
+        // Flush SQLite WAL to disk without closing the singleton Room database.
+        // Closing the injected AppDatabase would permanently close the connection pool
+        // for the running process, breaking writes (e.g., create group) until app restart.
+        runCatching {
+            db.openHelper.writableDatabase.execSQL("PRAGMA wal_checkpoint(FULL)")
+        }
         val dbMain = context.getDatabasePath(DB_NAME)
         if (!dbMain.exists()) return null
         val dbWal = java.io.File(dbMain.parentFile, "$DB_NAME-wal")
