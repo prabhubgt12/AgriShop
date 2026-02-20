@@ -4,4 +4,5 @@
     <string name="split_equally_among">%1$d సభ్యుల మధ్య సమానంగా పంచండి</string>
     <string name="no_members_hint">ఇప్పటికీ ఎలాంటి సభ్యులు జోడించలేదు.</string>
     <string name="add_sample_members">నమూనా సభ్యులను జోడించండి</string>
+    <string name="settle_up">బాకీ తీర్చండి</string>
 </resources>

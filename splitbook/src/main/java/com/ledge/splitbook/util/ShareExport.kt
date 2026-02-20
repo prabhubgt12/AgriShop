@@ -317,11 +317,16 @@ object ShareExport {
         val totalPlaces = days.sumOf { it.places.size }
 
         ensureSpace(72f)
-        canvas.drawText("Trip Plan", margin, y, titlePaint)
+        canvas.drawText(context.getString(com.ledge.splitbook.R.string.trip_plan), margin, y, titlePaint)
         y += 26f
         canvas.drawText(groupName, margin, y, subPaint)
         y += 18f
-        canvas.drawText("${days.size} day(s) • ${totalPlaces} place(s)", margin, y, subPaint)
+        canvas.drawText(
+            context.getString(com.ledge.splitbook.R.string.days_places, days.size, totalPlaces),
+            margin,
+            y,
+            subPaint
+        )
         y += 16f
         if (!dateRangeLabel.isNullOrBlank()) {
             canvas.drawText(dateRangeLabel, margin, y, subPaint)
@@ -334,8 +339,7 @@ object ShareExport {
             val sectionTop = y
             canvas.drawRect(margin, sectionTop - 14f, margin + contentWidth, sectionTop + 10f, sectionPaint)
             val header = buildString {
-                append("Day ")
-                append(d.dayNumber)
+                append(context.getString(com.ledge.splitbook.R.string.trip_day_title, d.dayNumber))
                 if (!d.dateLabel.isNullOrBlank()) {
                     append("  •  ")
                     append(d.dateLabel)
@@ -345,7 +349,13 @@ object ShareExport {
             y += 28f
 
             if (d.places.isEmpty()) {
-                drawWrappedText("No places", margin + 10f, contentWidth - 20f, bodyPaint, 18f)
+                drawWrappedText(
+                    context.getString(com.ledge.splitbook.R.string.no_places),
+                    margin + 10f,
+                    contentWidth - 20f,
+                    bodyPaint,
+                    18f
+                )
             } else {
                 d.places.forEach { p ->
                     drawWrappedText("• $p", margin + 10f, contentWidth - 20f, bodyPaint, 18f)

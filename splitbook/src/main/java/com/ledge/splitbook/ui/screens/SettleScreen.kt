@@ -121,6 +121,35 @@ fun SettleScreen(
     val bannerVisible = !settings.removeAds && !anyPopupOpen
     // Transfers moved to a dedicated screen
 
+    // Error alert for operations like delete not allowed
+    if (ui.error != null) {
+        val msg = when (ui.error) {
+            "REMOVE_USED" -> stringResource(id = com.ledge.splitbook.R.string.cannot_remove_used)
+            else -> ui.error ?: ""
+        }
+        AlertDialog(
+            onDismissRequest = { viewModel.clearError() },
+            title = { Text(stringResource(id = com.ledge.splitbook.R.string.action_not_allowed)) },
+            text = { Text(msg) },
+            confirmButton = { TextButton(onClick = { viewModel.clearError() }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) } }
+        )
+    }
+
+    if (showAddMember) {
+        val hasAdmin = ui.members.any { it.isAdmin }
+        AddMemberDialog(
+            onDismiss = { showAddMember = false },
+            onAdd = { name, depStr, isAdmin ->
+                val trimmed = name.trim()
+                val deposit = depStr.toDoubleOrNull() ?: 0.0
+                if (trimmed.isNotEmpty()) viewModel.addMember(trimmed, deposit, isAdmin)
+                showAddMember = false
+            },
+            showAdminOption = !hasAdmin,
+            adminRequired = !hasAdmin
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -171,35 +200,6 @@ fun SettleScreen(
                             ShareExport.shareFile(context, uri, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                         })
                     }
-
-    // Error alert for operations like delete not allowed
-    if (ui.error != null) {
-        val msg = when (ui.error) {
-            "REMOVE_USED" -> stringResource(id = com.ledge.splitbook.R.string.cannot_remove_used)
-            else -> ui.error ?: ""
-        }
-        AlertDialog(
-            onDismissRequest = { viewModel.clearError() },
-            title = { Text(stringResource(id = com.ledge.splitbook.R.string.action_not_allowed)) },
-            text = { Text(msg) },
-            confirmButton = { TextButton(onClick = { viewModel.clearError() }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) } }
-        )
-    }
-
-    if (showAddMember) {
-        val hasAdmin = ui.members.any { it.isAdmin }
-        AddMemberDialog(
-            onDismiss = { showAddMember = false },
-            onAdd = { name, depStr, isAdmin ->
-                val trimmed = name.trim()
-                val deposit = depStr.toDoubleOrNull() ?: 0.0
-                if (trimmed.isNotEmpty()) viewModel.addMember(trimmed, deposit, isAdmin)
-                showAddMember = false
-            },
-            showAdminOption = !hasAdmin,
-            adminRequired = !hasAdmin
-        )
-    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
@@ -208,8 +208,7 @@ fun SettleScreen(
                     actionIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
                 )
             )
-        }
-        ,
+        },
         bottomBar = {
             if (bannerVisible) {
                 AndroidView(

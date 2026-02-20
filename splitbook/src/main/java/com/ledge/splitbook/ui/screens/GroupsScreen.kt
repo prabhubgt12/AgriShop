@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +55,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +87,9 @@ fun GroupsScreen(
     var deleteForId by remember { mutableStateOf<Long?>(null) }
     var renameDraft by remember { mutableStateOf("") }
 
+    val scope = rememberCoroutineScope()
+    var menuEnabled by remember { mutableStateOf(true) }
+
     val anyPopupOpen = showCreate || overflowMenuForId != null || renameForId != null || deleteForId != null
     val bannerVisible = !settings.removeAds && !anyPopupOpen
 
@@ -93,7 +98,18 @@ fun GroupsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.groups_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onOpenSettings) {
+                    IconButton(
+                        enabled = menuEnabled,
+                        onClick = {
+                            if (!menuEnabled) return@IconButton
+                            menuEnabled = false
+                            onOpenSettings()
+                            scope.launch {
+                                delay(600)
+                                menuEnabled = true
+                            }
+                        }
+                    ) {
                         Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.cd_menu))
                     }
                 },
