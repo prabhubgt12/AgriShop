@@ -38,7 +38,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DateRange
@@ -168,9 +167,6 @@ fun TripPlanScreen(
                             color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
                         )
                     }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = com.ledge.splitbook.R.string.back)) }
                 },
                 actions = {
                     IconButton(

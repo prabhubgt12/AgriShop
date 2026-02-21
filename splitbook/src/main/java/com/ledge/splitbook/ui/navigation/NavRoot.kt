@@ -2,6 +2,7 @@ package com.ledge.splitbook.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,7 +20,6 @@ import com.ledge.splitbook.ui.screens.SettleDetailsScreen
 import com.ledge.splitbook.ui.vm.BillingViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.splitbook.ui.vm.SettleViewModel
-import androidx.compose.runtime.remember
 import java.net.URLEncoder
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -91,9 +91,6 @@ private fun AppNavHost(navController: NavHostController) {
             val rawExp = backStackEntry.arguments?.getLong("expenseId") ?: Long.MIN_VALUE
             val expenseId: Long? = if (rawExp == Long.MIN_VALUE) null else rawExp
             AddExpenseScreen(groupId = gid, payerId = payerId, expenseId = expenseId, onDone = {
-                // Signal the SETTLE screen to refresh its subscriptions/snapshot after save
-                val parentEntry = navController.getBackStackEntry(Routes.SETTLE)
-                parentEntry.savedStateHandle["refresh_settle"] = true
                 navController.popBackStack()
             })
         }
@@ -109,16 +106,6 @@ private fun AppNavHost(navController: NavHostController) {
             val gname = URLDecoder.decode(encName, StandardCharsets.UTF_8.toString())
             // ViewModel scoped to this SETTLE route entry
             val settleVm: SettleViewModel = hiltViewModel(backStackEntry)
-            // Listen for refresh flag posted by AddExpense screen and reload VM when set
-            val refreshFlow = remember(backStackEntry) { backStackEntry.savedStateHandle.getStateFlow("refresh_settle", false) }
-            LaunchedEffect(refreshFlow) {
-                refreshFlow.collect { need ->
-                    if (need) {
-                        settleVm.reload()
-                        backStackEntry.savedStateHandle["refresh_settle"] = false
-                    }
-                }
-            }
             SettleScreen(
                 groupId = gid,
                 groupName = gname,

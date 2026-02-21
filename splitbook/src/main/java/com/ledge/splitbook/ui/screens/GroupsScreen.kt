@@ -47,7 +47,6 @@ import com.ledge.splitbook.ui.vm.GroupsViewModel
 import com.ledge.splitbook.ui.vm.SettingsViewModel
 import com.ledge.splitbook.util.formatAmount
 import com.ledge.splitbook.BuildConfig
-import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.ledge.splitbook.R
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -55,7 +54,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +86,6 @@ fun GroupsScreen(
     var renameDraft by remember { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
-    var menuEnabled by remember { mutableStateOf(true) }
 
     val anyPopupOpen = showCreate || overflowMenuForId != null || renameForId != null || deleteForId != null
     val bannerVisible = !settings.removeAds && !anyPopupOpen
@@ -99,15 +96,8 @@ fun GroupsScreen(
                 title = { Text(stringResource(R.string.groups_title)) },
                 navigationIcon = {
                     IconButton(
-                        enabled = menuEnabled,
                         onClick = {
-                            if (!menuEnabled) return@IconButton
-                            menuEnabled = false
                             onOpenSettings()
-                            scope.launch {
-                                delay(600)
-                                menuEnabled = true
-                            }
                         }
                     ) {
                         Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.cd_menu))

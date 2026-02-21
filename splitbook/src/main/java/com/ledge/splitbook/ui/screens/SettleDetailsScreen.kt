@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -43,7 +41,6 @@ fun SettleDetailsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(if (groupName.isNotBlank()) "$groupName • " + stringResource(id = com.ledge.splitbook.R.string.settle_up) else stringResource(id = com.ledge.splitbook.R.string.settle_up)) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = com.ledge.splitbook.R.string.back)) } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary,
@@ -116,7 +113,7 @@ fun SettleDetailsScreen(
             onOpen = { vpa, payee ->
                 val intent = Intent(Intent.ACTION_VIEW, buildUpiUri(vpa, payee, t.amount, "Simple Split settlement"))
                 context.startActivity(intent)
-                onBack()
+                upiDialog = null
             }
         )
     }

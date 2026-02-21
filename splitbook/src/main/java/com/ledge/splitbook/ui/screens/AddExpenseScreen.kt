@@ -45,7 +45,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.ledge.splitbook.ui.vm.AddExpenseViewModel
 import com.ledge.splitbook.ui.vm.AddExpenseViewModel.Mode
 import com.ledge.splitbook.ui.vm.SettingsViewModel
@@ -91,11 +90,6 @@ fun AddExpenseScreen(
         topBar = {
             TopAppBar(
                 title = { Text(if (ui.editingExpenseId != null) stringResource(id = com.ledge.splitbook.R.string.edit_expense) else stringResource(id = com.ledge.splitbook.R.string.add_expense)) },
-                navigationIcon = {
-                    IconButton(onClick = onDone) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = com.ledge.splitbook.R.string.back))
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
                     titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,

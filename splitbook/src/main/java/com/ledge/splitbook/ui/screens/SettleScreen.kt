@@ -36,7 +36,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
@@ -154,9 +153,6 @@ fun SettleScreen(
         topBar = {
             TopAppBar(
                 title = { Text(if (groupName.isNotBlank()) groupName else stringResource(id = com.ledge.splitbook.R.string.group)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = com.ledge.splitbook.R.string.back)) }
-                },
                 actions = {
                     IconButton(onClick = { topMenuOpen = true }) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(id = com.ledge.splitbook.R.string.more)) }
                     DropdownMenu(expanded = topMenuOpen, onDismissRequest = { topMenuOpen = false }) {

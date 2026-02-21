@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -92,7 +91,6 @@ fun TransactionsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("$groupName") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = null) } },
                 actions = {
                     // Compact Split-by dropdown in AppBar (right)
                     Box(modifier = Modifier.zIndex(1f)) {

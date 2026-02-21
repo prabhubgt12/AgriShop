@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -65,7 +64,6 @@ class SettleViewModel @Inject constructor(
                 // splitCount is only for invalidation; not stored in state
                 Triple(members, expenses, settlements)
             }
-                .debounce(200)
                 .collectLatest { (members, expenses, settlements) ->
                 // Mark loading while we recompute the derived snapshot to avoid transient mismatches in UI
                 _ui.value = _ui.value.copy(
