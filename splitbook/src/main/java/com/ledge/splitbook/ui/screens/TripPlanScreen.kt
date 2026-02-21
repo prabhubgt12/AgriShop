@@ -58,6 +58,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.splitbook.util.ShareExport
 import com.ledge.splitbook.util.TripPlanDay
@@ -314,7 +315,8 @@ fun TripPlanScreen(
                                         Text(
                                             stringResource(id = com.ledge.splitbook.R.string.trip_day_title, d.dayNumber),
                                             style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Medium
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 18.sp
                                         )
                                         d.date?.let { raw ->
                                             val formatted = runCatching {
@@ -323,6 +325,8 @@ fun TripPlanScreen(
                                             Text(
                                                 formatted,
                                                 style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = (13.5).sp,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                                             )
                                         }
@@ -363,7 +367,7 @@ fun TripPlanScreen(
                                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                                             contentPadding = PaddingValues(0.dp)
                                         ) {
-                                            Text("+ ${stringResource(id = com.ledge.splitbook.R.string.add_place)}")
+                                            Text("+ ${stringResource(id = com.ledge.splitbook.R.string.add_place)}", fontWeight = FontWeight.Medium, fontSize = 14.sp)
                                         }
                                     }
                                 } else {
@@ -390,7 +394,8 @@ fun TripPlanScreen(
                                                     Text(
                                                         place.name,
                                                         style = MaterialTheme.typography.bodyLarge,
-                                                        fontWeight = FontWeight.Normal,
+                                                        fontWeight = FontWeight.Medium,
+                                                        fontSize = 16.sp,
                                                         modifier = Modifier.weight(1f)
                                                     )
                                                 }
@@ -422,7 +427,7 @@ fun TripPlanScreen(
                                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                                         contentPadding = PaddingValues(0.dp)
                                     ) {
-                                        Text("+ ${stringResource(id = com.ledge.splitbook.R.string.add_place)}")
+                                        Text("+ ${stringResource(id = com.ledge.splitbook.R.string.add_place)}", fontWeight = FontWeight.Medium, fontSize = 14.sp)
                                     }
                                 }
                             }
