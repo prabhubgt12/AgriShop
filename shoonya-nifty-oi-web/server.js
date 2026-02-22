@@ -150,7 +150,7 @@ async function tryResyncFromShoonya() {
 
     if (exitOrder) {
       status = 'CLOSED';
-      exitTs = Date.now(); // Use current time for resync exit time
+      exitTs = new Date(exitOrder.norentm).getTime(); // Exit order time
       exitReason = exitOrder.remarks.replace('exit_', '');
       exitOrderNo = exitOrder.norenordno;
       const exitTrades = trades.filter(t => t.norenordno === exitOrder.norenordno);
@@ -175,7 +175,7 @@ async function tryResyncFromShoonya() {
           if (exitPrice > 0) {
             pnl = (exitPrice - entryPrice) * parseInt(entryOrder.qty);
             status = 'CLOSED';
-            exitTs = Date.now();
+            exitTs = new Date(manualExitOrder.norentm).getTime(); // Manual exit order time
             exitReason = 'MANUAL_EXIT';
             exitOrderNo = manualExitOrder.norenordno;
           }
@@ -296,7 +296,16 @@ async function updateOnce() {
   if (state.paper && state.paper.enabled) {
     state.paper = stepPaperTrade(state.paper, state.snapshotHistory, state.paper.selectedMode);
   }
- 
+
+  // Resync open/exiting trades on start to avoid showing stale trades
+  if (state.live && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
+    const ok = await tryResyncFromShoonya();
+    if (!ok) {
+      state.live.current = null;
+      persistLiveState();
+    }
+  }
+
   // LIVE execution (safe gated by env + UI)
   const liveEnabled = String(process.env.ENABLE_LIVE_TRADING || '').toLowerCase() === 'true';
   if (liveEnabled && state.paper && state.paper.tradeMode === 'LIVE') {
