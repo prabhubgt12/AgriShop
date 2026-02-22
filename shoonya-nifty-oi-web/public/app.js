@@ -616,6 +616,7 @@ loginBtn.addEventListener('click', async () => {
     const health = await fetchHealth();
     if (health.loggedIn) {
       setLoginStatus('Login successful', 'ok');
+      // document.getElementById('api-testing-section').style.display = 'block';
     } else {
       setLoginStatus('Login failed', 'bad');
     }
@@ -697,6 +698,49 @@ document.getElementById('generate-report').addEventListener('click', async () =>
     document.getElementById('report-results').innerHTML = 'Fetch error: ' + e.message;
   }
 });
+
+{
+  const testBtn = document.getElementById('test-api-btn');
+  if (testBtn) {
+    testBtn.addEventListener('click', async () => {
+      const api = 'get_time_price_series';
+      const paramsEl = document.getElementById('api-params');
+      if (!paramsEl) return;
+
+      let params = paramsEl.value;
+      try {
+        const obj = JSON.parse(params);
+        const toIstEpochSecondsStr = (s) => {
+          if (typeof s !== 'string') return null;
+          const t = s.trim();
+          if (!t) return null;
+          if (/^\d+$/.test(t)) return t;
+          if (!t.includes(' ')) return null;
+          const ms = new Date(t.replace(' ', 'T') + '+05:30').getTime();
+          if (!Number.isFinite(ms)) return null;
+          return String(Math.floor(ms / 1000));
+        };
+
+        const st = toIstEpochSecondsStr(obj.starttime);
+        const et = toIstEpochSecondsStr(obj.endtime);
+        if (st) obj.starttime = st;
+        if (et) obj.endtime = et;
+        params = JSON.stringify(obj);
+      } catch (_e) {
+      }
+
+      try {
+        const res = await fetch(`/api/debug/call?api=${encodeURIComponent(api)}&params=${encodeURIComponent(params)}`);
+        const data = await res.json();
+        const responseEl = document.getElementById('api-response');
+        if (responseEl) responseEl.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        const responseEl = document.getElementById('api-response');
+        if (responseEl) responseEl.textContent = 'Error: ' + e.message;
+      }
+    });
+  }
+}
 
 (async () => {
   try {

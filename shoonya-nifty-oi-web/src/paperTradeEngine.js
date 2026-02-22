@@ -186,17 +186,31 @@ function shouldEnter(history, mode, state) {
 
     if (!isNum(underNow)) return { ok: false, reasons: [...reasons, 'Underlying LTP missing'] };
 
-    // Compute 5m extremes (excluding current)
-    let extremeHigh5 = -Infinity;
-    let extremeLow5 = Infinity;
-    for (let i = history.length - 2; i >= 0; i -= 1) {
-      const s = history[i];
-      if (!s || !isNum(s.ts) || s.ts < nowTs - 5 * 60_000) break;
-      const ul = s.underlying?.ltp;
-      if (!isNum(ul)) continue;
-      extremeHigh5 = Math.max(extremeHigh5, ul);
-      extremeLow5 = Math.min(extremeLow5, ul);
+    // Prefer TPS-derived 5m candle extremes (last completed candle).
+    // Fallback to snapshot-derived extremes when TPS is not available.
+    let extremeHigh5 = null;
+    let extremeLow5 = null;
+    let extremeSource = 'snapshot';
+    if (latest && latest.candle5m && isNum(latest.candle5m.high) && isNum(latest.candle5m.low)) {
+      extremeHigh5 = latest.candle5m.high;
+      extremeLow5 = latest.candle5m.low;
+      extremeSource = 'tps';
+    } else {
+      let hi = -Infinity;
+      let lo = Infinity;
+      for (let i = history.length - 2; i >= 0; i -= 1) {
+        const s = history[i];
+        if (!s || !isNum(s.ts) || s.ts < nowTs - 5 * 60_000) break;
+        const ul = s.underlying?.ltp;
+        if (!isNum(ul)) continue;
+        hi = Math.max(hi, ul);
+        lo = Math.min(lo, ul);
+      }
+      extremeHigh5 = hi;
+      extremeLow5 = lo;
     }
+
+    reasons.push(`5m high/low source: ${extremeSource === 'tps' ? 'TPSeries (last completed 5m candle)' : 'snapshot fallback'}`);
 
     const breaksHigh = underNow > extremeHigh5;
     const breaksLow = underNow < extremeLow5;

@@ -181,6 +181,26 @@
     <div id="report-results"></div>
   </div>
 
+  <div class="card" id="api-testing-section" style="display: none;">
+    <h3>API Testing (get_time_price_series)</h3>
+    <div>
+      <label>Token:</label>
+      <input type="text" id="api-token" value="26000">
+    </div>
+    <div>
+      <label>Parameters (JSON):</label>
+      <textarea id="api-params" rows="5">{
+  "exchange": "NSE",
+  "token": "26000",
+  "starttime": "2026-02-22 09:15:00",
+  "endtime": "2026-02-22 15:30:00",
+  "interval": "1"
+}</textarea>
+    </div>
+    <button id="test-api-btn">Call API</button>
+    <div id="api-response" style="margin-top: 10px; white-space: pre-wrap;"></div>
+  </div>
+
   <script src="/app.js"></script>
 </body>
 </html>

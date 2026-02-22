@@ -29,6 +29,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const port = parseInt(process.env.PORT || '3000', 10);
 const pollSeconds = parseInt(process.env.POLL_SECONDS || '5', 10);
 const windowSeconds = parseInt(process.env.WINDOW_SECONDS || '60', 10);
+const TPS_POLL_MS = parseInt(process.env.TPS_POLL_MS || '60000', 10);
+const TPS_SHIFT_DAYS = parseInt(process.env.TPS_SHIFT_DAYS || '0', 10);
  
 const LIVE_STATE_PATH = path.join(__dirname, '.data', 'liveState.json');
  
@@ -37,6 +39,12 @@ const state = {
   loggedIn: false,
   lastSnapshot: null,
   snapshotHistory: [],
+  tps5m: {
+    lastFetchTs: 0,
+    lastCompleted: null,
+    lastError: null,
+    lastParams: null,
+  },
   paper: createPaperTradeState(),
   live: createLiveTradeState(),
   lastError: null,
@@ -271,6 +279,100 @@ async function loginWithOtp(otp) {
  
   state.loggedIn = true;
 }
+
+function istEpochSeconds(d) {
+  // Convert a JS Date to epoch seconds, treating the wall-clock as IST.
+  // (Used only for TPS calls)
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  const iso = `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}+05:30`;
+  return Math.floor(new Date(iso).getTime() / 1000);
+}
+
+function clampToMarketHoursIst(d) {
+  // Clamp wall-clock time to NSE cash market hours (approx) 09:15–15:30 IST.
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return d;
+  const hh = d.getHours();
+  const mm = d.getMinutes();
+  const mins = hh * 60 + mm;
+  const open = 9 * 60 + 15;
+  const close = 15 * 60 + 30;
+
+  if (mins < open) {
+    d.setHours(9, 20, 0, 0);
+    return d;
+  }
+  if (mins > close) {
+    d.setHours(15, 25, 0, 0);
+    return d;
+  }
+  return d;
+}
+
+function extractCandleHighLow(c) {
+  if (!c || typeof c !== 'object') return null;
+  const hi = Number(c.inth ?? c.high ?? c.h);
+  const lo = Number(c.intl ?? c.low ?? c.l);
+  if (!Number.isFinite(hi) || !Number.isFinite(lo)) return null;
+  return { high: hi, low: lo, raw: c };
+}
+
+async function maybeUpdateTps5m(api, token) {
+  if (!api || typeof api.get_time_price_series !== 'function') return;
+  const now = Date.now();
+  if (now - (state.tps5m.lastFetchTs || 0) < TPS_POLL_MS) return;
+  state.tps5m.lastFetchTs = now;
+
+  try {
+    const nowIst = new Date();
+    const shiftDays = Number.isFinite(TPS_SHIFT_DAYS) ? TPS_SHIFT_DAYS : 0;
+    if (shiftDays) {
+      nowIst.setDate(nowIst.getDate() - shiftDays);
+      clampToMarketHoursIst(nowIst);
+    }
+    const endSec = istEpochSeconds(nowIst);
+    const startSec = endSec !== null ? (endSec - 60 * 60) : null; // last 60m is enough to get a few 5m candles
+    if (!Number.isFinite(startSec) || !Number.isFinite(endSec)) return;
+
+    const reqParams = {
+      exchange: 'NSE',
+      token,
+      starttime: String(startSec),
+      endtime: String(endSec),
+      interval: '5',
+    };
+    state.tps5m.lastParams = { ...reqParams, _shiftDays: shiftDays };
+
+    const res = await api.get_time_price_series(reqParams);
+
+    if (!res || !Array.isArray(res) || res.length < 2) {
+      state.tps5m.lastError = 'No data';
+      return;
+    }
+
+    // Most recent candle can be in-progress; use previous candle as “last completed”.
+    const lastCompletedRaw = res[res.length - 2];
+    const hl = extractCandleHighLow(lastCompletedRaw);
+    if (!hl) {
+      state.tps5m.lastError = 'Candle high/low missing';
+      return;
+    }
+
+    state.tps5m.lastCompleted = {
+      high: hl.high,
+      low: hl.low,
+      fetchedAt: now,
+    };
+    state.tps5m.lastError = null;
+  } catch (e) {
+    state.tps5m.lastError = e && e.message ? e.message : String(e);
+  }
+}
  
 async function updateOnce() {
   if (!state.loggedIn) throw new Error('Not logged in. Call /api/login with OTP.');
@@ -292,6 +394,15 @@ async function updateOnce() {
     widthStrikes: 4,
     minScore: 2,
   });
+
+  // Update TPS 5m candle cache (once per minute) and attach last completed candle HL to snapshot
+  const underToken = snapshot && snapshot.underlying ? snapshot.underlying.token : null;
+  if (underToken) {
+    await maybeUpdateTps5m(state.client, underToken);
+    if (state.tps5m.lastCompleted) {
+      snapshot.candle5m = { ...state.tps5m.lastCompleted };
+    }
+  }
  
   if (state.paper && state.paper.enabled) {
     state.paper = stepPaperTrade(state.paper, state.snapshotHistory, state.paper.selectedMode);
@@ -373,6 +484,19 @@ app.post('/api/login', async (req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
   }
+});
+
+app.get('/api/debug/tps5m', (_req, res) => {
+  res.json({
+    ok: true,
+    tps5m: {
+      lastFetchTs: state.tps5m.lastFetchTs,
+      lastCompleted: state.tps5m.lastCompleted,
+      lastError: state.tps5m.lastError,
+      lastParams: state.tps5m.lastParams,
+      shiftDays: Number.isFinite(TPS_SHIFT_DAYS) ? TPS_SHIFT_DAYS : 0,
+    },
+  });
 });
  
 app.post('/api/start', async (_req, res) => {
@@ -711,6 +835,48 @@ app.get('/api/debug/search', async (req, res) => {
     const exch = typeof req.query.exch === 'string' ? req.query.exch : 'NSE';
     const text = typeof req.query.text === 'string' ? req.query.text : 'NIFTY';
     const reply = await state.client.searchscrip(exch, text);
+    res.json({ ok: true, reply });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
+  }
+});
+
+app.get('/api/debug/call', async (req, res) => {
+  try {
+    if (!state.loggedIn) {
+      res.status(401).json({ ok: false, error: 'Not logged in' });
+      return;
+    }
+    const api = req.query.api || req.body.api;
+    const paramsStr = req.query.params || req.body.params;
+    const params = paramsStr ? JSON.parse(paramsStr) : {};
+    if (!state.client || typeof state.client[api] !== 'function') {
+      res.status(400).json({ ok: false, error: 'Invalid API name or client not available' });
+      return;
+    }
+    params.uid = state.auth.userid;
+    // Convert params for get_time_price_series to match Shoonya API expectations
+    if (api === 'get_time_price_series') {
+      if (params.exsym) {
+        params.exch = 'NSE';
+        params.token = '26000'; // NIFTY token
+        delete params.exsym;
+      }
+      if (params.starttime) {
+        params.st = params.starttime;
+        delete params.starttime;
+      }
+      if (params.endtime) {
+        params.et = params.endtime;
+        delete params.endtime;
+      }
+      if (params.interval) {
+        params.intrv = params.interval;
+        delete params.interval;
+      }
+    }
+    // Keep debug/call generic; caller controls exact params shape.
+    const reply = await state.client[api](params);
     res.json({ ok: true, reply });
   } catch (e) {
     res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
