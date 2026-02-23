@@ -855,26 +855,7 @@ app.get('/api/debug/call', async (req, res) => {
       return;
     }
     params.uid = state.auth.userid;
-    // Convert params for get_time_price_series to match Shoonya API expectations
-    if (api === 'get_time_price_series') {
-      if (params.exsym) {
-        params.exch = 'NSE';
-        params.token = '26000'; // NIFTY token
-        delete params.exsym;
-      }
-      if (params.starttime) {
-        params.st = params.starttime;
-        delete params.starttime;
-      }
-      if (params.endtime) {
-        params.et = params.endtime;
-        delete params.endtime;
-      }
-      if (params.interval) {
-        params.intrv = params.interval;
-        delete params.interval;
-      }
-    }
+    // Note: get_time_price_series works with original parameter names in automated code
     // Keep debug/call generic; caller controls exact params shape.
     const reply = await state.client[api](params);
     res.json({ ok: true, reply });

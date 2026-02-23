@@ -616,7 +616,7 @@ loginBtn.addEventListener('click', async () => {
     const health = await fetchHealth();
     if (health.loggedIn) {
       setLoginStatus('Login successful', 'ok');
-      // document.getElementById('api-testing-section').style.display = 'block';
+      document.getElementById('api-testing-section').style.display = 'block';
     } else {
       setLoginStatus('Login failed', 'bad');
     }
