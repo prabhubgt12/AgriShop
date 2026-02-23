@@ -356,7 +356,7 @@ function updatePeakOnly(trade, currentLtp) {
   return { ...trade, peakPrice: peak };
 }
 
-function maybeExit(trade, mode, currentLtp, exitCfg) {
+function maybeExit(trade, mode, currentLtp, underlyingLtp, exitCfg) {
   if (!trade || trade.status !== 'OPEN' || !isNum(currentLtp)) return null;
 
   const exitStyle = normalizeExitStyle(exitCfg?.exitStyle || 'TRAILING');
@@ -370,10 +370,10 @@ function maybeExit(trade, mode, currentLtp, exitCfg) {
 
   // False breakout exit for NORMAL
   if (trade.mode === 'NORMAL' && isNum(trade.breakoutLevel)) {
-    if (trade.optType === 'CE' && currentLtp < trade.breakoutLevel - 7) {
+    if (trade.optType === 'CE' && underlyingLtp < trade.breakoutLevel - 7) {
       return { reason: 'FALSE_BREAKOUT' };
     }
-    if (trade.optType === 'PE' && currentLtp > trade.breakoutLevel + 7) {
+    if (trade.optType === 'PE' && underlyingLtp > trade.breakoutLevel + 7) {
       return { reason: 'FALSE_BREAKOUT' };
     }
   }
@@ -435,7 +435,7 @@ function stepPaperTrade(state, snapshotHistory, selectedMode) {
     const updated = exitStyle === 'TRAILING'
       ? updateTrailing(currentTrade, mode, ltpNow)
       : updatePeakOnly(currentTrade, ltpNow);
-    const exit = maybeExit(updated, mode, ltpNow, { exitStyle: state.exitStyle, targetPct: state.targetPct });
+    const exit = maybeExit(updated, mode, ltpNow, latest.underlying?.ltp, { exitStyle: state.exitStyle, targetPct: state.targetPct });
 
     if (exit) {
       const exitPrice = isNum(ltpNow) ? ltpNow : updated.entryPrice;
