@@ -344,7 +344,7 @@ function updateTrailing(trade, mode, currentLtp) {
   } else {
     // Normal/expiry
     if (mult >= 1.3) sl = Math.max(sl, entry);
-    if (mult >= 1.6) sl = Math.max(sl, peak * 0.8);
+    if (mult >= 1.6) sl = Math.max(sl, peak * 0.88);
   }
 
   return { ...trade, peakPrice: peak, slPrice: sl };
@@ -370,10 +370,10 @@ function maybeExit(trade, mode, currentLtp, exitCfg) {
 
   // False breakout exit for NORMAL
   if (trade.mode === 'NORMAL' && isNum(trade.breakoutLevel)) {
-    if (trade.optType === 'CE' && currentLtp < trade.breakoutLevel - 10) {
+    if (trade.optType === 'CE' && currentLtp < trade.breakoutLevel - 7) {
       return { reason: 'FALSE_BREAKOUT' };
     }
-    if (trade.optType === 'PE' && currentLtp > trade.breakoutLevel + 10) {
+    if (trade.optType === 'PE' && currentLtp > trade.breakoutLevel + 7) {
       return { reason: 'FALSE_BREAKOUT' };
     }
   }
@@ -383,12 +383,12 @@ function maybeExit(trade, mode, currentLtp, exitCfg) {
     return { reason: 'SL_HIT' };
   }
 
-  // Peak trail exit for normal/expiry (20% from peak after >=60% profit)
+  // Peak trail exit for normal/expiry (12% from peak after >=20% profit)
   const entry = trade.entryPrice;
   const peak = trade.peakPrice;
   if (mode !== 'BIG_RALLY' && isNum(entry) && isNum(peak) && peak > 0) {
     const mult = peak / entry;
-    if (mult >= 1.6 && currentLtp <= peak * 0.8) {
+    if (mult >= 1.2 && currentLtp <= peak * 0.88) {
       return { reason: 'TRAIL_FROM_PEAK' };
     }
   }
@@ -399,7 +399,7 @@ function maybeExit(trade, mode, currentLtp, exitCfg) {
 function initialSl(entryPrice, mode) {
   if (!isNum(entryPrice) || entryPrice <= 0) return null;
   if (mode === 'EXPIRY') return entryPrice * 0.75; // ~25%
-  if (mode === 'NORMAL') return entryPrice * 0.70; // ~30%
+  if (mode === 'NORMAL') return entryPrice * 0.80; // ~20%
   if (mode === 'BIG_RALLY') return entryPrice * 0.60; // looser
   return entryPrice * 0.70;
 }
