@@ -174,10 +174,10 @@ function shouldEnter(history, mode, state) {
 
   // Entry thresholds from notes
   if (mode === 'EXPIRY') {
-    // Require ~50% move in 5 min
+    // Require ~30% move in 5 min
     if (chg === null) return { ok: false, reasons: [...reasons, 'Not enough data for 5-min price change'] };
-    if (chg >= 0.5) return { ok: true, direction, inst, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% >= 50%`] };
-    return { ok: false, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% < 50%`] };
+    if (chg >= 0.3) return { ok: true, direction, inst, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% >= 30%`] };
+    return { ok: false, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% < 30%`] };
   }
 
   if (mode === 'NORMAL') {
@@ -236,46 +236,10 @@ function shouldEnter(history, mode, state) {
     if (breaksHigh && ceCond) {
       const direction = 'BULL';
       const inst = selectInstrument(latest, mode, direction);
-      const trade = {
-        id: `paper_${latest.ts}`,
-        status: 'OPEN',
-        mode,
-        strike: inst.strike,
-        optType: inst.type,
-        qty: normalizeOrderQty(state.orderQty),
-        entryPrice: entryPrice,
-        entryTs: latest.ts,
-        peakPrice: entryPrice,
-        slPrice: initialSl(entryPrice, mode),
-        exitPrice: null,
-        exitTs: null,
-        exitReason: null,
-        pnl: 0,
-        reasons: reasons,
-        breakoutLevel: extremeHigh5,
-      };
       return { ok: true, direction, inst, reasons };
     } else if (breaksLow && peCond) {
       const direction = 'BEAR';
       const inst = selectInstrument(latest, mode, direction);
-      const trade = {
-        id: `paper_${latest.ts}`,
-        status: 'OPEN',
-        mode,
-        strike: inst.strike,
-        optType: inst.type,
-        qty: normalizeOrderQty(state.orderQty),
-        entryPrice: entryPrice,
-        entryTs: latest.ts,
-        peakPrice: entryPrice,
-        slPrice: initialSl(entryPrice, mode),
-        exitPrice: null,
-        exitTs: null,
-        exitReason: null,
-        pnl: 0,
-        reasons: reasons,
-        breakoutLevel: extremeLow5,
-      };
       return { ok: true, direction, inst, reasons };
     } else {
       return { ok: false, reasons: [...reasons, 'Conditions not met'] };
@@ -341,10 +305,19 @@ function updateTrailing(trade, mode, currentLtp) {
     if (mult >= 3) sl = Math.max(sl, peak * 0.5);
     if (mult >= 5) sl = Math.max(sl, peak * 0.6);
     if (mult >= 10) sl = Math.max(sl, peak * 0.7);
-  } else {
-    // Normal/expiry
+  } else if (mode === 'NORMAL') {
     if (mult >= 1.3) sl = Math.max(sl, entry);
     if (mult >= 1.6) sl = Math.max(sl, peak * 0.88);
+  } else if (mode === 'EXPIRY') {
+    if (mult >= 1.20) {
+      sl = Math.max(sl, entry);
+    }
+    if (mult >= 1.35) {
+      sl = Math.max(sl, peak * 0.90);
+    }
+    if (mult >= 1.60) {
+      sl = Math.max(sl, peak * 0.85);
+    }
   }
 
   return { ...trade, peakPrice: peak, slPrice: sl };
@@ -620,6 +593,10 @@ function computeEntryDecision(state, snapshotHistory) {
   const maxTrades = isNum(state.maxTradesPerDay) ? state.maxTradesPerDay : 3;
   if (tradesToday >= maxTrades) {
     return { ok: false, reasons: [`Max trades/day reached: ${tradesToday}/${maxTrades}`] };
+  }
+
+  if (state.currentTrade && state.currentTrade.status === 'OPEN') {
+    return { ok: false, reasons: ['Trade already OPEN'] };
   }
 
   const selectedMode = state.selectedMode || 'AUTO';

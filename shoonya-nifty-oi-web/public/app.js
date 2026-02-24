@@ -316,7 +316,7 @@ function render(snapshot, lastError, paper, live) {
       if (elTradeLtp) elTradeLtp.textContent = fmtNum(ltp);
       elTradePeak.textContent = fmtNum(t.peakPrice);
       elTradeSl.textContent = fmtNum(t.slPrice);
-      elTradePnl.textContent = pnl === null ? '-' : fmtSigned(pnl);
+      elTradePnl.textContent = pnl === null ? '-' : fmtSigned(Math.round(pnl));
       elTradeUpdated.textContent = fmtTime(snapshot?.ts);
 
       elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');
@@ -337,7 +337,7 @@ function render(snapshot, lastError, paper, live) {
       if (elTradeLtp) elTradeLtp.textContent = '-';
       elTradePeak.textContent = fmtNum(t.peakPrice);
       elTradeSl.textContent = fmtNum(t.slPrice);
-      elTradePnl.textContent = fmtNum(t.pnl);
+      elTradePnl.textContent = fmtNum(Math.round(t.pnl));
       elTradeUpdated.textContent = fmtTime(t.exitTs);
 
       elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');
@@ -677,19 +677,20 @@ document.getElementById('generate-report').addEventListener('click', async () =>
     const res = await fetch('/api/trades/report?' + params);
     const data = await res.json();
     if (data.ok) {
-      let html = '<table><thead><tr><th>Date</th><th>Strike</th><th>Buy Price</th><th>Sell Price</th><th>P/L</th></tr></thead><tbody>';
+      let html = '<table><thead><tr><th>Entry Date/Time</th><th>Strike</th><th>Qty</th><th>Buy Price</th><th>Sell Price</th><th>P/L</th></tr></thead><tbody>';
       let totalPL = 0;
       for (const trade of data.trades) {
-        const date = new Date(trade.exitTs).toLocaleDateString();
+        const date = trade.entryTs && trade.entryTs > 0 ? new Date(trade.entryTs).toLocaleString() : 'N/A';
         const strike = trade.strike;
-        const buyPrice = trade.entryPrice;
-        const sellPrice = trade.exitPrice;
+        const buyPrice = Math.round(trade.entryPrice);
+        const sellPrice = Math.round(trade.exitPrice);
         const pnl = trade.pnl;
         totalPL += pnl || 0;
-        const pnlClass = pnl > 0 ? 'profit' : pnl < 0 ? 'loss' : '';
-        html += `<tr><td>${date}</td><td>${strike}</td><td>${buyPrice}</td><td>${sellPrice}</td><td class="${pnlClass}">${pnl}</td></tr>`;
+        const pnlStyle = pnl > 0 ? 'style="color: limegreen;"' : pnl < 0 ? 'style="color: red;"' : '';
+        html += `<tr><td>${date}</td><td>${strike} ${trade.optType}</td><td>${trade.qty}</td><td>${buyPrice}</td><td>${sellPrice}</td><td ${pnlStyle}>${Math.round(pnl)}</td></tr>`;
       }
-      html += `</tbody></table><div>Total P/L: ${totalPL}</div>`;
+      const totalStyle = totalPL > 0 ? 'style="color: limegreen;"' : totalPL < 0 ? 'style="color: red;"' : '';
+      html += `</tbody></table><div ${totalStyle}>Total P/L: ${Math.round(totalPL)}</div>`;
       document.getElementById('report-results').innerHTML = html;
     } else {
       document.getElementById('report-results').innerHTML = 'Error: ' + (data.error || 'Unknown error');
@@ -742,7 +743,30 @@ document.getElementById('generate-report').addEventListener('click', async () =>
   }
 }
 
+function formatDateTime(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
 (async () => {
+  const now = new Date();
+  const start = new Date(now.getTime() - 15 * 60 * 1000); // 15 min ago
+  const end = now;
+  const paramsEl = document.getElementById('api-params');
+  if (paramsEl) {
+    try {
+      const obj = JSON.parse(paramsEl.value);
+      obj.starttime = formatDateTime(start);
+      obj.endtime = formatDateTime(end);
+      obj.interval = "5";
+      paramsEl.value = JSON.stringify(obj, null, 2);
+    } catch (_) {}
+  }
+
   try {
     const health = await fetchHealth();
     setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);
