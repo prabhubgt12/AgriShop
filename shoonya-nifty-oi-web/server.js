@@ -33,6 +33,8 @@ const TPS_POLL_MS = parseInt(process.env.TPS_POLL_MS || '60000', 10);
 const TPS_SHIFT_DAYS = parseInt(process.env.TPS_SHIFT_DAYS || '0', 10);
  
 const LIVE_STATE_PATH = path.join(__dirname, '.data', 'liveState.json');
+
+let hasResyncedOnStart = false;
  
 const state = {
   client: null,
@@ -129,22 +131,102 @@ function tryRestoreLiveState() {
 tryRestoreLiveState();
  
 async function tryResyncFromShoonya() {
-  if (!state.loggedIn || !state.client) return false;
   try {
+    const getOrderId = (o) => (o && (o.norenordno || o.orderno || o.order_no)) || null;
+    const toMs = (t) => {
+      const v = t ? new Date(t).getTime() : NaN;
+      return Number.isFinite(v) ? v : null;
+    };
+
     const orders = await state.client.get_orderbook();
-    if (!orders || !Array.isArray(orders)) return false;
-    const appOrders = orders.filter(o => o.remarks && (o.remarks.startsWith('forced_') || o.remarks.startsWith('auto_')) && o.status === 'COMPLETE' && o.trantype === 'B');
-    if (appOrders.length === 0) return false;
+    if (!orders || !Array.isArray(orders)) {
+      return false;
+    }
 
     const trades = await state.client.get_tradebook();
+    const existingTrades = safeReadJson(path.join(__dirname, '.data', 'trades.json')) || [];
+
+    // If we have a current LIVE trade in memory, first try to close it using broker exit linkage
+    // (works even if you currently have manual positions in the same tsym).
+    if (state.live && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
+      const cur = state.live.current;
+      const entryOrderNo = cur.entryOrderNo;
+      if (entryOrderNo) {
+        const entryTsMs = Number.isFinite(cur.entryTs) ? cur.entryTs : null;
+        const exitOrder = orders.find((o) => {
+          const parent = o && o.parentorderno ? String(o.parentorderno) : '';
+          const remarks = o && o.remarks ? String(o.remarks) : '';
+          const status = o && o.status ? String(o.status) : '';
+          const isExitRemark = remarks.startsWith('exit_') || remarks === 'forced_exit';
+          return isExitRemark && status === 'COMPLETE' && parent === String(entryOrderNo);
+        }) || orders.find((o) => {
+          // Fallback: Some brokers don't set parentorderno reliably.
+          // Match by symbol+qty and time after entry.
+          const remarks = o && o.remarks ? String(o.remarks) : '';
+          const status = o && o.status ? String(o.status) : '';
+          const trantype = o && o.trantype ? String(o.trantype) : '';
+          const tsym = o && o.tsym ? String(o.tsym) : '';
+          const qty = typeof o.qty === 'number' ? o.qty : Number(o.qty);
+          const isExitRemark = remarks.startsWith('exit_') || remarks === 'forced_exit';
+          const orderTs = toMs(o.norentm);
+          const afterEntry = entryTsMs === null || orderTs === null ? true : orderTs >= entryTsMs;
+          return isExitRemark && status === 'COMPLETE' && trantype === 'S' && tsym === String(cur.tsym) && qty === Number(cur.qty) && afterEntry;
+        });
+
+        if (exitOrder) {
+          const exitOrderId = getOrderId(exitOrder);
+          let exitPrice = null;
+          if (trades && Array.isArray(trades) && exitOrderId) {
+            const exitTrades = trades.filter(t => t && t.norenordno === exitOrderId);
+            if (exitTrades.length > 0) {
+              const p = parseFloat(exitTrades[0].avgprc);
+              if (p > 0) exitPrice = p;
+            }
+          }
+
+          const closed = {
+            ...cur,
+            status: 'CLOSED',
+            exitTs: new Date(exitOrder.norentm || Date.now()).getTime(),
+            exitReason: (() => {
+              const r = String(exitOrder.remarks || '');
+              if (r === 'forced_exit') return 'FORCED_EXIT';
+              return r.replace('exit_', '') || 'EXIT';
+            })(),
+            exitOrderNo: exitOrderId,
+            exitPrice,
+            pnl: (typeof exitPrice === 'number' && typeof cur.entryPrice === 'number' && typeof cur.qty === 'number')
+              ? (exitPrice - cur.entryPrice) * cur.qty
+              : cur.pnl,
+          };
+
+          // Only store if not already stored.
+          if (!existingTrades.some(t => t && t.entryOrderNo === closed.entryOrderNo)) {
+            storeTrade(closed);
+          }
+
+          state.live.current = null;
+          state.live.history = [...(state.live.history || []), closed].slice(-50);
+          state.live.lastDecision = { ts: Date.now(), action: 'RESYNC_CLOSED', reasons: ['Exit order COMPLETE found for current trade'] };
+          state.live.lastExitTs = Date.now();
+          persistLiveState();
+          return true;
+        }
+      }
+    }
+
+    const appOrders = orders.filter(o => o.remarks && (o.remarks.startsWith('forced_') || o.remarks.startsWith('auto_')));
+    if (appOrders.length === 0) {
+      return false;
+    }
     let syncedAny = false;
 
     for (const entryOrder of appOrders) {
+      const orderId = getOrderId(entryOrder);
       // Check if already synced (skip if we have a trade with this entryOrderNo)
-      const existingTrades = safeReadJson(path.join(__dirname, '.data', 'trades.json')) || [];
-      if (existingTrades.some(t => t.entryOrderNo === entryOrder.norenordno)) continue;
+      if (existingTrades.some(t => t.entryOrderNo === orderId)) continue;
 
-      const entryTrades = trades.filter(t => t.norenordno === entryOrder.norenordno);
+      const entryTrades = trades.filter(t => t.norenordno === orderId);
       if (!trades || !Array.isArray(trades) || entryTrades.length === 0) continue;
       const entryTrade = entryTrades[0];
       const entryPrice = parseFloat(entryTrade.avgprc);
@@ -160,11 +242,12 @@ async function tryResyncFromShoonya() {
       // Check for app-placed exit order
       const exitOrder = orders.find(o => o.remarks && o.remarks.startsWith('exit_') && o.status === 'COMPLETE' && o.parentorderno === entryOrder.norenordno);
       if (exitOrder) {
+        const exitOrderId = exitOrder.norenordno || exitOrder.orderno || exitOrder.order_no;
         status = 'CLOSED';
         exitTs = new Date(exitOrder.norentm).getTime();
         exitReason = exitOrder.remarks.replace('exit_', '');
-        exitOrderNo = exitOrder.norenordno;
-        const exitTrades = trades.filter(t => t.norenordno === exitOrder.norenordno);
+        exitOrderNo = exitOrderId;
+        const exitTrades = trades.filter(t => t.norenordno === exitOrderId);
         if (exitTrades.length > 0) {
           const exitTrade = exitTrades[0];
           exitPrice = parseFloat(exitTrade.avgprc);
@@ -173,21 +256,17 @@ async function tryResyncFromShoonya() {
           }
         }
       } else {
-        // Check for manual exits: sell orders on same tsym
-        const sellOrders = orders.filter(o => o.tsym === entryOrder.tsym && o.trantype === 'S' && o.status === 'COMPLETE');
-        if (sellOrders.length > 0) {
-          const manualExitOrder = sellOrders[0]; // Take the first one, assuming bulk exit
-          const manualExitTrades = trades.filter(t => t.norenordno === manualExitOrder.norenordno);
-          if (manualExitTrades.length > 0) {
-            const manualExitTrade = manualExitTrades[0];
-            exitPrice = parseFloat(manualExitTrade.avgprc);
-            if (exitPrice > 0) {
-              pnl = (exitPrice - entryPrice) * parseInt(entryOrder.qty);
-              status = 'CLOSED';
-              exitTs = new Date(manualExitOrder.norentm).getTime();
-              exitReason = 'MANUAL_EXIT';
-              exitOrderNo = manualExitOrder.norenordno;
-            }
+        // Check for manual exits: sell trades on same tsym
+        const sellTrades = trades.filter(t => t.tsym === entryOrder.tsym && t.trantype === 'S');
+        if (sellTrades.length > 0) {
+          const manualExitTrade = sellTrades[0]; // Take the first one, assuming bulk exit
+          exitPrice = parseFloat(manualExitTrade.avgprc);
+          if (exitPrice > 0) {
+            pnl = (exitPrice - entryPrice) * parseInt(entryOrder.qty);
+            status = 'CLOSED';
+            exitTs = new Date(manualExitTrade.norentm || entryOrder.norentm || Date.now()).getTime();
+            exitReason = 'MANUAL_EXIT';
+            exitOrderNo = manualExitTrade.norenordno;
           }
         }
       }
@@ -204,7 +283,7 @@ async function tryResyncFromShoonya() {
       const strike = parseInt(tsymMatch[2]);
       const qty = parseInt(entryOrder.qty);
       const tradeObj = {
-        id: `resynced_${entryOrder.norenordno}_${Date.now()}`,
+        id: `resynced_${orderId}_${Date.now()}`,
         status,
         mode,
         strike,
@@ -212,8 +291,8 @@ async function tryResyncFromShoonya() {
         tsym: entryOrder.tsym,
         exchange: entryOrder.exch,
         qty,
-        entryTs: Date.now(), // Placeholder, could parse entryOrder.norentm if available
-        entryOrderNo: entryOrder.norenordno,
+        entryTs: new Date(entryOrder.norentm || Date.now()).getTime(),
+        entryOrderNo: orderId,
         entryPrice,
         peakPrice: entryPrice,
         slPrice,
@@ -227,12 +306,16 @@ async function tryResyncFromShoonya() {
       if (status === 'CLOSED') {
         storeTrade(tradeObj);
         syncedAny = true;
+      } else if (status === 'OPEN') {
+        state.live.current = tradeObj;
       }
     }
 
-    // Set live.current to null or the first open trade if any
-    state.live.current = null; // Since all are closed
-    return syncedAny;
+    if (state.live.current) {
+      state.paper.tradeMode = 'LIVE';
+    }
+
+    return syncedAny || !!state.live.current;
   } catch (e) {
     console.error('Resync from Shoonya failed:', e);
     return false;
@@ -365,6 +448,7 @@ async function maybeUpdateTps5m(api, token) {
       fetchedAt: now,
     };
     state.tps5m.lastError = null;
+    console.log(`TPS 5m updated: high=${hl.high}, low=${hl.low}, fetchedAt=${new Date(now).toISOString()}`);
   } catch (e) {
     state.tps5m.lastError = e && e.message ? e.message : String(e);
   }
@@ -404,18 +488,31 @@ async function updateOnce() {
     state.paper = stepPaperTrade(state.paper, state.snapshotHistory, state.paper.selectedMode);
   }
 
-  // Resync open/exiting trades on start to avoid showing stale trades
-  if (state.live && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
-    const ok = await tryResyncFromShoonya();
-    if (!ok) {
-      console.log('Resync failed — NOT clearing live.current');
-    }
+  // Resync once on start
+  if (!hasResyncedOnStart) {
+    await tryResyncFromShoonya();
+    hasResyncedOnStart = true;
   }
 
   // LIVE execution (safe gated by env + UI)
   const liveEnabled = String(process.env.ENABLE_LIVE_TRADING || '').toLowerCase() === 'true';
   if (liveEnabled && state.paper && state.paper.tradeMode === 'LIVE') {
-    const entryDecision = computeEntryDecision(state.paper, state.snapshotHistory);
+    const cooldownMs = parseInt(process.env.TRADE_COOLDOWN_MS || '30000', 10);
+    let entryDecision;
+    if (state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
+      entryDecision = { ok: false, reasons: ['Live trade already open'] };
+    } else if (state.live.lastExitTs && Date.now() - state.live.lastExitTs < cooldownMs) {
+      entryDecision = { ok: false, reasons: ['Cooldown active'] };
+    } else {
+      entryDecision = computeEntryDecision(state.paper, state.snapshotHistory);
+    }
+    if (entryDecision.ok && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
+      entryDecision = { ok: false, reasons: ['Live trade already open'] };
+    }
+    if (entryDecision.ok && state.live.lastRejectTs && Date.now() - state.live.lastRejectTs < cooldownMs) {
+      entryDecision = { ok: false, reasons: ['Cooldown after rejection'] };
+    }
+    console.log('Live entryDecision:', entryDecision);
     state.live = await stepLiveTrade({
       client: state.client,
       paper: state.paper,
@@ -423,12 +520,11 @@ async function updateOnce() {
       snapshotHistory: state.snapshotHistory,
       entryDecision,
     });
- 
+
     if (state.live && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
       persistLiveState();
     }
   }
- 
   state.lastSnapshot = snapshot;
   state.lastError = null;
 }
@@ -438,11 +534,17 @@ async function startPolling() {
   if (!state.loggedIn) throw new Error('Not logged in. Call /api/login with OTP first.');
   state.polling = true;
  
+  let updateInFlight = false;
+ 
   const loop = async () => {
+    if (updateInFlight) return;
+    updateInFlight = true;
     try {
       await updateOnce();
     } catch (e) {
       state.lastError = e && e.message ? e.message : String(e);
+    } finally {
+      updateInFlight = false;
     }
   };
  
@@ -496,6 +598,8 @@ app.get('/api/debug/tps5m', (_req, res) => {
  
 app.post('/api/start', async (_req, res) => {
   try {
+    // Reset paper state on server start
+    state.paper = createPaperTradeState();
     await startPolling();
     res.json({ ok: true });
   } catch (e) {
@@ -799,6 +903,7 @@ app.post('/api/paper/force-exit', (_req, res) => {
         state.live.current = closed;
         state.live.history = [...(state.live.history || []), closed].slice(-50);
         state.live.lastDecision = { ts: Date.now(), action: 'FORCED_EXIT', reasons: ['FORCED_EXIT'] };
+        state.live.lastExitTs = Date.now();
         persistLiveState();
         res.json({ ok: true, paper: state.paper, live: state.live, order: resp });
       } catch (e) {
@@ -860,6 +965,10 @@ app.get('/api/debug/call', async (req, res) => {
 });
 
 app.get('/api/snapshot', (_req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+
   if (!state.loggedIn) {
     res.status(401).json({ ok: false, error: 'Not logged in. POST /api/login with factor2 code.' });
     return;

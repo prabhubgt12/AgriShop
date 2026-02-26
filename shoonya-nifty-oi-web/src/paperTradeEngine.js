@@ -228,6 +228,8 @@ function shouldEnter(history, mode, state) {
     const ceCond = ceChg !== null && ceChg >= 0.12;
     const peCond = peChg !== null && peChg >= 0.12;
 
+    console.log(`Conditions: breaksHigh=${breaksHigh} (${underNow} > ${extremeHigh5}), breaksLow=${breaksLow} (${underNow} < ${extremeLow5}), ceCond=${ceCond} (${ceChg} >= 0.12), peCond=${peCond} (${peChg} >= 0.12)`);
+
     reasons.push(`Breaks 5m high: ${passFailSpan(breaksHigh)} (LTP ${fmtNum(underNow, 2)} vs high ${fmtNum(extremeHigh5, 2)})`);
     reasons.push(`ATM CE >=12% (2m): ${passFailSpan(ceCond)} (${fmtPct(ceChg, 1)} | now ${fmtNum(ceNow?.ltp, 2)} vs 2m ${fmtNum(cePast?.ltp, 2)})`);
     reasons.push(`Breaks 5m low: ${passFailSpan(breaksLow)} (LTP ${fmtNum(underNow, 2)} vs low ${fmtNum(extremeLow5, 2)})`);
@@ -491,6 +493,8 @@ function stepPaperTrade(state, snapshotHistory, selectedMode) {
     reasons: entryCheck.reasons,
   };
 
+  console.log('Paper trade entered:', trade);
+
   return {
     ...state,
     selectedMode,
@@ -593,10 +597,6 @@ function computeEntryDecision(state, snapshotHistory) {
   const maxTrades = isNum(state.maxTradesPerDay) ? state.maxTradesPerDay : 3;
   if (tradesToday >= maxTrades) {
     return { ok: false, reasons: [`Max trades/day reached: ${tradesToday}/${maxTrades}`] };
-  }
-
-  if (state.currentTrade && state.currentTrade.status === 'OPEN') {
-    return { ok: false, reasons: ['Trade already OPEN'] };
   }
 
   const selectedMode = state.selectedMode || 'AUTO';
