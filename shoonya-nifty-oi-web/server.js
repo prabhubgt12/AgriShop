@@ -598,8 +598,6 @@ app.get('/api/debug/tps5m', (_req, res) => {
  
 app.post('/api/start', async (_req, res) => {
   try {
-    // Reset paper state on server start
-    state.paper = createPaperTradeState();
     await startPolling();
     res.json({ ok: true });
   } catch (e) {
