@@ -513,6 +513,7 @@ async function updateOnce() {
       entryDecision = { ok: false, reasons: ['Cooldown after rejection'] };
     }
     console.log('Live entryDecision:', entryDecision);
+    state.live.lastDecision = entryDecision;
     state.live = await stepLiveTrade({
       client: state.client,
       paper: state.paper,

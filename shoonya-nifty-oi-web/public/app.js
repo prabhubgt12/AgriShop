@@ -385,7 +385,9 @@ function render(snapshot, lastError, paper, live) {
   }
 
   if (elConditionStatus) {
-    const dec = paper?.lastDecision;
+    const dec = paper?.tradeMode === 'LIVE'
+      ? live?.lastDecision
+      : paper?.lastDecision;
     const arr = Array.isArray(dec?.reasons) ? dec.reasons : [];
     elConditionStatus.innerHTML = arr.length
       ? arr.map((r) => `<div>${String(r || '')}</div>`).join('')
