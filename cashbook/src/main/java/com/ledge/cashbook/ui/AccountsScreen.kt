@@ -420,15 +420,17 @@ fun AccountsScreen(
                                     Spacer(Modifier.height(8.dp))
                                     val creditFrac = (credit / totalTx).toFloat().coerceIn(0f, 1f)
                                     val debitFrac = (debit / totalTx).toFloat().coerceIn(0f, 1f)
+                                    val creditPct = (creditFrac * 100f).roundToInt().coerceIn(0, 100)
+                                    val debitPct = (100 - creditPct).coerceIn(0, 100)
                                     // Percentage values above progress bar: 80% -------- 20%
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        val pctColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                                        val pctColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.70f)
                                         val lineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
                                         Text(
-                                            text = "${(creditFrac * 100).toInt()}%",
+                                            text = "${creditPct}%",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = pctColor
                                         )
@@ -440,7 +442,7 @@ fun AccountsScreen(
                                         )
                                         Spacer(Modifier.width(8.dp))
                                         Text(
-                                            text = "${(debitFrac * 100).toInt()}%",
+                                            text = "${debitPct}%",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = pctColor
                                         )
@@ -449,10 +451,12 @@ fun AccountsScreen(
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(14.dp)
+                                            .height(10.dp)
                                             .clip(RoundedCornerShape(50))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
                                     ) {
+                                        val creditBarColor = Color(0xFF81C784).copy(alpha = if (dark) 0.24f else 0.40f)
+                                        val debitBarColor = Color(0xFFE57373).copy(alpha = if (dark) 0.24f else 0.40f)
                                         Row(Modifier.fillMaxSize()) {
                                             if (creditFrac > 0f) {
                                                 Box(
@@ -460,7 +464,7 @@ fun AccountsScreen(
                                                         .fillMaxHeight()
                                                         .weight(creditFrac)
                                                         .background(
-                                                            Color(0xFF81C784),
+                                                            creditBarColor,
                                                             if (debitFrac > 0f) {
                                                                 RoundedCornerShape(
                                                                     topStart = 50.dp,
@@ -480,7 +484,7 @@ fun AccountsScreen(
                                                         .fillMaxHeight()
                                                         .weight(debitFrac)
                                                         .background(
-                                                            Color(0xFFE57373),
+                                                            debitBarColor,
                                                             if (creditFrac > 0f) {
                                                                 RoundedCornerShape(
                                                                     topStart = 0.dp,
