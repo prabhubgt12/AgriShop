@@ -876,8 +876,8 @@ fun AccountsScreen(
             val edge = 16.dp
             val topInsetPx = with(density) { WindowInsets.statusBars.getTop(this).toFloat() }
             val bottomInsetPx = with(density) { WindowInsets.navigationBars.getBottom(this).toFloat() }
-            val bannerReservePx = with(density) { if (showBanner && bannerLoaded) bannerHeight.toPx() + 24.dp.toPx() else 24.dp.toPx() }
-            val maxX = maxWidth - with(density) { fabSize.toPx() + edge.toPx() }
+            val bannerReservePx = with(density) { if (showBanner && bannerLoaded) bannerHeight.toPx() + 30.dp.toPx() else 30.dp.toPx() }
+            val maxX = maxWidth - with(density) { fabSize.toPx() }
             val maxY = maxHeight - with(density) { fabSize.toPx() + edge.toPx() } - bannerReservePx
             val minX = with(density) { edge.toPx() }
             val minY = topInsetPx + with(density) { edge.toPx() }
