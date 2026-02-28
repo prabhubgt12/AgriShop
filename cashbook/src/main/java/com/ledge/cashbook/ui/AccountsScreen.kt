@@ -420,6 +420,32 @@ fun AccountsScreen(
                                     Spacer(Modifier.height(8.dp))
                                     val creditFrac = (credit / totalTx).toFloat().coerceIn(0f, 1f)
                                     val debitFrac = (debit / totalTx).toFloat().coerceIn(0f, 1f)
+                                    // Percentage values above progress bar: 80% -------- 20%
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val pctColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                                        val lineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+                                        Text(
+                                            text = "${(creditFrac * 100).toInt()}%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = pctColor
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        HorizontalDivider(
+                                            modifier = Modifier.weight(1f),
+                                            color = lineColor,
+                                            thickness = 0.5.dp
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            text = "${(debitFrac * 100).toInt()}%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = pctColor
+                                        )
+                                    }
+                                    Spacer(Modifier.height(4.dp))
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -469,24 +495,6 @@ fun AccountsScreen(
                                                 )
                                             }
                                         }
-                                        Text(
-                                            text = "${(creditFrac * 100).toInt()}%",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color.Black.copy(alpha = 0.85f),
-                                            textAlign = TextAlign.Start,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterStart)
-                                                .padding(start = 10.dp)
-                                        )
-                                        Text(
-                                            text = "${(debitFrac * 100).toInt()}%",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color.Black.copy(alpha = 0.85f),
-                                            textAlign = TextAlign.End,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterEnd)
-                                                .padding(end = 10.dp)
-                                        )
                                     }
                                 }
                             }
