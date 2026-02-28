@@ -142,64 +142,18 @@ fun AccountsScreen(
                                 ) {
                                     // Credit
                                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.total_credit), style = MaterialTheme.typography.labelSmall)
-                                        val chipBg = Color(0xFFDFF6DD)
-                                        val chipFg = Color(0xFF0B6A0B)
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(chipBg)
-                                                .padding(vertical = 4.dp, horizontal = 6.dp)
-                                        ) {
-                                            Text(
-                                                Currency.inr(totalCredit),
-                                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                                                color = chipFg,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
+                                        Text(stringResource(R.string.total_credit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(Currency.inr(totalCredit), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = Color(0xFF66BB6A))
                                     }
                                     // Debit
                                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.total_debit), style = MaterialTheme.typography.labelSmall)
-                                        val chipBg = MaterialTheme.colorScheme.errorContainer
-                                        val chipFg = MaterialTheme.colorScheme.onErrorContainer
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(chipBg)
-                                                .padding(vertical = 4.dp, horizontal = 6.dp)
-                                        ) {
-                                            Text(
-                                                Currency.inr(totalDebit),
-                                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                                                color = chipFg,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
+                                        Text(stringResource(R.string.total_debit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(Currency.inr(totalDebit), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = Color(0xFFEF5350))
                                     }
                                     // Due count
                                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.due_accounts), style = MaterialTheme.typography.labelSmall)
-                                        val chipBg = MaterialTheme.colorScheme.errorContainer
-                                        val chipFg = MaterialTheme.colorScheme.onErrorContainer
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(chipBg)
-                                                .padding(vertical = 4.dp, horizontal = 6.dp)
-                                                .then(if (dueCount > 0) Modifier.clickable { showDueOnly = !showDueOnly } else Modifier)
-                                        ) {
-                                            Text(
-                                                dueCount.toString(),
-                                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                                                color = chipFg,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
+                                        Text(stringResource(R.string.due_accounts), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(dueCount.toString(), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = Color(0xFFEF5350), modifier = Modifier.then(if (dueCount > 0) Modifier.clickable { showDueOnly = !showDueOnly } else Modifier))
                                     }
                                 }
                             }
