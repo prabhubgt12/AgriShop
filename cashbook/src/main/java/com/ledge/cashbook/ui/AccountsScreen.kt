@@ -30,18 +30,15 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.DrawStyle
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.sp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.foundation.layout.Box
 import com.ledge.cashbook.util.PdfShare
@@ -101,15 +98,87 @@ fun AccountsScreen(
     }
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(
-            title = { Text(stringResource(R.string.title_cash_book)) },
-            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) },
+        topBar = {
+            Column {
+                CenterAlignedTopAppBar(
+                    title = { Text(stringResource(R.string.title_cash_book)) },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+                // Summary information in the app bar - matching account card background
+                if (showSummary) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(0.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Credit
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    stringResource(R.string.total_credit),
+                                    style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                )
+                                Text(
+                                    Currency.inr(totalCredit),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)
+                                    )
+                                )
+                            }
+                            // Debit
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    stringResource(R.string.total_debit),
+                                    style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                )
+                                Text(
+                                    Currency.inr(totalDebit),
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)
+                                    )
+                                )
+                            }
+                            // Due count
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    stringResource(R.string.due_accounts),
+                                    style = MaterialTheme.typography.labelSmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (dark) Color(0xFFE57373).copy(alpha = 0.15f) else Color(0xFFB71C1C).copy(alpha = 0.15f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        .then(if (dueCount > 0) Modifier.clickable { showDueOnly = !showDueOnly } else Modifier)
+                                ) {
+                                    Text(
+                                        dueCount.toString(),
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         contentWindowInsets = WindowInsets.systemBars
     ) { padding ->
         BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -137,51 +206,6 @@ fun AccountsScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (showSummary) {
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Column(Modifier.padding(12.dp)) {
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                ) {
-                                    // Credit
-                                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.total_credit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(Currency.inr(totalCredit), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32), textAlign = TextAlign.Start)
-                                    }
-                                    // Debit
-                                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.total_debit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(Currency.inr(totalDebit), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C), textAlign = TextAlign.Start)
-                                    }
-                                    // Due count
-                                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(stringResource(R.string.due_accounts), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                                                                Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(if (dark) Color(0xFFE57373).copy(alpha = 0.15f) else Color(0xFFB71C1C).copy(alpha = 0.15f))
-                                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                                                .then(if (dueCount > 0) Modifier.clickable { showDueOnly = !showDueOnly } else Modifier)
-                                        ) {
-                                            Text(
-                                                dueCount.toString(),
-                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                                color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C),
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
                 items(accounts, key = { it.id }) { acc ->
                 // Collect txns for this account to compute totals live
                 val txns by remember(acc.id) { vm.txns(acc.id) }.collectAsState(initial = emptyList())
@@ -844,18 +868,21 @@ fun AccountsScreen(
     }
 
             // Draggable FAB overlay (mirrors LedgerBook)
+            val configuration = androidx.compose.ui.platform.LocalConfiguration.current
             val density = LocalDensity.current
+            val maxWidth = with(density) { configuration.screenWidthDp.dp.toPx() }
+            val maxHeight = with(density) { configuration.screenHeightDp.dp.toPx() }
             val fabSize = 56.dp
             val edge = 16.dp
             val topInsetPx = with(density) { WindowInsets.statusBars.getTop(this).toFloat() }
             val bottomInsetPx = with(density) { WindowInsets.navigationBars.getBottom(this).toFloat() }
-            val bannerReservePx = with(density) { if (showBanner && bannerLoaded) (bannerHeight + 12.dp).toPx() else 0f }
-            val maxX = with(density) { (maxWidth - fabSize - edge).toPx() }
-            val maxY = with(density) { (maxHeight - fabSize - edge).toPx() } - bottomInsetPx - bannerReservePx
+            val bannerReservePx = with(density) { if (showBanner && bannerLoaded) bannerHeight.toPx() + 24.dp.toPx() else 24.dp.toPx() }
+            val maxX = maxWidth - with(density) { fabSize.toPx() + edge.toPx() }
+            val maxY = maxHeight - with(density) { fabSize.toPx() + edge.toPx() } - bannerReservePx
             val minX = with(density) { edge.toPx() }
             val minY = topInsetPx + with(density) { edge.toPx() }
-            var offsetX by remember(maxWidth, maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf(maxX.coerceAtLeast(minX)) }
-            var offsetY by remember(maxWidth, maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf(maxY.coerceAtLeast(minY)) }
+            var offsetX by remember(maxWidth, maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf<Float>(maxX.coerceAtLeast(minX)) }
+            var offsetY by remember(maxWidth, maxHeight, topInsetPx, bottomInsetPx) { mutableStateOf<Float>(maxY.coerceAtLeast(minY)) }
 
             LaunchedEffect(minY, maxY) {
                 offsetY = offsetY.coerceIn(minY, maxY)
@@ -883,7 +910,10 @@ fun AccountsScreen(
                 }
                 FloatingActionButton(
                     onClick = { showAdd = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
+                        .size(44.dp)
                         .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
