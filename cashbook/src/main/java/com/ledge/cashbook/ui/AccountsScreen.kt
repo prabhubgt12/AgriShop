@@ -51,7 +51,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import kotlin.math.roundToInt
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.filled.Delete
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.ads.BannerAd
@@ -143,17 +143,29 @@ fun AccountsScreen(
                                     // Credit
                                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(stringResource(R.string.total_credit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(Currency.inr(totalCredit), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = Color(0xFF66BB6A))
+                                        Text(Currency.inr(totalCredit), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = if (isSystemInDarkTheme()) Color(0xFF81C784) else Color(0xFF2E7D32), textAlign = TextAlign.Start)
                                     }
                                     // Debit
                                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(stringResource(R.string.total_debit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(Currency.inr(totalDebit), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = Color(0xFFEF5350))
+                                        Text(Currency.inr(totalDebit), style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold), color = if (isSystemInDarkTheme()) Color(0xFFE57373) else Color(0xFFB71C1C), textAlign = TextAlign.Start)
                                     }
                                     // Due count
                                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(stringResource(R.string.due_accounts), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text(dueCount.toString(), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = Color(0xFFEF5350), modifier = Modifier.then(if (dueCount > 0) Modifier.clickable { showDueOnly = !showDueOnly } else Modifier))
+                                                                                Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(if (isSystemInDarkTheme()) Color(0xFFEF5350).copy(alpha = 0.15f) else Color(0xFFB71C1C).copy(alpha = 0.15f))
+                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                .then(if (dueCount > 0) Modifier.clickable { showDueOnly = !showDueOnly } else Modifier)
+                                        ) {
+                                            Text(
+                                                dueCount.toString(),
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                                color = if (isSystemInDarkTheme()) Color(0xFFE57373) else Color(0xFFB71C1C)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -192,7 +204,7 @@ fun AccountsScreen(
                             Spacer(Modifier.width(8.dp))
                             // Quick Add button
                             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
-                                FilledTonalIconButton(
+                                IconButton(
                                     onClick = { quickAddMenuFor = acc.id },
                                     modifier = Modifier.size(32.dp)
                                 ) {
@@ -251,7 +263,7 @@ fun AccountsScreen(
                             }
                             Spacer(Modifier.width(8.dp))
                             // Chart icon to open monthly comparison
-                            FilledTonalIconButton(
+                            IconButton(
                                 onClick = { chartFor = acc.id },
                                 modifier = Modifier.size(32.dp)
                             ) {
@@ -264,7 +276,7 @@ fun AccountsScreen(
                             Spacer(Modifier.width(8.dp))
                             var menuOpen by remember(acc.id) { mutableStateOf(false) }
                             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
-                                FilledTonalIconButton(
+                                IconButton(
                                     onClick = { menuOpen = true },
                                     modifier = Modifier.size(32.dp)
                                 ) {
@@ -343,7 +355,7 @@ fun AccountsScreen(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(stringResource(R.string.credit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(Currency.inr(credit), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = Color(0xFF66BB6A))
+                                            Text(Currency.inr(credit), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = if (isSystemInDarkTheme()) Color(0xFF81C784) else Color(0xFF2E7D32), textAlign = TextAlign.Start)
                                         }
                                         VerticalDivider(
                                             modifier = Modifier
@@ -362,7 +374,7 @@ fun AccountsScreen(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(stringResource(R.string.debit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(Currency.inr(debit), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = Color(0xFFEF5350))
+                                            Text(Currency.inr(debit), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = if (isSystemInDarkTheme()) Color(0xFFE57373) else Color(0xFFB71C1C), textAlign = TextAlign.Start)
                                         }
                                         VerticalDivider(
                                             modifier = Modifier
@@ -379,8 +391,9 @@ fun AccountsScreen(
                                         Text(stringResource(R.string.balance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         Text(
                                             Currency.inr(balance),
-                                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                                            color = if (balance >= 0) Color(0xFF66BB6A) else Color(0xFFEF5350)
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = if (balance >= 0) (if (isSystemInDarkTheme()) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (isSystemInDarkTheme()) Color(0xFFE57373) else Color(0xFFB71C1C)),
+                                            textAlign = TextAlign.Start
                                         )
                                     }
                                 }
