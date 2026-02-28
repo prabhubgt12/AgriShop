@@ -1,6 +1,7 @@
 package com.ledge.cashbook.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -129,7 +131,7 @@ fun AccountsScreen(
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
@@ -215,23 +217,36 @@ fun AccountsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { onOpenAccount(acc.id) },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(Modifier.padding(12.dp)) {
-                        // First row: account name + chart + menu
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        // Account name and icons row
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 0.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
                                 acc.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f)
                             )
+                            Spacer(Modifier.width(8.dp))
                             // Quick Add button
                             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
-                                IconButton(onClick = { quickAddMenuFor = acc.id }) {
-                                    Icon(Icons.Filled.Add, contentDescription = "Quick Add")
+                                FilledTonalIconButton(
+                                    onClick = { quickAddMenuFor = acc.id },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Add,
+                                        contentDescription = "Quick Add",
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
                                 // Quick Add menu
                                 val accountTxns by remember(acc.id) { vm.txns(acc.id) }.collectAsState(initial = emptyList())
@@ -280,14 +295,30 @@ fun AccountsScreen(
                                     }
                                 }
                             }
+                            Spacer(Modifier.width(8.dp))
                             // Chart icon to open monthly comparison
-                            IconButton(onClick = { chartFor = acc.id }) {
-                                Icon(Icons.Filled.BarChart, contentDescription = "Chart")
+                            FilledTonalIconButton(
+                                onClick = { chartFor = acc.id },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.BarChart,
+                                    contentDescription = "Chart",
+                                    modifier = Modifier.size(16.dp)
+                                )
                             }
+                            Spacer(Modifier.width(8.dp))
                             var menuOpen by remember(acc.id) { mutableStateOf(false) }
                             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
-                                IconButton(onClick = { menuOpen = true }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = null)
+                                FilledTonalIconButton(
+                                    onClick = { menuOpen = true },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.MoreVert,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
                                 DropdownMenu(
                                     expanded = menuOpen,
@@ -330,74 +361,154 @@ fun AccountsScreen(
                                 }
                             }
                         }
-                        HorizontalDivider()
                         Spacer(Modifier.height(8.dp))
-                        // Second row: Credit, Debit, Balance (chip)
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
+                        // Inner card with amounts and progress bar
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            // Credit block
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.credit), style = MaterialTheme.typography.labelSmall)
-                                Text(Currency.inr(credit), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
-                            }
-                            // Debit block
-                            Column(Modifier.weight(1f)) {
-                                Text(stringResource(R.string.debit), style = MaterialTheme.typography.labelSmall)
-                                Text(Currency.inr(debit), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
-                            }
-                            // Balance block styled like ledgerbook (rounded Box)
-                            Column(Modifier.weight(1.4f)) {
-                                Text(stringResource(R.string.balance), style = MaterialTheme.typography.labelSmall)
-                                val pos = balance >= 0
-                                val chipBg = if (pos) Color(0xFFDFF6DD) else MaterialTheme.colorScheme.errorContainer
-                                val chipFg = if (pos) Color(0xFF0B6A0B) else MaterialTheme.colorScheme.onErrorContainer
-                                Box(
-                                    modifier = Modifier
-                                        .defaultMinSize(minWidth = 112.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(chipBg)
-                                        .padding(vertical = 4.dp, horizontal = 6.dp)
-                                ) {
-                                    Text(
-                                        Currency.inr(balance),
-                                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-                                        color = chipFg,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                        }
-                        val totalTx = (credit + debit).coerceAtLeast(0.0)
-                        if (totalTx > 0.0) {
-                            Spacer(Modifier.height(6.dp))
-                            val creditFrac = (credit / totalTx).toFloat().coerceIn(0f, 1f)
-                            val debitFrac = (debit / totalTx).toFloat().coerceIn(0f, 1f)
-                            Box(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(2.dp)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(horizontal = 12.dp, vertical = 12.dp)
                             ) {
-                                Row(Modifier.fillMaxSize()) {
-                                    if (creditFrac > 0f) {
-                                        Box(
+                                // Amounts row with vertical dividers
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Credit block
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(stringResource(R.string.credit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(Currency.inr(credit), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = Color(0xFF66BB6A))
+                                        }
+                                        VerticalDivider(
                                             modifier = Modifier
-                                                .fillMaxHeight()
-                                                .weight(creditFrac)
-                                                .background(Color(0xFF10B981))
+                                                .height(30.dp)
+                                                .padding(horizontal = 8.dp),
+                                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                            thickness = 0.5.dp
                                         )
                                     }
-                                    if (debitFrac > 0f) {
-                                        Box(
+                                    // Debit block
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(stringResource(R.string.debit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(Currency.inr(debit), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = Color(0xFFEF5350))
+                                        }
+                                        VerticalDivider(
                                             modifier = Modifier
-                                                .fillMaxHeight()
-                                                .weight(debitFrac)
-                                                .background(Color(0xFFEF4444))
+                                                .height(30.dp)
+                                                .padding(horizontal = 8.dp),
+                                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                            thickness = 0.5.dp
+                                        )
+                                    }
+                                    // Balance block (no pill)
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(stringResource(R.string.balance), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(
+                                            Currency.inr(balance),
+                                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                            color = if (balance >= 0) Color(0xFF66BB6A) else Color(0xFFEF5350)
+                                        )
+                                    }
+                                }
+                                
+                                // Progress bar section
+                                val totalTx = (credit + debit).coerceAtLeast(0.0)
+                                if (totalTx > 0.0) {
+                                    Spacer(Modifier.height(8.dp))
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(horizontal = 8.dp),
+                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                        thickness = 0.5.dp
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    val creditFrac = (credit / totalTx).toFloat().coerceIn(0f, 1f)
+                                    val debitFrac = (debit / totalTx).toFloat().coerceIn(0f, 1f)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(14.dp)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    ) {
+                                        Row(Modifier.fillMaxSize()) {
+                                            if (creditFrac > 0f) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxHeight()
+                                                        .weight(creditFrac)
+                                                        .background(
+                                                            Color(0xFF81C784),
+                                                            if (debitFrac > 0f) {
+                                                                RoundedCornerShape(
+                                                                    topStart = 50.dp,
+                                                                    bottomStart = 50.dp,
+                                                                    topEnd = 0.dp,
+                                                                    bottomEnd = 0.dp
+                                                                )
+                                                            } else {
+                                                                RoundedCornerShape(50)
+                                                            }
+                                                        )
+                                                )
+                                            }
+                                            if (debitFrac > 0f) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxHeight()
+                                                        .weight(debitFrac)
+                                                        .background(
+                                                            Color(0xFFE57373),
+                                                            if (creditFrac > 0f) {
+                                                                RoundedCornerShape(
+                                                                    topStart = 0.dp,
+                                                                    bottomStart = 0.dp,
+                                                                    topEnd = 50.dp,
+                                                                    bottomEnd = 50.dp
+                                                                )
+                                                            } else {
+                                                                RoundedCornerShape(50)
+                                                            }
+                                                        )
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            text = "${(creditFrac * 100).toInt()}%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.Black.copy(alpha = 0.85f),
+                                            textAlign = TextAlign.Start,
+                                            modifier = Modifier
+                                                .align(Alignment.CenterStart)
+                                                .padding(start = 10.dp)
+                                        )
+                                        Text(
+                                            text = "${(debitFrac * 100).toInt()}%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.Black.copy(alpha = 0.85f),
+                                            textAlign = TextAlign.End,
+                                            modifier = Modifier
+                                                .align(Alignment.CenterEnd)
+                                                .padding(end = 10.dp)
                                         )
                                     }
                                 }
