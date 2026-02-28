@@ -1085,15 +1085,16 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         Text(stringResource(R.string.col_debit), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
                         Text(stringResource(R.string.col_balance), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
                     }
-                    HorizontalDivider()
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 0.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                        thickness = 0.6.dp
+                    )
                 }
                 itemsIndexed(displayedTxns) { index, t ->
                     val run = runningBalances.getOrNull(index) ?: 0.0
-                    // Theme-aware subtle backgrounds per row by type
-                    val dark = androidx.compose.foundation.isSystemInDarkTheme()
-                    val creditTint = if (!dark) Color(0x330B6A0B) else Color(0x6618A418)
-                    val debitTint = if (!dark) Color(0x339A0007) else Color(0x66CF6671)
-                    val rowBg = if (t.isCredit) creditTint else debitTint
+                    // Theme-aware subtle background (15% opacity)
+                    val rowBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
                     Row(
                         Modifier
                             .fillMaxWidth()
@@ -1176,15 +1177,23 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
-                        Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
-                        Text(Currency.inr(run), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End)
+                        Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface)
+                        Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) Color(0xFFB71C1C) else MaterialTheme.colorScheme.onSurface)
+                        Text(Currency.inr(run), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) Color(0xFF2E7D32) else Color(0xFFB71C1C))
                     }
-                    HorizontalDivider()
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 0.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                        thickness = 0.6.dp
+                    )
                 }
             }
             // Divider above footer for separation
-            HorizontalDivider()
+            HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 0.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                        thickness = 0.6.dp
+                    )
             // Sticky totals footer (outside list)
             val showBanner = !hasRemoveAds && !showAdd
             val bannerHeightDp = remember(showBanner, bannerLoaded) {
