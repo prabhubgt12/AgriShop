@@ -508,38 +508,6 @@ fun AccountsScreen(
                                             color = pctColor
                                         )
                                     }
-                                                                    bottomStart = 50.dp,
-                                                                    topEnd = 0.dp,
-                                                                    bottomEnd = 0.dp
-                                                                )
-                                                            } else {
-                                                                RoundedCornerShape(50)
-                                                            }
-                                                        )
-                                                )
-                                            }
-                                            if (debitFrac > 0f) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxHeight()
-                                                        .weight(debitFrac)
-                                                        .background(
-                                                            debitBarColor,
-                                                            if (creditFrac > 0f) {
-                                                                RoundedCornerShape(
-                                                                    topStart = 0.dp,
-                                                                    bottomStart = 0.dp,
-                                                                    topEnd = 50.dp,
-                                                                    bottomEnd = 50.dp
-                                                                )
-                                                            } else {
-                                                                RoundedCornerShape(50)
-                                                            }
-                                                        )
-                                                )
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
