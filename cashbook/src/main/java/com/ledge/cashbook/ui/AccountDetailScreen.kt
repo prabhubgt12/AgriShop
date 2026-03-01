@@ -100,16 +100,26 @@ import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
+import com.ledge.cashbook.ui.theme.ThemeViewModel
+import androidx.compose.foundation.isSystemInDarkTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = false, vm: AccountDetailViewModel = hiltViewModel()) {
+fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = false, vm: AccountDetailViewModel = hiltViewModel(), themeViewModel: ThemeViewModel = hiltViewModel()) {
     LaunchedEffect(accountId) {
         vm.load(accountId)
         // Generate any overdue recurring transactions when viewing this account
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             vm.generateRecurringTransactions()
         }
+    }
+
+    // Use same theme logic as MainActivity
+    val mode by themeViewModel.themeMode.collectAsState()
+    val dark = when (mode) {
+        ThemeViewModel.MODE_DARK -> true
+        ThemeViewModel.MODE_LIGHT -> false
+        else -> isSystemInDarkTheme()
     }
 
     val name by vm.accountName.collectAsState()
@@ -1177,9 +1187,9 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface)
-                        Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) Color(0xFFB71C1C) else MaterialTheme.colorScheme.onSurface)
-                        Text(Currency.inr(run), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) Color(0xFF2E7D32) else Color(0xFFB71C1C))
+                        Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else MaterialTheme.colorScheme.onSurface)
+                        Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)) else MaterialTheme.colorScheme.onSurface)
+                        Text(Currency.inr(run), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)))
                     }
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 0.dp),
@@ -1224,7 +1234,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         Currency.inr(totalCredit),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF0B6A0B)
+                        color = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)
                     )
                 }
                 // Total Debit
@@ -1238,7 +1248,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         Currency.inr(totalDebit),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF9A0007)
+                        color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)
                     )
                 }
                 // Quick add mini FABs aligned to the right
