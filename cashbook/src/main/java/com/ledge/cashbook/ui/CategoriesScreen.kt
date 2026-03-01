@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
+import com.ledge.cashbook.data.local.entities.Category
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,6 +26,8 @@ fun CategoriesScreen(onBack: () -> Unit, vm: CategoriesViewModel = hiltViewModel
     var editId by remember { mutableStateOf<Long?>(null) }
     var name by remember { mutableStateOf(TextFieldValue("")) }
     var keywords by remember { mutableStateOf(TextFieldValue("")) }
+    var menuOpen by remember { mutableStateOf<Long?>(null) } // Track which category menu is open
+    var deleteConfirmCategory by remember { mutableStateOf<Category?>(null) } // Track category to delete
     // Read setting to guide users when the feature is off
     val settingsVM: SettingsViewModel = hiltViewModel()
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
@@ -106,13 +110,38 @@ fun CategoriesScreen(onBack: () -> Unit, vm: CategoriesViewModel = hiltViewModel
                                 )
                             }
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(onClick = {
-                                editId = cat.id; name = TextFieldValue(cat.name)
-                                keywords = TextFieldValue(kws.joinToString(", ") { it.keyword })
-                                showDialog = true
-                            }) { Text(stringResource(id = R.string.edit)) }
-                            IconButton(onClick = { vm.delete(cat) }) { Icon(Icons.Default.Delete, contentDescription = null) }
+                        Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
+                            IconButton(
+                                onClick = { menuOpen = if (menuOpen == cat.id) null else cat.id },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    contentDescription = "Menu",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = menuOpen == cat.id,
+                                onDismissRequest = { menuOpen = null }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(id = R.string.edit)) },
+                                    onClick = {
+                                        editId = cat.id; name = TextFieldValue(cat.name)
+                                        keywords = TextFieldValue(kws.joinToString(", ") { it.keyword })
+                                        showDialog = true
+                                        menuOpen = null
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(id = R.string.delete)) },
+                                    onClick = {
+                                        deleteConfirmCategory = cat
+                                        menuOpen = null
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -141,6 +170,26 @@ fun CategoriesScreen(onBack: () -> Unit, vm: CategoriesViewModel = hiltViewModel
                     )
                 }
             }
+        )
+    }
+
+    // Delete confirmation dialog
+    if (deleteConfirmCategory != null) {
+        AlertDialog(
+            onDismissRequest = { deleteConfirmCategory = null },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.delete(deleteConfirmCategory!!)
+                    deleteConfirmCategory = null
+                }) { Text(stringResource(R.string.delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteConfirmCategory = null }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+            title = { Text(stringResource(R.string.delete)) },
+            text = { Text(stringResource(R.string.delete_txn_confirm)) }
         )
     }
 }
