@@ -389,7 +389,7 @@ fun AccountsScreen(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(stringResource(R.string.credit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(Currency.inr(credit), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32), textAlign = TextAlign.Start)
+                                            Text(Currency.inr(credit), style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32), textAlign = TextAlign.Start)
                                         }
                                         VerticalDivider(
                                             modifier = Modifier
@@ -408,7 +408,7 @@ fun AccountsScreen(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(stringResource(R.string.debit), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            Text(Currency.inr(debit), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold), color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C), textAlign = TextAlign.Start)
+                                            Text(Currency.inr(debit), style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold), color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C), textAlign = TextAlign.Start)
                                         }
                                         VerticalDivider(
                                             modifier = Modifier
@@ -436,34 +436,71 @@ fun AccountsScreen(
                                 val totalTx = (credit + debit).coerceAtLeast(0.0)
                                 if (totalTx > 0.0) {
                                     Spacer(Modifier.height(8.dp))
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = 8.dp),
-                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                                        thickness = 0.5.dp
-                                    )
-                                    Spacer(Modifier.height(8.dp))
                                     val creditFrac = (credit / totalTx).toFloat().coerceIn(0f, 1f)
                                     val debitFrac = (debit / totalTx).toFloat().coerceIn(0f, 1f)
                                     val creditPct = (creditFrac * 100f).roundToInt().coerceIn(0, 100)
                                     val debitPct = (100 - creditPct).coerceIn(0, 100)
-                                    // Percentage values above progress bar: 80% -------- 20%
+                                    // Percentage values with progress bar: 98%---progbar--2%
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         val pctColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.70f)
-                                        val lineColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
                                         Text(
                                             text = "${creditPct}%",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = pctColor
                                         )
                                         Spacer(Modifier.width(8.dp))
-                                        HorizontalDivider(
-                                            modifier = Modifier.weight(1f),
-                                            color = lineColor,
-                                            thickness = 0.5.dp
-                                        )
+                                        // Progress bar in the middle
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(6.dp)
+                                                .clip(RoundedCornerShape(50))
+                                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                                        ) {
+                                            val creditBarColor = Color(0xFF81C784).copy(alpha = if (dark) 0.24f else 0.40f)
+                                            val debitBarColor = Color(0xFFE57373).copy(alpha = if (dark) 0.24f else 0.40f)
+                                            Row(Modifier.fillMaxSize()) {
+                                                if (creditFrac > 0f) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxHeight()
+                                                            .weight(creditFrac)
+                                                            .background(
+                                                                creditBarColor,
+                                                                if (debitFrac > 0f) {
+                                                                    RoundedCornerShape(
+                                                                        topStart = 50.dp,
+                                                                        bottomStart = 50.dp
+                                                                    )
+                                                                } else {
+                                                                    RoundedCornerShape(50.dp)
+                                                                }
+                                                            )
+                                                    )
+                                                }
+                                                if (debitFrac > 0f) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxHeight()
+                                                            .weight(debitFrac)
+                                                            .background(
+                                                                debitBarColor,
+                                                                if (creditFrac > 0f) {
+                                                                    RoundedCornerShape(
+                                                                        topEnd = 50.dp,
+                                                                        bottomEnd = 50.dp
+                                                                    )
+                                                                } else {
+                                                                    RoundedCornerShape(50.dp)
+                                                                }
+                                                            )
+                                                    )
+                                                }
+                                            }
+                                        }
                                         Spacer(Modifier.width(8.dp))
                                         Text(
                                             text = "${debitPct}%",
@@ -471,27 +508,6 @@ fun AccountsScreen(
                                             color = pctColor
                                         )
                                     }
-                                    Spacer(Modifier.height(4.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(10.dp)
-                                            .clip(RoundedCornerShape(50))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
-                                    ) {
-                                        val creditBarColor = Color(0xFF81C784).copy(alpha = if (dark) 0.24f else 0.40f)
-                                        val debitBarColor = Color(0xFFE57373).copy(alpha = if (dark) 0.24f else 0.40f)
-                                        Row(Modifier.fillMaxSize()) {
-                                            if (creditFrac > 0f) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxHeight()
-                                                        .weight(creditFrac)
-                                                        .background(
-                                                            creditBarColor,
-                                                            if (debitFrac > 0f) {
-                                                                RoundedCornerShape(
-                                                                    topStart = 50.dp,
                                                                     bottomStart = 50.dp,
                                                                     topEnd = 0.dp,
                                                                     bottomEnd = 0.dp
