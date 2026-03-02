@@ -1,3 +1,5 @@
+const { storeTrade } = require('./tradeStorage');
+
 function isNum(x) {
   return typeof x === 'number' && !Number.isNaN(x);
 }
@@ -64,6 +66,7 @@ function shouldExit(trade, mode, currentLtp, exitStyle, targetPct) {
 
   if (exitStyle === 'TARGET' && isNum(trade.entryPrice) && trade.entryPrice > 0) {
     const targetPrice = trade.entryPrice * (1 + targetPct / 100);
+    console.log(`TARGET check: entryPrice=${trade.entryPrice}, targetPct=${targetPct}, targetPrice=${targetPrice}, currentLtp=${currentLtp}, hit=${currentLtp >= targetPrice}`);
     if (currentLtp >= targetPrice) return { reason: `TARGET_HIT_${targetPct}` };
   }
 
@@ -111,6 +114,8 @@ async function stepLiveTrade(ctx) {
     entryDecision,
   } = ctx;
 
+  console.log('stepLiveTrade called, live.current:', live.current ? { status: live.current.status, id: live.current.id } : 'null');
+
   const latest = Array.isArray(snapshotHistory) ? snapshotHistory[snapshotHistory.length - 1] : null;
   if (!latest) return live;
 
@@ -119,13 +124,88 @@ async function stepLiveTrade(ctx) {
     return { ...live, lastDecision: { ts: latest.ts, action: 'NO_TRADE', reasons: ['LIVE not armed'] } };
   }
 
+  // Convert ENTRY_PENDING → OPEN On Next Poll
+  if (live.current && live.current.status === 'ENTRY_PENDING') {
+    try {
+      const orders = await client.get_orderbook();
+      const order = orders.find(o => o.norenordno === live.current.entryOrderNo);
+
+      if (order && order.status === 'COMPLETE') {
+        const trades = await client.get_tradebook();
+        const fill = trades.find(t => t.norenordno === live.current.entryOrderNo);
+
+        if (fill) {
+          const entryPrice = parseFloat(fill.avgprc);
+
+          live.current = {
+            ...live.current,
+            status: 'OPEN',
+            entryPrice,
+            peakPrice: entryPrice,
+            slPrice: initialSl(entryPrice, live.current.mode),
+          };
+        }
+      }
+    } catch (e) {
+      console.log('Error checking pending order fill:', e.message);
+    }
+    return live;
+  }
+
+  // Convert EXITING → CLOSED On Next Poll
+  if (live.current && live.current.status === 'EXITING') {
+    try {
+      const orders = await client.get_orderbook();
+      const order = orders.find(o => o.norenordno === live.current.exitOrderNo);
+
+      if (order && order.status === 'COMPLETE') {
+        const trades = await client.get_tradebook();
+        const fill = trades.find(t => t.norenordno === live.current.exitOrderNo);
+
+        if (fill) {
+          const exitPrice = parseFloat(fill.avgprc);
+          const pnl = (isNum(exitPrice) && isNum(live.current.entryPrice)) ? (exitPrice - live.current.entryPrice) * live.current.qty : null;
+
+          const closed = {
+            ...live.current,
+            status: 'CLOSED',
+            exitPrice,
+            pnl,
+          };
+
+          storeTrade(closed);
+
+          live.current = null;
+          live.lastClosed = closed;
+          live.history = [...live.history, closed].slice(-50);
+          live.lastExitTs = Date.now();
+        }
+      }
+    } catch (e) {
+      console.log('Error checking exit order fill:', e.message);
+    }
+    return live;
+  }
+
+  // Block new entries if ENTRY_PENDING
+  if (live.current && live.current.status === 'ENTRY_PENDING') {
+    return {
+      ...live,
+      lastDecision: { ts: latest.ts, action: 'BLOCKED', reasons: ['Trade already active or pending'] }
+    };
+  }
+
   const exitStyle = normalizeExitStyle(paper.exitStyle);
   const targetPct = normalizeTargetPct(paper.targetPct);
 
+  console.log('Before exit if, live.current.status:', live.current?.status);
+
   if (live.current && (live.current.status === 'OPEN' || live.current.status === 'EXITING')) {
+    console.log('Entering exit block for trade', live.current.id);
     const t = live.current;
     const legNow = findLeg(latest, t.strike, t.optType);
     const ltpNow = legNow?.ltp;
+    console.log(`Exit check: trade ${t.id} status=${t.status}, entryPrice=${t.entryPrice}, slPrice=${t.slPrice}, currentLtp=${ltpNow}, strike=${t.strike}, optType=${t.optType}`);
 
     // If we already sent an exit order, don't place again.
     if (t.status === 'EXITING') {
@@ -136,7 +216,15 @@ async function stepLiveTrade(ctx) {
       ? updateTrailing(t, t.mode, ltpNow)
       : updatePeakOnly(t, ltpNow);
 
+    if (!updated.tsym || !updated.exchange) {
+      const leg = findLeg(latest, updated.strike, updated.optType);
+      updated.tsym = updated.tsym || leg?.tsym;
+      updated.exchange = updated.exchange || 'NFO';
+    }
+
     const exit = shouldExit(updated, updated.mode, ltpNow, exitStyle, targetPct);
+    console.log(`Should exit result: ${JSON.stringify(exit)}`);
+
     if (!exit) {
       return {
         ...live,
@@ -157,26 +245,18 @@ async function stepLiveTrade(ctx) {
     } catch (_e) {
       netQty = null;
     }
+    console.log(`Exit netQty check: tsym=${updated.tsym}, productType=${productType}, netQty=${netQty}, expectedQty=${expectedQty}`);
 
-    if (netQty === 0) {
-      return {
-        ...live,
-        current: updated,
-        lastDecision: { ts: latest.ts, action: 'SKIP_EXIT', reasons: ['No open position (netqty=0), skipping exit'] },
-      };
+    if (typeof netQty === 'number' && Number.isFinite(netQty) && netQty <= 0) {
+      console.warn(`Position lookup returned netqty=${netQty} for ${updated.tsym}. Attempting exit anyway.`);
     }
 
-    if (typeof netQty === 'number' && Number.isFinite(netQty) && Number.isFinite(expectedQty) && netQty !== expectedQty) {
-      return {
-        ...live,
-        current: updated,
-        lastDecision: {
-          ts: latest.ts,
-          action: 'BLOCK_EXIT',
-          reasons: [`Position mismatch for ${updated.tsym} (${productType}): netqty=${netQty}, expected=${expectedQty}. Manual lots detected; refusing to auto-exit.`],
-        },
-      };
-    }
+    console.log(`Placing exit order for ${updated.tsym}, qty=${updated.qty}, reason=${exit.reason}`);
+
+    console.log("EXIT PAYLOAD:", {
+      tsym: updated.tsym,
+      exchange: updated.exchange
+    });
 
     const exitingBeforePlace = {
       ...updated,
@@ -187,7 +267,7 @@ async function stepLiveTrade(ctx) {
       pnl: (isNum(ltpNow) && isNum(updated.entryPrice)) ? (ltpNow - updated.entryPrice) * updated.qty : null,
     };
 
-    const resExit = await client.place_order({
+    const exitPayload = {
       buy_or_sell: 'S',
       product_type: productType,
       exchange: updated.exchange,
@@ -199,7 +279,13 @@ async function stepLiveTrade(ctx) {
       trigger_price: 0,
       retention: 'DAY',
       remarks: `exit_${exit.reason}`,
-    });
+    };
+
+    console.log("Exit order payload:", exitPayload);
+
+    const resExit = await client.place_order(exitPayload);
+
+    console.log('Exit order placed:', resExit);
 
     if (!resExit || resExit.stat !== 'Ok') {
       return {
@@ -215,16 +301,11 @@ async function stepLiveTrade(ctx) {
       exitOrderNo,
     };
 
-    // For now we mark it CLOSED immediately after sending MKT exit.
-    const closed = { ...exiting, status: 'CLOSED' };
-    storeTrade(closed);
+    // Set to EXITING, confirm complete on next poll
     return {
       ...live,
-      current: null,
-      lastClosed: closed,
-      history: [...live.history, closed].slice(-50),
-      lastExitTs: Date.now(),
-      lastDecision: { ts: latest.ts, action: 'EXIT', reasons: [exit.reason] },
+      current: exiting,
+      lastDecision: { ts: latest.ts, action: 'EXITING', reasons: [exit.reason] },
     };
   }
 
@@ -272,63 +353,37 @@ async function stepLiveTrade(ctx) {
     return {
       ...live,
       lastDecision: { ts: latest.ts, action: 'ERROR', reasons: ['place_order failed', JSON.stringify(res)] },
-      lastRejectTs: Date.now(),
+      lastFailedTs: Date.now(),
     };
   }
 
   const orderno = res.norenordno || res.orderno || res.order_no || null;
 
-  // Confirm order fill
-  if (orderno) {
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds for potential fill
-    try {
-      const trades = await client.get_tradebook();
-      const entryTrades = trades.filter(t => t.norenordno === orderno);
-      console.log('Fill check: trades length', trades ? trades.length : 'null', 'entryTrades length', entryTrades.length);
-      if (!trades || !Array.isArray(trades) || entryTrades.length === 0) {
-        console.log('Order not filled, setting lastRejectTs');
-        return {
-          ...live,
-          lastDecision: { ts: latest.ts, action: 'ERROR', reasons: ['Entry order placed but not filled within 2s', `OrderNo: ${orderno}`] },
-          lastRejectTs: Date.now(),
-        };
-      }
-    } catch (e) {
-      console.log('Fill check error:', e.message);
-      return {
-        ...live,
-        lastDecision: { ts: latest.ts, action: 'ERROR', reasons: ['Failed to confirm entry order fill', e && e.message ? e.message : String(e)] },
-        lastRejectTs: Date.now(),
-      };
-    }
-  }
-  console.log('Creating live trade for order', orderno);
-  const opened = {
+  console.log("ENTRY DEBUG:", {
+    strike: inst.strike,
+    type: inst.type,
+    tradingsymbol,
+    exchange,
+  });
+
+  const pendingTrade = {
     id: `live_${latest.ts}`,
-    status: 'OPEN',
+    status: 'ENTRY_PENDING',
     mode: entryDecision.mode,
     direction: entryDecision.direction,
     strike: inst.strike,
     optType: inst.type,
+    tsym: tradingsymbol,
+    exchange: exchange,
     qty: quantity,
-    entryPrice,
     entryTs: latest.ts,
-    peakPrice: entryPrice,
-    slPrice: sl,
-    exitPrice: null,
-    exitTs: null,
-    exitReason: null,
-    pnl: 0,
     entryOrderNo: orderno,
-    reasons: entryDecision.reasons,
   };
-
-  console.log('Live trade entered:', opened);
 
   return {
     ...live,
-    current: trade,
-    lastDecision: { ts: latest.ts, action: 'ENTER', reasons: entryDecision.reasons },
+    current: pendingTrade,
+    lastDecision: { ts: latest.ts, action: 'ENTRY_PENDING', reasons: ['Waiting for broker fill'] }
   };
 }
 

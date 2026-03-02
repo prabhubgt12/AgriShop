@@ -116,34 +116,30 @@ function pickSnapshotAtOrBefore(history, ts) {
 
 function computeDirectionSignal(history, mode, state) {
   const latest = history[history.length - 1];
+  const now = latest?.ts;
   const under = latest?.underlying?.ltp;
-  const atm = latest?.atmStrike;
-  if (!isNum(under) || !isNum(atm)) {
-    return { direction: null, reasons: ['Underlying/ATM missing'] };
+  if (!isNum(now) || !isNum(under)) {
+    return { direction: null, reasons: ['Underlying LTP missing'] };
   }
 
+  const under2MinAgo = pickSnapshotAtOrBefore(history, now - 2 * 60_000)?.underlying?.ltp;
+  if (!isNum(under2MinAgo)) {
+    return { direction: null, reasons: ['2-minute underlying data missing'] };
+  }
+
+  const diff = under - under2MinAgo;
   const reasons = [];
 
-  const ov = typeof state?.directionOverride === 'string' ? state.directionOverride.trim().toUpperCase() : '';
-  if (ov === 'BULL' || ov === 'BEAR') {
-    reasons.push(`Direction override: ${ov}`);
-    return { direction: ov, reasons };
-  }
-
-  // Use the existing levels as a lightweight direction hint
-  const resist = latest?.levels?.resistanceStrike;
-  const support = latest?.levels?.supportStrike;
-
-  // Simple heuristic: if price is above ATM => bullish bias, below ATM => bearish bias.
-  if (under >= atm) {
-    reasons.push('Underlying >= ATM');
-    if (isNum(resist) && Math.abs(resist - under) <= 50) reasons.push('Near resistance');
+  if (diff > 10) {
+    reasons.push(`Underlying up >10 pts in 2m: ${fmtNum(diff, 1)} pts`);
     return { direction: 'BULL', reasons };
+  } else if (diff < -10) {
+    reasons.push(`Underlying down >10 pts in 2m: ${fmtNum(diff, 1)} pts`);
+    return { direction: 'BEAR', reasons };
+  } else {
+    reasons.push(`Underlying movement <10 pts in 2m: ${fmtNum(diff, 1)} pts`);
+    return { direction: null, reasons };
   }
-
-  reasons.push('Underlying < ATM');
-  if (isNum(support) && Math.abs(under - support) <= 50) reasons.push('Near support');
-  return { direction: 'BEAR', reasons };
 }
 
 function shouldEnter(history, mode, state) {
@@ -156,29 +152,7 @@ function shouldEnter(history, mode, state) {
   const pastSnap = pickSnapshotAtOrBefore(history, nowTs - lookbackMs);
 
   const { direction, reasons: dirReasons } = computeDirectionSignal(history, mode, state);
-  if (!direction) return { ok: false, reasons: dirReasons };
-
-  const inst = selectInstrument(latest, mode, direction);
-  if (!inst) return { ok: false, reasons: ['Instrument selection failed'] };
-
-  const legNow = findLeg(latest, inst.strike, inst.type);
-  const legPast = pastSnap ? findLeg(pastSnap, inst.strike, inst.type) : null;
-
-  const ltpNow = legNow?.ltp;
-  const ltpPast = legPast?.ltp;
-  const chg = pctChange(ltpNow, ltpPast);
-
   const reasons = [...dirReasons];
-  reasons.push(`Mode: ${mode}`);
-  reasons.push(`Instrument: ${inst.strike} ${inst.type}`);
-
-  // Entry thresholds from notes
-  if (mode === 'EXPIRY') {
-    // Require ~30% move in 5 min
-    if (chg === null) return { ok: false, reasons: [...reasons, 'Not enough data for 5-min price change'] };
-    if (chg >= 0.3) return { ok: true, direction, inst, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% >= 30%`] };
-    return { ok: false, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% < 30%`] };
-  }
 
   if (mode === 'NORMAL') {
     const underNow = latest?.underlying?.ltp;
@@ -246,6 +220,27 @@ function shouldEnter(history, mode, state) {
     } else {
       return { ok: false, reasons: [...reasons, 'Conditions not met'] };
     }
+  }
+  if (!direction) return { ok: false, reasons: dirReasons };
+  const inst = selectInstrument(latest, mode, direction);
+  if (!inst) return { ok: false, reasons: ['Instrument selection failed'] };
+
+  const legNow = findLeg(latest, inst.strike, inst.type);
+  const legPast = pastSnap ? findLeg(pastSnap, inst.strike, inst.type) : null;
+
+  const ltpNow = legNow?.ltp;
+  const ltpPast = legPast?.ltp;
+  const chg = pctChange(ltpNow, ltpPast);
+
+  reasons.push(`Mode: ${mode}`);
+  reasons.push(`Instrument: ${inst.strike} ${inst.type}`);
+
+  // Entry thresholds from notes
+  if (mode === 'EXPIRY') {
+    // Require ~30% move in 5 min
+    if (chg === null) return { ok: false, reasons: [...reasons, 'Not enough data for 5-min price change'] };
+    if (chg >= 0.3) return { ok: true, direction, inst, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% >= 30%`] };
+    return { ok: false, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% < 30%`] };
   }
 
   if (mode === 'BIG_RALLY') {

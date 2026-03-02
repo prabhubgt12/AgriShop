@@ -127,201 +127,108 @@ function tryRestoreLiveState() {
   state.live = { ...createLiveTradeState(), ...data.live };
   return true;
 }
- 
+
 tryRestoreLiveState();
- 
+
 async function tryResyncFromShoonya() {
   try {
-    const getOrderId = (o) => (o && (o.norenordno || o.orderno || o.order_no)) || null;
-    const toMs = (t) => {
-      const v = t ? new Date(t).getTime() : NaN;
-      return Number.isFinite(v) ? v : null;
-    };
+    console.log("=== RESYNC START ===");
 
-    const orders = await state.client.get_orderbook();
-    if (!orders || !Array.isArray(orders)) {
-      return false;
-    }
-
+    const positions = await state.client.get_positions();
     const trades = await state.client.get_tradebook();
-    const existingTrades = safeReadJson(path.join(__dirname, '.data', 'trades.json')) || [];
 
-    // If we have a current LIVE trade in memory, first try to close it using broker exit linkage
-    // (works even if you currently have manual positions in the same tsym).
-    if (state.live && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
-      const cur = state.live.current;
-      const entryOrderNo = cur.entryOrderNo;
-      if (entryOrderNo) {
-        const entryTsMs = Number.isFinite(cur.entryTs) ? cur.entryTs : null;
-        const exitOrder = orders.find((o) => {
-          const parent = o && o.parentorderno ? String(o.parentorderno) : '';
-          const remarks = o && o.remarks ? String(o.remarks) : '';
-          const status = o && o.status ? String(o.status) : '';
-          const isExitRemark = remarks.startsWith('exit_') || remarks === 'forced_exit';
-          return isExitRemark && status === 'COMPLETE' && parent === String(entryOrderNo);
-        }) || orders.find((o) => {
-          // Fallback: Some brokers don't set parentorderno reliably.
-          // Match by symbol+qty and time after entry.
-          const remarks = o && o.remarks ? String(o.remarks) : '';
-          const status = o && o.status ? String(o.status) : '';
-          const trantype = o && o.trantype ? String(o.trantype) : '';
-          const tsym = o && o.tsym ? String(o.tsym) : '';
-          const qty = typeof o.qty === 'number' ? o.qty : Number(o.qty);
-          const isExitRemark = remarks.startsWith('exit_') || remarks === 'forced_exit';
-          const orderTs = toMs(o.norentm);
-          const afterEntry = entryTsMs === null || orderTs === null ? true : orderTs >= entryTsMs;
-          return isExitRemark && status === 'COMPLETE' && trantype === 'S' && tsym === String(cur.tsym) && qty === Number(cur.qty) && afterEntry;
-        });
-
-        if (exitOrder) {
-          const exitOrderId = getOrderId(exitOrder);
-          let exitPrice = null;
-          if (trades && Array.isArray(trades) && exitOrderId) {
-            const exitTrades = trades.filter(t => t && t.norenordno === exitOrderId);
-            if (exitTrades.length > 0) {
-              const p = parseFloat(exitTrades[0].avgprc);
-              if (p > 0) exitPrice = p;
-            }
-          }
-
-          const closed = {
-            ...cur,
-            status: 'CLOSED',
-            exitTs: new Date(exitOrder.norentm || Date.now()).getTime(),
-            exitReason: (() => {
-              const r = String(exitOrder.remarks || '');
-              if (r === 'forced_exit') return 'FORCED_EXIT';
-              return r.replace('exit_', '') || 'EXIT';
-            })(),
-            exitOrderNo: exitOrderId,
-            exitPrice,
-            pnl: (typeof exitPrice === 'number' && typeof cur.entryPrice === 'number' && typeof cur.qty === 'number')
-              ? (exitPrice - cur.entryPrice) * cur.qty
-              : cur.pnl,
-          };
-
-          // Only store if not already stored.
-          if (!existingTrades.some(t => t && t.entryOrderNo === closed.entryOrderNo)) {
-            storeTrade(closed);
-          }
-
-          state.live.current = null;
-          state.live.history = [...(state.live.history || []), closed].slice(-50);
-          state.live.lastDecision = { ts: Date.now(), action: 'RESYNC_CLOSED', reasons: ['Exit order COMPLETE found for current trade'] };
-          state.live.lastExitTs = Date.now();
-          persistLiveState();
-          return true;
-        }
-      }
-    }
-
-    const appOrders = orders.filter(o => o.remarks && (o.remarks.startsWith('forced_') || o.remarks.startsWith('auto_')));
-    if (appOrders.length === 0) {
+    if (!Array.isArray(positions) || positions.length === 0) {
+      console.log("Resync: no positions found.");
       return false;
     }
-    let syncedAny = false;
 
-    for (const entryOrder of appOrders) {
-      const orderId = getOrderId(entryOrder);
-      // Check if already synced (skip if we have a trade with this entryOrderNo)
-      if (existingTrades.some(t => t.entryOrderNo === orderId)) continue;
+    // 1️⃣ Find open positions for current product type
+    const openPositions = positions.filter(p =>
+      Number(p.netqty) > 0 &&
+      String(p.prd) === String(state.paper.productType)
+    );
 
-      const entryTrades = trades.filter(t => t.norenordno === orderId);
-      if (!trades || !Array.isArray(trades) || entryTrades.length === 0) continue;
-      const entryTrade = entryTrades[0];
-      const entryPrice = parseFloat(entryTrade.avgprc);
-      if (!entryPrice || entryPrice <= 0) continue;
+    if (openPositions.length === 0) {
+      console.log("Resync: no open netqty > 0 positions.");
+      return false;
+    }
 
-      let exitPrice = null;
-      let pnl = null;
-      let status = 'OPEN';
-      let exitTs = null;
-      let exitReason = null;
-      let exitOrderNo = null;
+    console.log("Resync: openPositions found:", openPositions.length);
 
-      // Check for app-placed exit order
-      const exitOrder = orders.find(o => o.remarks && o.remarks.startsWith('exit_') && o.status === 'COMPLETE' && o.parentorderno === entryOrder.norenordno);
-      if (exitOrder) {
-        const exitOrderId = exitOrder.norenordno || exitOrder.orderno || exitOrder.order_no;
-        status = 'CLOSED';
-        exitTs = new Date(exitOrder.norentm).getTime();
-        exitReason = exitOrder.remarks.replace('exit_', '');
-        exitOrderNo = exitOrderId;
-        const exitTrades = trades.filter(t => t.norenordno === exitOrderId);
-        if (exitTrades.length > 0) {
-          const exitTrade = exitTrades[0];
-          exitPrice = parseFloat(exitTrade.avgprc);
-          if (exitPrice > 0) {
-            pnl = (exitPrice - entryPrice) * parseInt(entryOrder.qty);
-          }
-        }
-      } else {
-        // Check for manual exits: sell trades on same tsym
-        const sellTrades = trades.filter(t => t.tsym === entryOrder.tsym && t.trantype === 'S');
-        if (sellTrades.length > 0) {
-          const manualExitTrade = sellTrades[0]; // Take the first one, assuming bulk exit
-          exitPrice = parseFloat(manualExitTrade.avgprc);
-          if (exitPrice > 0) {
-            pnl = (exitPrice - entryPrice) * parseInt(entryOrder.qty);
-            status = 'CLOSED';
-            exitTs = new Date(manualExitTrade.norentm || entryOrder.norentm || Date.now()).getTime();
-            exitReason = 'MANUAL_EXIT';
-            exitOrderNo = manualExitTrade.norenordno;
-          }
-        }
+    // 2️⃣ Match open position with app-placed trade using remarks
+    for (const pos of openPositions) {
+
+      console.log("Processing position:", pos);
+
+      console.log("Checking tradebook entries for", pos.tsym);
+      trades.filter(t => t.tsym === pos.tsym).forEach(t => {
+        console.log("Checking tradebook entry:", {
+          tsym: t.tsym,
+          status: t.status,
+          remarks: t.remarks
+        });
+      });
+
+      const matchingEntry = trades.find(t =>
+        t.tsym === pos.tsym &&
+        t.remarks &&
+        (t.remarks.startsWith('auto_') || t.remarks.startsWith('forced_'))
+      );
+
+      if (!matchingEntry) {
+        console.log("Resync: position ignored (not app trade):", pos.tsym);
+        continue; // skip manual trades
       }
 
-      const mode = (entryOrder.remarks.split('_')[1] || 'NORMAL').toUpperCase();
-      let slPrice;
-      if (mode === 'EXPIRY') slPrice = entryPrice * 0.75;
-      else if (mode === 'NORMAL') slPrice = entryPrice * 0.7;
-      else if (mode === 'BIG_RALLY') slPrice = entryPrice * 0.6;
-      else slPrice = entryPrice * 0.7;
-      const tsymMatch = entryOrder.tsym.match(/([CP])(\d+)$/);
-      if (!tsymMatch) continue;
-      const optType = tsymMatch[1] === 'C' ? 'CE' : 'PE';
-      const strike = parseInt(tsymMatch[2]);
-      const qty = parseInt(entryOrder.qty);
-      const tradeObj = {
-        id: `resynced_${orderId}_${Date.now()}`,
-        status,
-        mode,
+      console.log("Resync: rebuilding trade for", pos.tsym);
+
+      // 3️⃣ Extract strike + option type safely
+      const tsym = pos.tsym;
+      const strikeMatch = tsym.match(/(\d+)(CE|PE)$/);
+
+      if (!strikeMatch) {
+        console.log("Resync: could not parse strike from", tsym);
+        continue;
+      }
+
+      const strike = Number(strikeMatch[1]);
+      const optType = strikeMatch[2];
+
+      // 4️⃣ Rebuild live.current safely
+      state.live.current = {
+        id: `resynced_${Date.now()}`,
+        status: 'OPEN',
+        mode: state.paper.effectiveMode || 'NORMAL',
+        direction: optType === 'CE' ? 'BULL' : 'BEAR',
+
         strike,
         optType,
-        tsym: entryOrder.tsym,
-        exchange: entryOrder.exch,
-        qty,
-        entryTs: new Date(entryOrder.norentm || Date.now()).getTime(),
-        entryOrderNo: orderId,
-        entryPrice,
-        peakPrice: entryPrice,
-        slPrice,
-        exitTs,
-        exitPrice,
-        exitReason,
-        exitOrderNo,
-        pnl,
+        tsym: pos.tsym,
+        exchange: pos.exch,
+
+        qty: Number(pos.netqty),
+        entryTs: Date.now(),
+        entryOrderNo: matchingEntry.norenordno || matchingEntry.orderno,
+        entryPrice: Number(pos.dayavgprc) || 0,
+
+        peakPrice: Number(pos.dayavgprc) || 0,
+        slPrice: null, // will recalc on next poll
       };
 
-      if (status === 'CLOSED') {
-        storeTrade(tradeObj);
-        syncedAny = true;
-      } else if (status === 'OPEN') {
-        state.live.current = tradeObj;
-      }
-    }
-
-    if (state.live.current) {
+      console.log("Resync: SUCCESS.");
       state.paper.tradeMode = 'LIVE';
+      return true;
     }
 
-    return syncedAny || !!state.live.current;
-  } catch (e) {
-    console.error('Resync from Shoonya failed:', e);
+    console.log("Resync: no matching app positions found.");
+    return false;
+
+  } catch (err) {
+    console.error("Resync error:", err);
     return false;
   }
 }
- 
+
 function ensureClient() {
   if (state.client) return;
   state.client = createShoonyaClient({});

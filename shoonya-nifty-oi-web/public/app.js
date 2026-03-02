@@ -302,7 +302,9 @@ function render(snapshot, lastError, paper, live) {
       if (forceExitBtn) forceExitBtn.disabled = !liveOpen;
     }
 
-    const t = paper.tradeMode === 'LIVE' ? live?.current : paper.currentTrade;
+    const t = paper.tradeMode === 'LIVE'
+  ? (live?.current || live?.lastClosed)
+  : paper.currentTrade;
     if (t && t.status === 'OPEN') {
       const ltp = (() => {
         const row = (snapshot?.rows || []).find(r => r.strike === t.strike);
