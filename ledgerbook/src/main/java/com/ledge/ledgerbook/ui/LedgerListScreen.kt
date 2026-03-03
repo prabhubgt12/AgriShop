@@ -26,6 +26,10 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Monitor
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Percent
+import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -1403,6 +1407,41 @@ private fun LabelValue(label: String, value: String, modifier: Modifier = Modifi
 }
 
 @Composable
+private fun DetailRow(
+    icon: ImageVector,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            )
+        }
+        
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
 private fun CompactSearchBar(
     value: String,
     onValueChange: (String) -> Unit,
@@ -1526,101 +1565,234 @@ private fun LedgerRow(
     includePromo: Boolean = true
 ) {
     val ctx = LocalContext.current
+    val openMenu = remember { mutableStateOf(false) }
+    
+    // Calculate repayment percentage
+    val repaymentPercentage = if (vm.total > 0) {
+        ((vm.total - vm.outstanding) / vm.total * 100).coerceIn(0.0, 100.0)
+    } else 0.0
+    
+    // Calculate monthly interest for this month
+    val currentMonthlyInterest = if (vm.principal > 0) {
+        when (vm.rateBasis.uppercase()) {
+            "MONTHLY" -> vm.principal * (vm.rate / 100)
+            "YEARLY" -> vm.principal * (vm.rate / 100) / 12
+            else -> 0.0
+        }
+    } else 0.0
+    
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            val topBarVisible = showName || showTypeChip
-            val openMenu = remember { mutableStateOf(false) }
-            if (topBarVisible) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    // Column 1 (matches grid first column)
-                    Box(Modifier.weight(1f)) {
-                        if (showName) {
-                            Text(
-                                vm.name,
-                                style = MaterialTheme.typography.titleMedium
+            // Header with title and action buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Title
+                Text(
+                    text = vm.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                
+                // Action buttons
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Lend/Borrow button
+                    val isLend = vm.type == "LEND"
+                    Surface(
+                        onClick = { /* Handle lend/borrow action */ },
+                        color = if (isLend) Color(0xFF2E7D32) else Color(0xFFD32F2F),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = if (isLend) "Lend" else "Borrow",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White
+                        )
+                    }
+                    
+                    // More options menu
+                    Box {
+                        IconButton(onClick = { openMenu.value = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-
-                    // Inter-column gap (matches rows below)
-                    Spacer(Modifier.width(16.dp))
-
-                    // Column 2 (matches grid second column): chip at start, menu at end
-                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                        if (showTypeChip) {
-                            val isLend = vm.type == "LEND"
-                            val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
-                            val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                            val typeLabel = when (vm.type.uppercase()) {
-                                "LEND" -> stringResource(R.string.lend)
-                                "BORROW" -> stringResource(R.string.borrow)
-                                else -> toCamel(vm.type)
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(chipBg)
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = typeLabel,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = chipFg
-                                )
-                            }
-                        }
-                        Spacer(Modifier.weight(1f))
-                        Box {
-                            IconButton(onClick = { openMenu.value = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More",
-                                    tint = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = openMenu.value,
-                                onDismissRequest = { openMenu.value = false }
-                            ) {
-                                if (showName && !vm.phone.isNullOrBlank()) {
-                                    DropdownMenuItem(text = { Text(stringResource(R.string.call_user)) }, onClick = {
-                                        openMenu.value = false
-                                        try {
-                                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + vm.phone))
-                                            ctx.startActivity(intent)
-                                        } catch (_: Exception) {}
-                                    })
-                                }
-                                DropdownMenuItem(text = { Text(stringResource(R.string.share_receipt)) }, onClick = { openMenu.value = false; onShare() })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = {
+                        DropdownMenu(
+                            expanded = openMenu.value,
+                            onDismissRequest = { openMenu.value = false }
+                        ) {
+                            if (showName && !vm.phone.isNullOrBlank()) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.call_user)) }, onClick = {
                                     openMenu.value = false
-                                    val text = buildShareText(ctx, vm, includePromo)
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, text)
-                                    }
-                                    ctx.startActivity(Intent.createChooser(intent, ctx.getString(R.string.share_via)))
+                                    try {
+                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + vm.phone))
+                                        ctx.startActivity(intent)
+                                    } catch (_: Exception) {}
                                 })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.payment_history)) }, onClick = { openMenu.value = false; onHistory() })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.partial_payment)) }, onClick = { openMenu.value = false; onPartial() })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = { openMenu.value = false; onEdit() })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = { openMenu.value = false; onDelete() })
                             }
+                            DropdownMenuItem(text = { Text(stringResource(R.string.share_receipt)) }, onClick = { openMenu.value = false; onShare() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = {
+                                openMenu.value = false
+                                val text = buildShareText(ctx, vm, includePromo)
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, text)
+                                }
+                                ctx.startActivity(Intent.createChooser(intent, ctx.getString(R.string.share_via)))
+                            })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.payment_history)) }, onClick = { openMenu.value = false; onHistory() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.partial_payment)) }, onClick = { openMenu.value = false; onPartial() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = { openMenu.value = false; onEdit() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = { openMenu.value = false; onDelete() })
                         }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
             }
-
+            
+            Spacer(Modifier.height(8.dp))
+            
+            // Total amount with Principal and Interest below
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.AccountBalanceWallet,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Total Amount",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    Text(
+                        text = CurrencyFormatter.formatNoDecimals(vm.total),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                Spacer(Modifier.height(8.dp))
+                
+                // Principal amount below total
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Monitor,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Principal",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                    Text(
+                        text = CurrencyFormatter.formatNoDecimals(vm.principal),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF2196F3)
+                    )
+                }
+                
+                Spacer(Modifier.height(2.dp))
+                
+                // Interest amount below principal
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.ShowChart,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Interest",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                        Text(
+                            text = CurrencyFormatter.formatNoDecimals(vm.accrued),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF8BC34A)
+                        )
+                    }
+                    
+                    if (currentMonthlyInterest > 0) {
+                        Spacer(Modifier.height(2.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Monthly ",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = "${CurrencyFormatter.formatNoDecimals(currentMonthlyInterest)}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+            
+            Spacer(Modifier.height(12.dp))
+            
+            // Details grid
             val msPerDay = 86_400_000L
             val daysTotal = (((System.currentTimeMillis() - vm.fromDateMillis) / msPerDay).toInt()).coerceAtLeast(0)
             val years = daysTotal / 365
@@ -1635,132 +1807,28 @@ private fun LedgerRow(
                 if (months > 0) append("${months} ${mo} ")
                 append("${days} ${dy}")
             }
-
-            Column(Modifier.fillMaxWidth()) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    LabelValue(
-                        label = stringResource(R.string.label_principal_generic),
-                        value = CurrencyFormatter.formatNoDecimals(vm.principal),
-                        modifier = Modifier.weight(1f),
-                        leadingIcon = Icons.Outlined.Payments
-                    )
-                    Box(Modifier.weight(1f)) {
-                        LabelValue(label = stringResource(R.string.interest_rate), value = InterestRateFormatter.format(vm.rate, vm.rateBasis))
-                        if (!topBarVisible) {
-                            // Move 3-dots here when header row is hidden (grouping mode)
-                            Box(Modifier.fillMaxWidth()) {
-                                IconButton(onClick = { openMenu.value = true }, modifier = Modifier.align(Alignment.TopEnd)) {
-                                    Icon(
-                                        imageVector = Icons.Default.MoreVert,
-                                        contentDescription = stringResource(R.string.more),
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            }
-                            DropdownMenu(
-                                expanded = openMenu.value,
-                                onDismissRequest = { openMenu.value = false }
-                            ) {
-                                if (showName && !vm.phone.isNullOrBlank()) {
-                                    DropdownMenuItem(text = { Text(stringResource(R.string.call_user)) }, onClick = {
-							openMenu.value = false
-                                        try {
-                                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + vm.phone))
-                                            ctx.startActivity(intent)
-                                        } catch (_: Exception) {}
-                                    })
-                                }
-                                DropdownMenuItem(text = { Text(stringResource(R.string.share_receipt)) }, onClick = { openMenu.value = false; onShare() })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.share)) }, onClick = {
-                                    openMenu.value = false
-                                    val text = buildShareText(ctx, vm, includePromo)
-                                    val intent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, text)
-                                    }
-                                    ctx.startActivity(Intent.createChooser(intent, ctx.getString(R.string.share_via)))
-                                })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.payment_history)) }, onClick = { openMenu.value = false; onHistory() })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.partial_payment)) }, onClick = { openMenu.value = false; onPartial() })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = { openMenu.value = false; onEdit() })
-                                DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = { openMenu.value = false; onDelete() })
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabelValue(label = stringResource(R.string.from_date), value = vm.dateStr, modifier = Modifier.weight(1f), leadingIcon = Icons.Outlined.Event)
-                    // Right column: total time with small colored status dot (due soon / overdue)
-                    // Status dot colors: thresholds from settings
-                    val themeVM: ThemeViewModel = hiltViewModel()
-                    val odChild by themeVM.overdueDays.collectAsState()
-                    val winChild by themeVM.dueSoonWindowDays.collectAsState()
-                    val odT = odChild.coerceAtLeast(1)
-                    val fromT = (odT - winChild.coerceAtLeast(1)).coerceAtLeast(0)
-                    val statusColor = when {
-                        daysTotal >= odT -> Color(0xFFEF5350) // red
-                        daysTotal in fromT until odT -> Color(0xFFFFB300) // amber
-                        else -> null
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.AccessTime,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(stringResource(R.string.total_time), style = MaterialTheme.typography.labelSmall)
-                        }
-                        Spacer(Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            statusColor?.let {
-                                Box(
-                                    Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(it)
-                                )
-                                Spacer(Modifier.width(6.dp))
-                            }
-                            Text(
-                                totalTime,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (statusColor == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    LabelValue(label = stringResource(R.string.label_interest), value = CurrencyFormatter.formatNoDecimals(vm.accrued), modifier = Modifier.weight(1f))
-                    val isLendChip = vm.type == "LEND"
-                    val chipBg2 = if (isLendChip) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
-                    val chipFg2 = if (isLendChip) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.total_amount), style = MaterialTheme.typography.labelSmall)
-                        Spacer(Modifier.height(2.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(chipBg2)
-                                .padding(vertical = 4.dp, horizontal = 6.dp)
-                        ) {
-                            Text(
-                                CurrencyFormatter.formatNoDecimals(vm.total),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = chipFg2
-                            )
-                        }
-                    }
-                }
+            
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Interest rate row
+                DetailRow(
+                    icon = Icons.Outlined.Percent,
+                    label = "Interest Rate",
+                    value = InterestRateFormatter.format(vm.rate, vm.rateBasis)
+                )
+                
+                // From date row
+                DetailRow(
+                    icon = Icons.Outlined.Event,
+                    label = "From Date",
+                    value = vm.dateStr
+                )
+                
+                // Total time row
+                DetailRow(
+                    icon = Icons.Outlined.AccessTime,
+                    label = "Total Time",
+                    value = totalTime
+                )
             }
         }
     }
