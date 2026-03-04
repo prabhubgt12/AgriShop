@@ -130,6 +130,11 @@ async function stepLiveTrade(ctx) {
       const orders = await client.get_orderbook();
       const order = orders.find(o => o.norenordno === live.current.entryOrderNo);
 
+      if (order && (order.status === 'REJECTED' || order.status === 'CANCELLED')) {
+        live.current = null;
+        return { ...live, lastDecision: { ts: latest.ts, action: 'ERROR', reasons: ['Entry order rejected or cancelled by broker'] } };
+      }
+
       if (order && order.status === 'COMPLETE') {
         const trades = await client.get_tradebook();
         const fill = trades.find(t => t.norenordno === live.current.entryOrderNo);
