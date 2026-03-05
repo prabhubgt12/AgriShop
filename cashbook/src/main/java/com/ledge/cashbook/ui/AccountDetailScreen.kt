@@ -127,6 +127,24 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     val txns by vm.txns.collectAsState()
     val balance by vm.balance.collectAsState()
     val ctx = LocalContext.current
+
+    // Function to format date header nicely
+    @Composable
+    fun formatDateHeader(dateStr: String): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val date = sdf.parse(dateStr)
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val yesterday = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(System.currentTimeMillis() - 24L * 60 * 60 * 1000))
+        
+        return when (dateStr) {
+            today -> stringResource(R.string.today)
+            yesterday -> stringResource(R.string.yesterday)
+            else -> {
+                // Format as "dd MMM yyyy" (e.g., "05 Mar 2026")
+                SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(date ?: Date())
+            }
+        }
+    }
     
 
     var showAdd by remember { mutableStateOf(false) }
@@ -992,7 +1010,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 DropdownMenuItem(
                                     text = { 
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text("Group by Date")
+                                            Text(stringResource(R.string.group_by_date))
                                             Spacer(Modifier.width(4.dp))
                                             Switch(
                                                 checked = groupByDate,
@@ -1014,10 +1032,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = if (dark) Color(0xFF6750A4) else Color(0xFF6750A4),
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
+                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                        titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                        navigationIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                        actionIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
                     )
                 )
 
@@ -1112,23 +1130,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(txn.date))
                 }.toSortedMap(Comparator.reverseOrder()).mapValues { entry ->
                     entry.value.sortedByDescending { it.date } // Sort transactions within each date by newest first
-                }
-            }
-
-            // Function to format date header nicely
-            fun formatDateHeader(dateStr: String): String {
-                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val date = sdf.parse(dateStr)
-                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                val yesterday = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(System.currentTimeMillis() - 24L * 60 * 60 * 1000))
-                
-                return when (dateStr) {
-                    today -> "Today"
-                    yesterday -> "Yesterday"
-                    else -> {
-                        // Format as "dd MMM yyyy" (e.g., "05 Mar 2026")
-                        SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(date ?: Date())
-                    }
                 }
             }
 

@@ -46,8 +46,10 @@
     <string name="total_credit">మొత్తం జమ</string>
     <string name="total_debit">మొత్తం డెబిట్</string>
     <string name="due_accounts">బాకీ ఖాతాలు</string>
-    <string name="export_to_pdf">PDFకి ఎగుమతి</string>
-    <string name="export_to_excel">Excelకి ఎగుమతి</string>
+    <string name="group_by_date">తేదీ ప్రకారంగా చేయండి</string>
+    <string name="today">ఈన్న</string>
+    <string name="yesterday">నిన్న</string>
+    <string name="category_split">వర్గ విభజన</string>
     
     <!-- PDF labels -->
     <string name="total">మొత్తం</string>
@@ -145,7 +147,6 @@
     <string name="show_category_field">వర్గాన్ని ప్రారంభించండి</string>
     <string name="categories_csv">వర్గాలు (కామా-వేరు)</string>
     <string name="show_summary_card_label">ఖాతాల్లో సమగ్ర వివరణ చూపించు</string>
-    <string name="category_split">ఖర్చు విభజన</string>
     <string name="expense_split">ఖర్చు విభజన</string>
     <string name="last_6_months">గత 6 నెలలు</string>
     <string name="no_data_last_6_months">గత 6 నెలల్లో డేటా లేదు</string>

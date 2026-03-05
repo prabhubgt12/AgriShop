@@ -94,6 +94,9 @@
     <string name="add_category">श्रेणी जोड़ें</string>
     <string name="edit_category">श्रेणी संपादित करें</string>
     <string name="category_name">श्रेणी का नाम</string>
+    <string name="group_by_date">तिथि के अनुसार समूह करें</string>
+    <string name="today">आज</string>
+    <string name="yesterday">कल</string>
 
     <!-- Image labels -->
     <string name="attachment">छवि</string>

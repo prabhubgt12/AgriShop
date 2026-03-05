@@ -47,9 +47,10 @@
     <string name="total_debit">மொத்த செலவு</string>
     <string name="due_accounts">நிலுவை கணக்குகள்</string>
     <string name="export_to_pdf">PDF-ஆக ஏற்றுமதி</string>
-    <string name="export_to_excel">Excel-க்கு ஏற்றுமதி</string>
-    
-    <!-- PDF labels -->
+    <string name="group_by_date">தேதி வாரியாக குழும்</string>
+    <string name="today">இன்று</string>
+    <string name="yesterday">நேற்று</string>
+    <string name="category_split">வகை பிரிப்பு</string>
     <string name="total">மொத்தம்</string>
     <string name="label_customer_with_value">Account: %1$s</string>
     <string name="label_date_with_value">Date: %1$s</string>
@@ -145,7 +146,6 @@
     <string name="show_category_field">வகை அம்சத்தை இயக்கவும்</string>
     <string name="categories_csv">வகைகள் (கூட்டுப்புள்ளி பிரிக்கப்பட்டது)</string>
     <string name="show_summary_card_label">கணக்குகளில் சுருக்கத்தை காட்டு</string>
-    <string name="category_split">செலவு பிரிப்பு</string>
     <string name="expense_split">செலவு பிரிப்பு</string>
     <string name="last_6_months">கடைசி 6 மாதங்கள்</string>
     <string name="no_data_last_6_months">கடைசி 6 மாதங்களில் தரவு இல்லை</string>

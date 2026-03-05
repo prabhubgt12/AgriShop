@@ -57,10 +57,10 @@ fun HomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.title_dashboard)) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                    titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
