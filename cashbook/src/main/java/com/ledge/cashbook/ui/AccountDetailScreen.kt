@@ -196,12 +196,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var searchQuery by remember { mutableStateOf("") }
     val displayedTxns = remember(filteredTxns, searchQuery) {
         val q = searchQuery.trim()
-        if (q.isEmpty()) filteredTxns else filteredTxns.filter { t ->
+        val baseList = if (q.isEmpty()) filteredTxns else filteredTxns.filter { t ->
             val noteOk = (t.note ?: "").contains(q, ignoreCase = true)
             val catOk = (t.category ?: "").contains(q, ignoreCase = true)
             val amtOk = t.amount.toString().contains(q, ignoreCase = true)
             noteOk || catOk || amtOk
         }
+        // Sort by date descending (newest first)
+        baseList.sortedByDescending { it.date }
     }
     // Observe bulk selection from VM
     val selectedIds by vm.selection.collectAsState()
@@ -854,26 +856,24 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         } else {
                             val displayBal = if (isFiltered) filteredBalance else balance
                             val pos = displayBal >= 0
-                            val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
-                            val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
                             if (!searchOpen) {
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(chipBg)
-                                        .padding(vertical = 1.dp, horizontal = 4.dp)
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .background(Color(0xFFF8EAEA))
+                                        .padding(vertical = 6.dp, horizontal = 12.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                             text = stringResource(R.string.balance) + ": ",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = chipFg
+                                            color = Color(0xFFB3261E)
                                         )
                                         Text(
                                             text = Currency.inr(displayBal),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
-                                            color = chipFg
+                                            color = Color(0xFFB3261E)
                                         )
                                     }
                                 }
@@ -989,10 +989,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = if (dark) Color(0xFF6750A4) else Color(0xFF6750A4),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
                     )
                 )
 
@@ -1001,7 +1001,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     val startStr = filterStart?.let { fmt.format(Date(it)) }
                     val endStr = filterEnd?.let { fmt.format(Date(it)) }
                     val ctxBar = LocalContext.current
-                    Surface(color = MaterialTheme.colorScheme.primary) {
+                    Surface(color = if (dark) Color(0xFF6750A4) else Color(0xFF6750A4)) {
                         Row(
                             Modifier
                                 .fillMaxWidth()
@@ -1015,7 +1015,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     endStr != null -> endStr
                                     else -> ""
                                 },
-                                color = MaterialTheme.colorScheme.onPrimary,
+                                color = Color.White,
                                 style = MaterialTheme.typography.labelSmall,
                                 modifier = Modifier.weight(1f)
                             )
@@ -1024,7 +1024,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 Icon(
                                     imageVector = Icons.Filled.PictureAsPdf,
                                     contentDescription = stringResource(R.string.export_to_pdf),
-                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -1032,7 +1032,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 Icon(
                                     imageVector = Icons.Filled.TableView,
                                     contentDescription = stringResource(R.string.export_to_excel),
-                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -1040,7 +1040,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 Icon(
                                     Icons.Default.Close,
                                     contentDescription = stringResource(R.string.cancel),
-                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -1065,12 +1065,15 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             val headerBg = MaterialTheme.colorScheme.surfaceVariant
 
             // Search+date filtered list reused across top bar, list and totals
-            // Precompute running balances on displayed list
+            // Precompute running balances on displayed list (newest first order)
             val runningBalances = remember(displayedTxns) {
-                var r = 0.0
+                // Calculate total first, then subtract in reverse order
+                val total = displayedTxns.sumOf { if (it.isCredit) it.amount else -it.amount }
+                var running = total
                 displayedTxns.map { t ->
-                    r += if (t.isCredit) t.amount else -t.amount
-                    r
+                    val current = running
+                    running -= if (t.isCredit) t.amount else -t.amount
+                    current
                 }
             }
             // Totals for credit and debit
@@ -1128,43 +1131,19 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             modifier = Modifier
                                 .weight(wDatePart)
                         ) {
+                            // Particular with attachment icon and better font size
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .background(color = Color(0xFF5C6BC0), shape = RoundedCornerShape(4.dp))
-                                            .padding(horizontal = 4.dp, vertical = 0.dp)
-                                    ) {
-                                        Text(
-                                            SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                            color = Color.White
-                                        )
-                                    }
-                                    val catLabelDate = (t.category ?: "").trim()
-                                    if (showCategory && showCategoryInList && !t.isCredit && catLabelDate.isNotEmpty()) {
-                                        val color = Color(0xFF7E57C2)
-                                        Box(
-                                            modifier = Modifier
-                                                .padding(start = 6.dp)
-                                                .background(color = color, shape = RoundedCornerShape(4.dp))
-                                                .padding(horizontal = 4.dp, vertical = 0.dp)
-                                        ) {
-                                            Text(
-                                                text = catLabelDate,
-                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = Color.White,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-                                }
+                                Text(
+                                    t.note ?: "-",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
+                                )
                                 if (t.attachmentUri != null) {
+                                    Spacer(Modifier.width(2.dp))
                                     CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
                                         IconButton(
                                             onClick = { previewUri = t.attachmentUri },
@@ -1173,23 +1152,46 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                             Icon(
                                                 imageVector = Icons.Filled.Attachment,
                                                 contentDescription = "View attachment",
-                                                modifier = Modifier.size(18.dp)
+                                                modifier = Modifier.size(16.dp),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
                                     }
                                 }
                             }
-                            Text(
-                                t.note ?: "-",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            // Date and category row (subtle and muted)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(top = 2.dp)
+                            ) {
+                                Text(
+                                    SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                                val catLabelDate = (t.category ?: "").trim()
+                                if (showCategory && showCategoryInList && !t.isCredit && catLabelDate.isNotEmpty()) {
+                                    Spacer(Modifier.width(6.dp))
+                                    // Category pill
+                                    Box(
+                                        modifier = Modifier
+                                            .background(color = Color(0xFF7E57C2), shape = RoundedCornerShape(4.dp))
+                                            .padding(horizontal = 4.dp, vertical = 0.dp)
+                                    ) {
+                                        Text(
+                                            text = catLabelDate,
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
                         }
-                        Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else MaterialTheme.colorScheme.onSurface)
-                        Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)) else MaterialTheme.colorScheme.onSurface)
-                        Text(Currency.inr(run), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)))
+                        Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else MaterialTheme.colorScheme.onSurface)
+                        Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)) else MaterialTheme.colorScheme.onSurface)
+                        Text(Currency.inr(run), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)))
                     }
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 0.dp),

@@ -103,10 +103,10 @@ fun AccountsScreen(
                 CenterAlignedTopAppBar(
                     title = { Text(stringResource(R.string.title_cash_book)) },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = if (dark) Color(0xFF6750A4) else Color(0xFF6750A4),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
                     )
                 )
                 // Summary information in the app bar - matching account card background
