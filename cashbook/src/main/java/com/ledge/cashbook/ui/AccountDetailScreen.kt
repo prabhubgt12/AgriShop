@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.sp
 import com.ledge.cashbook.util.Currency
 import com.ledge.cashbook.data.local.entities.CashTxn
 import com.ledge.cashbook.data.local.entities.CashAccount
+import java.text.SimpleDateFormat
+import java.util.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
@@ -58,7 +60,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.platform.LocalContext
 import kotlin.math.roundToInt
-import java.text.SimpleDateFormat
 import java.util.Date
 import com.ledge.cashbook.util.PdfShare
 import com.ledge.cashbook.util.ExcelShare
@@ -162,6 +163,8 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Pending confirmations
     var confirmMoveSingle by remember { mutableStateOf<Pair<CashTxn, CashAccount>?>(null) }
     var confirmMoveBulk by remember { mutableStateOf<CashAccount?>(null) }
+    // Group by date toggle
+    var groupByDate by remember { mutableStateOf(true) }
     // Load all accounts for move action (placed before usage)
     val accountsVM: AccountsViewModel = hiltViewModel()
     val allAccounts by accountsVM.accounts.collectAsState()
@@ -985,6 +988,28 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     filterMenuOpen = false
                                     showStartPicker = true
                                 })
+                                Divider()
+                                DropdownMenuItem(
+                                    text = { 
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Group by Date")
+                                            Spacer(Modifier.width(4.dp))
+                                            Switch(
+                                                checked = groupByDate,
+                                                onCheckedChange = { 
+                                                    groupByDate = it
+                                                    filterMenuOpen = false
+                                                },
+                                                modifier = Modifier.scale(0.8f)
+                                            )
+                                        }
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                                    onClick = {
+                                        groupByDate = !groupByDate
+                                        filterMenuOpen = false
+                                    }
+                                )
                             }
                         }
                     },
@@ -1080,6 +1105,33 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             val totalCredit = remember(displayedTxns) { displayedTxns.filter { it.isCredit }.sumOf { it.amount } }
             val totalDebit = remember(displayedTxns) { displayedTxns.filter { !it.isCredit }.sumOf { it.amount } }
 
+            // Group transactions by date
+            val groupedTxns = remember(displayedTxns) {
+                displayedTxns.groupBy { txn: CashTxn ->
+                    // Format date to yyyy-MM-dd for grouping
+                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(txn.date))
+                }.toSortedMap(Comparator.reverseOrder()).mapValues { entry ->
+                    entry.value.sortedByDescending { it.date } // Sort transactions within each date by newest first
+                }
+            }
+
+            // Function to format date header nicely
+            fun formatDateHeader(dateStr: String): String {
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val date = sdf.parse(dateStr)
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                val yesterday = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(System.currentTimeMillis() - 24L * 60 * 60 * 1000))
+                
+                return when (dateStr) {
+                    today -> "Today"
+                    yesterday -> "Yesterday"
+                    else -> {
+                        // Format as "dd MMM yyyy" (e.g., "05 Mar 2026")
+                        SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(date ?: Date())
+                    }
+                }
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1104,100 +1156,247 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         thickness = 0.6.dp
                     )
                 }
-                itemsIndexed(displayedTxns) { index, t ->
-                    val run = runningBalances.getOrNull(index) ?: 0.0
-                    // Theme-aware subtle background (15% opacity)
-                    val rowBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(rowBg)
-                            .combinedClickable(
-                                onClick = {
-                                    if (inSelectionMode) vm.toggleSelection(t.id) else Unit
-                                },
-                                onLongClick = {
-                                    if (inSelectionMode) vm.toggleSelection(t.id) else actionTxn = t
-                                }
-                            )
-                            .padding(vertical = 6.dp, horizontal = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (inSelectionMode) {
-                            Checkbox(checked = t.id in selectedIds, onCheckedChange = { vm.toggleSelection(t.id) })
-                            Spacer(Modifier.width(6.dp))
-                        }
-                        Column(
-                            modifier = Modifier
-                                .weight(wDatePart)
-                        ) {
-                            // Particular with attachment icon and better font size
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
+                
+                if (groupByDate) {
+                    // Display grouped transactions
+                    groupedTxns.forEach { (dateStr: String, txns: List<CashTxn>) ->
+                        // Date header with card container
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 6.dp, vertical = 4.dp)
                             ) {
-                                Text(
-                                    t.note ?: "-",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                if (t.attachmentUri != null) {
-                                    Spacer(Modifier.width(2.dp))
-                                    CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-                                        IconButton(
-                                            onClick = { previewUri = t.attachmentUri },
-                                            modifier = Modifier.size(24.dp)
+                                // Card container for the entire group
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                ) {
+                                    Column {
+                                        // Date header inside card
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                                                .padding(horizontal = 12.dp, vertical = 6.dp)
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Attachment,
-                                                contentDescription = "View attachment",
-                                                modifier = Modifier.size(16.dp),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            Text(
+                                                text = formatDateHeader(dateStr),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                        
+                                        // Transactions for this date inside card
+                                        Column {
+                                            txns.forEachIndexed { index, t ->
+                                                val run = runningBalances.getOrNull(displayedTxns.indexOf(t)) ?: 0.0
+                                                
+                                                Row(
+                                                    Modifier
+                                                        .fillMaxWidth()
+                                                        .combinedClickable(
+                                                            onClick = {
+                                                                if (inSelectionMode) vm.toggleSelection(t.id) else Unit
+                                                            },
+                                                            onLongClick = {
+                                                                if (inSelectionMode) vm.toggleSelection(t.id) else actionTxn = t
+                                                            }
+                                                        )
+                                                        .padding(vertical = 6.dp, horizontal = 12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    if (inSelectionMode) {
+                                                        Checkbox(checked = t.id in selectedIds, onCheckedChange = { vm.toggleSelection(t.id) })
+                                                        Spacer(Modifier.width(6.dp))
+                                                    }
+                                                    Column(
+                                                        modifier = Modifier
+                                                            .weight(wDatePart)
+                                                    ) {
+                                                        // Particular with attachment icon and better font size
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            modifier = Modifier.fillMaxWidth()
+                                                        ) {
+                                                            Text(
+                                                                t.note ?: "-",
+                                                                style = MaterialTheme.typography.bodyMedium,
+                                                                fontWeight = FontWeight.Medium,
+                                                                modifier = Modifier.weight(1f)
+                                                            )
+                                                            if (t.attachmentUri != null) {
+                                                                Spacer(Modifier.width(2.dp))
+                                                                CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                                                                    IconButton(
+                                                                        onClick = { previewUri = t.attachmentUri },
+                                                                        modifier = Modifier.size(24.dp)
+                                                                    ) {
+                                                                        Icon(
+                                                                            imageVector = Icons.Filled.Attachment,
+                                                                            contentDescription = "View attachment",
+                                                                            modifier = Modifier.size(16.dp),
+                                                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        // Date and category row (subtle and muted)
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            modifier = Modifier.padding(top = 2.dp)
+                                                        ) {
+                                                            Text(
+                                                                SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                                            )
+                                                            val catLabelDate = (t.category ?: "").trim()
+                                                            if (showCategory && showCategoryInList && !t.isCredit && catLabelDate.isNotEmpty()) {
+                                                                Spacer(Modifier.width(6.dp))
+                                                                // Category pill
+                                                                Box(
+                                                                    modifier = Modifier
+                                                                        .background(color = Color(0xFF7E57C2), shape = RoundedCornerShape(4.dp))
+                                                                        .padding(horizontal = 4.dp, vertical = 0.dp)
+                                                                ) {
+                                                                    Text(
+                                                                        text = catLabelDate,
+                                                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                                                        color = Color.White,
+                                                                        maxLines = 1,
+                                                                        overflow = TextOverflow.Ellipsis
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else MaterialTheme.colorScheme.onSurface)
+                                                    Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)) else MaterialTheme.colorScheme.onSurface)
+                                                    Text(Currency.inr(run), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C7C)))
+                                                }
+                                                
+                                                // Add divider between transactions except last one
+                                                if (index < txns.size - 1) {
+                                                    HorizontalDivider(
+                                                        modifier = Modifier.padding(horizontal = 12.dp),
+                                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                                                        thickness = 0.5.dp
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Add gap between cards
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                    }
+                } else {
+                    // Display transactions normally (not grouped)
+                    itemsIndexed(displayedTxns, key = { index, t -> t.id }) { index, t ->
+                        val run = runningBalances.getOrNull(index) ?: 0.0
+                        // Theme-aware subtle background (15% opacity)
+                        val rowBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .background(rowBg)
+                                .combinedClickable(
+                                    onClick = {
+                                        if (inSelectionMode) vm.toggleSelection(t.id) else Unit
+                                    },
+                                    onLongClick = {
+                                        if (inSelectionMode) vm.toggleSelection(t.id) else actionTxn = t
+                                    }
+                                )
+                                .padding(vertical = 6.dp, horizontal = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (inSelectionMode) {
+                                Checkbox(checked = t.id in selectedIds, onCheckedChange = { vm.toggleSelection(t.id) })
+                                Spacer(Modifier.width(6.dp))
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .weight(wDatePart)
+                            ) {
+                                // Particular with attachment icon and better font size
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        t.note ?: "-",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (t.attachmentUri != null) {
+                                        Spacer(Modifier.width(2.dp))
+                                        CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                                            IconButton(
+                                                onClick = { previewUri = t.attachmentUri },
+                                                modifier = Modifier.size(24.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Attachment,
+                                                    contentDescription = "View attachment",
+                                                    modifier = Modifier.size(16.dp),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                // Date and category row (subtle and muted)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                ) {
+                                    Text(
+                                        SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                    )
+                                    val catLabelDate = (t.category ?: "").trim()
+                                    if (showCategory && showCategoryInList && !t.isCredit && catLabelDate.isNotEmpty()) {
+                                        Spacer(Modifier.width(6.dp))
+                                        // Category pill
+                                        Box(
+                                            modifier = Modifier
+                                                .background(color = Color(0xFF7E57C2), shape = RoundedCornerShape(4.dp))
+                                                .padding(horizontal = 4.dp, vertical = 0.dp)
+                                        ) {
+                                            Text(
+                                                text = catLabelDate,
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
                                             )
                                         }
                                     }
                                 }
                             }
-                            // Date and category row (subtle and muted)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(top = 2.dp)
-                            ) {
-                                Text(
-                                    SimpleDateFormat("dd/MM/yy").format(Date(t.date)),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
-                                val catLabelDate = (t.category ?: "").trim()
-                                if (showCategory && showCategoryInList && !t.isCredit && catLabelDate.isNotEmpty()) {
-                                    Spacer(Modifier.width(6.dp))
-                                    // Category pill
-                                    Box(
-                                        modifier = Modifier
-                                            .background(color = Color(0xFF7E57C2), shape = RoundedCornerShape(4.dp))
-                                            .padding(horizontal = 4.dp, vertical = 0.dp)
-                                    ) {
-                                        Text(
-                                            text = catLabelDate,
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                            color = Color.White,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
-                            }
+                            Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else MaterialTheme.colorScheme.onSurface)
+                            Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)) else MaterialTheme.colorScheme.onSurface)
+                            Text(Currency.inr(run), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C7C)))
                         }
-                        Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else MaterialTheme.colorScheme.onSurface)
-                        Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)) else MaterialTheme.colorScheme.onSurface)
-                        Text(Currency.inr(run), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 0.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                            thickness = 0.6.dp
+                        )
                     }
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 0.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
-                        thickness = 0.6.dp
-                    )
                 }
             }
             // Divider above footer for separation
