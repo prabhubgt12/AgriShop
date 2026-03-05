@@ -17,11 +17,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Circle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
 import androidx.compose.ui.unit.sp
@@ -1032,10 +1034,18 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                        titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                        actionIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    ),
+                    modifier = Modifier.background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF6750A4),
+                                Color(0xFF4A3C8C)
+                            )
+                        )
                     )
                 )
 
@@ -1261,16 +1271,21 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                                             val catLabelDate = (t.category ?: "").trim()
                                                             if (showCategory && showCategoryInList && !t.isCredit && catLabelDate.isNotEmpty()) {
                                                                 Spacer(Modifier.width(6.dp))
-                                                                // Category pill
-                                                                Box(
-                                                                    modifier = Modifier
-                                                                        .background(color = Color(0xFF7E57C2), shape = RoundedCornerShape(4.dp))
-                                                                        .padding(horizontal = 4.dp, vertical = 0.dp)
+                                                                // Date and category with colored dot in between
+                                                                Row(
+                                                                    verticalAlignment = Alignment.CenterVertically
                                                                 ) {
+                                                                    Icon(
+                                                                        Icons.Default.Circle,
+                                                                        contentDescription = null,
+                                                                        modifier = Modifier.size(4.dp),
+                                                                        tint = Color(0xFF7E57C2)
+                                                                    )
+                                                                    Spacer(Modifier.width(4.dp))
                                                                     Text(
                                                                         text = catLabelDate,
                                                                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                                        color = Color.White,
+                                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                                                         maxLines = 1,
                                                                         overflow = TextOverflow.Ellipsis
                                                                     )
@@ -1280,7 +1295,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                                     }
                                                     Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else MaterialTheme.colorScheme.onSurface)
                                                     Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)) else MaterialTheme.colorScheme.onSurface)
-                                                    Text(Currency.inr(run), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C7C)))
+                                                    Text(Currency.inr(run), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                                                 }
                                                 
                                                 // Add divider between transactions except last one
@@ -1371,16 +1386,21 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     val catLabelDate = (t.category ?: "").trim()
                                     if (showCategory && showCategoryInList && !t.isCredit && catLabelDate.isNotEmpty()) {
                                         Spacer(Modifier.width(6.dp))
-                                        // Category pill
-                                        Box(
-                                            modifier = Modifier
-                                                .background(color = Color(0xFF7E57C2), shape = RoundedCornerShape(4.dp))
-                                                .padding(horizontal = 4.dp, vertical = 0.dp)
+                                        // Date and category with colored dot in between
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            Icon(
+                                                Icons.Default.Circle,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(4.dp),
+                                                tint = Color(0xFF7E57C2)
+                                            )
+                                            Spacer(Modifier.width(4.dp))
                                             Text(
                                                 text = catLabelDate,
                                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                color = Color.White,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
                                             )
@@ -1390,7 +1410,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                             }
                             Text(if (t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else MaterialTheme.colorScheme.onSurface)
                             Text(if (!t.isCredit) Currency.inr(t.amount) else "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (!t.isCredit) (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)) else MaterialTheme.colorScheme.onSurface)
-                            Text(Currency.inr(run), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = if (run >= 0) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C7C)))
+                            Text(Currency.inr(run), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(wAmt), textAlign = TextAlign.End, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                         }
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 0.dp),

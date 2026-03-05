@@ -1,5 +1,6 @@
 package com.ledge.cashbook.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -44,10 +47,18 @@ fun CategoriesScreen(onBack: () -> Unit, vm: CategoriesViewModel = hiltViewModel
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, contentDescription = null) }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                    titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
+                ),
+                modifier = Modifier.background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFF6750A4),
+                            Color(0xFF4A3C8C)
+                        )
+                    )
                 )
             )
         },

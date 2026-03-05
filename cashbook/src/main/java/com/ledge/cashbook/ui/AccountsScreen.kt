@@ -1,12 +1,15 @@
 package com.ledge.cashbook.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -26,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ledge.cashbook.R
 import com.ledge.cashbook.util.Currency
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.Canvas
@@ -104,9 +106,17 @@ fun AccountsScreen(
                 CenterAlignedTopAppBar(
                     title = { Text(stringResource(R.string.title_cash_book)) },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                        titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    ),
+                    modifier = Modifier.background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF6750A4),
+                                Color(0xFF4A3C8C)
+                            )
+                        )
                     )
                 )
                 // Summary information in the app bar - matching account card background
@@ -132,7 +142,7 @@ fun AccountsScreen(
                                 )
                                 Text(
                                     Currency.inr(totalCredit),
-                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                    style = MaterialTheme.typography.bodyLarge.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)
                                     )
@@ -146,7 +156,7 @@ fun AccountsScreen(
                                 )
                                 Text(
                                     Currency.inr(totalDebit),
-                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                    style = MaterialTheme.typography.bodyLarge.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)
                                     )
