@@ -476,6 +476,10 @@ function stepPaperTrade(state, snapshotHistory, selectedMode) {
     mode,
     strike: inst.strike,
     optType: inst.type,
+    breakoutLevel: inst.type === 'CE'
+      ? latest?.candle5m?.high ?? latest?.underlying?.ltp
+      : latest?.candle5m?.low ?? latest?.underlying?.ltp,
+    breakoutSource: '5M_CANDLE',
     qty: normalizeOrderQty(state.orderQty),
     entryPrice,
     entryTs: latest.ts,

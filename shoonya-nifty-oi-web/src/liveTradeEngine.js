@@ -61,13 +61,26 @@ function updatePeakOnly(trade, currentLtp) {
   return { ...trade, peakPrice: peak };
 }
 
-function shouldExit(trade, mode, currentLtp, exitStyle, targetPct) {
+function shouldExit(trade, mode, currentLtp, exitStyle, targetPct, underlyingLtp) {
   if (!trade || trade.status !== 'OPEN' || !isNum(currentLtp)) return null;
 
   if (exitStyle === 'TARGET' && isNum(trade.entryPrice) && trade.entryPrice > 0) {
     const targetPrice = trade.entryPrice * (1 + targetPct / 100);
     console.log(`TARGET check: entryPrice=${trade.entryPrice}, targetPct=${targetPct}, targetPrice=${targetPrice}, currentLtp=${currentLtp}, hit=${currentLtp >= targetPrice}`);
     if (currentLtp >= targetPrice) return { reason: `TARGET_HIT_${targetPct}` };
+  }
+
+  // False breakout exit for NORMAL
+  if (mode === 'NORMAL' && isNum(trade.breakoutLevel) && isNum(underlyingLtp)) {
+    const buffer = 5;
+    if (trade.optType === 'CE' && underlyingLtp < trade.breakoutLevel - buffer) {
+      console.log('FALSE BREAKOUT CE', underlyingLtp, trade.breakoutLevel);
+      return { reason: 'FALSE_BREAKOUT' };
+    }
+    if (trade.optType === 'PE' && underlyingLtp > trade.breakoutLevel + buffer) {
+      console.log('FALSE BREAKOUT PE', underlyingLtp, trade.breakoutLevel);
+      return { reason: 'FALSE_BREAKOUT' };
+    }
   }
 
   if (isNum(trade.slPrice) && currentLtp <= trade.slPrice) return { reason: 'SL_HIT' };
@@ -227,7 +240,7 @@ async function stepLiveTrade(ctx) {
       updated.exchange = updated.exchange || 'NFO';
     }
 
-    const exit = shouldExit(updated, updated.mode, ltpNow, exitStyle, targetPct);
+    const exit = shouldExit(updated, updated.mode, ltpNow, exitStyle, targetPct, latest.underlying?.ltp);
     console.log(`Should exit result: ${JSON.stringify(exit)}`);
 
     if (!exit) {
@@ -380,6 +393,10 @@ async function stepLiveTrade(ctx) {
     optType: inst.type,
     tsym: tradingsymbol,
     exchange: exchange,
+    breakoutLevel: inst.type === 'CE'
+      ? latest?.candle5m?.high ?? latest?.underlying?.ltp
+      : latest?.candle5m?.low ?? latest?.underlying?.ltp,
+    breakoutSource: '5M_CANDLE',
     qty: quantity,
     entryTs: latest.ts,
     entryOrderNo: orderno,
