@@ -183,8 +183,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Pending confirmations
     var confirmMoveSingle by remember { mutableStateOf<Pair<CashTxn, CashAccount>?>(null) }
     var confirmMoveBulk by remember { mutableStateOf<CashAccount?>(null) }
-    // Group by date toggle
-    var groupByDate by remember { mutableStateOf(true) }
     // Load all accounts for move action (placed before usage)
     val accountsVM: AccountsViewModel = hiltViewModel()
     val allAccounts by accountsVM.accounts.collectAsState()
@@ -446,6 +444,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     val settingsVM: SettingsViewModel = hiltViewModel()
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
     val showCategoryInList by settingsVM.showCategoryInList.collectAsState(initial = true)
+    val groupByDate by settingsVM.groupByDate.collectAsState(initial = true)
     val categories = remember(dbCategories) { dbCategories.map { it.name }.distinct() }
     // Category suggestion engine (only when category is shown)
     val catSuggestVm: CategorySuggestionViewModel? = if (showCategory) hiltViewModel() else null
@@ -1017,7 +1016,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                             Switch(
                                                 checked = groupByDate,
                                                 onCheckedChange = { 
-                                                    groupByDate = it
+                                                    settingsVM.setGroupByDate(it)
                                                     filterMenuOpen = false
                                                 },
                                                 modifier = Modifier.scale(0.8f)
@@ -1026,7 +1025,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     },
                                     leadingIcon = { Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(16.dp)) },
                                     onClick = {
-                                        groupByDate = !groupByDate
+                                        settingsVM.setGroupByDate(!groupByDate)
                                         filterMenuOpen = false
                                     }
                                 )
@@ -1115,7 +1114,10 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             // Combine Date + Particular into a single wider column keeping the same total width (0.9 + 1.3 = 2.2)
             val wDatePart = 2.2f
             val wAmt = 1.0f
-            val headerBg = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+            val headerBg = if (dark) 
+        Color(0xFF1E1E1E)
+    else 
+        Color(0xFFF5F0FF)
 
             // Search+date filtered list reused across top bar, list and totals
             // Precompute running balances on displayed list (newest first order)
@@ -1320,8 +1322,17 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     // Display transactions normally (not grouped)
                     itemsIndexed(displayedTxns, key = { index, t -> t.id }) { index, t ->
                         val run = runningBalances.getOrNull(index) ?: 0.0
-                        // Theme-aware subtle background (15% opacity)
-                        val rowBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
+                        // Theme-aware subtle background with neutral alternate colors
+                        val rowBg = if (index % 2 == 0) 
+                            if (dark) 
+                                Color(0xFF1E1E1E)
+                            else 
+                                Color(0xFFFFFFFF)
+                        else 
+                            if (dark) 
+                                Color(0xFF2A2A2A)
+                            else 
+                                Color(0xFFF7F7F7)
                         Row(
                             Modifier
                                 .fillMaxWidth()
@@ -1440,7 +1451,12 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(
+                    if (dark) 
+                        Color(0xFF1E1E1E)
+                    else 
+                        Color(0xFFF5F0FF)
+                )
                     .then(if (!showBanner) Modifier.windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)) else Modifier)
                     .padding(vertical = 6.dp, horizontal = 6.dp),
                 verticalAlignment = Alignment.CenterVertically

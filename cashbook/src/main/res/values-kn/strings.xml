@@ -154,7 +154,7 @@
     <string name="uncategorized">ವರ್ಗೀಕರಿಸದ</string>
     <string name="show_category_field">ವರ್ಗ ಸಕ್ರಿಯಗೊಳಿಸಿ</string>
     <string name="categories_csv">ವರ್ಗಗಳು (ಕಾಮಾ ಪ್ರತ್ಯೇಕ)</string>
-    <string name="group_by_date">ದಿನಾಂಕದ ಪ್ರಕಾರ ಮಾಡಿ</string>
+    <string name="group_by_date">ದಿನಾಂಕದ ಪ್ರಕಾರ ಗುಂಪು</string>
     <string name="today">ಇಂದು</string>
     <string name="yesterday">ನಿನ್ನೆ</string>
     <string name="category_split">ವರ್ಗ ವಿಭಜನೆ</string>
@@ -186,5 +186,10 @@
     <string name="quick_add_title">ತ್ವರಿತ ಸೇರಿಸಿ</string>
     <string name="transaction_added_success">ವಹಿವಾಟು ಯಶಸ್ವಿಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ</string>
     <string name="amount_label">ಮೊತ್ತ</string>
+    
+    <!-- Transaction display settings -->
+    <string name="transaction_display">ವಹಿವಾಟು ಪ್ರದರ್ಶನ</string>
+    <string name="settings_group_by_date_note">ಉತ್ತಮ ಸಂಘಟನೆಗಾಗಿ ವಹಿವಾಟುಗಳನ್ನು ದಿನಾಂಕದ ಪ್ರಕಾರ ಗುಂಪು ಮಾಡಿ</string>
+    <string name="show_summary_card_label">ಸಾರಾಂಶ ಕಾರ್ಡ್ ತೋರಿಸಿ</string>
 
 </resources>

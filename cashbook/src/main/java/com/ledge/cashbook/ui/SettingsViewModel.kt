@@ -24,6 +24,7 @@ class SettingsViewModel @Inject constructor(
         val CATEGORIES_CSV = stringPreferencesKey("categories_csv")
         val SHOW_SUMMARY = booleanPreferencesKey("show_summary_card")
         val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
+        val GROUP_BY_DATE = booleanPreferencesKey("group_by_date")
     }
 
     val showCategory: Flow<Boolean> = prefs.data.map { it[SHOW_CATEGORY] ?: false }
@@ -31,6 +32,7 @@ class SettingsViewModel @Inject constructor(
     val categoriesCsv: Flow<String> = prefs.data.map { it[CATEGORIES_CSV] ?: "" }
     val showSummary: Flow<Boolean> = prefs.data.map { it[SHOW_SUMMARY] ?: true }
     val autoBackupEnabled: Flow<Boolean> = prefs.data.map { it[AUTO_BACKUP_ENABLED] ?: false }
+    val groupByDate: Flow<Boolean> = prefs.data.map { it[GROUP_BY_DATE] ?: true }
 
     fun setShowCategory(enabled: Boolean) {
         viewModelScope.launch {
@@ -59,6 +61,12 @@ class SettingsViewModel @Inject constructor(
     fun setAutoBackupEnabled(enabled: Boolean) {
         viewModelScope.launch {
             prefs.edit { it[AUTO_BACKUP_ENABLED] = enabled }
+        }
+    }
+
+    fun setGroupByDate(enabled: Boolean) {
+        viewModelScope.launch {
+            prefs.edit { it[GROUP_BY_DATE] = enabled }
         }
     }
 }

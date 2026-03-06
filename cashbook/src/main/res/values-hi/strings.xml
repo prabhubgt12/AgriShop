@@ -94,7 +94,7 @@
     <string name="add_category">श्रेणी जोड़ें</string>
     <string name="edit_category">श्रेणी संपादित करें</string>
     <string name="category_name">श्रेणी का नाम</string>
-    <string name="group_by_date">तिथि के अनुसार समूह करें</string>
+    <string name="group_by_date">तिथि के अनुसार समूह</string>
     <string name="today">आज</string>
     <string name="yesterday">कल</string>
 
@@ -190,5 +190,9 @@
     <string name="quick_add_title">त्वरित जोड़ें</string>
     <string name="transaction_added_success">लेन-देन सफलतापूर्वक जोड़ा गया</string>
     <string name="amount_label">राशि</string>
+    
+    <!-- Transaction display settings -->
+    <string name="transaction_display">लेन-देन प्रदर्शन</string>
+    <string name="settings_group_by_date_note">बेहतर आयोजन के लिए लेन-देन को दिनांक के अनुसार समूहित करें</string>
 
 </resources>

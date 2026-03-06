@@ -74,6 +74,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     val settingsVM: SettingsViewModel = hiltViewModel()
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
     val autoBackupEnabled by settingsVM.autoBackupEnabled.collectAsState(initial = false)
+    val groupByDate by settingsVM.groupByDate.collectAsState(initial = false)
 
     // Removed legacy CSV categories field and persistence
 
@@ -242,6 +243,23 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     // Legacy CSV field removed. Category management is now via the Categories screen.
                 }
             }
+            item { HorizontalDivider() }
+
+            // Transaction display settings
+            item { Text(stringResource(R.string.transaction_display), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.group_by_date))
+                        Switch(checked = groupByDate, onCheckedChange = { settingsVM.setGroupByDate(it) })
+                    }
+                    Text(
+                        text = stringResource(R.string.settings_group_by_date_note),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+
             item { HorizontalDivider() }
 
             // Accounts summary

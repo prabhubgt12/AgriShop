@@ -46,7 +46,7 @@
     <string name="total_credit">మొత్తం జమ</string>
     <string name="total_debit">మొత్తం డెబిట్</string>
     <string name="due_accounts">బాకీ ఖాతాలు</string>
-    <string name="group_by_date">తేదీ ప్రకారంగా చేయండి</string>
+    <string name="group_by_date">తేదీ ప్రకారం సమూహం</string>
     <string name="today">ఈన్న</string>
     <string name="yesterday">నిన్న</string>
     <string name="category_split">వర్గ విభజన</string>
@@ -187,4 +187,8 @@
     <string name="label_suggested_with_name">సూచన: %1$s</string>
     <string name="categories_enable_note">లావాదేవీలలో వర్గాలను ఉపయోగించడానికి, సెట్టింగ్‌లలో వర్గ ఫీచర్‌ను ప్రారంభించండి.</string>
     <string name="show_category_in_list_label">లావాదేవీ జాబితాలో వర్గం చూపించు</string>
+    
+    <!-- Transaction display settings -->
+    <string name="transaction_display">లావాదేవీ ప్రదర్శన</string>
+    <string name="settings_group_by_date_note">మెరుగైన నిర్వహణ కోసం లావాదేవీలను తేదీ ప్రకారం సమూహించండి</string>
 </resources>
