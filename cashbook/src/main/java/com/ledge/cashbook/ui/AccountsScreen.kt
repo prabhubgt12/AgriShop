@@ -2,6 +2,7 @@ package com.ledge.cashbook.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -172,8 +173,12 @@ fun AccountsScreen(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(if (dark) Color(0xFFE57373).copy(alpha = 0.15f) else Color(0xFFB71C1C).copy(alpha = 0.15f))
+                                        .border(
+                                            width = if (showDueOnly) 2.dp else 0.dp,
+                                            color = if (showDueOnly) MaterialTheme.colorScheme.primary else Color.Transparent
+                                        )
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
-                                        .then(if (dueCount > 0) Modifier.clickable { showDueOnly = !showDueOnly } else Modifier)
+                                        .clickable { showDueOnly = !showDueOnly }
                                 ) {
                                     Text(
                                         dueCount.toString(),
