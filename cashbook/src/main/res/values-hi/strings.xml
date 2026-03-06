@@ -194,5 +194,6 @@
     <!-- Transaction display settings -->
     <string name="transaction_display">लेन-देन प्रदर्शन</string>
     <string name="settings_group_by_date_note">बेहतर आयोजन के लिए लेन-देन को दिनांक के अनुसार समूहित करें</string>
+    <string name="selected_count">%d चयनित</string>
 
 </resources>

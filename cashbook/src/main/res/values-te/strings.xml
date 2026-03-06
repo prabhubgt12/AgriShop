@@ -191,4 +191,5 @@
     <!-- Transaction display settings -->
     <string name="transaction_display">లావాదేవీ ప్రదర్శన</string>
     <string name="settings_group_by_date_note">మెరుగైన నిర్వహణ కోసం లావాదేవీలను తేదీ ప్రకారం సమూహించండి</string>
+    <string name="selected_count">%d ఎంపిక చేయబడింది</string>
 </resources>

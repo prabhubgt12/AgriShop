@@ -184,10 +184,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                                                 },
                                                 Toast.LENGTH_SHORT
                                             ).show()
-                                            activity?.let { act ->
-                                                act.finishAffinity()
-                                                act.startActivity(Intent(act, MainActivity::class.java))
-                                            }
+                                            activity?.recreate()
                                         }
                                     }
                                 )

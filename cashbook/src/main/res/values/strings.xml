@@ -167,6 +167,7 @@
     <string name="group_by_date">Group by Date</string>
     <string name="transaction_display">Transaction Display</string>
     <string name="settings_group_by_date_note">Group transactions by date for better organization</string>
+    <string name="selected_count">%d selected</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
 

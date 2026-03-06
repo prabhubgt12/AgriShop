@@ -190,4 +190,5 @@
     <!-- Transaction display settings -->
     <string name="transaction_display">பரிவர்த்தனை காட்சி</string>
     <string name="settings_group_by_date_note">சிறந்த ஒழுங்கமைப்பிற்கு பரிவர்த்தனைகளை தேதி வாரியாக குழுவாக்கு</string>
+    <string name="selected_count">%d தேர்ந்தெடுக்கப்பட்டது</string>
 </resources>

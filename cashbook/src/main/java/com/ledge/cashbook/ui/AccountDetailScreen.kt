@@ -804,7 +804,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     title = {
                         if (inSelectionMode) {
                             Text(
-                                text = "${selectedIds.size} selected",
+                                text = stringResource(R.string.selected_count, selectedIds.size),
                                 style = MaterialTheme.typography.titleSmall
                             )
                         } else {
@@ -882,20 +882,20 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(18.dp))
-                                        .background(Color(0xFFF8EAEA))
+                                        .background(if (pos) Color(0xFFE8F5E8) else Color(0xFFF8EAEA))
                                         .padding(vertical = 6.dp, horizontal = 12.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                             text = stringResource(R.string.balance) + ": ",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = Color(0xFFB3261E)
+                                            color = if (pos) Color(0xFF0F9D58) else Color(0xFFB3261E)
                                         )
                                         Text(
                                             text = Currency.inr(displayBal),
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = FontWeight.Bold,
-                                            color = Color(0xFFB3261E)
+                                            color = if (pos) Color(0xFF0F9D58) else Color(0xFFB3261E)
                                         )
                                     }
                                 }
@@ -1325,14 +1325,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         // Theme-aware subtle background with neutral alternate colors
                         val rowBg = if (index % 2 == 0) 
                             if (dark) 
-                                Color(0xFF1E1E1E)
-                            else 
-                                Color(0xFFFFFFFF)
-                        else 
-                            if (dark) 
                                 Color(0xFF2A2A2A)
                             else 
                                 Color(0xFFF7F7F7)
+                        else 
+                            if (dark) 
+                                Color(0xFF1E1E1E)
+                            else 
+                                Color(0xFFFFFFFF)
                         Row(
                             Modifier
                                 .fillMaxWidth()

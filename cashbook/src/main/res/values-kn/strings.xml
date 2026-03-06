@@ -190,6 +190,6 @@
     <!-- Transaction display settings -->
     <string name="transaction_display">ವಹಿವಾಟು ಪ್ರದರ್ಶನ</string>
     <string name="settings_group_by_date_note">ಉತ್ತಮ ಸಂಘಟನೆಗಾಗಿ ವಹಿವಾಟುಗಳನ್ನು ದಿನಾಂಕದ ಪ್ರಕಾರ ಗುಂಪು ಮಾಡಿ</string>
-    <string name="show_summary_card_label">ಸಾರಾಂಶ ಕಾರ್ಡ್ ತೋರಿಸಿ</string>
+    <string name="selected_count">%d ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ</string>
 
 </resources>
