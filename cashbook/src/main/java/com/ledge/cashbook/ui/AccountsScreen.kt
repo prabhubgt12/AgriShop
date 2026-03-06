@@ -142,7 +142,7 @@ fun AccountsScreen(
                                 )
                                 Text(
                                     Currency.inr(totalCredit),
-                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                    style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)
                                     )
@@ -156,7 +156,7 @@ fun AccountsScreen(
                                 )
                                 Text(
                                     Currency.inr(totalDebit),
-                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                    style = MaterialTheme.typography.bodyMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)
                                     )

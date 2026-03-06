@@ -1115,7 +1115,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             // Combine Date + Particular into a single wider column keeping the same total width (0.9 + 1.3 = 2.2)
             val wDatePart = 2.2f
             val wAmt = 1.0f
-            val headerBg = MaterialTheme.colorScheme.surfaceVariant
+            val headerBg = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
 
             // Search+date filtered list reused across top bar, list and totals
             // Precompute running balances on displayed list (newest first order)
@@ -1192,7 +1192,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+                                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
                                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                                         ) {
                                             Text(
