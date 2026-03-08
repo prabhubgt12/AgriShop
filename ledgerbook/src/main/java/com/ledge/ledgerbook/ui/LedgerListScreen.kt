@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
@@ -1410,7 +1411,8 @@ private fun LabelValue(label: String, value: String, modifier: Modifier = Modifi
 private fun DetailRow(
     icon: ImageVector,
     label: String,
-    value: String
+    value: String,
+    iconColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1421,26 +1423,24 @@ private fun DetailRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
+                tint = iconColor,
+                modifier = Modifier.size(16.dp)
             )
             Spacer(Modifier.width(8.dp))
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
         }
         
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
-
 @Composable
 private fun CompactSearchBar(
     value: String,
@@ -1537,7 +1537,7 @@ private fun CenteredDatePickerDialog(
                 tonalElevation = 6.dp,
                 modifier = Modifier.fillMaxWidth(0.9f)
             ) {
-                Column(Modifier.padding(16.dp)) {
+                Column(Modifier.padding(12.dp)) {
                     content()
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -1566,6 +1566,23 @@ private fun LedgerRow(
 ) {
     val ctx = LocalContext.current
     val openMenu = remember { mutableStateOf(false) }
+    
+    // Calculate overdue/due soon status using existing logic
+    val currentTime = System.currentTimeMillis()
+    val entryTime = vm.fromDateMillis
+    val daysSinceEntry = ((currentTime - entryTime) / (24 * 60 * 60 * 1000)).toInt()
+    
+    // These will be passed from the parent LedgerListScreen
+    val overdueDays = 365 // Default fallback
+    val dueSoonWindow = 30 // Default fallback
+    
+    val isOverdue = daysSinceEntry > overdueDays
+    val isDueSoon = daysSinceEntry > (overdueDays - dueSoonWindow) && daysSinceEntry <= overdueDays
+    val timeIconColor = when {
+        isOverdue -> Color(0xFFD32F2F) // Red for overdue
+        isDueSoon -> Color(0xFFFF9800) // Orange for due soon
+        else -> MaterialTheme.colorScheme.onSurfaceVariant // Default color
+    }
     
     // Calculate repayment percentage
     val repaymentPercentage = if (vm.total > 0) {
@@ -1671,128 +1688,119 @@ private fun LedgerRow(
             
             Spacer(Modifier.height(8.dp))
             
-            // Total amount with Principal and Interest below
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            // Amounts card
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+            ) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.AccountBalanceWallet,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "Total Amount",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
-                    Text(
-                        text = CurrencyFormatter.formatNoDecimals(vm.total),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = Color(0xFF4CAF50),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                
-                Spacer(Modifier.height(8.dp))
-                
-                // Principal amount below total
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Monitor,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "Principal",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                        )
-                    }
-                    Text(
-                        text = CurrencyFormatter.formatNoDecimals(vm.principal),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF2196F3)
-                    )
-                }
-                
-                Spacer(Modifier.height(2.dp))
-                
-                // Interest amount below principal
-                Column {
+                    // Total amount (prominent)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.ShowChart,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = "Interest",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                            )
-                        }
                         Text(
-                            text = CurrencyFormatter.formatNoDecimals(vm.accrued),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFF8BC34A)
+                            text = "Total Amount",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = CurrencyFormatter.formatNoDecimals(vm.total),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF4CAF50),
+                            fontWeight = FontWeight.Bold
                         )
                     }
                     
-                    if (currentMonthlyInterest > 0) {
-                        Spacer(Modifier.height(2.dp))
+                    // Details section
+                    Column {
+                        // Principal
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Monitor,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "Principal",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                             Text(
-                                text = "Monthly ",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                text = CurrencyFormatter.formatNoDecimals(vm.principal),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF2196F3)
                             )
-                            Text(
-                                text = "${CurrencyFormatter.formatNoDecimals(currentMonthlyInterest)}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                        }
+                        
+                        // Interest with monthly
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.ShowChart,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "Interest",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = CurrencyFormatter.formatNoDecimals(vm.accrued),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFF66BB6A)
+                                )
+                                if (currentMonthlyInterest > 0) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowUpward,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Text(
+                                        text = "${CurrencyFormatter.formatNoDecimals(currentMonthlyInterest)} Monthly",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
-            
             Spacer(Modifier.height(12.dp))
             
-            // Details grid
+            // Details grid with horizontal dividers
             val msPerDay = 86_400_000L
             val daysTotal = (((System.currentTimeMillis() - vm.fromDateMillis) / msPerDay).toInt()).coerceAtLeast(0)
             val years = daysTotal / 365
@@ -1808,26 +1816,41 @@ private fun LedgerRow(
                 append("${days} ${dy}")
             }
             
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 // Interest rate row
                 DetailRow(
                     icon = Icons.Outlined.Percent,
                     label = "Interest Rate",
-                    value = InterestRateFormatter.format(vm.rate, vm.rateBasis)
+                    value = InterestRateFormatter.format(vm.rate, vm.rateBasis),
+                    iconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                    thickness = 0.5.dp
                 )
                 
                 // From date row
                 DetailRow(
                     icon = Icons.Outlined.Event,
                     label = "From Date",
-                    value = vm.dateStr
+                    value = vm.dateStr,
+                    iconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                    thickness = 0.5.dp
                 )
                 
                 // Total time row
                 DetailRow(
                     icon = Icons.Outlined.AccessTime,
                     label = "Total Time",
-                    value = totalTime
+                    value = totalTime,
+                    iconColor = timeIconColor
                 )
             }
         }
