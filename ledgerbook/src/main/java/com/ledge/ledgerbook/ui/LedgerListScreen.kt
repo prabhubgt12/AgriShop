@@ -707,53 +707,112 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     if (detailsId != null) {
         val e = editing
         if (e != null && e.id == detailsId) {
-            CenteredAlertDialog(
-                onDismissRequest = { detailsForId.value = null; vm.clearEdit() },
-                title = { Text(stringResource(R.string.entry_details)) },
-                text = {
-                    Column(Modifier.fillMaxWidth()) {
-                        val isLend = e.type == "LEND"
-                        val chipBg = if (isLend) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
-                        val chipFg = if (isLend) Color(0xFF0B6A0B) else Color(0xFF9A0007)
-                        val typeLbl = when (e.type.uppercase()) {
-                            "LEND" -> stringResource(R.string.lend)
-                            "BORROW" -> stringResource(R.string.borrow)
-                            else -> toCamel(e.type)
+            Dialog(onDismissRequest = { detailsForId.value = null; vm.clearEdit() }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp)
+                    ) {
+                        // Header with Entry Type
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = e.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            
+                            val isLend = e.type == "LEND"
+                            val typeLbl = when (e.type.uppercase()) {
+                                "LEND" -> stringResource(R.string.lend)
+                                "BORROW" -> stringResource(R.string.borrow)
+                                else -> toCamel(e.type)
+                            }
+                            
+                            Surface(
+                                onClick = { /* No action needed for detail view */ },
+                                color = if (isLend) Color(0xFF2E7D32) else Color(0xFFD32F2F),
+                                shape = RoundedCornerShape(20.dp),
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = typeLbl,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White
+                                )
+                            }
                         }
-                        AssistChip(onClick = {}, label = { Text(typeLbl) }, colors = AssistChipDefaults.assistChipColors(containerColor = chipBg, labelColor = chipFg))
-                        Spacer(Modifier.height(8.dp))
-
-                        LabelValue(label = stringResource(R.string.name_label), value = e.name)
-                        Spacer(Modifier.height(8.dp))
+                        
+                        Spacer(Modifier.height(12.dp))
+                        
+                        // Detail rows with dividers
                         val interestTypeValue = when (e.interestType.uppercase()) {
                             "SIMPLE" -> stringResource(R.string.simple)
                             "COMPOUND" -> stringResource(R.string.compound)
                             else -> toCamel(e.interestType)
                         }
-                        LabelValue(label = stringResource(R.string.interest_type), value = interestTypeValue)
-                        Spacer(Modifier.height(8.dp))
+                        DetailRow(label = stringResource(R.string.interest_type), value = interestTypeValue)
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+                        
                         val basis = (e.period ?: "MONTHLY").uppercase()
                         val basisValue = when (basis) {
                             "MONTHLY" -> stringResource(R.string.rate_basis_rupee)
                             "YEARLY" -> stringResource(R.string.rate_basis_percentage)
                             else -> toCamel(basis)
                         }
-                        LabelValue(label = stringResource(R.string.rate_basis), value = basisValue)
+                        DetailRow(label = stringResource(R.string.rate_basis), value = basisValue)
+                        
                         if (e.interestType.equals("COMPOUND", true)) {
-                            Spacer(Modifier.height(8.dp))
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                            )
+                            
                             val durValue = when (e.compoundPeriod.uppercase()) {
                                 "MONTHLY" -> stringResource(R.string.monthly)
                                 "YEARLY" -> stringResource(R.string.yearly)
                                 else -> toCamel(e.compoundPeriod)
                             }
-                            LabelValue(label = stringResource(R.string.duration_type), value = durValue)
+                            DetailRow(label = stringResource(R.string.duration_type), value = durValue)
                         }
-                        Spacer(Modifier.height(8.dp))
-                        LabelValue(label = stringResource(R.string.label_principal_generic), value = CurrencyFormatter.formatInr(e.principal))
-                        Spacer(Modifier.height(8.dp))
-                        LabelValue(label = stringResource(R.string.interest_rate), value = InterestRateFormatter.format(e.rateRupees, e.period))
-                        Spacer(Modifier.height(8.dp))
-                        LabelValue(label = stringResource(R.string.from_date), value = SimpleDateFormat("dd/MM/yyyy").format(Date(e.fromDate)))
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+                        
+                        DetailRow(label = stringResource(R.string.label_principal_generic), value = CurrencyFormatter.formatInr(e.principal))
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+                        
+                        DetailRow(label = stringResource(R.string.interest_rate), value = InterestRateFormatter.format(e.rateRupees, e.period))
+                        
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        )
+                        
+                        DetailRow(label = stringResource(R.string.from_date), value = SimpleDateFormat("dd MMM yyyy").format(Date(e.fromDate)))
+                        
                         // Extract phone from notes (line starting with 'Phone:') and show as tappable
                         val phoneDigits = remember(e.notes) {
                             val n = e.notes ?: ""
@@ -761,12 +820,17 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             line?.filter { it.isDigit() } ?: ""
                         }
                         if (phoneDigits.isNotBlank()) {
-                            Spacer(Modifier.height(8.dp))
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                            )
+                            
                             val ctxPhone = LocalContext.current
-                            LabelValue(
+                            DetailRow(
                                 label = stringResource(R.string.phone),
                                 value = phoneDigits,
-                                modifier = Modifier.clickable {
+                                isClickable = true,
+                                onClick = {
                                     try {
                                         val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phoneDigits))
                                         ctxPhone.startActivity(intent)
@@ -774,6 +838,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 }
                             )
                         }
+                        
                         if (!e.notes.isNullOrBlank()) {
                             val filteredNotes = remember(e.notes) {
                                 e.notes
@@ -786,10 +851,15 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     ?: ""
                             }
                             if (filteredNotes.isNotBlank()) {
-                                Spacer(Modifier.height(8.dp))
-                                LabelValue(label = stringResource(R.string.notes_optional), value = filteredNotes)
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                )
+                                
+                                DetailRow(label = stringResource(R.string.notes_optional), value = filteredNotes)
                             }
                         }
+                        
                         // Show attachment preview if att: <uri> exists
                         val attUri = remember(e.notes) {
                             e.notes
@@ -807,7 +877,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 contentDescription = null,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(160.dp)
+                                    .height(120.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .clickable {
                                         try {
@@ -821,10 +891,30 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 contentScale = ContentScale.Crop
                             )
                         }
+                        
+                        Spacer(Modifier.height(16.dp))
+                        
+                        // Close button
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            TextButton(
+                                onClick = { detailsForId.value = null; vm.clearEdit() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(40.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.close),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
                     }
-                },
-                confirmButton = { TextButton(onClick = { detailsForId.value = null; vm.clearEdit() }) { Text(stringResource(R.string.ok)) } }
-            )
+                }
+            }
         }
     }
 
@@ -1440,6 +1530,29 @@ private fun DetailRow(
             text = value,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String, isClickable: Boolean = false, onClick: () -> Unit = {}) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .let { if (isClickable) it.clickable { onClick() } else it },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            color = if (isClickable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
 }
