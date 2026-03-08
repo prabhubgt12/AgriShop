@@ -1698,7 +1698,7 @@ private fun LedgerRow(
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+                        .padding(4.dp)
                 ) {
                     // Total amount (prominent)
                     Row(
@@ -1798,7 +1798,7 @@ private fun LedgerRow(
                     }
                 }
             }
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(4.dp))
             
             // Details grid with horizontal dividers
             val msPerDay = 86_400_000L
@@ -1816,7 +1816,7 @@ private fun LedgerRow(
                 append("${days} ${dy}")
             }
             
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 // Interest rate row
                 DetailRow(
                     icon = Icons.Outlined.Percent,
