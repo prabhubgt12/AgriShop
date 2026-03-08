@@ -134,6 +134,8 @@ private fun buildShareText(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: ThemeViewModel = hiltViewModel()) {
+    val ctx = LocalContext.current
+    InterestRateFormatter.init(ctx) // Initialize formatter with context
     val state by vm.state.collectAsState()
     // Settings flag
     val groupingEnabled by themeViewModel.groupingEnabled.collectAsState()
@@ -1651,7 +1653,8 @@ private fun LedgerRow(
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
                                 contentDescription = "More",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                         DropdownMenu(
