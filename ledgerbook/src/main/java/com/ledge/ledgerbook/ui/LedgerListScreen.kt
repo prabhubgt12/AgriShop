@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
@@ -826,17 +828,41 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             )
                             
                             val ctxPhone = LocalContext.current
-                            DetailRow(
-                                label = stringResource(R.string.phone),
-                                value = phoneDigits,
-                                isClickable = true,
-                                onClick = {
-                                    try {
-                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phoneDigits))
-                                        ctxPhone.startActivity(intent)
-                                    } catch (_: Exception) {}
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.phone),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Row(
+                                verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Call,
+                                        contentDescription = "Call",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable {
+                                                try {
+                                                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phoneDigits))
+                                                    ctxPhone.startActivity(intent)
+                                                } catch (_: Exception) {}
+                                            }
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = phoneDigits,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 }
-                            )
+                            }
                         }
                         
                         if (!e.notes.isNullOrBlank()) {
@@ -856,11 +882,24 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                                 )
                                 
-                                DetailRow(label = stringResource(R.string.notes_optional), value = filteredNotes)
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.notes_optional),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = filteredNotes,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
                             }
                         }
                         
-                        // Show attachment preview if att: <uri> exists
+                        // Show attachment if att: <uri> exists
                         val attUri = remember(e.notes) {
                             e.notes
                                 ?.lineSequence()
@@ -870,47 +909,55 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 ?.let { runCatching { Uri.parse(it) }.getOrNull() }
                         }
                         if (attUri != null) {
-                            Spacer(Modifier.height(8.dp))
-                            val painter = rememberAsyncImagePainter(attUri)
-                            Image(
-                                painter = painter,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(120.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        try {
-                                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                setDataAndType(attUri, "image/*")
-                                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                            }
-                                            context.startActivity(intent)
-                                        } catch (_: Exception) {}
-                                    },
-                                contentScale = ContentScale.Crop
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 8.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                             )
+                            
+                            val ctxAttachment = LocalContext.current
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Attachment",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.AttachFile,
+                                    contentDescription = "Attachment",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clickable {
+                                            try {
+                                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                                    setDataAndType(attUri, "image/*")
+                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                }
+                                                ctxAttachment.startActivity(intent)
+                                            } catch (_: Exception) {}
+                                        }
+                                )
+                            }
                         }
-                        
+
                         Spacer(Modifier.height(16.dp))
                         
                         // Close button
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                        Button(
+                            onClick = { detailsForId.value = null; vm.clearEdit() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
                         ) {
-                            TextButton(
-                                onClick = { detailsForId.value = null; vm.clearEdit() },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(40.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.close),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                            Text(
+                                text = stringResource(R.string.close),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
                     }
                 }
