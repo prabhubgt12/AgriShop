@@ -1022,13 +1022,6 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = phoneDigits,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Spacer(Modifier.width(8.dp))
                                     Icon(
                                         imageVector = Icons.Default.Call,
                                         contentDescription = "Call",
@@ -1041,6 +1034,13 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                                     ctxPhone.startActivity(intent)
                                                 } catch (_: Exception) {}
                                             }
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = phoneDigits,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
@@ -1081,12 +1081,15 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                         )
                                     }
                                     Spacer(Modifier.height(4.dp))
-                                    Text(
-                                        text = filteredNotes,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                    Row {
+                                        Spacer(Modifier.width(24.dp)) // Align with icon + spacer
+                                        Text(
+                                            text = filteredNotes,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
                                 }
                             }
                         }
