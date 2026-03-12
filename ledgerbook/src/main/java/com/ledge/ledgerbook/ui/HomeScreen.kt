@@ -217,7 +217,7 @@ private fun OptionItem(
             imageVector = icon,
             contentDescription = title,
             modifier = Modifier.size(if (compact) 26.dp else 36.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.height(if (compact) 4.dp else 6.dp))
         Text(
@@ -674,13 +674,27 @@ fun HomeScreen(
 
         // Calculators: Interest | SIP
         val calcTab = rememberSaveable { mutableStateOf(0) }
-        TabRow(selectedTabIndex = calcTab.value) {
-            Tab(selected = calcTab.value == 0, onClick = { calcTab.value = 0 }) {
+        TabRow(
+            selectedTabIndex = calcTab.value,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ) {
+            Tab(
+                selected = calcTab.value == 0,
+                onClick = { calcTab.value = 0 },
+                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
                 Box(Modifier.height(44.dp).padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
                     Text(text = stringResource(R.string.interest))
                 }
             }
-            Tab(selected = calcTab.value == 1, onClick = { calcTab.value = 1 }) {
+            Tab(
+                selected = calcTab.value == 1,
+                onClick = { calcTab.value = 1 },
+                selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
                 Box(Modifier.height(44.dp).padding(horizontal = 16.dp), contentAlignment = Alignment.Center) {
                     Text(text = stringResource(R.string.sip))
                 }
@@ -726,13 +740,13 @@ private fun Tile(
                 imageVector = icon,
                 contentDescription = title,
                 modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                tint = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

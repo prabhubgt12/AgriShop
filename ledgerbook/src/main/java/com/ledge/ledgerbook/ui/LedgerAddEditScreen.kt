@@ -9,10 +9,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import com.ledge.ledgerbook.data.local.entities.LedgerEntry
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -43,7 +51,7 @@ fun LedgerAddEditScreen(
     existing: LedgerEntry? = null,
     prefillName: String? = null
 ) {
-    val isEdit = existing != null
+        val isEdit = existing != null
 
     var type by remember { mutableStateOf(existing?.type ?: "LEND") }
     var name by remember { mutableStateOf(prefillName ?: existing?.name ?: "") }
@@ -94,52 +102,52 @@ fun LedgerAddEditScreen(
     val nameValid = name.isNotBlank()
     val formValid = nameValid && principalValid && rateValid
 
-    CenteredAlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                // Build notes as: att: <uri> (if any), Phone: <digits> (if any), then user's notes (without previous meta)
-                val phoneDigits = phone.filter { it.isDigit() }
-                val mergedNotes = buildString {
-                    attachmentUri?.toString()?.let {
-                        append("att: "); append(it)
+    val compactFieldModifier = Modifier
+        .fillMaxWidth()
+        .heightIn(min = 32.dp)
+
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        if (isEdit) stringResource(R.string.edit_entry) else stringResource(R.string.add_to_book),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    ) 
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                navigationIcon = {
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            Icons.Filled.ArrowBack, 
+                            contentDescription = stringResource(R.string.cancel),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
-                    if (phoneDigits.isNotBlank()) {
-                        if (isNotEmpty()) append('\n')
-                        append("Phone: "); append(phoneDigits)
-                    }
-                    val base = notes.trim()
-                    if (base.isNotEmpty()) {
-                        if (isNotEmpty()) append('\n')
-                        append(base)
-                    }
-                }.ifBlank { null }
-                val entry = LedgerEntry(
-                    id = existing?.id ?: 0,
-                    type = type,
-                    name = name.trim(),
-                    principal = (principal.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0),
-                    interestType = interestType,
-                    period = period,
-                    compoundPeriod = compoundPeriod,
-                    rateRupees = (rateRupees.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0),
-                    fromDate = fromDate,
-                    notes = mergedNotes
-                )
-                onSave(entry)
-            }, enabled = formValid) { Text(if (isEdit) stringResource(R.string.update) else stringResource(R.string.save)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
-        title = { Text(if (isEdit) stringResource(R.string.edit_entry) else stringResource(R.string.add_to_book), style = MaterialTheme.typography.titleLarge) },
-        text = {
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp, vertical = 2.dp)
+        ) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 480.dp)
+                    .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FilterChip(
+                    CompactFilterChip(
                         selected = type.equals("LEND", true),
                         onClick = { type = "LEND" },
                         label = { Text(stringResource(R.string.lend)) },
@@ -150,7 +158,7 @@ fun LedgerAddEditScreen(
                             labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
-                    FilterChip(
+                    CompactFilterChip(
                         selected = type.equals("BORROW", true),
                         onClick = { type = "BORROW" },
                         label = { Text(stringResource(R.string.borrow)) },
@@ -162,38 +170,40 @@ fun LedgerAddEditScreen(
                         )
                     )
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(if (type.equals("LEND", true)) stringResource(R.string.borrower_name) else stringResource(R.string.lender_name)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = compactFieldModifier,
                     isError = !nameValid && name.isNotEmpty(),
+                    singleLine = true,
                     supportingText = {
                         if (!nameValid && name.isNotEmpty()) Text(stringResource(R.string.name_required))
                     }
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(2.dp))
                 // Phone number (optional, digits only)
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { input -> phone = input.filter { it.isDigit() } },
                     label = { Text(stringResource(R.string.phone_optional)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = compactFieldModifier,
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(2.dp))
 
                 Text(stringResource(R.string.interest_type), style = MaterialTheme.typography.labelMedium)
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(1.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FilterChip(
+                    CompactFilterChip(
                         selected = interestType.equals("SIMPLE", true),
                         onClick = { interestType = "SIMPLE" },
                         label = { Text(stringResource(R.string.simple)) }
                     )
-                    FilterChip(
+                    CompactFilterChip(
                         selected = interestType.equals("COMPOUND", true),
                         onClick = { interestType = "COMPOUND" },
                         label = { Text(stringResource(R.string.compound)) }
@@ -201,16 +211,16 @@ fun LedgerAddEditScreen(
                 }
 
                 if (interestType.equals("COMPOUND", true)) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(stringResource(R.string.duration_type), style = MaterialTheme.typography.labelMedium)
                     Spacer(Modifier.height(4.dp))
+                    Text(stringResource(R.string.duration_type), style = MaterialTheme.typography.labelMedium)
+                    Spacer(Modifier.height(1.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        FilterChip(
+                        CompactFilterChip(
                             selected = compoundPeriod == "MONTHLY",
                             onClick = { compoundPeriod = "MONTHLY" },
                             label = { Text(stringResource(R.string.monthly)) }
                         )
-                        FilterChip(
+                        CompactFilterChip(
                             selected = compoundPeriod == "YEARLY",
                             onClick = { compoundPeriod = "YEARLY" },
                             label = { Text(stringResource(R.string.yearly)) }
@@ -218,7 +228,7 @@ fun LedgerAddEditScreen(
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(4.dp))
                 OutlinedTextField(
                     value = principal,
                     onValueChange = { input ->
@@ -226,9 +236,10 @@ fun LedgerAddEditScreen(
                         principal = input.filter { ch -> ch.isDigit() || ch == '.' }
                     },
                     label = { Text(stringResource(R.string.principal_amount)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = compactFieldModifier,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = principal.isNotEmpty() && !principalValid,
+                    singleLine = true,
                     supportingText = {
                         if (principal.isNotEmpty() && !principalValid) Text(stringResource(R.string.enter_valid_number))
                     }
@@ -239,60 +250,64 @@ fun LedgerAddEditScreen(
                     val lang = runCatching { ctx.resources.configuration.locales[0]?.language ?: "en" }.getOrElse { "en" }
                     val words = NumberToWords.inIndianSystem(principalDouble, lang)
                     if (words.isNotBlank()) {
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(1.dp))
                         Text(words, style = MaterialTheme.typography.labelSmall)
                     }
                 }
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.rate_basis), style = MaterialTheme.typography.labelMedium)
                 Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.rate_basis), style = MaterialTheme.typography.labelMedium)
+                Spacer(Modifier.height(1.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FilterChip(
+                    CompactFilterChip(
                         selected = period == "MONTHLY",
                         onClick = { period = "MONTHLY" },
                         label = { Text(stringResource(R.string.rate_basis_rupee)) }
                     )
-                    FilterChip(
+                    CompactFilterChip(
                         selected = period == "YEARLY",
                         onClick = { period = "YEARLY" },
                         label = { Text(stringResource(R.string.rate_basis_percentage)) }
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = rateRupees,
-                    onValueChange = { input ->
-                        // Allow only digits and a decimal point; disallow negatives
-                        rateRupees = input.filter { ch -> ch.isDigit() || ch == '.' }
-                    },
-                    label = {
-                        Text(
-                            if (period == "MONTHLY") {
-                                stringResource(R.string.interest_rate_rupee_monthly)
-                            } else {
-                                stringResource(R.string.interest_rate_percentage_yearly)
+                Spacer(Modifier.height(4.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = rateRupees,
+                        onValueChange = { input ->
+                            // Allow only digits and a decimal point; disallow negatives
+                            rateRupees = input.filter { ch -> ch.isDigit() || ch == '.' }
+                        },
+                        label = {
+                            Text(
+                                if (period == "MONTHLY") {
+                                    "${stringResource(R.string.interest_rate)} (₹)"
+                                } else {
+                                    "${stringResource(R.string.interest_rate)} (%)"
+                                }
+                            )
+                        },
+                        modifier = Modifier.weight(1f).heightIn(min = 32.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        isError = rateRupees.isNotEmpty() && !rateValid,
+                        singleLine = true,
+                        supportingText = {
+                            if (rateRupees.isNotEmpty() && !rateValid) Text(stringResource(R.string.enter_valid_number))
+                        }
+                    )
+                    OutlinedTextField(
+                        value = SimpleDateFormat("dd/MM/yyyy").format(Date(fromDate)),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.from_date)) },
+                        modifier = Modifier.weight(1f).heightIn(min = 32.dp),
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { showDatePicker = true }) {
+                                Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.pick))
                             }
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = rateRupees.isNotEmpty() && !rateValid,
-                    supportingText = {
-                        if (rateRupees.isNotEmpty() && !rateValid) Text(stringResource(R.string.enter_valid_number))
-                    }
-                )
-
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = SimpleDateFormat("dd/MM/yyyy").format(Date(fromDate)),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.from_date)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    trailingIcon = {
-                        TextButton(onClick = { showDatePicker = true }) { Text(stringResource(R.string.pick)) }
-                    }
-                )
+                        }
+                    )
+                }
 
                 if (showDatePicker) {
                     val today = System.currentTimeMillis()
@@ -317,7 +332,7 @@ fun LedgerAddEditScreen(
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(2.dp))
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
@@ -325,7 +340,7 @@ fun LedgerAddEditScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
                 // Attachment row (like Partial Payment)
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(2.dp))
                 val ctx = LocalContext.current
                 val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
                     if (uri != null) {
@@ -378,60 +393,77 @@ fun LedgerAddEditScreen(
                     }
                 }
             }
+            Spacer(Modifier.height(4.dp))
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .imePadding()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                OutlinedButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.cancel))
+                }
+                Spacer(Modifier.width(6.dp))
+                Button(
+                    onClick = {
+                        // Build notes as: att: <uri> (if any), Phone: <digits> (if any), then user's notes (without previous meta)
+                        val phoneDigits = phone.filter { it.isDigit() }
+                        val mergedNotes = buildString {
+                            attachmentUri?.toString()?.let {
+                                append("att: "); append(it)
+                            }
+                            if (phoneDigits.isNotBlank()) {
+                                if (isNotEmpty()) append('\n')
+                                append("Phone: "); append(phoneDigits)
+                            }
+                            val base = notes.trim()
+                            if (base.isNotEmpty()) {
+                                if (isNotEmpty()) append('\n')
+                                append(base)
+                            }
+                        }.ifBlank { null }
+                        val entry = LedgerEntry(
+                            id = existing?.id ?: 0,
+                            type = type,
+                            name = name.trim(),
+                            principal = (principal.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0),
+                            interestType = interestType,
+                            period = period,
+                            compoundPeriod = compoundPeriod,
+                            rateRupees = (rateRupees.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0),
+                            fromDate = fromDate,
+                            notes = mergedNotes
+                        )
+                        onSave(entry)
+                    },
+                    enabled = formValid
+                ) {
+                    Text(if (isEdit) stringResource(R.string.update) else stringResource(R.string.save))
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun CompactFilterChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: @Composable () -> Unit,
+    colors: SelectableChipColors = FilterChipDefaults.filterChipColors(),
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = {
+            ProvideTextStyle(MaterialTheme.typography.labelSmall) {
+                label()
+            }
+        },
+        modifier = Modifier.heightIn(min = 28.dp),
+        colors = colors
     )
 }
 
-@Composable
-private fun CenteredAlertDialog(
-    onDismissRequest: () -> Unit,
-    title: @Composable (() -> Unit)? = null,
-    text: @Composable (() -> Unit)? = null,
-    confirmButton: @Composable () -> Unit,
-    dismissButton: (@Composable () -> Unit)? = null
-) {
-    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp) {
-            Column(Modifier.padding(24.dp)) {
-                title?.let {
-                    it()
-                    Spacer(Modifier.height(16.dp))
-                }
-                text?.let {
-                    it()
-                    Spacer(Modifier.height(24.dp))
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    dismissButton?.let {
-                        it()
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    confirmButton()
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CenteredDatePickerDialog(
-    onDismissRequest: () -> Unit,
-    onConfirm: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Surface(shape = MaterialTheme.shapes.medium, tonalElevation = 6.dp, modifier = Modifier.fillMaxWidth(0.9f)) {
-                Column(Modifier.padding(16.dp)) {
-                    content()
-                    Spacer(Modifier.height(8.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.cancel)) }
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = onConfirm) { Text(stringResource(R.string.ok)) }
-                    }
-                }
-            }
-        }
-    }
-}
