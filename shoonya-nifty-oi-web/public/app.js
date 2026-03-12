@@ -15,6 +15,8 @@ const elTradeEntry = document.getElementById('tradeEntry');
 const elTradeLtp = document.getElementById('tradeLtp');
 const elTradePeak = document.getElementById('tradePeak');
 const elTradeSl = document.getElementById('tradeSl');
+const elTradeBreakoutLevel = document.getElementById('tradeBreakoutLevel');
+const elTradeBreakoutSource = document.getElementById('tradeBreakoutSource');
 const elTradePnl = document.getElementById('tradePnl');
 const elTradeUpdated = document.getElementById('tradeUpdated');
 const elTradeNote = document.getElementById('tradeNote');
@@ -306,11 +308,9 @@ function render(snapshot, lastError, paper, live) {
   ? (live?.current || live?.lastClosed)
   : paper.currentTrade;
     if (t && t.status === 'OPEN') {
-      const ltp = (() => {
-        const row = (snapshot?.rows || []).find(r => r.strike === t.strike);
-        const leg = t.optType === 'CE' ? row?.ce : row?.pe;
-        return leg?.ltp;
-      })();
+      const ltp = paper.tradeMode === 'LIVE'
+        ? (findLeg(snapshot, t.strike, t.optType)?.ltp)
+        : (findLeg(snapshot, t.strike, t.optType)?.ltp);
       const pnl = (typeof ltp === 'number' && typeof t.entryPrice === 'number') ? (ltp - t.entryPrice) * (t.qty || 1) : null;
 
       elTradeInstrument.textContent = `${t.strike} ${t.optType}`;
@@ -318,6 +318,8 @@ function render(snapshot, lastError, paper, live) {
       if (elTradeLtp) elTradeLtp.textContent = fmtNum(ltp);
       elTradePeak.textContent = fmtNum(t.peakPrice);
       elTradeSl.textContent = fmtNum(t.slPrice);
+      if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = fmtNum(t.breakoutLevel);
+      if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = t.breakoutSource || '-';
       elTradePnl.textContent = pnl === null ? '-' : fmtSigned(Math.round(pnl));
       elTradeUpdated.textContent = fmtTime(snapshot?.ts);
 
@@ -339,6 +341,8 @@ function render(snapshot, lastError, paper, live) {
       if (elTradeLtp) elTradeLtp.textContent = '-';
       elTradePeak.textContent = fmtNum(t.peakPrice);
       elTradeSl.textContent = fmtNum(t.slPrice);
+      if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = fmtNum(t.breakoutLevel);
+      if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = t.breakoutSource || '-';
       elTradePnl.textContent = fmtNum(Math.round(t.pnl));
       elTradeUpdated.textContent = fmtTime(t.exitTs);
 
@@ -357,6 +361,8 @@ function render(snapshot, lastError, paper, live) {
       if (elTradeLtp) elTradeLtp.textContent = '-';
       elTradePeak.textContent = '-';
       elTradeSl.textContent = '-';
+      if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = '-';
+      if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = '-';
       elTradePnl.textContent = '-';
       elTradeUpdated.textContent = '-';
       elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');
@@ -380,6 +386,8 @@ function render(snapshot, lastError, paper, live) {
     if (elTradeLtp) elTradeLtp.textContent = '-';
     elTradePeak.textContent = '-';
     elTradeSl.textContent = '-';
+    if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = '-';
+    if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = '-';
     elTradePnl.textContent = '-';
     elTradeUpdated.textContent = '-';
     elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');

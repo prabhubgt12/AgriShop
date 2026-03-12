@@ -371,7 +371,12 @@ async function updateOnce() {
  
   // Maintain history for window-based suggestion
   state.snapshotHistory.push(snapshot);
-  const maxKeep = Math.max(2, Math.ceil((Math.max(1, windowSeconds) / Math.max(1, pollSeconds)) * 2));
+  const minKeepSeconds = 10 * 60; // need enough history for prev 5m candle reconstruction + buffer
+  const maxKeep = Math.max(
+    2,
+    Math.ceil((Math.max(1, windowSeconds) / Math.max(1, pollSeconds)) * 2),
+    Math.ceil((minKeepSeconds / Math.max(1, pollSeconds)) + 2),
+  );
   if (state.snapshotHistory.length > maxKeep) {
     state.snapshotHistory = state.snapshotHistory.slice(-maxKeep);
   }

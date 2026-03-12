@@ -114,6 +114,33 @@ function pickSnapshotAtOrBefore(history, ts) {
   return history[0] || null;
 }
 
+function getPrev5mCandleFromSnapshots(history, nowTs) {
+  const FIVE_MIN = 5 * 60_000;
+  if (!Array.isArray(history) || history.length === 0 || !isNum(nowTs)) return null;
+
+  const currentWindowStart = Math.floor(nowTs / FIVE_MIN) * FIVE_MIN;
+  const prevStart = currentWindowStart - FIVE_MIN;
+  const prevEnd = currentWindowStart;
+
+  let hi = -Infinity;
+  let lo = Infinity;
+
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const s = history[i];
+    if (!s || !isNum(s.ts)) continue;
+    if (s.ts < prevStart) break;
+    if (s.ts >= prevStart && s.ts < prevEnd) {
+      const ul = s.underlying?.ltp;
+      if (!isNum(ul)) continue;
+      hi = Math.max(hi, ul);
+      lo = Math.min(lo, ul);
+    }
+  }
+
+  if (hi === -Infinity || lo === Infinity) return null;
+  return { high: hi, low: lo };
+}
+
 function computeDirectionSignal(history, mode, state) {
   const latest = history[history.length - 1];
   const now = latest?.ts;
@@ -160,31 +187,24 @@ function shouldEnter(history, mode, state) {
 
     if (!isNum(underNow)) return { ok: false, reasons: [...reasons, 'Underlying LTP missing'] };
 
-    // Prefer TPS-derived 5m candle extremes (last completed candle).
-    // Fallback to snapshot-derived extremes when TPS is not available.
+    // Prefer snapshot-derived previous 5m candle (aligned + frozen) to avoid TPS delay.
+    // Backup to TPS candle if snapshot history is insufficient.
+    const prevCandle = getPrev5mCandleFromSnapshots(history, nowTs);
     let extremeHigh5 = null;
     let extremeLow5 = null;
-    let extremeSource = 'snapshot';
-    if (latest && latest.candle5m && isNum(latest.candle5m.high) && isNum(latest.candle5m.low)) {
+    let extremeSource = null;
+
+    if (prevCandle) {
+      extremeHigh5 = prevCandle.high;
+      extremeLow5 = prevCandle.low;
+      extremeSource = 'snapshot_prev_5m';
+    } else if (latest && latest.candle5m && isNum(latest.candle5m.high) && isNum(latest.candle5m.low)) {
       extremeHigh5 = latest.candle5m.high;
       extremeLow5 = latest.candle5m.low;
-      extremeSource = 'tps';
-    } else {
-      let hi = -Infinity;
-      let lo = Infinity;
-      for (let i = history.length - 2; i >= 0; i -= 1) {
-        const s = history[i];
-        if (!s || !isNum(s.ts) || s.ts < nowTs - 5 * 60_000) break;
-        const ul = s.underlying?.ltp;
-        if (!isNum(ul)) continue;
-        hi = Math.max(hi, ul);
-        lo = Math.min(lo, ul);
-      }
-      extremeHigh5 = hi;
-      extremeLow5 = lo;
+      extremeSource = 'tps_backup';
     }
 
-    reasons.push(`5m high/low source: ${extremeSource === 'tps' ? 'TPSeries (last completed 5m candle)' : 'snapshot fallback'}`);
+    reasons.push(`5m high/low source: ${extremeSource || '-'}`);
 
     const breaksHigh = underNow > extremeHigh5;
     const breaksLow = underNow < extremeLow5;
@@ -212,11 +232,25 @@ function shouldEnter(history, mode, state) {
     if (breaksHigh && ceCond) {
       const direction = 'BULL';
       const inst = selectInstrument(latest, mode, direction);
-      return { ok: true, direction, inst, reasons };
+      return {
+        ok: true,
+        direction,
+        inst,
+        breakoutLevel: extremeHigh5,
+        breakoutSource: extremeSource,
+        reasons,
+      };
     } else if (breaksLow && peCond) {
       const direction = 'BEAR';
       const inst = selectInstrument(latest, mode, direction);
-      return { ok: true, direction, inst, reasons };
+      return {
+        ok: true,
+        direction,
+        inst,
+        breakoutLevel: extremeLow5,
+        breakoutSource: extremeSource,
+        reasons,
+      };
     } else {
       return { ok: false, reasons: [...reasons, 'Conditions not met'] };
     }
@@ -369,7 +403,7 @@ function maybeExit(trade, mode, currentLtp, underlyingLtp, exitCfg) {
 function initialSl(entryPrice, mode) {
   if (!isNum(entryPrice) || entryPrice <= 0) return null;
   if (mode === 'EXPIRY') return entryPrice * 0.75; // ~25%
-  if (mode === 'NORMAL') return entryPrice * 0.80; // ~20%
+  if (mode === 'NORMAL') return entryPrice * 0.75; // ~25%
   if (mode === 'BIG_RALLY') return entryPrice * 0.60; // looser
   return entryPrice * 0.70;
 }
@@ -476,10 +510,12 @@ function stepPaperTrade(state, snapshotHistory, selectedMode) {
     mode,
     strike: inst.strike,
     optType: inst.type,
-    breakoutLevel: inst.type === 'CE'
-      ? latest?.candle5m?.high ?? latest?.underlying?.ltp
-      : latest?.candle5m?.low ?? latest?.underlying?.ltp,
-    breakoutSource: '5M_CANDLE',
+    breakoutLevel: (entryCheck && isNum(entryCheck.breakoutLevel))
+      ? entryCheck.breakoutLevel
+      : (inst.type === 'CE'
+        ? latest?.candle5m?.high ?? latest?.underlying?.ltp
+        : latest?.candle5m?.low ?? latest?.underlying?.ltp),
+    breakoutSource: entryCheck?.breakoutSource || '5M_CANDLE',
     qty: normalizeOrderQty(state.orderQty),
     entryPrice,
     entryTs: latest.ts,
@@ -611,6 +647,8 @@ function computeEntryDecision(state, snapshotHistory) {
     mode: effectiveMode,
     inst: entryCheck.inst,
     direction: entryCheck.direction,
+    breakoutLevel: entryCheck.breakoutLevel,
+    breakoutSource: entryCheck.breakoutSource,
     reasons: entryCheck.reasons,
   };
 }

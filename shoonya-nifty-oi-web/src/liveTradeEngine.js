@@ -28,7 +28,7 @@ function findLeg(snapshot, strike, optType) {
 function initialSl(entryPrice, mode) {
   if (!isNum(entryPrice) || entryPrice <= 0) return null;
   if (mode === 'EXPIRY') return entryPrice * 0.75;
-  if (mode === 'NORMAL') return entryPrice * 0.70;
+  if (mode === 'NORMAL') return entryPrice * 0.75;
   if (mode === 'BIG_RALLY') return entryPrice * 0.60;
   return entryPrice * 0.70;
 }
@@ -393,10 +393,12 @@ async function stepLiveTrade(ctx) {
     optType: inst.type,
     tsym: tradingsymbol,
     exchange: exchange,
-    breakoutLevel: inst.type === 'CE'
-      ? latest?.candle5m?.high ?? latest?.underlying?.ltp
-      : latest?.candle5m?.low ?? latest?.underlying?.ltp,
-    breakoutSource: '5M_CANDLE',
+    breakoutLevel: (entryDecision && isNum(entryDecision.breakoutLevel))
+      ? entryDecision.breakoutLevel
+      : (inst.type === 'CE'
+        ? latest?.candle5m?.high ?? latest?.underlying?.ltp
+        : latest?.candle5m?.low ?? latest?.underlying?.ltp),
+    breakoutSource: entryDecision?.breakoutSource || '5M_CANDLE',
     qty: quantity,
     entryTs: latest.ts,
     entryOrderNo: orderno,
