@@ -104,6 +104,7 @@ function createLiveTradeState() {
     lastDecision: null,
     lastExitTs: null,
     lastClosed: null,
+    lastFailedTs: null,
   };
 }
 
@@ -329,6 +330,15 @@ async function stepLiveTrade(ctx) {
 
   if (!entryDecision || !entryDecision.ok) {
     return { ...live, lastDecision: { ts: latest.ts, action: 'NO_TRADE', reasons: entryDecision?.reasons || ['No entry'] } };
+  }
+
+  // Cooldown after failed entry
+  const cooldownMs = parseInt(process.env.TRADE_COOLDOWN_MS || '30000', 10);
+  if (live.lastFailedTs && Date.now() - live.lastFailedTs < cooldownMs) {
+    return {
+      ...live,
+      lastDecision: { ts: latest.ts, action: 'COOLDOWN', reasons: ['Waiting after failed entry'] }
+    };
   }
 
   if (!client || typeof client.place_order !== 'function') {
