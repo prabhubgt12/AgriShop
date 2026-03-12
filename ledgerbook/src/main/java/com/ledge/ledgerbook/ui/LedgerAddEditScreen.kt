@@ -399,13 +399,15 @@ fun LedgerAddEditScreen(
                     .fillMaxWidth()
                     .imePadding()
                     .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.End
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                OutlinedButton(onClick = onDismiss) {
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
-                Spacer(Modifier.width(6.dp))
                 Button(
                     onClick = {
                         // Build notes as: att: <uri> (if any), Phone: <digits> (if any), then user's notes (without previous meta)
@@ -438,7 +440,8 @@ fun LedgerAddEditScreen(
                         )
                         onSave(entry)
                     },
-                    enabled = formValid
+                    enabled = formValid,
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(if (isEdit) stringResource(R.string.update) else stringResource(R.string.save))
                 }
