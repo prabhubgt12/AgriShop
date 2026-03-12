@@ -152,9 +152,9 @@ fun LedgerAddEditScreen(
                         onClick = { type = "LEND" },
                         label = { Text(stringResource(R.string.lend)) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFFDFF6DD),
-                            selectedLabelColor = Color(0xFF0B6A0B),
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            containerColor = MaterialTheme.colorScheme.surface,
                             labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
@@ -163,9 +163,9 @@ fun LedgerAddEditScreen(
                         onClick = { type = "BORROW" },
                         label = { Text(stringResource(R.string.borrow)) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFFFFE2E0),
-                            selectedLabelColor = Color(0xFF9A0007),
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            containerColor = MaterialTheme.colorScheme.surface,
                             labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
@@ -457,7 +457,7 @@ private fun CompactFilterChip(
     label: @Composable () -> Unit,
     colors: SelectableChipColors = FilterChipDefaults.filterChipColors(),
 ) {
-    FilterChip(
+    InputChip(
         selected = selected,
         onClick = onClick,
         label = {
@@ -469,4 +469,3 @@ private fun CompactFilterChip(
         colors = colors
     )
 }
-

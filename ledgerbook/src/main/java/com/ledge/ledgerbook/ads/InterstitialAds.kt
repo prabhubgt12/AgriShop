@@ -23,6 +23,9 @@ object InterstitialAds {
     @Volatile
     private var isLoading: Boolean = false
     private const val MIN_INTERVAL_MS: Long = 2 * 60 * 1000 // 2 minutes
+    // Global throttle timestamp (shared across all screens)
+    @Volatile
+    private var lastShownAtGlobal: Long = 0L
     // Per-placement throttle timestamps (keyed by effective unit id used for loading/showing)
     private val lastShownAtByUnit: java.util.concurrent.ConcurrentHashMap<String, Long> = java.util.concurrent.ConcurrentHashMap()
     @Volatile
@@ -75,9 +78,9 @@ object InterstitialAds {
         val defaultUnit = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else PROD_UNIT
         val currentUnit = defaultUnit
         val now = System.currentTimeMillis()
-        val last = lastShownAtByUnit[currentUnit] ?: 0L
+        val last = lastShownAtGlobal
         if (now - last < MIN_INTERVAL_MS) {
-            Log.d("InterstitialAds", "Throttled for unit=$currentUnit: lastShown=$last now=$now")
+            Log.d("InterstitialAds", "Throttled globally for unit=$currentUnit: lastShown=$last now=$now")
             onDismiss?.invoke(); return
         }
         val cached = adsByUnit[currentUnit]
@@ -96,7 +99,7 @@ object InterstitialAds {
                 Log.d("InterstitialAds", "Dismissed")
                 adsByUnit.remove(currentUnit)
                 if (lastLoadedUnitId == currentUnit) interstitial = null
-                lastShownAtByUnit[currentUnit] = System.currentTimeMillis()
+                lastShownAtGlobal = System.currentTimeMillis()
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
                 preload(activity, currentUnit)
                 onDismiss?.invoke()
@@ -119,9 +122,9 @@ object InterstitialAds {
     fun showWithUnit(activity: Activity, prodUnitId: String, onDismiss: (() -> Unit)? = null) {
         val requestedUnit = if (BuildConfig.USE_TEST_ADS) TEST_UNIT else prodUnitId
         val now = System.currentTimeMillis()
-        val last = lastShownAtByUnit[requestedUnit] ?: 0L
+        val last = lastShownAtGlobal
         if (now - last < MIN_INTERVAL_MS) {
-            Log.d("InterstitialAds", "Throttled (placement) for unit=$requestedUnit: lastShown=$last now=$now")
+            Log.d("InterstitialAds", "Throttled globally for unit=$requestedUnit: lastShown=$last now=$now")
             onDismiss?.invoke(); return
         }
         val cached = adsByUnit[requestedUnit]
@@ -140,7 +143,7 @@ object InterstitialAds {
                 Log.d("InterstitialAds", "Dismissed")
                 adsByUnit.remove(requestedUnit)
                 if (lastLoadedUnitId == requestedUnit) interstitial = null
-                lastShownAtByUnit[requestedUnit] = System.currentTimeMillis()
+                lastShownAtGlobal = System.currentTimeMillis()
                 WindowCompat.setDecorFitsSystemWindows(activity.window, false)
                 preload(activity, requestedUnit)
                 onDismiss?.invoke()
