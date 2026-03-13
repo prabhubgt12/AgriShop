@@ -49,6 +49,9 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +62,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Dialog
@@ -94,6 +99,24 @@ import java.text.SimpleDateFormat
 import com.ledge.ledgerbook.ui.settings.CurrencyViewModel
 import java.util.Date
 import kotlin.math.roundToInt
+
+// Triangle shape for corner indicator
+class TriangleShape : Shape {
+    override fun createOutline(
+        size: androidx.compose.ui.geometry.Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
+        val path = Path().apply {
+            // Create a right triangle in the top-right corner
+            moveTo(size.width, 0f)  // Top-right corner
+            lineTo(size.width, size.height)  // Bottom-right corner
+            lineTo(0f, 0f)  // Top-left corner
+            close()
+        }
+        return Outline.Generic(path)
+    }
+}
 
 typealias LedgerItemVM = LedgerViewModel.LedgerItemVM
 
@@ -242,7 +265,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 val container = MaterialTheme.colorScheme.surface
                 val isPositive = state.finalAmount >= 0
                 val lendValueColor = Color(0xFF4CAF50)
-                val borrowValueColor = Color(0xFFD32F2F)
+                val borrowValueColor = Color(0xFFE57373)
                 val finalValueColor = if (isPositive) lendValueColor else borrowValueColor
                 val msPerDay = 86_400_000L
                 val now = System.currentTimeMillis()
@@ -792,7 +815,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             
                             Surface(
                                 onClick = { /* No action needed for detail view */ },
-                                color = if (isLend) Color(0xFF2E7D32) else Color(0xFFD32F2F),
+                                color = if (isLend) Color(0xFF2E7D32) else Color(0xFFE57373),
                                 shape = RoundedCornerShape(20.dp),
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                             ) {
@@ -1983,8 +2006,8 @@ private fun LedgerRow(
     
     // Determine if this is a lend or borrow entry
     val isLend = vm.type == "LEND"
-    val totalColor = if (isLend) Color(0xFF4CAF50) else Color(0xFFD32F2F)
-    val interestColor = if (isLend) Color(0xFF66BB6A) else Color(0xFFD32F2F)
+    val totalColor = if (isLend) Color(0xFF4CAF50) else Color(0xFFE57373)
+    val interestColor = if (isLend) Color(0xFF66BB6A) else Color(0xFFE57373)
     
     // Calculate overdue/due soon status using existing logic
     val currentTime = System.currentTimeMillis()
@@ -1998,7 +2021,7 @@ private fun LedgerRow(
     val isOverdue = daysSinceEntry > overdueDays
     val isDueSoon = daysSinceEntry > (overdueDays - dueSoonWindow) && daysSinceEntry <= overdueDays
     val timeIconColor = when {
-        isOverdue -> Color(0xFFD32F2F) // Red for overdue
+        isOverdue -> Color(0xFFE57373) // Better red for overdue
         isDueSoon -> Color(0xFFFF9800) // Orange for due soon
         else -> MaterialTheme.colorScheme.onSurfaceVariant // Default color
     }
@@ -2017,17 +2040,48 @@ private fun LedgerRow(
         }
     } else 0.0
     
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    // Custom card with corner coloring
+    val cornerColor = if (isLend) Color(0xFF2E7D32) else Color(0xFFE57373)
+    
+    Box(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
+        // Corner color overlay
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .width(60.dp)
+                .height(60.dp)
+                .background(
+                    cornerColor,
+                    RoundedCornerShape(topStart = 0.dp, topEnd = 16.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
+                )
+        )
+        
+        Card(
+            modifier = Modifier.fillMaxWidth().clickable { onClick() },
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Corner color overlay on top
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .width(60.dp)
+                    .height(60.dp)
+                    .background(
+                        cornerColor,
+                        TriangleShape()
+                    )
+            )
+            
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
             // Header with title and action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -2048,22 +2102,6 @@ private fun LedgerRow(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Lend/Borrow button
-                    val isLend = vm.type == "LEND"
-                    Surface(
-                        onClick = { /* Handle lend/borrow action */ },
-                        color = if (isLend) Color(0xFF2E7D32) else Color(0xFFD32F2F),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = if (isLend) "Lend" else "Borrow",
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White
-                        )
-                    }
-                    
                     // More options menu
                     Box {
                         IconButton(onClick = { openMenu.value = true }) {
@@ -2278,6 +2316,8 @@ private fun LedgerRow(
                     iconColor = timeIconColor
                 )
             }
+            }
         }
+    }
     }
 }
