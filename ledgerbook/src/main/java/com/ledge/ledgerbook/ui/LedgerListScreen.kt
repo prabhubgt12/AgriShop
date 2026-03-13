@@ -218,10 +218,11 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                    .padding(horizontal = 10.dp, vertical = 0.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
             item {
+                Spacer(Modifier.height(4.dp))
                 val container = MaterialTheme.colorScheme.surface
                 val isPositive = state.finalAmount >= 0
                 val lendValueColor = Color(0xFF4CAF50)
@@ -334,8 +335,13 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         Spacer(Modifier.height(10.dp))
 
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isDarkActive) 
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f) 
+                                else 
+                                    MaterialTheme.colorScheme.surface
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = if (isDarkActive) 0.dp else 1.dp),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Row(
