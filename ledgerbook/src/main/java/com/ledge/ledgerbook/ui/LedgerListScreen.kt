@@ -162,15 +162,31 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     // Local helpers to format with the current settings on the very first frame
     fun fmt(v: Double): String = CurrencyFormatter.format(v, currencyCode, showCurrencySymbol)
     fun fmtNo(v: Double): String = CurrencyFormatter.formatNoDecimals(v, currencyCode, showCurrencySymbol)
-    // Search state and filtered items
-    var searchQuery by rememberSaveable { mutableStateOf("") }
-    val filteredItems = remember(state.items, searchQuery) {
-        if (searchQuery.isBlank()) state.items
-        else state.items.filter { it.name.contains(searchQuery, ignoreCase = true) }
-    }
     // Thresholds from settings
     val overdueDays by themeViewModel.overdueDays.collectAsState()
     val dueSoonWindow by themeViewModel.dueSoonWindowDays.collectAsState()
+    // Search state and filtered items
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var activeFilter by rememberSaveable { mutableStateOf("all") } // "all", "overdue", "dueSoon"
+    val filteredItems = remember(state.items, searchQuery, activeFilter, overdueDays, dueSoonWindow) {
+        val baseFiltered = if (searchQuery.isBlank()) state.items
+        else state.items.filter { it.name.contains(searchQuery, ignoreCase = true) }
+        
+        val msPerDay = 86_400_000L
+        val now = System.currentTimeMillis()
+        val od = overdueDays.coerceAtLeast(1)
+        val win = dueSoonWindow.coerceAtLeast(1)
+        val dueFrom = (od - win).coerceAtLeast(0)
+        
+        when (activeFilter) {
+            "overdue" -> baseFiltered.filter { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
+            "dueSoon" -> baseFiltered.filter {
+                val d = (((now - it.fromDateMillis) / msPerDay).toInt())
+                d >= dueFrom && d < od
+            }
+            else -> baseFiltered
+        }
+    }
     // Precompute groups in composable scope (cannot call remember inside LazyListScope)
     val groups = remember(filteredItems) { filteredItems.groupBy { it.name } }
     val sortedGroups = remember(groups) { groups.entries.sortedBy { it.key.lowercase() } }
@@ -352,9 +368,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Card(
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFDE0E0)),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                                    shape = RoundedCornerShape(12.dp)
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (activeFilter == "overdue") Color(0xFFFFCDD2) else Color(0xFFFDE0E0)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = if (activeFilter == "overdue") 2.dp else 0.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.clickable { activeFilter = if (activeFilter == "overdue") "all" else "overdue" }
                                 ) {
                                     Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                                         Text(
@@ -381,9 +400,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 }
 
                                 Card(
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                                    shape = RoundedCornerShape(12.dp)
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (activeFilter == "dueSoon") Color(0xFFFFE0B2) else Color(0xFFFFF3E0)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = if (activeFilter == "dueSoon") 2.dp else 0.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.clickable { activeFilter = if (activeFilter == "dueSoon") "all" else "dueSoon" }
                                 ) {
                                     Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                                         Text(
