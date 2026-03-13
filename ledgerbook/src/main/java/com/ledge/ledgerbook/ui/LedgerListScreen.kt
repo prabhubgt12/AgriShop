@@ -1981,6 +1981,11 @@ private fun LedgerRow(
     val ctx = LocalContext.current
     val openMenu = remember { mutableStateOf(false) }
     
+    // Determine if this is a lend or borrow entry
+    val isLend = vm.type == "LEND"
+    val totalColor = if (isLend) Color(0xFF4CAF50) else Color(0xFFD32F2F)
+    val interestColor = if (isLend) Color(0xFF66BB6A) else Color(0xFFD32F2F)
+    
     // Calculate overdue/due soon status using existing logic
     val currentTime = System.currentTimeMillis()
     val entryTime = vm.fromDateMillis
@@ -2129,7 +2134,7 @@ private fun LedgerRow(
                         Text(
                             text = CurrencyFormatter.formatNoDecimals(vm.total),
                             style = MaterialTheme.typography.titleMedium,
-                            color = Color(0xFF4CAF50),
+                            color = totalColor,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -2191,7 +2196,7 @@ private fun LedgerRow(
                                 Text(
                                     text = CurrencyFormatter.formatNoDecimals(vm.accrued),
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = Color(0xFF66BB6A)
+                                    color = interestColor
                                 )
                             }
                             if (currentMonthlyInterest > 0) {

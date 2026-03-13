@@ -27,7 +27,7 @@ object InterestRateFormatter {
         return if (basis == "MONTHLY") {
             "${rate} ${ctx.getString(R.string.rate_basis_rupee)}"
         } else {
-            "${CurrencyFormatter.formatNumericUpTo2(rate)}${ctx.getString(R.string.rate_basis_percentage)}"
+            "${CurrencyFormatter.formatNumericUpTo2(rate)} ${ctx.getString(R.string.rate_basis_percentage)}"
         }
     }
 }

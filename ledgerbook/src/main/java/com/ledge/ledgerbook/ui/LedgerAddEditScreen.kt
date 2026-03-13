@@ -42,6 +42,7 @@ import androidx.core.content.FileProvider
 import android.net.Uri
 import java.io.File
 import java.io.FileOutputStream
+import androidx.activity.compose.BackHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,6 +106,11 @@ fun LedgerAddEditScreen(
     val compactFieldModifier = Modifier
         .fillMaxWidth()
         .heightIn(min = 32.dp)
+
+    // Handle system back button
+    BackHandler(enabled = true) {
+        onDismiss()
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
