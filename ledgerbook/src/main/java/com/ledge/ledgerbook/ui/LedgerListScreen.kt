@@ -267,7 +267,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Spacer(Modifier.width(6.dp))
                                     Text(
                                         text = fmtNo(state.totalLend),
-                                        style = MaterialTheme.typography.titleMedium,
+                                        style = MaterialTheme.typography.titleSmall,
                                         color = lendValueColor,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -309,7 +309,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Spacer(Modifier.width(6.dp))
                                     Text(
                                         text = fmtNo(state.totalBorrow),
-                                        style = MaterialTheme.typography.titleMedium,
+                                        style = MaterialTheme.typography.titleSmall,
                                         color = borrowValueColor,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -324,7 +324,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Text(
                                         text = fmtNo(state.totalBorrowInterest),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFFEF5350),
+                                        color = Color(0xFFEF9A9A),
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -333,56 +333,60 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
 
                         Spacer(Modifier.height(10.dp))
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFDE0E0)),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                                shape = RoundedCornerShape(12.dp)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFDE0E0)),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                        Text(
+                                            text = stringResource(R.string.overdue_with_count, overdueCount),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color(0xFFB00020),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
-                                        text = stringResource(R.string.overdue_with_count, overdueCount),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color(0xFFB00020),
-                                        fontWeight = FontWeight.SemiBold
+                                        text = stringResource(R.string.final_amount),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = fmtNo(state.finalAmount),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = finalValueColor
                                     )
                                 }
-                            }
 
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = stringResource(R.string.final_amount),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = fmtNo(state.finalAmount),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = finalValueColor
-                                )
-                            }
-
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
-                                    Text(
-                                        text = stringResource(R.string.due_soon_with_count, dueSoonCount),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color(0xFF8C6D1F),
-                                        fontWeight = FontWeight.SemiBold
-                                    )
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                        Text(
+                                            text = stringResource(R.string.due_soon_with_count, dueSoonCount),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color(0xFF8C6D1F),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
                                 }
                             }
                         }
