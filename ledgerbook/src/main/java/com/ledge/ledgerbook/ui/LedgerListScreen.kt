@@ -2079,13 +2079,13 @@ private fun LedgerRow(
                 }
             }
             
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(0.dp))
             
             // Amounts card
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
             ) {
                 Column(
