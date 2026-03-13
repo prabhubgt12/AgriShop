@@ -283,7 +283,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Text(
                                         text = fmtNo(state.totalLendInterest),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFF66BB6A),
+                                        color = lendValueColor.copy(alpha = 0.7f),
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -325,7 +325,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     Text(
                                         text = fmtNo(state.totalBorrowInterest),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFFEF9A9A),
+                                        color = borrowValueColor.copy(alpha = 0.7f),
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
@@ -2085,7 +2085,7 @@ private fun LedgerRow(
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
                 border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
             ) {
                 Column(
@@ -2144,46 +2144,51 @@ private fun LedgerRow(
                         }
                         
                         // Interest with monthly
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Column {
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.ShowChart,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                Text(
-                                    text = "Interest",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.ShowChart,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        text = "Interest",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                                 Text(
                                     text = CurrencyFormatter.formatNoDecimals(vm.accrued),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color(0xFF66BB6A)
                                 )
-                                if (currentMonthlyInterest > 0) {
+                            }
+                            if (currentMonthlyInterest > 0) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Icon(
                                         imageVector = Icons.Default.ArrowUpward,
                                         contentDescription = null,
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(12.dp)
                                     )
+                                    Spacer(Modifier.width(2.dp))
                                     Text(
-                                        text = "${CurrencyFormatter.formatNoDecimals(currentMonthlyInterest)} Monthly",
+                                        text = "Monthly ${CurrencyFormatter.formatNoDecimals(currentMonthlyInterest)}",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                                     )
                                 }
                             }
