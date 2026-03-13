@@ -222,153 +222,176 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
             item {
-                // Old design: three separate summary cards
                 val container = MaterialTheme.colorScheme.surface
+                val isPositive = state.finalAmount >= 0
+                val lendValueColor = Color(0xFF4CAF50)
+                val borrowValueColor = Color(0xFFD32F2F)
+                val finalValueColor = if (isPositive) lendValueColor else borrowValueColor
+                val msPerDay = 86_400_000L
+                val now = System.currentTimeMillis()
+                val od = overdueDays.coerceAtLeast(1)
+                val win = dueSoonWindow.coerceAtLeast(1)
+                val dueFrom = (od - win).coerceAtLeast(0)
+                val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
+                val dueSoonCount = state.items.count {
+                    val d = (((now - it.fromDateMillis) / msPerDay).toInt())
+                    d in dueFrom until od
+                }
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            // Lend card
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = container),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Column(Modifier.padding(12.dp)) {
-                                    Text(stringResource(R.string.total_lend), style = MaterialTheme.typography.labelSmall)
-                                    Spacer(Modifier.height(6.dp))
-                                    Card(
-                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFDFF6DD)),
-                                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Box(Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
-                                            Text(
-                                                fmtNo(state.totalLend),
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = Color(0xFF0B6A0B),
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
-                                    Spacer(Modifier.height(4.dp))
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = container),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .padding(vertical = 10.dp, horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = buildAnnotatedString {
-                                            append(stringResource(R.string.label_interest) + ": ")
-                                            withStyle(SpanStyle(color = Color(0xFF66BB6A), fontWeight = FontWeight.Bold)) {
-                                                append(fmtNo(state.totalLendInterest))
-                                            }
-                                        },
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(start = 8.dp)
+                                        text = "Lend",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = fmtNo(state.totalLend),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = lendValueColor,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(Modifier.height(2.dp))
+                                Row {
+                                    Text(
+                                        text = stringResource(R.string.label_interest) + " ",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = fmtNo(state.totalLendInterest),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF66BB6A),
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
-                            // Borrow card
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = container),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Column(Modifier.padding(12.dp)) {
-                                    Text(stringResource(R.string.total_borrow), style = MaterialTheme.typography.labelSmall)
-                                    Spacer(Modifier.height(6.dp))
-                                    Card(
-                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFE2E0)),
-                                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Box(Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
-                                            Text(
-                                                fmtNo(state.totalBorrow),
-                                                style = MaterialTheme.typography.titleSmall,
-                                                color = Color(0xFF9A0007),
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
-                                    Spacer(Modifier.height(4.dp))
+
+                            Box(
+                                Modifier
+                                    .height(44.dp)
+                                    .width(1.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f))
+                            )
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = buildAnnotatedString {
-                                            append(stringResource(R.string.label_interest) + ": ")
-                                            withStyle(SpanStyle(color = Color(0xFFEF5350), fontWeight = FontWeight.Bold)) {
-                                                append(fmtNo(state.totalBorrowInterest))
-                                            }
-                                        },
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(start = 8.dp)
+                                        text = "Borrow",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = fmtNo(state.totalBorrow),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = borrowValueColor,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(Modifier.height(2.dp))
+                                Row {
+                                    Text(
+                                        text = stringResource(R.string.label_interest) + " ",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = fmtNo(state.totalBorrowInterest),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFFEF5350),
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
-                    }
+                        }
 
-                    // Final Amount card
-                    val isPositive = state.finalAmount >= 0
-                    val msPerDay = 86_400_000L
-                    val now = System.currentTimeMillis()
-                    val od = overdueDays.coerceAtLeast(1)
-                    val win = dueSoonWindow.coerceAtLeast(1)
-                    val dueFrom = (od - win).coerceAtLeast(0)
-                    val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
-                    val dueSoonCount = state.items.count {
-                        val d = (((now - it.fromDateMillis) / msPerDay).toInt())
-                        d in dueFrom until od
-                    }
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = container),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text(stringResource(R.string.final_amount), style = MaterialTheme.typography.labelSmall)
-                            Spacer(Modifier.height(6.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                        Spacer(Modifier.height(10.dp))
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(R.string.final_amount),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = fmtNo(state.finalAmount),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Black,
+                                color = finalValueColor
+                            )
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFDE0E0)),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = if (isPositive) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Box(Modifier.padding(vertical = 6.dp, horizontal = 10.dp)) {
-                                        Text(
-                                            fmtNo(state.finalAmount),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = if (isPositive) Color(0xFF0B6A0B) else Color(0xFF9A0007),
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
+                                Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                    Text(
+                                        text = stringResource(R.string.overdue_with_count, overdueCount),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color(0xFFB00020),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
                                 }
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    Card(
-                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFDE0E0)),
-                                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
-                                            Text(
-                                                text = stringResource(R.string.overdue_with_count, overdueCount),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = Color(0xFFB00020),
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                        }
-                                    }
-                                    Card(
-                                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
-                                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
-                                            Text(
-                                                text = stringResource(R.string.due_soon_with_count, dueSoonCount),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = Color(0xFF8C6D1F),
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                        }
-                                    }
+                            }
+
+                            Text(
+                                text = "··",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                    Text(
+                                        text = stringResource(R.string.due_soon_with_count, dueSoonCount),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = Color(0xFF8C6D1F),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
                                 }
                             }
                         }
