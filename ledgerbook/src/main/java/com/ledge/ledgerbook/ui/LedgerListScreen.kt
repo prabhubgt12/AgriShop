@@ -710,7 +710,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     )
                     Spacer(Modifier.height(8.dp))
                 }
+                
             }
+            // Add extra padding at end to allow scrolling above FAB
+                item {
+                    Spacer(Modifier.height(80.dp))
+                }
             }
 
             // Draggable FAB overlay
