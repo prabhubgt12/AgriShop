@@ -618,26 +618,18 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     value = fmtNo(netInterest),
                                     modifier = Modifier.weight(1f)
                                 )
-                                // Total chip (compact)
-                                val pos = netTotal >= 0
-                                val chipBg = if (pos) Color(0xFFDFF6DD) else Color(0xFFFFE2E0)
-                                val chipFg = if (pos) Color(0xFF0B6A0B) else Color(0xFF9A0007)
+                                // Total amount with summary card colors
+                                val isLendTotal = netTotal >= 0
+                                val totalColor = if (isLendTotal) Color(0xFF4CAF50) else Color(0xFFE57373)
                                 Column(Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.total_amount), style = MaterialTheme.typography.labelSmall)
+                                    Text(stringResource(R.string.total_amount), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     Spacer(Modifier.height(2.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(chipBg)
-                                            .padding(vertical = 2.dp, horizontal = 4.dp)
-                                    ) {
-                                        Text(
-                                            fmtNo(netTotal),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = chipFg
-                                        )
-                                    }
+                                    Text(
+                                        fmtNo(netTotal),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = totalColor
+                                    )
                                 }
                             }
                         }
@@ -1819,7 +1811,7 @@ private fun LabelValue(label: String, value: String, modifier: Modifier = Modifi
                 )
                 Spacer(Modifier.width(4.dp))
             }
-            Text(label, style = MaterialTheme.typography.labelSmall)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.height(2.dp))
         Text(value, style = MaterialTheme.typography.bodyMedium)
