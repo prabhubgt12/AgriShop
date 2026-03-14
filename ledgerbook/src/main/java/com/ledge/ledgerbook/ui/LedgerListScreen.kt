@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
@@ -1430,7 +1431,11 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                         readOnly = true,
                                         label = { Text(stringResource(R.string.payment_date), style = MaterialTheme.typography.bodySmall) },
                                         modifier = Modifier.fillMaxWidth(),
-                                        trailingIcon = { TextButton(onClick = { showPicker.value = true }) { Text(stringResource(R.string.pick)) } }
+                                        trailingIcon = {
+                            IconButton(onClick = { showPicker.value = true }) {
+                                Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.pick))
+                            }
+                        }
                                     )
                                     if (showPicker.value) {
                                         val entryFrom = state.items.firstOrNull { it.id == entryId }?.fromDateMillis ?: 0L

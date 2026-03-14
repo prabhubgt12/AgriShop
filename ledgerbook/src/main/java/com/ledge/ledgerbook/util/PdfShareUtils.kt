@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Color
 import android.graphics.pdf.PdfDocument
 import androidx.core.content.FileProvider
 import com.ledge.ledgerbook.ui.LedgerViewModel
@@ -34,9 +35,11 @@ object PdfShareUtils {
         var pageNumber = 1
         var page = doc.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pageNumber).create())
         var canvas: Canvas = page.canvas
-        val title = Paint().apply { textSize = 18f; isFakeBoldText = true }
-        val label = Paint().apply { textSize = 12f; isFakeBoldText = true }
-        val text = Paint().apply { textSize = 12f }
+        val title = Paint().apply { textSize = 18f; isFakeBoldText = true; color = Color.BLACK }
+        val header = Paint().apply { textSize = 12f; isFakeBoldText = true; color = Color.BLACK }
+        val text = Paint().apply { textSize = 12f; color = Color.BLACK }
+        val border = Paint().apply { style = Paint.Style.STROKE; strokeWidth = 1.2f; color = Color.parseColor("#E0E0E0") }
+        val rule = Paint().apply { strokeWidth = 1f; color = Color.parseColor("#E0E0E0") }
         var y = MARGIN.toFloat()
 
         fun newPage() {
@@ -49,27 +52,80 @@ object PdfShareUtils {
 
         fun lineL(t: String, p: Paint = text, gap: Float = 18f) { canvas.drawText(t, MARGIN.toFloat(), y, p); y += gap }
 
-        // Header
+        // Title
         lineL(context.getString(R.string.pdf_title_receipt), title, 24f)
         lineL(context.getString(R.string.label_date_with_value, dateFmt.format(Date())), text)
         y += 6f
-        lineL(context.getString(R.string.label_customer_with_value, item.name), label)
+        lineL(context.getString(R.string.label_customer_with_value, item.name), header)
         y += 6f
 
-        // Summary (no box)
-        fun summaryLine(lbl: String, value: String) { lineL("$lbl: $value", text) }
-        // Localized type label (LEND/BORROW)
-        val typeValue = when (item.type?.uppercase()) {
-            "LEND" -> context.getString(R.string.lend)
-            "BORROW" -> context.getString(R.string.borrow)
-            else -> item.type?.let { toCamel(it) } ?: ""
+        // Table columns for single entry
+        data class Col(val title: String, val width: Float)
+        val cols = listOf(
+            Col(context.getString(R.string.entry_details), 120f),
+            Col(context.getString(R.string.amount), 120f),
+        )
+
+        // Draw table without header row
+        val startX = MARGIN.toFloat()
+        val tableWidth = cols.sumOf { it.width.toDouble() }.toFloat() + COL_GAP * (cols.size - 1)
+        y += 12f
+
+        // Details data rows
+        val details = listOf(
+            context.getString(R.string.label_type) to when (item.type?.uppercase()) {
+                "LEND" -> context.getString(R.string.lend)
+                "BORROW" -> context.getString(R.string.borrow)
+                else -> item.type?.let { toCamel(it) } ?: ""
+            },
+            context.getString(R.string.label_principal) to CurrencyFormatter.format(item.principal),
+            context.getString(R.string.label_rate) to InterestRateFormatter.format(item.rate, item.rateBasis),
+            context.getString(R.string.label_from) to item.dateStr,
+            context.getString(R.string.duration) to "${((System.currentTimeMillis() - item.fromDateMillis).coerceAtLeast(0) / 86_400_000L)} ${context.getString(R.string.days)}",
+            context.getString(R.string.label_interest) to CurrencyFormatter.format(item.accrued),
+            context.getString(R.string.label_total) to CurrencyFormatter.format(item.total)
+        )
+
+        // Draw data rows with alternating colors
+        details.forEachIndexed { index, (key, value) ->
+            var x = startX
+            val rowHeight = 25f
+            val isTotalRow = key == context.getString(R.string.label_total)
+            val isTypeRow = key == context.getString(R.string.label_type)
+            val isLend = item.type == "LEND"
+            
+            val rowBgColor = when {
+                isTotalRow -> if (isLend) Color.parseColor("#E8F5E8") else Color.parseColor("#FFEBEE") // Green for lend, red for borrow (same as type row)
+                isTypeRow -> if (isLend) Color.parseColor("#E8F5E8") else Color.parseColor("#FFEBEE") // Green for lend, red for borrow
+                index % 2 == 0 -> Color.parseColor("#FAFAFA")
+                else -> Color.WHITE
+            }
+            val rowBg = Paint().apply { color = rowBgColor }
+            
+            // Draw row background and border
+            canvas.drawRect(startX, y, startX + tableWidth, y + rowHeight, rowBg)
+            canvas.drawRect(startX, y, startX + tableWidth, y + rowHeight, border)
+            
+            // Choose text style and color based on row type
+            val textStyle = if (isTotalRow) header else text
+            val textColor = when {
+                isTotalRow -> if (isLend) Color.parseColor("#2E7D32") else Color.parseColor("#C62828") // Dark green for lend, dark red for borrow (same as type row)
+                isTypeRow -> if (isLend) Color.parseColor("#2E7D32") else Color.parseColor("#C62828") // Dark green for lend, dark red for borrow
+                else -> Color.BLACK
+            }
+            textStyle.color = textColor
+            
+            // Draw field name
+            canvas.drawText(key, x + 4f, y + rowHeight / 2 + 4f, textStyle)
+            x += cols[0].width + COL_GAP
+            
+            // Draw value (right-aligned)
+            val drawX = x + cols[1].width - 4f - textStyle.measureText(value)
+            canvas.drawText(value, drawX, y + rowHeight / 2 + 4f, textStyle)
+            
+            y += rowHeight
         }
-        summaryLine(context.getString(R.string.label_type), typeValue)
-        summaryLine(context.getString(R.string.label_principal), CurrencyFormatter.format(item.principal))
-        summaryLine(context.getString(R.string.label_rate), InterestRateFormatter.format(item.rate, item.rateBasis))
-        summaryLine(context.getString(R.string.label_from), item.dateStr)
-        summaryLine(context.getString(R.string.label_interest), CurrencyFormatter.format(item.accrued))
-        summaryLine(context.getString(R.string.label_total), CurrencyFormatter.format(item.total))
+
         y += 8f
         if (includePromo) {
             // Footer note with app link for free users
@@ -91,11 +147,14 @@ object PdfShareUtils {
         var pageNumber = 1
         var page = doc.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pageNumber).create())
         var canvas: Canvas = page.canvas
-        val title = Paint().apply { textSize = 18f; isFakeBoldText = true }
-        val header = Paint().apply { textSize = 12f; isFakeBoldText = true }
-        val text = Paint().apply { textSize = 12f }
-        val border = Paint().apply { style = Paint.Style.STROKE; strokeWidth = 1.2f }
-        val rule = Paint().apply { strokeWidth = 1f }
+        val title = Paint().apply { textSize = 18f; isFakeBoldText = true; color = Color.BLACK }
+        val header = Paint().apply { textSize = 12f; isFakeBoldText = true; color = Color.BLACK }
+        val text = Paint().apply { textSize = 12f; color = Color.BLACK }
+        val border = Paint().apply { style = Paint.Style.STROKE; strokeWidth = 1.2f; color = Color.parseColor("#E0E0E0") }
+        val rule = Paint().apply { strokeWidth = 1f; color = Color.parseColor("#E0E0E0") }
+        val lendHeaderBg = Paint().apply { color = Color.parseColor("#4CAF50") } // Green for lend
+        val borrowHeaderBg = Paint().apply { color = Color.parseColor("#F44336") } // Red for borrow
+        val headerText = Paint().apply { textSize = 12f; isFakeBoldText = true; color = Color.WHITE }
         var y = MARGIN.toFloat()
 
         fun newPage() {
@@ -139,14 +198,32 @@ object PdfShareUtils {
 
         fun ensureSpace(rowHeight: Float) { if (y + rowHeight > PAGE_HEIGHT - MARGIN) newPage() }
 
-        fun drawTable(titleText: String, rows: List<LedgerViewModel.LedgerItemVM>) {
+        fun drawTable(sectionTitle: String, rows: List<LedgerViewModel.LedgerItemVM>, isLendTable: Boolean) {
             if (rows.isEmpty()) return
-            ensureSpace(60f)
-            // Section title
-            lineL(titleText, header, 22f)
-            // Header row (align like body: right-align numeric columns, left-align others)
+            ensureSpace(80f)
+            
             val startX = MARGIN.toFloat()
+            val tableWidth = cols.sumOf { it.width.toDouble() }.toFloat() + COL_GAP * (cols.size - 1)
+            
+            // Section title with colorful header background
+            val headerHeight = 35f
+            val headerBg = if (isLendTable) lendHeaderBg else borrowHeaderBg
+            canvas.drawRect(startX, y, startX + tableWidth, y + headerHeight, headerBg)
+            
+            // Draw section title in white
+            val titleWidth = headerText.measureText(sectionTitle)
+            canvas.drawText(sectionTitle, startX + (tableWidth - titleWidth) / 2, y + headerHeight / 2 + 6f, headerText)
+            y += headerHeight + 15f
+            
+            // Header row with background and borders
             var x = startX
+            val headerRowHeight = 30f
+            
+            // Draw header background
+            val headerRowBg = Paint().apply { color = Color.parseColor("#F5F5F5") }
+            canvas.drawRect(startX, y, startX + tableWidth, y + headerRowHeight, headerRowBg)
+            canvas.drawRect(startX, y, startX + tableWidth, y + headerRowHeight, border)
+            
             for (i in cols.indices) {
                 val col = cols[i]
                 val titleText = col.title
@@ -158,19 +235,30 @@ object PdfShareUtils {
                     }
                     else -> x + 4f
                 }
-                canvas.drawText(titleText, drawX, y, header)
+                canvas.drawText(titleText, drawX, y + headerRowHeight / 2 + 4f, header)
+                // Draw vertical lines
+                if (i < cols.size - 1) {
+                    canvas.drawRect(x + cellWidth + COL_GAP / 2 - 0.5f, y, x + cellWidth + COL_GAP / 2 + 0.5f, y + headerRowHeight, border)
+                }
                 x += cellWidth + COL_GAP
             }
-            val tableWidth = cols.sumOf { it.width.toDouble() }.toFloat() + COL_GAP * (cols.size - 1)
-            // Draw header underline sufficiently below text baseline
-            y += 14f
+            
+            y += headerRowHeight
             canvas.drawLine(startX, y, startX + tableWidth, y, rule)
             y += 12f
 
-            // Body rows
-            rows.forEach { r ->
-                ensureSpace(22f)
+            // Body rows with alternating colors and borders
+            rows.forEachIndexed { rowIndex, r ->
+                ensureSpace(30f)
                 x = startX
+                val rowHeight = 25f
+                val rowBgColor = if (rowIndex % 2 == 0) Color.parseColor("#FAFAFA") else Color.WHITE
+                val rowBg = Paint().apply { color = rowBgColor }
+                
+                // Draw row background and border
+                canvas.drawRect(startX, y, startX + tableWidth, y + rowHeight, rowBg)
+                canvas.drawRect(startX, y, startX + tableWidth, y + rowHeight, border)
+                
                 val values = listOf(
                     r.dateStr,
                     CurrencyFormatter.format(r.principal),
@@ -188,24 +276,30 @@ object PdfShareUtils {
                         }
                         else -> x + 4f
                     }
-                    canvas.drawText(value, drawX, y, text)
+                    canvas.drawText(value, drawX, y + rowHeight / 2 + 4f, text)
+                    // Draw vertical lines
+                    if (i < cols.size - 1) {
+                        canvas.drawRect(x + cellWidth + COL_GAP / 2 - 0.5f, y, x + cellWidth + COL_GAP / 2 + 0.5f, y + rowHeight, border)
+                    }
                     x += cellWidth + COL_GAP
                 }
-                // Leave ample space after text, then draw row separator line
-                y += 12f
-                canvas.drawLine(startX, y, startX + tableWidth, y, rule)
-                y += 12f
+                y += rowHeight
             }
 
-            // Subtotal single row aligned with columns
+            // Subtotal row with special styling
             val principalValue = rows.sumOf { it.principal }
             val interestValue = rows.sumOf { it.accrued }
             val totalValue = rows.sumOf { it.total }
-            ensureSpace(30f)
-            // Do not draw another line here to avoid double-line; last row separator already drawn
-            // Keep spacing consistent with a normal row gap (12f)
+            ensureSpace(40f)
             y += 12f
-            // Draw values per column
+            
+            // Draw subtotal background
+            val subtotalBg = Paint().apply { color = Color.parseColor("#E8F5E8") }
+            val subtotalHeight = 25f
+            canvas.drawRect(startX, y, startX + tableWidth, y + subtotalHeight, subtotalBg)
+            canvas.drawRect(startX, y, startX + tableWidth, y + subtotalHeight, border)
+            
+            // Draw subtotal values
             x = startX
             val subtotalValues = listOf(
                 context.getString(R.string.label_subtotal), // under Date column as label
@@ -224,19 +318,21 @@ object PdfShareUtils {
                     }
                     else -> x + 4f
                 }
-                canvas.drawText(value, drawX, y, header)
+                canvas.drawText(value, drawX, y + subtotalHeight / 2 + 4f, header)
+                if (i < cols.size - 1) {
+                    canvas.drawRect(x + cellWidth + COL_GAP / 2 - 0.5f, y, x + cellWidth + COL_GAP / 2 + 0.5f, y + subtotalHeight, border)
+                }
                 x += cellWidth + COL_GAP
             }
-            // Bottom line after subtotal row
-            y += 12f
+            y += subtotalHeight
             canvas.drawLine(startX, y, startX + tableWidth, y, rule)
             y += 8f
         }
 
-        drawTable(context.getString(R.string.lend), lend)
+        drawTable(context.getString(R.string.lend), lend, true)
         // extra separation between sections
         y += 24f
-        drawTable(context.getString(R.string.borrow), borrow)
+        drawTable(context.getString(R.string.borrow), borrow, false)
 
         if (includePromo) {
             // Footer note with app link for free users
