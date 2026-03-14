@@ -2170,7 +2170,7 @@ private fun LedgerRow(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Total Amount",
+                            text = stringResource(R.string.total_amount),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -2201,7 +2201,7 @@ private fun LedgerRow(
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 Text(
-                                    text = "Principal",
+                                    text = stringResource(R.string.label_principal),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -2231,7 +2231,7 @@ private fun LedgerRow(
                                     )
                                     Spacer(Modifier.width(4.dp))
                                     Text(
-                                        text = "Interest",
+                                        text = stringResource(R.string.label_interest),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -2256,7 +2256,7 @@ private fun LedgerRow(
                                     )
                                     Spacer(Modifier.width(2.dp))
                                     Text(
-                                        text = "Monthly ${CurrencyFormatter.formatNoDecimals(currentMonthlyInterest)}",
+                                        text = "${stringResource(R.string.monthly)} ${CurrencyFormatter.formatNoDecimals(currentMonthlyInterest)}",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                                     )
@@ -2288,7 +2288,7 @@ private fun LedgerRow(
                 // Interest rate row
                 DetailRow(
                     icon = Icons.Outlined.Percent,
-                    label = "Interest Rate",
+                    label = stringResource(R.string.interest_rate),
                     value = InterestRateFormatter.format(vm.rate, vm.rateBasis),
                     iconColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -2302,7 +2302,7 @@ private fun LedgerRow(
                 // From date row
                 DetailRow(
                     icon = Icons.Outlined.Event,
-                    label = "From Date",
+                    label = stringResource(R.string.from_date),
                     value = vm.dateStr,
                     iconColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -2316,7 +2316,7 @@ private fun LedgerRow(
                 // Total time row
                 DetailRow(
                     icon = Icons.Outlined.AccessTime,
-                    label = "Total Time",
+                    label = stringResource(R.string.total_time),
                     value = totalTime,
                     iconColor = timeIconColor
                 )
