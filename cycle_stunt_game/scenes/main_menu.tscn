@@ -1,0 +1,80 @@
+[gd_scene format=3 uid="uid://bvx8n7q3k2mr"]
+
+[ext_resource type="Script" uid="uid://dop81x2151f8q" path="res://scripts/main_menu.gd" id="1"]
+
+[node name="MainMenu" type="Control" unique_id=1831929213]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1268848870]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.2, 0.3, 0.5, 1)
+
+[node name="Title" type="Label" parent="." unique_id=1852117944]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -240.0
+offset_right = 150.0
+offset_bottom = -140.0
+theme_override_font_sizes/font_size = 40
+text = "Cycle Stunt Game"
+horizontal_alignment = 1
+
+[node name="MenuContainer" type="VBoxContainer" parent="." unique_id=654363973]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -10.0
+offset_right = 100.0
+offset_bottom = 350.0
+
+[node name="Level1Button" type="Button" parent="MenuContainer" unique_id=1348979733]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
+text = "Level 1"
+
+[node name="Level2Button" type="Button" parent="MenuContainer" unique_id=1776022294]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
+text = "Level 2"
+
+[node name="Level3Button" type="Button" parent="MenuContainer" unique_id=1030047711]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
+text = "Level 3"
+
+[node name="Level4Button" type="Button" parent="MenuContainer" unique_id=668867213]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
+text = "Level 4"
+
+[node name="Level5Button" type="Button" parent="MenuContainer" unique_id=1237895899]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
+text = "Level 5"
+
+[node name="ExitButton" type="Button" parent="MenuContainer" unique_id=929140748]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 2
+text = "Exit"
+
+[connection signal="pressed" from="MenuContainer/Level1Button" to="." method="_on_level1_pressed"]
+[connection signal="pressed" from="MenuContainer/Level2Button" to="." method="_on_level2_pressed"]
+[connection signal="pressed" from="MenuContainer/Level3Button" to="." method="_on_level3_pressed"]
+[connection signal="pressed" from="MenuContainer/Level4Button" to="." method="_on_level4_pressed"]
+[connection signal="pressed" from="MenuContainer/Level5Button" to="." method="_on_level5_pressed"]
+[connection signal="pressed" from="MenuContainer/ExitButton" to="." method="_on_exit_pressed"]

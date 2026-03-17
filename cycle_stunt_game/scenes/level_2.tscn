@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://lvl2abcd1234"]
+
+[ext_resource type="PackedScene" uid="uid://bqxyxw7yh8knl" path="res://scenes/bike.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/game_manager.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://lv21s4wj84sl" path="res://assets/sky.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://ch8qfdpp55a6i" path="res://assets/mountains.png" id="4"]
+
+[sub_resource type="RectangleShape2D" id=1]
+size = Vector2(5000, 60)
+
+[sub_resource type="ConvexPolygonShape2D" id=2]
+points = PackedVector2Array(-70, 30, 70, 30, 70, 0, -70, 0)
+
+[sub_resource type="ConvexPolygonShape2D" id=3]
+points = PackedVector2Array(-70, 60, 70, 60, 70, 0, -70, 0)
+
+[sub_resource type="RectangleShape2D" id=4]
+size = Vector2(40, 160)
+
+[node name="Level2" type="Node2D"]
+script = ExtResource(2)
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+repeat_size = Vector2(4000, 0)
+
+[node name="Sky" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.2, 0.2)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/Sky"]
+texture = ExtResource(3)
+centered = false
+position = Vector2(-2000, -800)
+scale = Vector2(4, 4)
+
+[node name="Mountains" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.4, 0.4)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/Mountains"]
+texture = ExtResource(4)
+centered = false
+position = Vector2(-2000, -800)
+scale = Vector2(4, 4)
+
+[node name="Terrain" type="StaticBody2D" parent="."]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Terrain"]
+polygon = PackedVector2Array(-700,800,-700,500,-200,500,100,480,300,460,420,440,520,420,750,460,980,400,1250,520,1800,520,2400,520,3000,480,3600,440,4200,400,4800,360,5400,320,6000,280,6600,240,7200,200,7800,160,8400,120,9000,80,9600,40,10200,0,10800,-40,11400,-80,12000,-120,12600,-160,13200,-200,13800,-160,14400,-120,15000,-80,15600,-40,16200,0,16800,40,17400,80,18200,140,19000,80,19800,160,20600,80,21400,140,22200,80,23000,80,25000,80,27000,80,29000,80,31000,80,33000,80,34000,80,35000,120,36000,200,37000,300,37000,800,-700,800)
+
+[node name="GroundLine" type="Line2D" parent="Terrain"]
+width = 40
+default_color = Color(0.35,0.25,0.15,1)
+points = PackedVector2Array(-700,500,-200,500,100,480,300,460,420,440,520,420,750,460,980,400,1250,520,1800,520,2400,520,3000,480,3600,440,4200,400,4800,360,5400,320,6000,280,6600,240,7200,200,7800,160,8400,120,9000,80,9600,40,10200,0,10800,-40,11400,-80,12000,-120,12600,-160,13200,-200,13800,-160,14400,-120,15000,-80,15600,-40,16200,0,16800,40,17400,80,18200,140,19000,80,19800,160,20600,80,21400,140,22200,80,23000,80,25000,80,27000,80,29000,80,31000,80,33000,80,34000,80,35000,120,36000,200,37000,300)
+
+[node name="Finish" type="Area2D" parent="."]
+position = Vector2(34000,80)
+
+[node name="Visual" type="Polygon2D" parent="Finish"]
+polygon = PackedVector2Array(-20,-80,20,-80,20,80,-20,80)
+color = Color(0.9,0.2,0.2,1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Finish"]
+shape = SubResource(4)
+
+[node name="Bike" parent="." instance=ExtResource(1)]
+position = Vector2(100,443)
+
+[node name="Camera2D" type="Camera2D" parent="Bike"]
+position = Vector2(0,-100)
+current = true

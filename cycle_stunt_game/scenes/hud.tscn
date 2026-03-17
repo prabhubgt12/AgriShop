@@ -1,0 +1,103 @@
+[gd_scene format=3 uid="uid://hud1234abcd"]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource(1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -10.0
+
+[node name="Bg" type="ColorRect" parent="Margin"]
+color = Color(0, 0, 0, 0.1)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Root" type="VBoxContainer" parent="Margin"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="TopRow" type="HBoxContainer" parent="Margin/Root"]
+size_flags_horizontal = 3
+
+[node name="Level" type="Label" parent="Margin/Root/TopRow"]
+text = "Level: 1"
+size_flags_horizontal = 3
+
+[node name="Score" type="Label" parent="Margin/Root/TopRow"]
+text = "Score: 0"
+horizontal_alignment = 1
+size_flags_horizontal = 3
+
+[node name="Time" type="Label" parent="Margin/Root/TopRow"]
+text = "Time: 0.00"
+horizontal_alignment = 2
+size_flags_horizontal = 3
+
+[node name="Message" type="Label" parent="Margin/Root"]
+text = ""
+horizontal_alignment = 1
+
+[node name="InputDebug" type="Label" parent="Margin/Root"]
+text = "A:false B:false L:false R:false"
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+modulate = Color(1, 1, 0, 1)
+horizontal_alignment = 1
+
+[node name="DebugBg" type="ColorRect" parent="Margin/Root/InputDebug"]
+color = Color(0, 0, 0, 0.7)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="Spacer" type="Control" parent="Margin/Root"]
+size_flags_vertical = 3
+
+[node name="Controls" type="HBoxContainer" parent="Margin/Root"]
+size_flags_horizontal = 3
+
+[node name="Accel" type="Button" parent="Margin/Root/Controls"]
+text = "Accelerate"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 80)
+
+[node name="Stunt" type="Button" parent="Margin/Root/Controls"]
+text = "Stunt"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 80)
+
+[node name="Brake" type="Button" parent="Margin/Root/Controls"]
+text = "Brake"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 80)
+
+[node name="ControlSpacer" type="Control" parent="Margin/Root"]
+custom_minimum_size = Vector2(0, 20)
+
+[node name="Navigation" type="HBoxContainer" parent="Margin/Root"]
+size_flags_horizontal = 3
+
+[node name="BackToMenu" type="Button" parent="Margin/Root/Navigation"]
+text = "Back to Menu"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 60)
+[connection signal="pressed" from="Margin/Root/Navigation/BackToMenu" to="." method="_on_back_to_menu_pressed"]
+
+[node name="NavSpacer" type="Control" parent="Margin/Root/Navigation"]
+size_flags_horizontal = 3
+
+[node name="Restart" type="Button" parent="Margin/Root/Navigation"]
+text = "Restart"
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(150, 60)
+[connection signal="pressed" from="Margin/Root/Navigation/Restart" to="." method="_on_restart_pressed"]

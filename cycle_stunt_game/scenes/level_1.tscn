@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://c16aujmskpcmf"]
+
+[ext_resource type="PackedScene" uid="uid://bqxyxw7yh8knl" path="res://scenes/bike.tscn" id="1"]
+[ext_resource type="Script" uid="uid://3vt5henfu665" path="res://scripts/game_manager.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://lv21s4wj84sl" path="res://assets/sky.png" id="2_5xbjy"]
+[ext_resource type="Texture2D" uid="uid://ch8qfdpp55a6i" path="res://assets/mountains.png" id="3_4nkto"]
+
+[sub_resource type="RectangleShape2D" id="4"]
+size = Vector2(40,160)
+
+[node name="Level1" type="Node2D"]
+script = ExtResource("2")
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+repeat_size = Vector2(4000, 0)
+
+[node name="Sky" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.2,0.2)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/Sky"]
+texture = ExtResource("2_5xbjy")
+centered = false
+position = Vector2(-2000, -800)
+scale = Vector2(4, 4)
+
+[node name="Mountains" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.4,0.4)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/Mountains"]
+texture = ExtResource("3_4nkto")
+centered = false
+position = Vector2(-2000, -800)
+scale = Vector2(4, 4)
+
+[node name="Terrain" type="StaticBody2D" parent="."]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Terrain"]
+polygon = PackedVector2Array(-500,800,-500,500,0,500,200,480,400,470,600,460,800,450,900,440,1000,420,1100,380,1200,340,1300,360,1400,380,1500,320,1600,280,1700,250,1800,220,1900,250,2000,300,2100,250,2200,200,2300,170,2400,140,2500,180,2600,240,2700,200,2800,160,2900,140,3000,120,3100,100,3200,80,3300,120,3400,160,3500,120,3600,80,3700,40,3800,0,3900,10,4000,20,4100,-50,4200,-120,4300,-160,4400,-200,4500,-150,4600,-100,4700,-130,4800,-160,4900,-190,5000,-220,5100,-200,5200,-180,5300,-160,5400,-140,5500,-120,5600,-100,5700,-80,5800,-60,5900,-40,6000,-20,6100,0,6200,20,6300,40,6400,60,6500,80,6600,100,6700,120,6800,140,6900,160,7000,180,7100,200,7200,220,7300,240,7400,260,7500,280,7600,300,7700,320,7800,340,7900,360,8000,380,8100,400,8200,420,8300,440,8400,460,8500,480,8600,500,8600,800,-500,800)
+
+[node name="GroundLine" type="Line2D" parent="Terrain"]
+width = 40
+default_color = Color(0.35,0.25,0.15,1)
+points = PackedVector2Array(-500,500,0,500,200,480,400,470,600,460,800,450,900,440,1000,420,1100,380,1200,340,1300,360,1400,380,1500,320,1600,280,1700,250,1800,220,1900,250,2000,300,2100,250,2200,200,2300,170,2400,140,2500,180,2600,240,2700,200,2800,160,2900,140,3000,120,3100,100,3200,80,3300,120,3400,160,3500,120,3600,80,3700,40,3800,0,3900,10,4000,20,4100,-50,4200,-120,4300,-160,4400,-200,4500,-150,4600,-100,4700,-130,4800,-160,4900,-190,5000,-220,5100,-200,5200,-180,5300,-160,5400,-140,5500,-120,5600,-100,5700,-80,5800,-60,5900,-40,6000,-20,6100,0,6200,20,6300,40,6400,60,6500,80,6600,100,6700,120,6800,140,6900,160,7000,180,7100,200,7200,220,7300,240,7400,260,7500,280,7600,300,7700,320,7800,340,7900,360,8000,380,8100,400,8200,420,8300,440,8400,460,8500,480,8600,500)
+
+[node name="Finish" type="Area2D" parent="."]
+position = Vector2(8000,360)
+
+[node name="Visual" type="Polygon2D" parent="Finish"]
+color = Color(0.9,0.2,0.2,1)
+polygon = PackedVector2Array(-20,-80,20,-80,20,80,-20,80)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Finish"]
+shape = SubResource("4")
+
+[node name="Bike" parent="." instance=ExtResource("1")]
+position = Vector2(100,443)
+
+[node name="Camera2D" type="Camera2D" parent="Bike"]
+position = Vector2(0,-100)
+
+[connection signal="body_entered" from="Finish" to="." method="_on_finish_body_entered"]
