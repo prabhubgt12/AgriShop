@@ -35,10 +35,11 @@ import kotlin.math.pow
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.StrokeCap
+import com.ledge.ledgerbook.util.CurrencyFormatter
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -536,7 +537,7 @@ private fun buildSchedule(p: LoanProfile): List<RowItem> {
     return list
 }
 
-private fun format(v: Double): String = if (v == 0.0 || v.isNaN() || v.isInfinite()) "0" else String.format("%,.2f", v)
+private fun format(v: Double): String = if (v == 0.0 || v.isNaN() || v.isInfinite()) "0" else CurrencyFormatter.format(v)
 
 private fun computePaidToDate(p: LoanProfile): Paid {
     if (p.firstEmiDateMillis <= 0L) return Paid(0.0, 0.0)

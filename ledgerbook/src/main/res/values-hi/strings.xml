@@ -108,7 +108,7 @@
     <string name="rate_mode_percentage">प्रतिशत</string>
     <string name="interest_calc_rate_rupee_monthly_label">दर (रुपये में)</string>
     <string name="interest_calc_rate_percentage_yearly_label">दर (% वार्षिक)</string>
-    <string name="rate_display_rupee_monthly">%1$s%% / माह</string>
+    <string name="rate_display_rupee_monthly">₹%1$s / माह</string>
     <string name="rate_display_percentage_yearly">%1$s%% / वर्ष</string>
     <string name="dates">तिथियाँ</string>
     <string name="duration">अवधि</string>
@@ -199,6 +199,7 @@
     <string name="name_required">नाम आवश्यक है</string>
     <string name="interest_type">ब्याज प्रकार</string>
     <string name="rate_basis">दर का आधार</string>
+    <string name="search_with_name">नाम से खोजें</string>
     <string name="rate_basis_rupee">रुपये</string>
     <string name="rate_basis_percentage">प्रतिशत</string>
     <string name="duration_type">चक्रवृद्धि अवधि</string>

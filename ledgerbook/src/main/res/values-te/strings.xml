@@ -64,7 +64,7 @@
     <string name="rate_mode_percentage">శాతం</string>
     <string name="interest_calc_rate_rupee_monthly_label">రేటు (రూపాయిల్లో)</string>
     <string name="interest_calc_rate_percentage_yearly_label">రేటు (% వార్షిక)</string>
-    <string name="rate_display_rupee_monthly">%1$s%% / నెల</string>
+    <string name="rate_display_rupee_monthly">₹%1$s / నెల</string>
     <string name="rate_display_percentage_yearly">%1$s%% / సంవత్సరం</string>
     <string name="dates">తేదీలు</string>
     <string name="duration">వ్యవధి</string>
@@ -266,6 +266,7 @@
     <string name="name_required">పేరు అవసరం</string>
     <string name="interest_type">వడ్డీ రకం</string>
     <string name="rate_basis">రేటు ఆధారం</string>
+    <string name="search_with_name">పేరుతో శోధించండి</string>
     <string name="rate_basis_rupee">రూపాయి</string>
     <string name="rate_basis_percentage">శాతం</string>
     <string name="duration_type">కాంపౌండ్ వ్యవధి</string>

@@ -31,14 +31,43 @@ object CurrencyFormatter {
         }
     }
 
-    // Explicit-format API
+    // Indian number formatter using en-IN locale for proper Indian grouping
+    private fun formatIndianNumber(amount: Double): String {
+        val formatter = NumberFormat.getNumberInstance(Locale("en", "IN"))
+        return formatter.format(amount)
+    }
+
+    // Indian number formatter with no decimals
+    private fun formatIndianNumberNoDecimals(amount: Double): String {
+        val formatter = NumberFormat.getNumberInstance(Locale("en", "IN"))
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 0
+        return formatter.format(amount)
+    }
+
+    // Explicit-format API - now defaults to no decimals
     fun format(amount: Double, currencyCode: String = currentCode, showSymbol: Boolean = currentShowSymbol, locale: Locale = Locale.getDefault()): String {
-        val nf = formatterFor(currencyCode, 0, 2, locale)
-        val s = nf.format(amount)
-        if (showSymbol) return s
-        // Remove currency symbol while keeping grouping and sign
-        val symbol = try { Currency.getInstance(currencyCode).getSymbol(locale) } catch (_: Exception) { "" }
-        return if (symbol.isNotBlank()) s.replace(symbol, "").trim() else s
+        val formatted = if (currencyCode.equals("INR", ignoreCase = true)) {
+            formatIndianNumberNoDecimals(amount)
+        } else {
+            val nf = formatterFor(currencyCode, 0, 0, locale)
+            nf.format(amount)
+        }
+        
+        if (showSymbol) {
+            // Add currency symbol for INR
+            if (currencyCode.equals("INR", ignoreCase = true)) {
+                return "₹$formatted"
+            } else {
+                val nf = formatterFor(currencyCode, 0, 0, locale)
+                val s = nf.format(amount)
+                return s
+            }
+        } else {
+            // Remove currency symbol while keeping grouping and sign
+            val symbol = try { Currency.getInstance(currencyCode).getSymbol(locale) } catch (_: Exception) { "" }
+            return if (symbol.isNotBlank()) formatted.replace(symbol, "").trim() else formatted
+        }
     }
 
     // Plain numeric without currency symbol, up to 2 decimals; omit .00 for whole numbers
@@ -48,11 +77,27 @@ object CurrencyFormatter {
     // No decimals version honoring currency and symbol choice
     // Explicit-format API (no decimals)
     fun formatNoDecimals(amount: Double, currencyCode: String = currentCode, showSymbol: Boolean = currentShowSymbol, locale: Locale = Locale.getDefault()): String {
-        val nf = formatterFor(currencyCode, 0, 0, locale)
-        val s = nf.format(amount)
-        if (showSymbol) return s
-        val symbol = try { Currency.getInstance(currencyCode).getSymbol(locale) } catch (_: Exception) { "" }
-        return if (symbol.isNotBlank()) s.replace(symbol, "").trim() else s
+        val formatted = if (currencyCode.equals("INR", ignoreCase = true)) {
+            formatIndianNumberNoDecimals(amount)
+        } else {
+            val nf = formatterFor(currencyCode, 0, 0, locale)
+            nf.format(amount)
+        }
+        
+        if (showSymbol) {
+            // Add currency symbol for INR
+            if (currencyCode.equals("INR", ignoreCase = true)) {
+                return "₹$formatted"
+            } else {
+                val nf = formatterFor(currencyCode, 0, 0, locale)
+                val s = nf.format(amount)
+                return s
+            }
+        } else {
+            // Remove currency symbol while keeping grouping and sign
+            val symbol = try { Currency.getInstance(currencyCode).getSymbol(locale) } catch (_: Exception) { "" }
+            return if (symbol.isNotBlank()) formatted.replace(symbol, "").trim() else formatted
+        }
     }
 
     // Backward-compat (will be migrated out): Fixed INR formatting

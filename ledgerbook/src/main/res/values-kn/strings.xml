@@ -109,7 +109,7 @@
     <string name="rate_mode_percentage">ಶೇಕಡಾ</string>
     <string name="interest_calc_rate_rupee_monthly_label">ದರ (ರೂಪಾಯಿಯಲ್ಲಿ)</string>
     <string name="interest_calc_rate_percentage_yearly_label">ದರ (% ವಾರ್ಷಿಕ)</string>
-    <string name="rate_display_rupee_monthly">%1$s%% / ತಿಂಗಳು</string>
+    <string name="rate_display_rupee_monthly">₹%1$s / ತಿಂಗಳು</string>
     <string name="rate_display_percentage_yearly">%1$s%% / ವರ್ಷ</string>
     <string name="dates">ದಿನಾಂಕಗಳು</string>
     <string name="duration">ಅವಧಿ</string>
@@ -242,6 +242,7 @@
     <string name="name_required">ಹೆಸರು ಅಗತ್ಯವಿದೆ</string>
     <string name="interest_type">ಬಡ್ಡಿ ಪ್ರಕಾರ</string>
     <string name="rate_basis">ದರ ಆಧಾರ</string>
+    <string name="search_with_name">ಹೆಸರಿನಿಂದ ಹುಡುಕಿ</string>
     <string name="rate_basis_rupee">ರೂಪಾಯಿ</string>
     <string name="rate_basis_percentage">ಶೇಕಡಾ</string>
     <string name="duration_type">ಚಕ್ರಬಡ್ಡಿ ಅವಧಿ</string>

@@ -3,6 +3,7 @@ package com.ledge.ledgerbook.util
 import com.ledge.ledgerbook.data.local.entities.LedgerEntry
 import com.ledge.ledgerbook.data.local.entities.LedgerPayment
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.Period as JavaPeriod
 import kotlin.math.pow
@@ -10,6 +11,20 @@ import kotlin.math.pow
 object LedgerInterest {
     enum class Type { SIMPLE, COMPOUND }
     enum class Period { MONTHLY, YEARLY }
+
+    fun durationBetween(startMillis: Long, endMillis: Long): Triple<Int, Int, Int> {
+        if (endMillis <= startMillis) return Triple(0, 0, 0)
+        val zone = ZoneId.systemDefault()
+        val startDate = Instant.ofEpochMilli(startMillis).atZone(zone).toLocalDate()
+        val endDate = Instant.ofEpochMilli(endMillis).atZone(zone).toLocalDate()
+        val p = JavaPeriod.between(startDate, endDate)
+        return Triple(p.years, p.months, p.days)
+    }
+
+    fun durationBetween(startDate: LocalDate, endDate: LocalDate): Triple<Int, Int, Int> {
+        val p = JavaPeriod.between(startDate, endDate)
+        return Triple(p.years, p.months, p.days)
+    }
 
     fun accruedInterest(entry: LedgerEntry, payments: List<LedgerPayment>, nowMillis: Long): Double {
         val type = when (entry.interestType.uppercase()) {

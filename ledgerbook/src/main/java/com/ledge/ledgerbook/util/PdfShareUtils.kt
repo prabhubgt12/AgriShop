@@ -7,8 +7,10 @@ import android.graphics.Paint
 import android.graphics.Color
 import android.graphics.pdf.PdfDocument
 import androidx.core.content.FileProvider
+import com.ledge.ledgerbook.util.LedgerInterest
 import com.ledge.ledgerbook.ui.LedgerViewModel
 import com.ledge.ledgerbook.util.InterestRateFormatter
+import com.ledge.ledgerbook.util.CurrencyFormatter
 import com.ledge.ledgerbook.R
 import java.io.File
 import java.io.FileOutputStream
@@ -72,6 +74,12 @@ object PdfShareUtils {
         y += 12f
 
         // Details data rows
+        val (years, months, days) = LedgerInterest.durationBetween(item.fromDateMillis, System.currentTimeMillis())
+        val duration = buildString {
+                if (years > 0) append("${years} ${context.getString(R.string.year_singular)} ")
+                if (months > 0) append("${months} ${context.getString(R.string.month_singular)} ")
+                append("${days} ${context.getString(R.string.day_singular)}")
+            }.trim()
         val details = listOf(
             context.getString(R.string.label_type) to when (item.type?.uppercase()) {
                 "LEND" -> context.getString(R.string.lend)
@@ -81,7 +89,7 @@ object PdfShareUtils {
             context.getString(R.string.label_principal) to CurrencyFormatter.format(item.principal),
             context.getString(R.string.label_rate) to InterestRateFormatter.format(item.rate, item.rateBasis),
             context.getString(R.string.label_from) to item.dateStr,
-            context.getString(R.string.duration) to "${((System.currentTimeMillis() - item.fromDateMillis).coerceAtLeast(0) / 86_400_000L)} ${context.getString(R.string.days)}",
+            context.getString(R.string.duration) to duration,
             context.getString(R.string.label_interest) to CurrencyFormatter.format(item.accrued),
             context.getString(R.string.label_total) to CurrencyFormatter.format(item.total)
         )

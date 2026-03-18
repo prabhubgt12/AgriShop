@@ -81,10 +81,12 @@ import com.ledge.ledgerbook.R
 import com.ledge.ledgerbook.billing.MonetizationViewModel
 import com.ledge.ledgerbook.ads.BannerAd
 import com.ledge.ledgerbook.ui.theme.ThemeViewModel
+import com.ledge.ledgerbook.util.LedgerInterest
 import com.ledge.ledgerbook.util.CurrencyFormatter
 import com.ledge.ledgerbook.util.InterestRateFormatter
 import com.ledge.ledgerbook.util.PdfShareUtils
 import com.ledge.ledgerbook.util.NumberToWords
+import com.ledge.ledgerbook.data.prefs.LocalePrefs
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -184,8 +186,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         CurrencyFormatter.setConfig(currencyCode, showCurrencySymbol)
     }
     // Local helpers to format with the current settings on the very first frame
-    fun fmt(v: Double): String = CurrencyFormatter.format(v, currencyCode, showCurrencySymbol)
-    fun fmtNo(v: Double): String = CurrencyFormatter.formatNoDecimals(v, currencyCode, showCurrencySymbol)
+    fun fmtNo(v: Double): String = CurrencyFormatter.format(v, currencyCode, showCurrencySymbol)
     // Thresholds from settings
     val overdueDays by themeViewModel.overdueDays.collectAsState()
     val dueSoonWindow by themeViewModel.dueSoonWindowDays.collectAsState()
@@ -196,17 +197,21 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         val baseFiltered = if (searchQuery.isBlank()) state.items
         else state.items.filter { it.name.contains(searchQuery, ignoreCase = true) }
         
-        val msPerDay = 86_400_000L
         val now = System.currentTimeMillis()
         val od = overdueDays.coerceAtLeast(1)
         val win = dueSoonWindow.coerceAtLeast(1)
         val dueFrom = (od - win).coerceAtLeast(0)
         
         when (activeFilter) {
-            "overdue" -> baseFiltered.filter { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
+            "overdue" -> baseFiltered.filter { 
+                val (years, months, days) = LedgerInterest.durationBetween(it.fromDateMillis, now)
+                val totalDays = years * 365 + months * 30 + days
+                totalDays >= od 
+            }
             "dueSoon" -> baseFiltered.filter {
-                val d = (((now - it.fromDateMillis) / msPerDay).toInt())
-                d >= dueFrom && d < od
+                val (years, months, days) = LedgerInterest.durationBetween(it.fromDateMillis, now)
+                val totalDays = years * 365 + months * 30 + days
+                totalDays in dueFrom until od
             }
             else -> baseFiltered
         }
@@ -298,14 +303,33 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 .padding(vertical = 10.dp, horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            val context = LocalContext.current
+                            val appLanguageTag by LocalePrefs.appLocaleFlow(context).collectAsState(initial = "")
+                            val isEnglishLocale = appLanguageTag.isEmpty() || appLanguageTag == "en"
                             Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (isEnglishLocale) {
+                                    // English: Keep horizontal layout
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = stringResource(R.string.lend),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text(
+                                            text = fmtNo(state.totalLend),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = lendValueColor,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                } else {
+                                    // Non-English: Move label above value
                                     Text(
-                                        text = "Lend",
+                                        text = stringResource(R.string.lend),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    Spacer(Modifier.width(6.dp))
                                     Text(
                                         text = fmtNo(state.totalLend),
                                         style = MaterialTheme.typography.titleSmall,
@@ -341,13 +365,29 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                     .weight(1f)
                                     .padding(start = 10.dp)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (isEnglishLocale) {
+                                    // English: Keep horizontal layout
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = stringResource(R.string.borrow),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text(
+                                            text = fmtNo(state.totalBorrow),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = borrowValueColor,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                } else {
+                                    // Non-English: Move label above value
                                     Text(
-                                        text = "Borrow",
+                                        text = stringResource(R.string.borrow),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    Spacer(Modifier.width(6.dp))
                                     Text(
                                         text = fmtNo(state.totalBorrow),
                                         style = MaterialTheme.typography.titleSmall,
@@ -459,7 +499,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 CompactSearchBar(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = "Search with name",
+                    placeholder = stringResource(R.string.search_with_name),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -1682,11 +1722,11 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                                         },
                                                         style = MaterialTheme.typography.bodySmall
                                                     )
-                                                    val durDays = (((p.date - fromDateAt).coerceAtLeast(0)) / 86_400_000L)
+                                                    val (durYears, durMonths, durDays) = LedgerInterest.durationBetween(fromDateAt, p.date)
                                                     Text(
                                                         buildAnnotatedString {
                                                             append(stringResource(R.string.duration) + ": ")
-                                                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("${durDays} " + stringResource(R.string.days)) }
+                                                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("${durYears}y ${durMonths}m ${durDays}d") }
                                                         },
                                                         style = MaterialTheme.typography.bodySmall
                                                     )
@@ -2266,12 +2306,7 @@ private fun LedgerRow(
             Spacer(Modifier.height(4.dp))
             
             // Details grid with horizontal dividers
-            val msPerDay = 86_400_000L
-            val daysTotal = (((System.currentTimeMillis() - vm.fromDateMillis) / msPerDay).toInt()).coerceAtLeast(0)
-            val years = daysTotal / 365
-            val remAfterYears = daysTotal % 365
-            val months = remAfterYears / 30
-            val days = remAfterYears % 30
+            val (years, months, days) = LedgerInterest.durationBetween(vm.fromDateMillis, System.currentTimeMillis())
             val totalTime = buildString {
                 val yr = stringResource(R.string.year_singular)
                 val mo = stringResource(R.string.month_singular)

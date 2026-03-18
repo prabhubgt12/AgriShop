@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.text.input.KeyboardType
+import com.ledge.ledgerbook.util.CurrencyFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -248,5 +249,5 @@ fun EMICalculatorScreen(onBack: () -> Unit) {
 data class EmiRow(val month: Int, val principal: Double, val interest: Double, val balance: Double)
 
 private fun format(v: Double): String {
-    return if (v == 0.0 || v.isNaN() || v.isInfinite()) "0" else String.format("%,.2f", v)
+    return if (v == 0.0 || v.isNaN() || v.isInfinite()) "0" else CurrencyFormatter.format(v)
 }

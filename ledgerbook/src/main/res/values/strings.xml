@@ -116,7 +116,7 @@
     <string name="rate_mode_percentage">Percentage</string>
     <string name="interest_calc_rate_rupee_monthly_label">Rate (In Rupee)</string>
     <string name="interest_calc_rate_percentage_yearly_label">Rate (In % Annual)</string>
-    <string name="rate_display_rupee_monthly">%1$s%% / month</string>
+    <string name="rate_display_rupee_monthly">₹%1$s / month</string>
     <string name="rate_display_percentage_yearly">%1$s%% / year</string>
     <string name="dates">Dates</string>
     <string name="duration">Duration</string>
@@ -257,6 +257,7 @@
     <string name="rate_basis_percentage">Percentage</string>
     <string name="duration_type">Compound Duration</string>
     <string name="principal_amount">Principal Amount</string>
+    <string name="search_with_name">Search with name</string>
     <string name="enter_valid_number">Enter a valid number</string>
     <string name="interest_rate_percent">Interest Rate (%)</string>
     <string name="interest_rate_rupee_monthly">Interest Rate (In Rupee Monthly)</string>

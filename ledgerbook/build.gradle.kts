@@ -18,8 +18,8 @@ android {
         applicationId = "com.ledge.ledgerbook"
         minSdk = 24
         targetSdk = 35
-        versionCode = 33
-        versionName = "1.0.33"
+        versionCode = 36
+        versionName = "1.0.36"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

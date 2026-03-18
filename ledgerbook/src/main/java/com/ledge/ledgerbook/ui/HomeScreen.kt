@@ -51,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import com.ledge.ledgerbook.R
 import com.ledge.ledgerbook.util.NumberToWords
 import com.ledge.ledgerbook.util.CurrencyFormatter
+import com.ledge.ledgerbook.util.LedgerInterest
 import com.ledge.ledgerbook.ui.settings.CurrencyViewModel
 import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.coroutines.launch
@@ -1068,8 +1069,7 @@ private fun InterestCalculatorCard(onCalculated: () -> Unit = {}) {
                         try {
                             val start = LocalDate.parse(fromDateText, df)
                             val end = LocalDate.parse(toDateText, df)
-                            val period = if (!end.isBefore(start)) Period.between(start, end) else Period.between(end, start)
-                            Triple(period.years, period.months, period.days)
+                            LedgerInterest.durationBetween(start, end)
                         } catch (_: DateTimeParseException) {
                             Triple(0, 0, 0)
                         }
