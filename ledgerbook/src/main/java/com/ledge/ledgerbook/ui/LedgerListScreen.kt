@@ -706,6 +706,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 },
                                 onDelete = { confirmDeleteId.value = item.id },
                                 onShare = { PdfShareUtils.shareEntry(context, item, includePromo = !hasRemoveAds) },
+                                showName = false,
                                 showTypeChip = false,
                                 includePromo = !hasRemoveAds
                             )
@@ -742,6 +743,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         onDelete = { confirmDeleteId.value = item.id },
                         onShare = { PdfShareUtils.shareEntry(context, item, includePromo = !hasRemoveAds) },
                         showName = true,
+                        showTypeChip = true,
                         includePromo = !hasRemoveAds
                     )
                     Spacer(Modifier.height(8.dp))
@@ -2127,13 +2129,17 @@ private fun LedgerRow(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Title
-                Text(
-                    text = vm.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
+                if (showName) {
+                    Text(
+                        text = vm.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
                 
                 // Action buttons
                 Row(
