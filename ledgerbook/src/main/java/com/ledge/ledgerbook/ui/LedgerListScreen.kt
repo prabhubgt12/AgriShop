@@ -197,21 +197,17 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         val baseFiltered = if (searchQuery.isBlank()) state.items
         else state.items.filter { it.name.contains(searchQuery, ignoreCase = true) }
         
+        val msPerDay = 86_400_000L
         val now = System.currentTimeMillis()
         val od = overdueDays.coerceAtLeast(1)
         val win = dueSoonWindow.coerceAtLeast(1)
         val dueFrom = (od - win).coerceAtLeast(0)
         
         when (activeFilter) {
-            "overdue" -> baseFiltered.filter { 
-                val (years, months, days) = LedgerInterest.durationBetween(it.fromDateMillis, now)
-                val totalDays = years * 365 + months * 30 + days
-                totalDays >= od 
-            }
+            "overdue" -> baseFiltered.filter { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
             "dueSoon" -> baseFiltered.filter {
-                val (years, months, days) = LedgerInterest.durationBetween(it.fromDateMillis, now)
-                val totalDays = years * 365 + months * 30 + days
-                totalDays in dueFrom until od
+                val d = (((now - it.fromDateMillis) / msPerDay).toInt())
+                d >= dueFrom && d < od
             }
             else -> baseFiltered
         }
