@@ -7,8 +7,10 @@ import com.ledge.ledgerbook.data.local.MonetizationPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -25,6 +27,12 @@ class BillingManager @Inject constructor(
     }
 
     private val scope = CoroutineScope(Dispatchers.IO)
+
+    private val _productPrice = MutableStateFlow<String?>(null)
+    val productPrice: StateFlow<String?> = _productPrice.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val billingClient: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
@@ -87,10 +95,29 @@ class BillingManager @Inject constructor(
     }
 
     private suspend fun queryAndAcknowledgeOwned() {
+        // Query product details to get price
+        queryProductDetails()
+        
         val result = billingClient.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build()
         )
         handlePurchases(result.purchasesList ?: emptyList())
+    }
+
+    private suspend fun queryProductDetails() {
+        val productList = listOf(
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(PRODUCT_REMOVE_ADS)
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        )
+        val params = QueryProductDetailsParams.newBuilder()
+            .setProductList(productList)
+            .build()
+        val detailsResult = billingClient.queryProductDetails(params)
+        val pd = detailsResult.productDetailsList?.firstOrNull()
+        _productPrice.value = pd?.getOneTimePurchaseOfferDetails()?.formattedPrice
+        _isLoading.value = false
     }
 
     private suspend fun handlePurchases(purchases: List<Purchase>) {

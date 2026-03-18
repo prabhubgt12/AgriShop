@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
@@ -62,6 +63,12 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     // Monetization state
     val monetizationVM: MonetizationViewModel = hiltViewModel()
     val hasRemoveAds by monetizationVM.hasRemoveAds.collectAsState()
+    val productPrice by monetizationVM.productPrice.collectAsState()
+    val isLoadingPrice by monetizationVM.isLoading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        // Start billing to get price
+    }
 
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         val act = activity ?: return@rememberLauncherForActivityResult
@@ -93,7 +100,13 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) }
+                title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold) },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
             )
         },
         contentWindowInsets = WindowInsets.safeDrawing
@@ -103,9 +116,35 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            // (Sign-in UI moved to bottom with Backup & Restore)
-            item { HorizontalDivider() }
-            // Language
+            // Premium section moved to top
+            item {
+                Text(stringResource(R.string.premium_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = if (hasRemoveAds) {
+                        stringResource(R.string.ads_removed)
+                    } else {
+                        when {
+                            isLoadingPrice -> "Loading price..."
+                            productPrice != null -> "${stringResource(R.string.ads_enabled_msg)} $productPrice"
+                            else -> stringResource(R.string.ads_enabled_msg)
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (hasRemoveAds) Color(0xFF4CAF50) else Color(0xFFFF9800)
+                )
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = { activity?.let { monetizationVM.purchaseRemoveAds(it) } }, enabled = !hasRemoveAds) { 
+                        Text(stringResource(R.string.remove_ads))
+                    }
+                    OutlinedButton(onClick = { monetizationVM.restore() }) { Text(stringResource(R.string.restore_purchase)) }
+                }
+                Spacer(Modifier.height(16.dp))
+                HorizontalDivider()
+            }
+            
+            // Language section
             item { Text(stringResource(R.string.language_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             item {
                 val storedTag by LocalePrefs.appLocaleFlow(context).collectAsState(initial = "")
