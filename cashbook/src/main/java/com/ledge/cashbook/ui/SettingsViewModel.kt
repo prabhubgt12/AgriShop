@@ -25,6 +25,7 @@ class SettingsViewModel @Inject constructor(
         val SHOW_SUMMARY = booleanPreferencesKey("show_summary_card")
         val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
         val GROUP_BY_DATE = booleanPreferencesKey("group_by_date")
+        val SHOW_NEWEST_FIRST = booleanPreferencesKey("show_newest_first")
     }
 
     val showCategory: Flow<Boolean> = prefs.data.map { it[SHOW_CATEGORY] ?: false }
@@ -33,6 +34,7 @@ class SettingsViewModel @Inject constructor(
     val showSummary: Flow<Boolean> = prefs.data.map { it[SHOW_SUMMARY] ?: true }
     val autoBackupEnabled: Flow<Boolean> = prefs.data.map { it[AUTO_BACKUP_ENABLED] ?: false }
     val groupByDate: Flow<Boolean> = prefs.data.map { it[GROUP_BY_DATE] ?: true }
+    val showNewestFirst: Flow<Boolean> = prefs.data.map { it[SHOW_NEWEST_FIRST] ?: false }
 
     fun setShowCategory(enabled: Boolean) {
         viewModelScope.launch {
@@ -67,6 +69,12 @@ class SettingsViewModel @Inject constructor(
     fun setGroupByDate(enabled: Boolean) {
         viewModelScope.launch {
             prefs.edit { it[GROUP_BY_DATE] = enabled }
+        }
+    }
+
+    fun setShowNewestFirst(enabled: Boolean) {
+        viewModelScope.launch {
+            prefs.edit { it[SHOW_NEWEST_FIRST] = enabled }
         }
     }
 }

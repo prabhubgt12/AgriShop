@@ -212,10 +212,17 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             sOk && eOk
         }
     }
+    // Settings toggle still controls visibility; source now from DB
+    val settingsVM: SettingsViewModel = hiltViewModel()
+    val showCategory by settingsVM.showCategory.collectAsState(initial = false)
+    val showCategoryInList by settingsVM.showCategoryInList.collectAsState(initial = true)
+    val groupByDate by settingsVM.groupByDate.collectAsState(initial = true)
+    val showNewestFirst by settingsVM.showNewestFirst.collectAsState(initial = false)
+    
     // Search state and search-applied list
     var searchOpen by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-    val displayedTxns = remember(filteredTxns, searchQuery) {
+    val displayedTxns = remember(filteredTxns, searchQuery, showNewestFirst) {
         val q = searchQuery.trim()
         val baseList = if (q.isEmpty()) filteredTxns else filteredTxns.filter { t ->
             val noteOk = (t.note ?: "").contains(q, ignoreCase = true)
@@ -223,8 +230,13 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             val amtOk = t.amount.toString().contains(q, ignoreCase = true)
             noteOk || catOk || amtOk
         }
-        // Sort by date descending (newest first)
-        baseList.sortedByDescending { it.date }
+        // Sort by date based on newest first preference
+        val sortedList = if (showNewestFirst) {
+            baseList.sortedByDescending { it.date } // Newest first
+        } else {
+            baseList.sortedBy { it.date } // Oldest first
+        }
+        sortedList
     }
     // Observe bulk selection from VM
     val selectedIds by vm.selection.collectAsState()
@@ -440,11 +452,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
         if (openAdd) showAdd = true
     }
 
-    // Settings toggle still controls visibility; source now from DB
-    val settingsVM: SettingsViewModel = hiltViewModel()
-    val showCategory by settingsVM.showCategory.collectAsState(initial = false)
-    val showCategoryInList by settingsVM.showCategoryInList.collectAsState(initial = true)
-    val groupByDate by settingsVM.groupByDate.collectAsState(initial = true)
     val categories = remember(dbCategories) { dbCategories.map { it.name }.distinct() }
     // Category suggestion engine (only when category is shown)
     val catSuggestVm: CategorySuggestionViewModel? = if (showCategory) hiltViewModel() else null
@@ -1120,15 +1127,24 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
         Color(0xFFF5F0FF)
 
             // Search+date filtered list reused across top bar, list and totals
-            // Precompute running balances on displayed list (newest first order)
-            val runningBalances = remember(displayedTxns) {
-                // Calculate total first, then subtract in reverse order
-                val total = displayedTxns.sumOf { if (it.isCredit) it.amount else -it.amount }
-                var running = total
-                displayedTxns.map { t ->
-                    val current = running
-                    running -= if (t.isCredit) t.amount else -t.amount
-                    current
+            // Precompute running balances based on newest first preference
+            val runningBalances = remember(displayedTxns, showNewestFirst) {
+                if (showNewestFirst) {
+                    // Logic for newest first
+                    val total = displayedTxns.sumOf { if (it.isCredit) it.amount else -it.amount }
+                    var running = total
+                    displayedTxns.map { t ->
+                        val current = running
+                        running -= if (t.isCredit) t.amount else -t.amount
+                        current
+                    }
+                } else {
+                    // Logic for oldest first
+                    var running = 0.0
+                    displayedTxns.map { t ->
+                        running += if (t.isCredit) t.amount else -t.amount
+                        running
+                    }
                 }
             }
             // Totals for credit and debit
@@ -1136,12 +1152,19 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
             val totalDebit = remember(displayedTxns) { displayedTxns.filter { !it.isCredit }.sumOf { it.amount } }
 
             // Group transactions by date
-            val groupedTxns = remember(displayedTxns) {
+            val groupedTxns = remember(displayedTxns, showNewestFirst) {
                 displayedTxns.groupBy { txn: CashTxn ->
                     // Format date to yyyy-MM-dd for grouping
                     SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(txn.date))
-                }.toSortedMap(Comparator.reverseOrder()).mapValues { entry ->
-                    entry.value.sortedByDescending { it.date } // Sort transactions within each date by newest first
+                }.toSortedMap(
+                    if (showNewestFirst) Comparator.reverseOrder() else Comparator.naturalOrder()
+                ).mapValues { entry ->
+                    // Sort transactions within each date based on user preference
+                    if (showNewestFirst) {
+                        entry.value.sortedByDescending { it.date } // Newest first
+                    } else {
+                        entry.value.sortedBy { it.date } // Oldest first
+                    }
                 }
             }
 

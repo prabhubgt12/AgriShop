@@ -165,8 +165,10 @@
     <string name="edit_category">Edit Category</string>
     <string name="category_name">Category Name</string>
     <string name="group_by_date">Group by Date</string>
+    <string name="show_newest_first">Show Newest First</string>
     <string name="transaction_display">Transaction Display</string>
     <string name="settings_group_by_date_note">Group transactions by date for better organization</string>
+    <string name="settings_show_newest_first_note">Display newest transactions at the top (when disabled, shows oldest first)</string>
     <string name="selected_count">%d selected</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>

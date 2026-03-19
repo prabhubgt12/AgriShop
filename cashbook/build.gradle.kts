@@ -18,8 +18,8 @@ android {
         applicationId = "com.ledge.cashbook"
         minSdk = 24
         targetSdk = 35
-        versionCode = 20
-        versionName = "1.1.3"
+        versionCode = 23
+        versionName = "1.1.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }

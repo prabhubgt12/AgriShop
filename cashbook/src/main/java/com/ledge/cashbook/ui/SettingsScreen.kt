@@ -75,6 +75,7 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
     val autoBackupEnabled by settingsVM.autoBackupEnabled.collectAsState(initial = false)
     val groupByDate by settingsVM.groupByDate.collectAsState(initial = false)
+    val showNewestFirst by settingsVM.showNewestFirst.collectAsState(initial = false)
 
     // Removed legacy CSV categories field and persistence
 
@@ -252,6 +253,18 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                     }
                     Text(
                         text = stringResource(R.string.settings_group_by_date_note),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.show_newest_first))
+                        Switch(checked = showNewestFirst, onCheckedChange = { settingsVM.setShowNewestFirst(it) })
+                    }
+                    Text(
+                        text = stringResource(R.string.settings_show_newest_first_note),
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
