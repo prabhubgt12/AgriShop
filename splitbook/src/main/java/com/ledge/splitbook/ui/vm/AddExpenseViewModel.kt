@@ -171,7 +171,8 @@ class AddExpenseViewModel @Inject constructor(
 
     fun updatePercentage(memberId: Long, value: String) {
         val map = _uiState.value.percentages.toMutableMap()
-        map[memberId] = value
+        val pct = value.toDoubleOrNull()
+        map[memberId] = if (pct != null) (kotlin.math.round(pct * 100) / 100.0).toString() else value
         _uiState.value = _uiState.value.copy(percentages = map)
         // When percentages change, recompute amounts accordingly
         recomputeAmountsFromPercentages()
@@ -194,7 +195,7 @@ class AddExpenseViewModel @Inject constructor(
             if (anyPct) {
                 val sumPct = sel.mapNotNull { _uiState.value.percentages[it]?.toDoubleOrNull() }.sum()
                 val sumPctRounded = kotlin.math.round(sumPct * 100) / 100.0
-                ok = ok && kotlin.math.abs(sumPctRounded - 100.0) <= 0.01
+                ok = ok && kotlin.math.abs(sumPctRounded - 100.0) <= 0.05
                 _uiState.value = _uiState.value.copy(mode = Mode.PERCENT)
             } else {
                 val total = amt ?: 0.0
@@ -239,9 +240,10 @@ class AddExpenseViewModel @Inject constructor(
         val equalRounded = { d: Double -> kotlin.math.round(d * 100) / 100.0 }
         val amounts = _uiState.value.customAmounts.toMutableMap()
         val pcts = _uiState.value.percentages.toMutableMap()
+        val equalPct = kotlin.math.round((100.0 / n) * 100) / 100.0
         ids.forEach { id ->
             amounts[id] = equalRounded(equal).toString()
-            pcts[id] = (100.0 / n).toString()
+            pcts[id] = equalPct.toString()
         }
         _uiState.value = _uiState.value.copy(customAmounts = amounts, percentages = pcts)
     }

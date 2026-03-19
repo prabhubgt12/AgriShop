@@ -361,7 +361,7 @@ fun AddExpenseScreen(
             val totalR = kotlin.math.round(total * 100) / 100.0
             val sumAmtR = kotlin.math.round(sumAmounts * 100) / 100.0
             val sumPctR = kotlin.math.round(sumPct * 100) / 100.0
-            val valid = if (sumPctR > 0.0) kotlin.math.abs(sumPctR - 100.0) <= 0.01 else kotlin.math.abs(sumAmtR - totalR) <= 0.01
+            val valid = if (sumPctR > 0.0) kotlin.math.abs(sumPctR - 100.0) <= 0.05 else kotlin.math.abs(sumAmtR - totalR) <= 0.01
             val infoColor = if (valid) Color(0xFF16A34A) else Color(0xFFDC2626)
             Text(
                 stringResource(id = com.ledge.splitbook.R.string.amounts_percent_format, sumAmtR, totalR, sumPctR),
