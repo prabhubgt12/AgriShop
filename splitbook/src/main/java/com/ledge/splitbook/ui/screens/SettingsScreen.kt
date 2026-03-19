@@ -73,6 +73,8 @@ fun SettingsScreen(
     var currExpanded by remember { mutableStateOf(false) }
     val backupUi by backupViewModel.ui.collectAsState()
     LaunchedEffect(Unit) { billingViewModel.start() }
+    val productPrice by billingViewModel.productPrice.collectAsState()
+    val isLoadingPrice by billingViewModel.isLoading.collectAsState()
     val signInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         backupViewModel.handleSignInResult(result.data)
     }
@@ -151,10 +153,21 @@ fun SettingsScreen(
                         ) {
                             val ctx = androidx.compose.ui.platform.LocalContext.current
                             if (!settings.removeAds) {
-                                androidx.compose.material3.FilledTonalButton(onClick = {
+                                androidx.compose.material3.Button(onClick = {
                                     val act = (ctx as? android.app.Activity)
                                     if (act != null) billingViewModel.purchaseRemoveAds(act)
-                                }) { Text(stringResource(id = com.ledge.splitbook.R.string.remove_ads)) }
+                                }, colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                                    contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
+                                )) { 
+                                    Text(
+                                        text = when {
+                                            isLoadingPrice -> "Loading..."
+                                            productPrice != null -> "${stringResource(id = com.ledge.splitbook.R.string.remove_ads)} - $productPrice"
+                                            else -> stringResource(id = com.ledge.splitbook.R.string.remove_ads)
+                                        }
+                                    )
+                                }
                             } else {
                                 androidx.compose.material3.AssistChip(
                                     onClick = {},
@@ -264,37 +277,7 @@ fun SettingsScreen(
 
             item {
                 OutlinedCard(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(id = com.ledge.splitbook.R.string.premium_title), style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
-                        Text(
-                            if (settings.removeAds)
-                                stringResource(id = com.ledge.splitbook.R.string.ads_removed)
-                            else
-                                stringResource(id = com.ledge.splitbook.R.string.ads_enabled_desc),
-                            style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
-                            maxLines = 2,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val context = androidx.compose.ui.platform.LocalContext.current
-                            if (!settings.removeAds) {
-                                androidx.compose.material3.FilledTonalButton(onClick = {
-                                    val act = (context as? android.app.Activity)
-                                    if (act != null) billingViewModel.purchaseRemoveAds(act)
-                                }) { Text(stringResource(id = com.ledge.splitbook.R.string.remove_ads)) }
-                            } else {
-                                androidx.compose.material3.AssistChip(
-                                    onClick = {},
-                                    enabled = false,
-                                    label = { Text(stringResource(id = com.ledge.splitbook.R.string.thank_you)) }
-                                )
-                            }
-                        }
-
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(stringResource(id = com.ledge.splitbook.R.string.language))
                         ExposedDropdownMenuBox(expanded = langExpanded, onExpandedChange = { langExpanded = !langExpanded }) {
                             OutlinedTextField(

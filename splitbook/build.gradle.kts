@@ -18,8 +18,8 @@ android {
         applicationId = "com.ledge.splitbook"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.1.4"
+        versionCode = 7
+        versionName = "0.1.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -136,8 +136,8 @@ dependencies {
     // Google Mobile Ads SDK (AdMob)
     implementation("com.google.android.gms:play-services-ads:23.3.0")
 
-    // Google Play Billing for IAP (remove ads)
-    implementation("com.android.billingclient:billing-ktx:6.2.1")
+    // Google Play Billing for IAP (remove ads) - Updated to latest 7.0.0
+    implementation("com.android.billingclient:billing-ktx:7.0.0")
 
     // Hilt (align with other apps)
     implementation("com.google.dagger:hilt-android:2.50")

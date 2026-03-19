@@ -17,6 +17,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import javax.inject.Singleton
 
 @Singleton
@@ -33,6 +36,11 @@ class BillingRepository @Inject constructor(
         .build()
 
     @Volatile private var productDetails: ProductDetails? = null
+    
+    private val _productUpdates = MutableSharedFlow<ProductDetails?>()
+    val productUpdates: SharedFlow<ProductDetails?> = _productUpdates.asSharedFlow()
+    
+    fun getProductDetails(): ProductDetails? = productDetails
 
     fun start() {
         if (billingClient.isReady) {
@@ -61,6 +69,10 @@ class BillingRepository @Inject constructor(
             ).build()
         billingClient.queryProductDetailsAsync(params) { _, list ->
             productDetails = list.firstOrNull()
+            // Emit update to notify listeners
+            CoroutineScope(Dispatchers.Main).launch {
+                _productUpdates.emit(productDetails)
+            }
         }
     }
 
