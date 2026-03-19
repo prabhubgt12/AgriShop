@@ -22,6 +22,7 @@ texture = ExtResource(3)
 centered = false
 position = Vector2(-2000, -800)
 scale = Vector2(4, 4)
+repeat = 1
 
 [node name="Mountains" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.4,0.4)
@@ -31,6 +32,7 @@ texture = ExtResource(4)
 centered = false
 position = Vector2(-2000, -800)
 scale = Vector2(4, 4)
+repeat = 1
 
 [node name="Terrain" type="StaticBody2D" parent="."]
 

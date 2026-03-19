@@ -17,8 +17,9 @@ var _stunt_score_accum: float = 0.0  # Stunt bonus accumulator
 var _jump_cooldown_left := 0.0
 var _auto_jump_cooldown_left := 0.0
 var _is_level_complete: bool = false  # Track level completion
+var _is_pedaling := false  # Track if currently pedaling for sound
 
-func _ready():
+func _ready() -> void:
 	_score = 0
 	_distance_score = 0
 	_last_x_position = global_position.x
@@ -62,8 +63,21 @@ func _physics_process(delta):
 
 	if accelerate_state and not _is_level_complete:
 		apply_central_force(Vector2(drive_force, 0))
+		# Start pedal sound if not already playing
+		if not _is_pedaling:
+			_is_pedaling = true
+			var audio_manager := get_tree().current_scene.get_node_or_null("SimpleAudioManager")
+			if audio_manager and audio_manager.has_method("play_pedal"):
+				audio_manager.call("play_pedal")
+			
 	if brake_state and not _is_level_complete:
 		apply_central_force(Vector2(-drive_force * 0.5, 0))
+		# Stop pedal sound when braking
+		if _is_pedaling:
+			_is_pedaling = false
+			var audio_manager := get_tree().current_scene.get_node_or_null("SimpleAudioManager")
+			if audio_manager and audio_manager.has_method("stop_pedal"):
+				audio_manager.call("stop_pedal")
 
 	if front_wheel != null and back_wheel != null:
 		var speed := linear_velocity.length()
@@ -128,6 +142,13 @@ func _physics_process(delta):
 				angular_velocity = signf(angular_velocity) * max_angular_velocity
 
 func stop_bike():
+	# Stop pedal sound
+	if _is_pedaling:
+		_is_pedaling = false
+		var audio_manager := get_tree().current_scene.get_node_or_null("SimpleAudioManager")
+		if audio_manager and audio_manager.has_method("stop_pedal"):
+			audio_manager.call("stop_pedal")
+	
 	linear_velocity = Vector2(0, 0)
 	angular_velocity = 0.0
 	_is_level_complete = true

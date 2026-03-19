@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bvx8n7q3k2mr"]
 
 [ext_resource type="Script" uid="uid://dop81x2151f8q" path="res://scripts/main_menu.gd" id="1"]
+[ext_resource type="Script" uid="uid://c0kewq0b6s4x7" path="res://scripts/simple_audio_manager.gd" id="2"]
 
 [node name="MainMenu" type="Control" unique_id=1831929213]
 layout_mode = 3
@@ -72,6 +73,15 @@ custom_minimum_size = Vector2(300, 80)
 layout_mode = 2
 text = "Exit"
 
+[node name="SimpleAudioManager" type="Node" parent="."]
+script = ExtResource("2")
+
+[connection signal="button_down" from="MenuContainer/Level1Button" to="." method="_on_button_click"]
+[connection signal="button_down" from="MenuContainer/Level2Button" to="." method="_on_button_click"]
+[connection signal="button_down" from="MenuContainer/Level3Button" to="." method="_on_button_click"]
+[connection signal="button_down" from="MenuContainer/Level4Button" to="." method="_on_button_click"]
+[connection signal="button_down" from="MenuContainer/Level5Button" to="." method="_on_button_click"]
+[connection signal="button_down" from="MenuContainer/ExitButton" to="." method="_on_button_click"]
 [connection signal="pressed" from="MenuContainer/Level1Button" to="." method="_on_level1_pressed"]
 [connection signal="pressed" from="MenuContainer/Level2Button" to="." method="_on_level2_pressed"]
 [connection signal="pressed" from="MenuContainer/Level3Button" to="." method="_on_level3_pressed"]

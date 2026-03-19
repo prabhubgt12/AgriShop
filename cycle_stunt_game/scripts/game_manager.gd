@@ -18,15 +18,8 @@ func _ready():
 		$Finish.body_entered.connect(_on_finish_entered)
 
 func _on_frame_collision(body):
-	print("=== FRAME COLLISION DETECTED ===")
-	print("Collided with: ", body.name if body else "NULL")
-	print("Is body in ground group? ", body.is_in_group("ground") if body else false)
-	
 	if body.is_in_group("ground"):
-		print("Emitting game_over signal")
 		game_over.emit()
-	else:
-		print("Not ground, not emitting game_over")
 
 func _on_finish_entered(body):
 	# Only complete when the bike touches the finish.

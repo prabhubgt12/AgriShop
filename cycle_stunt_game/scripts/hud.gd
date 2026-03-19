@@ -50,17 +50,14 @@ func _ready() -> void:
 	
 	# Connect button signals with sound effects
 	_btn_accel.button_down.connect(func(): 
-		_play_button_click()
 		_press_action("accelerate")
 	)
 	_btn_accel.button_up.connect(func(): _release_action("accelerate"))
 	_btn_stunt.button_down.connect(func(): 
-		_play_button_click()
 		_press_action("stunt")
 	)
 	_btn_stunt.button_up.connect(func(): _release_action("stunt"))
 	_btn_brake.button_down.connect(func(): 
-		_play_button_click()
 		_press_action("brake")
 	)
 	_btn_brake.button_up.connect(func(): _release_action("brake"))

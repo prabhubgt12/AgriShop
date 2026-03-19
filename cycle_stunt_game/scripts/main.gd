@@ -51,14 +51,35 @@ func load_level_from_menu(level_index: int) -> void:
 
 
 func _load_level(index: int) -> void:
+	print("=== LOADING LEVEL DEBUG START ===")
+	print("Requested level index: ", index)
+	print("Total available levels: ", levels.size())
+	
 	_current_level_index = clamp(index, 0, levels.size() - 1)
+	print("Clamped level index: ", _current_level_index)
+	
 	if _current_level != null:
+		print("Clearing existing level...")
 		_current_level.queue_free()
+	
+	print("Instantiating level ", _current_level_index)
 	_current_level = levels[_current_level_index].instantiate()
+	print("Level instantiated successfully")
+	
 	add_child(_current_level)
+	print("Level added to scene tree")
 	
 	print("=== LEVEL LOADING DEBUG ===")
 	print("Connecting signals to level...")
+	
+	# Check if level has the required nodes
+	if not _current_level.has_node("Bike/Frame"):
+		print("ERROR: Level missing Bike/Frame node!")
+		return
+	
+	if not _current_level.has_node("Bike"):
+		print("ERROR: Level missing Bike node!")
+		return
 	
 	_current_level.connect("game_over", _on_game_over)
 	print("Connected game_over signal")
@@ -68,6 +89,7 @@ func _load_level(index: int) -> void:
 	# Update HUD with current level
 	var hud := get_node_or_null("HUD")
 	if hud == null:
+		print("Creating new HUD...")
 		var hud_scene = preload("res://scenes/hud.tscn")
 		hud = hud_scene.instantiate()
 		hud.name = "HUD"
@@ -76,6 +98,7 @@ func _load_level(index: int) -> void:
 		hud.call("reset_timer")
 		hud.call("set_message", "")
 	else:
+		print("Using existing HUD...")
 		hud.call("set_level", _current_level_index + 1)
 		hud.call("reset_timer")
 		hud.call("set_message", "")

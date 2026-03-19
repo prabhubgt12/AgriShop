@@ -26,7 +26,30 @@ func play_sound(sound_path: String):
 
 func play_pedal():
 	print("PEDAL LOOP REQUESTED")
-	play_sound("res://assets/sounds/pedal_loop.wav")
+	var sound = load("res://assets/sounds/pedal_loop.wav")
+	if sound and sfx_player:
+		print("Pedal sound loaded successfully, setting up manual looping")
+		sfx_player.stream = sound
+		sfx_player.pitch_scale = randf_range(0.9, 1.1)
+		sfx_player.play()
+		
+		# Disconnect any existing finished signal to avoid duplicates
+		if sfx_player.is_connected("finished", _on_pedal_finished):
+			sfx_player.disconnect("finished", _on_pedal_finished)
+		
+		# Connect finished signal for manual looping
+		sfx_player.connect("finished", _on_pedal_finished)
+	else:
+		print("ERROR: Failed to load pedal sound")
+		if not sound:
+			print("  Reason: Pedal sound file not found or corrupted")
+		if not sfx_player:
+			print("  Reason: SFXPlayer not available")
+
+func _on_pedal_finished():
+	print("Pedal sound finished, restarting for continuous loop")
+	if sfx_player and sfx_player.stream:
+		sfx_player.play()  # Restart the sound for looping
 
 func play_jump():
 	print("JUMP SOUND REQUESTED")
@@ -47,3 +70,8 @@ func play_win():
 func play_click():
 	print("CLICK SOUND REQUESTED")
 	play_sound("res://assets/sounds/click.wav")
+
+func stop_pedal():
+	print("STOPPING PEDAL SOUND")
+	if sfx_player and sfx_player.playing:
+		sfx_player.stop()
