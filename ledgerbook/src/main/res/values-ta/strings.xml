@@ -9,6 +9,9 @@
     <string name="kannada_label">ಕನ್ನಡ</string>
     <string name="telugu_label">తెలుగు</string>
     <string name="tamil_label">தமிழ்</string>
+    <string name="currency_title">நாணயம்</string>
+    <string name="currency_label">நாணயம்</string>
+    <string name="show_currency_symbol">நாணய சின்னத்தைக் காட்டு</string>
 
     <!-- Common -->
     <string name="ok">சரி</string>

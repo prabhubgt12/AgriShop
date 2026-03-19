@@ -177,6 +177,9 @@
     <string name="theme_title">థీమ్</string>
     <string name="light_option">లైట్</string>
     <string name="dark_option">డార్క్</string>
+    <string name="currency_title">కరెన్సీ</string>
+    <string name="currency_label">కరెన్సీ</string>
+    <string name="show_currency_symbol">కరెన్సీ చిహ్నాన్ని చూపించు</string>
     <string name="reminders_title">రిమైండర్లు</string>
     <string name="overdue_days_label">విలంబం (ఎన్ని రోజుల తర్వాత)</string>
     <string name="due_soon_window_days_label">త్వరలో గడువు విండో (రోజులు)</string>

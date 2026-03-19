@@ -95,6 +95,9 @@
     <!-- Backup info -->
     <string name="last_backup_label">ಕೊನೆಯ ಬ್ಯಾಕಪ್: %1$s</string>
     <string name="never_label">ಎಂದಿಗೂ ಇಲ್ಲ</string>
+    <string name="currency_title">ಕರೆನ್ಸಿ</string>
+    <string name="currency_label">ಕರೆನ್ಸಿ</string>
+    <string name="show_currency_symbol">ಕರೆನ್ಸಿ ಚಿಹ್ನೆ ತೋರಿಸಿ</string>
 
     <!-- Common/Generic -->
     <string name="ok">ಸರಿ</string>

@@ -222,6 +222,9 @@
     <string name="image_too_large">छवि 1 एमबी से बड़ी है</string>
     <string name="full_payment">पूर्ण भुगतान</string>
     <string name="apply_action">लागू करें</string>
+    <string name="currency_title">मुद्रा</string>
+    <string name="currency_label">मुद्रा</string>
+    <string name="show_currency_symbol">मुद्रा प्रतीक दिखाएं</string>
 
     <!-- Loan delete confirmation (Hindi) -->
     <string name="delete_loan_confirm">क्या आप वाकई इस ऋण प्रोफ़ाइल को हटाना चाहते हैं? इसे वापस नहीं किया जा सकता।</string>
