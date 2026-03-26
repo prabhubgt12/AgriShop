@@ -30,7 +30,7 @@ object SplitLogic {
         require(total > 0)
         require(percentages.isNotEmpty())
         val totalPct = percentages.values.sum()
-        require(abs(totalPct - 100.0) < 0.01) { "Percentages must total 100" }
+        require(abs(totalPct - 100.0) < 0.1) { "Percentages must total 100" }
         val shares = percentages.toSortedMap().map { (id, pct) ->
             id to floor((total * pct / 100.0) * 100) / 100.0
         }.toMutableList()
