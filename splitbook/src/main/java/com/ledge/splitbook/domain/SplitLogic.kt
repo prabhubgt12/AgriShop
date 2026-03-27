@@ -64,7 +64,7 @@ object SplitLogic {
 
         // Use proper rounding to avoid precision issues
 
-        require(abs(totalPct - 100.0) < 0.01) { "Percentages must total 100 (within 0.01)" }
+        require(abs(totalPct - 100.0) < 0.1) { "Percentages must total 100 (within 0.1)" }
 
         val shares = percentages.toSortedMap().map { (id, pct) ->
 

@@ -191,7 +191,8 @@ class SettleViewModel @Inject constructor(
         return members.map { m ->
             val p = (paid[m.id] ?: 0.0)
             val s = (shared[m.id] ?: 0.0)
-            com.ledge.splitbook.util.MemberSummary(m.id, p, s, s - p)
+            val deposit = m.deposit ?: 0.0
+            com.ledge.splitbook.util.MemberSummary(m.id, p, s, s - (p + deposit))
         }
     }
 

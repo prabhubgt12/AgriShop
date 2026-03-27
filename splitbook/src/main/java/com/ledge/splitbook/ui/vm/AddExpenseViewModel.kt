@@ -72,9 +72,11 @@ class AddExpenseViewModel @Inject constructor(
         viewModelScope.launch {
             placeRepo.observePlacesByGroup(groupId).collect { list ->
                 val selectedId = _uiState.value.placeId
-                val selectedName = list.firstOrNull { it.id == selectedId }?.name ?: ""
+                // Deduplicate by name, keeping first occurrence
+                val uniquePlaces = list.distinctBy { it.name }
+                val selectedName = uniquePlaces.firstOrNull { it.id == selectedId }?.name ?: ""
                 _uiState.value = _uiState.value.copy(
-                    places = list,
+                    places = uniquePlaces,
                     placeName = selectedName
                 )
             }

@@ -124,6 +124,18 @@ object ShareExport {
             paint.isFakeBoldText = false
             y += 24f
         }
+        fun drawTruncatedText(text: String, x: Float, maxWidth: Float, paint: Paint) {
+            if (paint.measureText(text) <= maxWidth) {
+                canvas.drawText(text, x, y, paint)
+            } else {
+                val ellipsis = "..."
+                var truncated = text
+                while (truncated.isNotEmpty() && paint.measureText(truncated + ellipsis) > maxWidth) {
+                    truncated = truncated.dropLast(1)
+                }
+                canvas.drawText(truncated + ellipsis, x, y, paint)
+            }
+        }
         fun drawTable(headers: List<String>, rows: List<List<String>>, widths: List<Float>) {
             val left = margin
             val right = pageInfo.pageWidth - margin
@@ -146,7 +158,8 @@ object ShareExport {
             canvas.drawRect(left, topH - 16f, right, topH + 8f, headerBg)
             headers.forEachIndexed { i, h ->
                 val tx = colXs[i] + 6f
-                canvas.drawText(h, tx, topH, headerText)
+                val maxWidth = (colXs[i+1] - colXs[i]) - 12f
+                drawTruncatedText(h, tx, maxWidth, headerText)
                 // vertical lines
                 canvas.drawLine(colXs[i], topH - 16f, colXs[i], topH + rowH, cellStroke)
             }
@@ -159,7 +172,8 @@ object ShareExport {
                 val top = y
                 r.forEachIndexed { i, v ->
                     val tx = colXs[i] + 6f
-                    canvas.drawText(v, tx, top, cellText)
+                    val maxWidth = (colXs[i+1] - colXs[i]) - 12f
+                    drawTruncatedText(v, tx, maxWidth, cellText)
                     canvas.drawLine(colXs[i], top - 16f, colXs[i], top + rowH, cellStroke)
                 }
                 canvas.drawLine(right, top - 16f, right, top + rowH, cellStroke)
@@ -345,7 +359,7 @@ object ShareExport {
                     append(d.dateLabel)
                 }
             }
-            canvas.drawText(header, margin + 10f, sectionTop + 3f, sectionTextPaint)
+            drawWrappedText(header, margin + 10f, contentWidth - 20f, sectionTextPaint, 18f)
             y += 28f
 
             if (d.places.isEmpty()) {

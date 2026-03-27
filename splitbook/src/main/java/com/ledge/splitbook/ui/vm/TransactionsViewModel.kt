@@ -41,7 +41,7 @@ class TransactionsViewModel @Inject constructor(
         _ui.value = UiState(groupId = groupId, isLoading = true)
         viewModelScope.launch {
             launch { memberRepo.observeMembers(groupId).collectLatest { _ui.value = _ui.value.copy(members = it) } }
-            launch { expenseRepo.observeExpenses(groupId).collectLatest { _ui.value = _ui.value.copy(expenses = it, isLoading = false) } }
+            launch { expenseRepo.observeExpenses(groupId).collectLatest { _ui.value = _ui.value.copy(expenses = it.sortedByDescending { expense -> expense.createdAt ?: "" }, isLoading = false) } }
             launch { placeRepo.observePlacesByGroup(groupId).collectLatest { _ui.value = _ui.value.copy(places = it) } }
         }
     }
