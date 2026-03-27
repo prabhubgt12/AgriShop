@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -112,146 +114,185 @@ fun AddExpenseScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-        OutlinedTextField(
-            value = ui.amount,
-            onValueChange = { viewModel.updateAmount(it) },
-            label = { Text(stringResource(id = com.ledge.splitbook.R.string.amount)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-        )
-
-        var expanded by remember { mutableStateOf(false) }
-        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
             OutlinedTextField(
-                value = ui.paidByName,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text(stringResource(id = com.ledge.splitbook.R.string.paid_by)) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
+                value = ui.amount,
+                onValueChange = { viewModel.updateAmount(it) },
+                label = { Text(stringResource(id = com.ledge.splitbook.R.string.amount)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.widthIn(min = 300.dp)) {
-                Text(
-                    text = stringResource(id = com.ledge.splitbook.R.string.select_member),
-                    style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                )
-                androidx.compose.material3.HorizontalDivider()
-                ui.members.forEach { m ->
-                    DropdownMenuItem(text = { Text(m.name) }, onClick = {
-                        viewModel.selectPayer(m.id)
-                        expanded = false
-                    })
-                }
-            }
-        }
 
-        // Category dropdown with inline Add option
-        val cats by categoriesViewModel.categories.collectAsState()
-        var catExpanded by remember { mutableStateOf(false) }
-        var showAddCat by remember { mutableStateOf(false) }
-        var newCat by remember { mutableStateOf("") }
-        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            ExposedDropdownMenuBox(expanded = catExpanded, onExpandedChange = { catExpanded = !catExpanded }, modifier = Modifier.weight(1f)) {
+            var expanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                 OutlinedTextField(
-                    value = ui.category,
+                    value = ui.paidByName,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text(stringResource(id = com.ledge.splitbook.R.string.category)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catExpanded) },
+                    label = { Text(stringResource(id = com.ledge.splitbook.R.string.paid_by)) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier
                         .menuAnchor()
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
                 )
-                DropdownMenu(
-                    expanded = catExpanded,
-                    onDismissRequest = { catExpanded = false },
-                    modifier = Modifier.widthIn(min = 300.dp) // wider menu for readability
-                ) {
-                    // Title
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.widthIn(min = 300.dp)) {
                     Text(
-                        text = stringResource(id = com.ledge.splitbook.R.string.select_category),
+                        text = stringResource(id = com.ledge.splitbook.R.string.select_member),
                         style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
                     )
                     androidx.compose.material3.HorizontalDivider()
-                    // Scrollable list with a visible scrollbar thumb
-                    val menuScroll = rememberScrollState()
-                    androidx.compose.foundation.layout.Box(
+                    ui.members.forEach { m ->
+                        DropdownMenuItem(text = { Text(m.name) }, onClick = {
+                            viewModel.selectPayer(m.id)
+                            expanded = false
+                        })
+                    }
+                }
+            }
+
+            // Category dropdown with inline Add option
+            val cats by categoriesViewModel.categories.collectAsState()
+            var catExpanded by remember { mutableStateOf(false) }
+            var showAddCat by remember { mutableStateOf(false) }
+            var newCat by remember { mutableStateOf("") }
+            androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                ExposedDropdownMenuBox(expanded = catExpanded, onExpandedChange = { catExpanded = !catExpanded }, modifier = Modifier.weight(1f)) {
+                    OutlinedTextField(
+                        value = ui.category,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(id = com.ledge.splitbook.R.string.category)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catExpanded) },
                         modifier = Modifier
-                            .heightIn(max = 360.dp)
-                            .drawWithContent {
-                                drawContent()
-                                val max = menuScroll.maxValue
-                                if (max > 0) {
-                                    val proportion = size.height / (size.height + max)
-                                    val thumbH = (size.height * proportion).coerceAtLeast(24f)
-                                    val thumbOffset = (menuScroll.value.toFloat() / max.toFloat()) * (size.height - thumbH)
-                                    val thumbW = 4.dp.toPx()
-                                    val padding = 2.dp.toPx()
-                                    drawRoundRect(
-                                        color = Color(0x80212121),
-                                        topLeft = Offset(size.width - thumbW - padding, thumbOffset),
-                                        size = Size(thumbW, thumbH),
-                                        cornerRadius = CornerRadius(thumbW / 2f, thumbW / 2f)
-                                    )
-                                }
-                            }
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    DropdownMenu(
+                        expanded = catExpanded,
+                        onDismissRequest = { catExpanded = false },
+                        modifier = Modifier.widthIn(min = 300.dp) // wider menu for readability
                     ) {
-                        androidx.compose.foundation.layout.Column(
+                        // Title
+                        Text(
+                            text = stringResource(id = com.ledge.splitbook.R.string.select_category),
+                            style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                        )
+                        androidx.compose.material3.HorizontalDivider()
+                        // Scrollable list with a visible scrollbar thumb
+                        val menuScroll = rememberScrollState()
+                        androidx.compose.foundation.layout.Box(
                             modifier = Modifier
-                                .verticalScroll(menuScroll)
-                                .padding(end = 6.dp)
+                                .heightIn(max = 360.dp)
+                                .drawWithContent {
+                                    drawContent()
+                                    val max = menuScroll.maxValue
+                                    if (max > 0) {
+                                        val proportion = size.height / (size.height + max)
+                                        val thumbH = (size.height * proportion).coerceAtLeast(24f)
+                                        val thumbOffset = (menuScroll.value.toFloat() / max.toFloat()) * (size.height - thumbH)
+                                        val thumbW = 4.dp.toPx()
+                                        val padding = 2.dp.toPx()
+                                        drawRoundRect(
+                                            color = Color(0x80212121),
+                                            topLeft = Offset(size.width - thumbW - padding, thumbOffset),
+                                            size = Size(thumbW, thumbH),
+                                            cornerRadius = CornerRadius(thumbW / 2f, thumbW / 2f)
+                                        )
+                                    }
+                                }
                         ) {
-                            cats.forEach { c ->
-                                DropdownMenuItem(text = { Text(c.name) }, onClick = {
-                                    viewModel.updateCategory(c.name)
-                                    catExpanded = false
-                                })
+                            androidx.compose.foundation.layout.Column(
+                                modifier = Modifier
+                                    .verticalScroll(menuScroll)
+                                    .padding(end = 6.dp)
+                            ) {
+                                cats.forEach { c ->
+                                    DropdownMenuItem(text = { Text(c.name) }, onClick = {
+                                        viewModel.updateCategory(c.name)
+                                        catExpanded = false
+                                    })
+                                }
                             }
                         }
                     }
                 }
+                // Center-aligned + button outside the field, matching text field height and radius
+                androidx.compose.material3.FilledTonalButton(
+                    onClick = { showAddCat = true },
+                    modifier = Modifier.height(56.dp),
+                    shape = androidx.compose.material3.MaterialTheme.shapes.small,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(id = com.ledge.splitbook.R.string.add_category))
+                }
             }
-            // Center-aligned + button outside the field, matching text field height and radius
-            androidx.compose.material3.FilledTonalButton(
-                onClick = { showAddCat = true },
-                modifier = Modifier.height(56.dp),
-                shape = androidx.compose.material3.MaterialTheme.shapes.small,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(id = com.ledge.splitbook.R.string.add_category))
-            }
-        }
 
-        if (showAddCat) {
-            AlertDialog(
-                onDismissRequest = { showAddCat = false },
-                title = { Text(stringResource(id = com.ledge.splitbook.R.string.add_new_category)) },
-                text = {
+            if (ui.places.isNotEmpty()) {
+                var expanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                     OutlinedTextField(
-                        value = newCat,
-                        onValueChange = { newCat = it },
-                        label = { Text(stringResource(id = com.ledge.splitbook.R.string.enter_category_name)) },
-                        modifier = Modifier.fillMaxWidth()
+                        value = ui.placeName,
+                        onValueChange = { /* read-only */ },
+                        readOnly = true,
+                        label = { Text(stringResource(id = com.ledge.splitbook.R.string.place)) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
-                },
-                confirmButton = {
-                    val canAdd = newCat.trim().isNotEmpty()
-                    androidx.compose.material3.TextButton(enabled = canAdd, onClick = {
-                        val trimmed = newCat.trim()
-                        catScope.launch { categoriesViewModel.add(trimmed) }
-                        viewModel.updateCategory(trimmed)
-                        newCat = ""
-                        showAddCat = false
-                    }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) }
-                },
-                dismissButton = { androidx.compose.material3.TextButton(onClick = { showAddCat = false }) { Text(stringResource(id = com.ledge.splitbook.R.string.cancel)) } }
-            )
-        }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier.exposedDropdownSize()
+                    ) {
+                        Text(
+                            text = stringResource(id = com.ledge.splitbook.R.string.select_place),
+                            style = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                        )
+                        HorizontalDivider()
+                        ui.places.forEach { p ->
+                            DropdownMenuItem(
+                                text = { Text(p.name) },
+                                onClick = {
+                                    viewModel.selectPlace(p.id)
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (showAddCat) {
+                AlertDialog(
+                    onDismissRequest = { showAddCat = false },
+                    title = { Text(stringResource(id = com.ledge.splitbook.R.string.add_new_category)) },
+                    text = {
+                        OutlinedTextField(
+                            value = newCat,
+                            onValueChange = { newCat = it },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        val canAdd = newCat.trim().isNotEmpty()
+                        androidx.compose.material3.TextButton(enabled = canAdd, onClick = {
+                            val trimmed = newCat.trim()
+                            catScope.launch { categoriesViewModel.add(trimmed) }
+                            viewModel.updateCategory(trimmed)
+                            newCat = ""
+                            showAddCat = false
+                        }) { Text(stringResource(id = com.ledge.splitbook.R.string.ok)) }
+                    },
+                    dismissButton = {
+                        androidx.compose.material3.TextButton(onClick = { showAddCat = false }) {
+                            Text(stringResource(id = com.ledge.splitbook.R.string.cancel))
+                        }
+                    }
+                )
+            }
 
         // Date field with picker
         val dateStr = ui.date
@@ -391,6 +432,6 @@ fun AddExpenseScreen(
             Button(onClick = { viewModel.addSampleMembers() }) { Text(stringResource(id = com.ledge.splitbook.R.string.add_sample_members)) }
         }
     }
-}
+    }
 }
 

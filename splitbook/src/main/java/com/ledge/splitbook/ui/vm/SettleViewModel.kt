@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.ledge.splitbook.data.entity.ExpenseEntity
 import com.ledge.splitbook.data.entity.ExpenseSplitEntity
 import com.ledge.splitbook.data.entity.MemberEntity
+import com.ledge.splitbook.data.entity.PlaceEntity
 import com.ledge.splitbook.data.repo.ExpenseRepository
 import com.ledge.splitbook.data.repo.MemberRepository
+import com.ledge.splitbook.data.repo.PlaceRepository
 import com.ledge.splitbook.data.repo.SettlementRepository
 import com.ledge.splitbook.data.entity.SettlementEntity
 import com.ledge.splitbook.domain.SettlementLogic
@@ -27,12 +29,14 @@ class SettleViewModel @Inject constructor(
     private val memberRepo: MemberRepository,
     private val expenseRepo: ExpenseRepository,
     private val settlementRepo: SettlementRepository,
+    private val placeRepo: PlaceRepository,
 ) : ViewModel() {
 
     data class UiState(
         val groupId: Long = 0L,
         val members: List<MemberEntity> = emptyList(),
         val expenses: List<ExpenseEntity> = emptyList(),
+        val places: List<PlaceEntity> = emptyList(),
         val settlements: List<SettlementEntity> = emptyList(),
         val nets: Map<Long, Double> = emptyMap(),
         val transfers: List<SettlementLogic.Transfer> = emptyList(),
@@ -59,16 +63,19 @@ class SettleViewModel @Inject constructor(
                 expenseRepo.observeExpenses(groupId),
                 // Also observe split count so we recompute when splits change without expense list changing
                 expenseRepo.observeSplitCount(groupId),
+                placeRepo.observePlacesByGroup(groupId),
                 settlementRepo.observeSettlements(groupId)
-            ) { members, expenses, splitCount, settlements ->
+            ) { members, expenses, splitCount, places, settlements ->
                 // splitCount is only for invalidation; not stored in state
-                Triple(members, expenses, settlements)
+                Triple(members, expenses, Pair(places, settlements))
             }
-                .collectLatest { (members, expenses, settlements) ->
+                .collectLatest { (members, expenses, placesAndSettlements) ->
+                val (places, settlements) = placesAndSettlements
                 // Mark loading while we recompute the derived snapshot to avoid transient mismatches in UI
                 _ui.value = _ui.value.copy(
                     members = members,
                     expenses = expenses,
+                    places = places,
                     settlements = settlements,
                     isLoading = true
                 )

@@ -13,6 +13,7 @@
     <string name="add_expense_for_member">Add expense for member</string>
     <string name="expense_chart">Expense chart</string>
     <string name="member">Member</string>
+    <string name="place">Place</string>
     <string name="all">All</string>
     <string name="from_label">From</string>
     <string name="to_label">To</string>

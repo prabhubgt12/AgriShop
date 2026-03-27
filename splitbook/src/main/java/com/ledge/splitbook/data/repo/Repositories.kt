@@ -143,6 +143,7 @@ class ExpenseRepository @Inject constructor(
         amount: Double,
         category: String,
         paidByMemberId: Long,
+        placeId: Long?,
         note: String?,
         createdAt: String?,
         splits: List<ExpenseSplitEntity>
@@ -155,6 +156,7 @@ class ExpenseRepository @Inject constructor(
                     amount = amount,
                     category = category,
                     paidByMemberId = paidByMemberId,
+                    placeId = placeId,
                     note = note,
                     createdAt = createdAt
                 )
@@ -172,6 +174,7 @@ class ExpenseRepository @Inject constructor(
         amount: Double,
         category: String,
         paidByMemberId: Long,
+        placeId: Long?,
         note: String?,
         createdAt: String?,
         splits: List<ExpenseSplitEntity>
@@ -183,6 +186,7 @@ class ExpenseRepository @Inject constructor(
                     amount = amount,
                     category = category,
                     paidByMemberId = paidByMemberId,
+                    placeId = placeId,
                     note = note,
                     createdAt = createdAt
                 )
@@ -237,6 +241,8 @@ class PlaceRepository @Inject constructor(
     private val placeDao: PlaceDao
 ) {
     fun observePlaces(dayId: Long): Flow<List<PlaceEntity>> = placeDao.observeByDay(dayId)
+
+     fun observePlacesByGroup(groupId: Long): Flow<List<PlaceEntity>> = placeDao.observeByGroup(groupId)
 
     suspend fun addPlace(groupId: Long, dayId: Long, name: String): Long =
         placeDao.insert(PlaceEntity(groupId = groupId, dayId = dayId, name = name))

@@ -10,6 +10,7 @@
     <string name="select_member">Select member</string>
     <string name="category">Category</string>
     <string name="select_category">Select category</string>
+    <string name="select_place">Select place</string>
     <string name="add_category">Add category</string>
     <string name="add_new_category">Add New Category</string>
     <string name="enter_category_name">Enter category name</string>

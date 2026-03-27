@@ -103,6 +103,7 @@ fun TransactionsScreen(
                             val splitLabel = when (splitBy) {
                                 "Date" -> stringResource(id = com.ledge.splitbook.R.string.date)
                                 "Member" -> stringResource(id = com.ledge.splitbook.R.string.member)
+                                "Place" -> stringResource(id = com.ledge.splitbook.R.string.place)
                                 "Category" -> stringResource(id = com.ledge.splitbook.R.string.category)
                                 else -> stringResource(id = com.ledge.splitbook.R.string.all)
                             }
@@ -110,10 +111,18 @@ fun TransactionsScreen(
                             androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = splitDdOpen)
                         }
                         DropdownMenu(expanded = splitDdOpen, onDismissRequest = { splitDdOpen = false }) {
-                            listOf("All", "Category", "Date", "Member").forEach { option ->
+                            val options = buildList {
+                                add("All")
+                                add("Category")
+                                add("Date")
+                                add("Member")
+                                if (ui.places.isNotEmpty()) add("Place")
+                            }
+                            options.forEach { option ->
                                 val label = when (option) {
                                     "Date" -> stringResource(id = com.ledge.splitbook.R.string.date)
                                     "Member" -> stringResource(id = com.ledge.splitbook.R.string.member)
+                                    "Place" -> stringResource(id = com.ledge.splitbook.R.string.place)
                                     "Category" -> stringResource(id = com.ledge.splitbook.R.string.category)
                                     else -> stringResource(id = com.ledge.splitbook.R.string.all)
                                 }
@@ -150,10 +159,14 @@ fun TransactionsScreen(
     ) { padding ->
         // Group map and keys based on Split-by selection
         val byId = ui.members.associateBy { it.id }
+        val placeById = ui.places.associateBy { it.id }
         val grouped: Map<String, List<com.ledge.splitbook.data.entity.ExpenseEntity>> = when (splitBy) {
             "All" -> emptyMap()
             "Date" -> ui.expenses.groupBy { it.createdAt ?: "—" }
             "Member" -> ui.expenses.groupBy { byId[it.paidByMemberId]?.name ?: "—" }
+            "Place" -> ui.expenses.groupBy { e ->
+                e.placeId?.let { pid -> placeById[pid]?.name } ?: "—"
+            }
             else -> ui.expenses.groupBy { it.category.ifBlank { "Uncategorized" } }
         }
         val computedKeys = grouped.keys.sorted()
@@ -281,6 +294,17 @@ fun TransactionsScreen(
                                                 style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                                                 color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
                                             )
+
+                                            if (ui.places.isNotEmpty()) {
+                                                val placeLabel = e.placeId?.let { pid -> placeById[pid]?.name }
+                                                if (!placeLabel.isNullOrBlank()) {
+                                                    Text(
+                                                        stringResource(id = com.ledge.splitbook.R.string.place) + ": " + placeLabel,
+                                                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                                                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
                                         }
 
                                         Column(horizontalAlignment = Alignment.End) {
@@ -352,6 +376,14 @@ fun TransactionsScreen(
                         }
                         e.createdAt?.let { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(id = com.ledge.splitbook.R.string.date)); Text(it) } }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(id = com.ledge.splitbook.R.string.category)); Text(e.category) }
+                        if (ui.places.isNotEmpty()) {
+                            val placeById = ui.places.associateBy { it.id }
+                            val placeLabel = e.placeId?.let { pid -> placeById[pid]?.name } ?: "—"
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(stringResource(id = com.ledge.splitbook.R.string.place))
+                                Text(placeLabel)
+                            }
+                        }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(id = com.ledge.splitbook.R.string.expense_by)); Text(payer) }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(stringResource(id = com.ledge.splitbook.R.string.shared_by)); Text(sharedBy.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }) }
                     }

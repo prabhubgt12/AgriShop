@@ -12,6 +12,7 @@
     <string name="add_expense_for_member">सदस्य के लिए खर्च जोड़ें</string>
     <string name="expense_chart">खर्च चार्ट</string>
     <string name="member">सदस्य</string>
+    <string name="place">स्थान</string>
     <string name="all">सभी</string>
     <string name="from_label">से</string>
     <string name="to_label">को</string>

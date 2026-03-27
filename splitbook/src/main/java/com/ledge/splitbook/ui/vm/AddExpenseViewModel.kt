@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ledge.splitbook.data.entity.ExpenseSplitEntity
 import com.ledge.splitbook.data.entity.MemberEntity
+import com.ledge.splitbook.data.entity.PlaceEntity
 import com.ledge.splitbook.data.entity.SplitType
 import com.ledge.splitbook.data.repo.ExpenseRepository
 import com.ledge.splitbook.data.repo.MemberRepository
+import com.ledge.splitbook.data.repo.PlaceRepository
 import com.ledge.splitbook.domain.SplitLogic
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 class AddExpenseViewModel @Inject constructor(
     private val memberRepo: MemberRepository,
     private val expenseRepo: ExpenseRepository,
+    private val placeRepo: PlaceRepository,
 ) : ViewModel() {
 
     enum class Mode { EQUAL, CUSTOM, PERCENT }
@@ -27,10 +30,13 @@ class AddExpenseViewModel @Inject constructor(
         val groupId: Long = 0L,
         val editingExpenseId: Long? = null,
         val members: List<MemberEntity> = emptyList(),
+        val places: List<PlaceEntity> = emptyList(),
         val amount: String = "",
         val paidById: Long? = null,
         val paidByName: String = "",
         val category: String = "",
+        val placeId: Long? = null,
+        val placeName: String = "",
         val note: String = "",
         val date: String = java.time.LocalDate.now().toString(),
         val mode: Mode = Mode.EQUAL,
@@ -60,6 +66,17 @@ class AddExpenseViewModel @Inject constructor(
                     selectedMemberIds = if (_uiState.value.selectedMemberIds.isEmpty()) list.map { it.id }.toSet() else _uiState.value.selectedMemberIds,
                 )
                 recalcCanSave()
+            }
+        }
+
+        viewModelScope.launch {
+            placeRepo.observePlacesByGroup(groupId).collect { list ->
+                val selectedId = _uiState.value.placeId
+                val selectedName = list.firstOrNull { it.id == selectedId }?.name ?: ""
+                _uiState.value = _uiState.value.copy(
+                    places = list,
+                    placeName = selectedName
+                )
             }
         }
     }
@@ -93,6 +110,7 @@ class AddExpenseViewModel @Inject constructor(
                 paidById = e.paidByMemberId,
                 paidByName = byId[e.paidByMemberId]?.name ?: _uiState.value.paidByName,
                 category = e.category,
+                placeId = e.placeId,
                 note = e.note ?: "",
                 date = e.createdAt ?: _uiState.value.date,
                 shareByAll = shareAll,
@@ -100,6 +118,12 @@ class AddExpenseViewModel @Inject constructor(
                 customAmounts = _uiState.value.customAmounts.toMutableMap().apply { putAll(amountsMap) },
                 mode = modeDerived
             )
+
+            // Ensure placeName is updated if places have already loaded
+            val placeName = _uiState.value.places.firstOrNull { it.id == e.placeId }?.name ?: ""
+            if (placeName.isNotBlank() || e.placeId == null) {
+                _uiState.value = _uiState.value.copy(placeName = placeName)
+            }
             // If share-by-all, recompute equal distribution so UI reflects equal split
             if (shareAll) {
                 distributeEqual(e.amount, allMemberIds.toList())
@@ -120,6 +144,11 @@ class AddExpenseViewModel @Inject constructor(
     fun updateCategory(value: String) {
         _uiState.value = _uiState.value.copy(category = value)
         recalcCanSave()
+    }
+
+    fun selectPlace(placeId: Long?) {
+        val name = if (placeId == null) "" else _uiState.value.places.firstOrNull { it.id == placeId }?.name ?: ""
+        _uiState.value = _uiState.value.copy(placeId = placeId, placeName = name)
     }
 
     fun updateNote(value: String) {
@@ -312,6 +341,7 @@ class AddExpenseViewModel @Inject constructor(
                     amount = amount,
                     category = if (state.category.isBlank()) "general" else state.category,
                     paidByMemberId = state.paidById,
+                    placeId = state.placeId,
                     note = state.note.trim(),
                     createdAt = state.date,
                     splits = splits
@@ -322,6 +352,7 @@ class AddExpenseViewModel @Inject constructor(
                     amount = amount,
                     category = if (state.category.isBlank()) "general" else state.category,
                     paidByMemberId = state.paidById,
+                    placeId = state.placeId,
                     note = state.note.trim(),
                     createdAt = state.date,
                     splits = splits

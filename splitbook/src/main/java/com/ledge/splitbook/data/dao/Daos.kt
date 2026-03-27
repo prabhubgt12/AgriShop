@@ -195,6 +195,9 @@ interface PlaceDao {
     @Query("SELECT * FROM places WHERE dayId = :dayId ORDER BY id ASC")
     fun observeByDay(dayId: Long): Flow<List<PlaceEntity>>
 
+    @Query("SELECT * FROM places WHERE groupId = :groupId ORDER BY id ASC")
+    fun observeByGroup(groupId: Long): Flow<List<PlaceEntity>>
+
     @Query("SELECT * FROM places WHERE id = :id")
     suspend fun getById(id: Long): PlaceEntity?
 

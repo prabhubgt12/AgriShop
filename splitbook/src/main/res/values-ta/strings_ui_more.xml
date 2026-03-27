@@ -12,6 +12,7 @@
     <string name="add_expense_for_member">உறுப்பினருக்கு செலவு சேர்க்க</string>
     <string name="expense_chart">செலவு வரைபடம்</string>
     <string name="member">உறுப்பினர்</string>
+    <string name="place">இடம்</string>
     <string name="all">அனைத்தும்</string>
     <string name="from_label">இருந்து</string>
     <string name="to_label">க்கு</string>

@@ -401,17 +401,22 @@ fun SettleScreen(
                                         val splitLabel = when (splitBy) {
                                             "Date" -> stringResource(id = com.ledge.splitbook.R.string.date)
                                             "Member" -> stringResource(id = com.ledge.splitbook.R.string.member)
+                                            "Place" -> stringResource(id = com.ledge.splitbook.R.string.place)
                                             else -> stringResource(id = com.ledge.splitbook.R.string.category)
                                         }
                                         Text(splitLabel)
                                         androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = chartDdOpen)
                                     }
-                                    androidx.compose.material3.DropdownMenu(expanded = chartDdOpen, onDismissRequest = { chartDdOpen = false }) {
-                                        val options = listOf(
-                                            "Category" to stringResource(id = com.ledge.splitbook.R.string.category),
-                                            "Date" to stringResource(id = com.ledge.splitbook.R.string.date),
-                                            "Member" to stringResource(id = com.ledge.splitbook.R.string.member)
-                                        )
+                                    androidx.compose.material3.DropdownMenu(
+                                        expanded = chartDdOpen,
+                                        onDismissRequest = { chartDdOpen = false }
+                                    ) {
+                                        val options = buildList {
+                                            add("Category" to stringResource(id = com.ledge.splitbook.R.string.category))
+                                            add("Date" to stringResource(id = com.ledge.splitbook.R.string.date))
+                                            add("Member" to stringResource(id = com.ledge.splitbook.R.string.member))
+                                            if (ui.places.isNotEmpty()) add("Place" to stringResource(id = com.ledge.splitbook.R.string.place))
+                                        }
                                         options.forEach { (value, label) ->
                                             androidx.compose.material3.DropdownMenuItem(
                                                 text = { Text(label) },
@@ -423,9 +428,13 @@ fun SettleScreen(
                             }
 
                             val byId = ui.members.associateBy { it.id }
+                            val placeById = ui.places.associateBy { it.id }
                             val groups = when (splitBy) {
                                 "Date" -> ui.expenses.groupBy { it.createdAt ?: "—" }
                                 "Member" -> ui.expenses.groupBy { byId[it.paidByMemberId]?.name ?: "—" }
+                                "Place" -> ui.expenses.groupBy { e ->
+                                    e.placeId?.let { pid -> placeById[pid]?.name } ?: "—"
+                                }
                                 else -> ui.expenses.groupBy { it.category.ifBlank { stringResource(id = com.ledge.splitbook.R.string.uncategorized) } }
                             }
                             val totals = groups.mapValues { (_, list) -> list.sumOf { it.amount } }
