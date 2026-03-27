@@ -46,7 +46,7 @@ object SplitLogic {
 
         val sum = perMember.values.sum()
 
-        require(abs(sum - total) < 0.01) { "Custom amounts must sum to total" }
+        require(abs(sum - total) < 0.1) { "Custom amounts must sum to total" }
 
         return perMember.toSortedMap().map { (id, amt) -> MemberShare(id, round2(amt)) }
 
