@@ -200,7 +200,7 @@ fun TransactionsScreen(
                         val prevLabel = if (prev == "All") stringResource(id = com.ledge.splitbook.R.string.all) else prev
                         Text(
                             prevLabel,
-                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.4f),
                             maxLines = 1,
                             textAlign = TextAlign.Start,
                             modifier = Modifier
@@ -230,7 +230,7 @@ fun TransactionsScreen(
                         val nextLabel = if (next == "All") stringResource(id = com.ledge.splitbook.R.string.all) else next
                         Text(
                             nextLabel,
-                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                            color = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.4f),
                             maxLines = 1,
                             textAlign = TextAlign.End,
                             modifier = Modifier
