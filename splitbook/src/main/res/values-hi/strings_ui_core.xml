@@ -1,9 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="description">विवरण</string>
+    <string name="paid_by">भुगतान किया</string>
+    <string name="select_member">सदस्य चुनें</string>
+    <string name="select_category">श्रेणी चुनें</string>
+    <string name="select_place">स्थान चुनें</string>
+    <string name="add_category">श्रेणी जोड़ें</string>
+    <string name="date_ymd">दिनांक (YYYY-MM-DD)</string>
+    <string name="pick_date">दिनांक चुनें</string>
+    <string name="expense_share_by_all">सभी के साथ समान रूप से साझा करें</string>
+    <string name="select_members">सदस्य चुनें</string>
+    <string name="selected_count">%1$s चयनित</string>
+    <string name="select_person">व्यक्ति चुनें</string>
+    <string name="percent_sign">%</string>
+    <string name="note_amounts_or_percentages">राशि या प्रतिशत दर्ज करें</string>
     <string name="amounts_percent_format">राशि: %1$.2f / %2$.2f • प्रतिशत: %3$.0f%%</string>
     <string name="split_equally_among">%1$d सदस्यों में बराबर बाँटें</string>
     <string name="no_members_hint">अभी तक कोई सदस्य नहीं जोड़ा गया है।</string>
     <string name="add_sample_members">नमूना सदस्य जोड़ें</string>
     <string name="settle_up">बकाया चुकाएं</string>
-    <string name="select_place">स्थान चुनें</string>
 </resources>

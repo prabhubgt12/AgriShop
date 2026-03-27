@@ -5,4 +5,5 @@
     <string name="no_members_hint">ఇప్పటికీ ఎలాంటి సభ్యులు జోడించలేదు.</string>
     <string name="add_sample_members">నమూనా సభ్యులను జోడించండి</string>
     <string name="settle_up">బాకీ తీర్చండి</string>
+    <string name="select_place">స్థలాన్ని ఎంచుకోండి</string>
 </resources>
