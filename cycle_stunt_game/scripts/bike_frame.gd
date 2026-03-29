@@ -87,6 +87,13 @@ func _physics_process(delta):
 			var audio_manager := get_tree().current_scene.get_node_or_null("SimpleAudioManager")
 			if audio_manager and audio_manager.has_method("play_pedal"):
 				audio_manager.call("play_pedal")
+	else:
+		# Stop pedal sound when accelerate released or level completed
+		if _is_pedaling:
+			_is_pedaling = false
+			var audio_manager := get_tree().current_scene.get_node_or_null("SimpleAudioManager")
+			if audio_manager and audio_manager.has_method("stop_pedal"):
+				audio_manager.call("stop_pedal")
 			
 	if brake_state and not _is_level_complete:
 		apply_central_force(Vector2(-drive_force * 0.5, 0))
@@ -137,6 +144,12 @@ func _physics_process(delta):
 		if full_flips > 0:
 			_score += full_flips * 100
 			_update_hud_score()
+		# Restart pedal sound when landing if accelerate is still held
+		if accelerate_state and not _is_level_complete and not _is_pedaling:
+			_is_pedaling = true
+			var audio_manager := get_tree().current_scene.get_node_or_null("SimpleAudioManager")
+			if audio_manager and audio_manager.has_method("play_pedal"):
+				audio_manager.call("play_pedal")
 		_air_rot_accum = 0.0
 		_air_last_rot = 0.0
 

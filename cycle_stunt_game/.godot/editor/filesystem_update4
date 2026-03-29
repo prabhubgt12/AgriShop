@@ -1,0 +1,9 @@
+res://scenes/bike.tscn
+res://scripts/simple_audio_manager.gd
+res://scenes/level_1.tscn
+res://scenes/level_2.tscn
+res://scenes/level_3.tscn
+res://scenes/level_4.tscn
+res://scenes/level_5.tscn
+res://scripts/bike_frame.gd
+res://addons/admob/internal/version/plugin_version.gd
