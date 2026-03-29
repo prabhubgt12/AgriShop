@@ -1,6 +1,6 @@
 extends RigidBody2D
 
-@export var stunt_torque = 80000.0  # Moderate speed for better control
+@export var stunt_torque = 240000.0  # Fast spinning
 @export var drive_force := 1500.0  # Increased much more for speed
 @export var max_upward_velocity := 1800.0
 @export var max_angular_velocity := 16.0
@@ -24,7 +24,7 @@ var _is_pedaling := false  # Track if currently pedaling for sound
 
 func _ready() -> void:
 	# Set physics properties
-	angular_damp = 4.0
+	angular_damp = 1.0  # Reduced to allow faster spinning
 	physics_material_override.bounce = 0.0
 	physics_material_override.friction = 1.0
 	continuous_cd = RigidBody2D.CCD_MODE_CAST_SHAPE
@@ -59,6 +59,9 @@ func _physics_process(delta):
 		accelerate_state = hud.call("get_global_action_state", "accelerate")
 		brake_state = hud.call("get_global_action_state", "brake")
 		stunt_state = hud.call("get_global_action_state", "stunt")
+
+	# Fallback: direct key input for stunt
+	stunt_state = stunt_state or Input.is_key_pressed(KEY_S)
 
 	var bike := get_parent()
 	var front_wheel: RigidBody2D = bike.get_node_or_null("FrontWheel") if bike != null else null
@@ -158,6 +161,17 @@ func _physics_process(delta):
 		d = wrapf(d, -PI, PI)
 		_air_rot_accum += d
 		_air_last_rot = rotation
+
+		# Near ground: stop spinning and straighten to wheels-down
+		if linear_velocity.y > 150.0:
+			# Strong damping to stop spinning
+			angular_velocity *= 0.7
+			# Strong auto-straighten torque
+			var rot_err := wrapf(0.0 - rotation, -PI, PI)
+			apply_torque(rot_err * stunt_torque * 0.04)
+			# Extra damping if still spinning fast
+			if absf(angular_velocity) > 2.0:
+				angular_velocity *= 0.5
 
 		if stunt_state:
 			# Reduce torque when airborne
