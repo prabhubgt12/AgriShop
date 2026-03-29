@@ -113,16 +113,16 @@ func _physics_process(delta):
 			var bike_x := global_position.x
 
 			if bike_x > 950 and bike_x < 1250:  # First jump area
-				jump_force = speed * 0.20
+				jump_force = speed * 0.22
 			elif bike_x > 1550 and bike_x < 1850:  # Second jump area
-				jump_force = speed * 0.20
+				jump_force = speed * 0.22
 			elif bike_x > 2950 and bike_x < 3250:  # Third jump area
-				jump_force = speed * 0.20
+				jump_force = speed * 0.22
 			elif bike_x > 4150 and bike_x < 4450:  # Fourth jump area
-				jump_force = speed * 0.20
+				jump_force = speed * 0.22
 			# Also check rotation for general jumps
 			elif rotation < -0.05:  # Going downhill
-				jump_force = speed * 0.20
+				jump_force = speed * 0.22
 
 		if jump_force > 0:
 			apply_central_impulse(Vector2(0, -jump_force))

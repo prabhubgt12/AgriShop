@@ -7,3 +7,4 @@ res://scenes/level_4.tscn
 res://scenes/level_5.tscn
 res://scripts/bike_frame.gd
 res://addons/admob/internal/version/plugin_version.gd
+res://export_presets.cfg
