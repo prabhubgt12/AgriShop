@@ -7,6 +7,9 @@ extends RigidBody2D
 @export var jump_impulse := 5500.0
 @export var jump_cooldown := 0.35
 
+# Physics damping and limits
+var max_upward_clamp = -1200.0
+
 var _score := 0
 var _distance_score := 0
 var _last_x_position := 0.0
@@ -20,6 +23,12 @@ var _is_level_complete: bool = false  # Track level completion
 var _is_pedaling := false  # Track if currently pedaling for sound
 
 func _ready() -> void:
+	# Set physics properties
+	angular_damp = 4.0
+	physics_material_override.bounce = 0.0
+	physics_material_override.friction = 1.0
+	continuous_cd = RigidBody2D.CCD_MODE_CAST_SHAPE
+	
 	_score = 0
 	_distance_score = 0
 	_last_x_position = global_position.x
@@ -36,6 +45,11 @@ func _physics_process(delta):
 		_jump_cooldown_left = maxf(0.0, _jump_cooldown_left - delta)
 	if _auto_jump_cooldown_left > 0.0:
 		_auto_jump_cooldown_left = maxf(0.0, _auto_jump_cooldown_left - delta)
+	
+	# Clamp max upward velocity
+	if linear_velocity.y < -1200:
+		linear_velocity.y = -1200
+	
 	var hud := get_tree().current_scene.get_node_or_null("HUD") if get_tree().current_scene != null else null
 	var accelerate_state := false
 	var brake_state := false
@@ -62,7 +76,11 @@ func _physics_process(delta):
 	_update_hud_score()
 
 	if accelerate_state and not _is_level_complete:
-		apply_central_force(Vector2(drive_force, 0))
+		# Reduce torque when airborne
+		if in_air:
+			apply_central_force(Vector2(drive_force * 0.4, 0))
+		else:
+			apply_central_force(Vector2(drive_force, 0))
 		# Start pedal sound if not already playing
 		if not _is_pedaling:
 			_is_pedaling = true
@@ -129,13 +147,18 @@ func _physics_process(delta):
 		_air_last_rot = rotation
 
 		if stunt_state:
-			apply_torque(stunt_torque)
+			# Reduce torque when airborne
+			if in_air:
+				apply_torque(stunt_torque * 0.4)
+			else:
+				apply_torque(stunt_torque)
 			_stunt_score_accum += delta
 			if _stunt_score_accum >= 0.2:
 				var bonus := int(floor(_stunt_score_accum / 0.2)) * 20  
 				_stunt_score_accum = fmod(_stunt_score_accum, 0.2)
 				_score += bonus
 				_update_hud_score()
+			# Clamp velocity and angular velocity
 			if linear_velocity.y < -max_upward_velocity:
 				linear_velocity.y = -max_upward_velocity
 			if absf(angular_velocity) > max_angular_velocity:

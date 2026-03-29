@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" uid="uid://bqxyxw7yh8knl" path="res://scenes/bike.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://lv21s4wj84sl" path="res://assets/sky.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://ch8qfdpp55a6i" path="res://assets/mountains.png" id="4"]
 
 [sub_resource type="RectangleShape2D" id=1]
 size = Vector2(5000, 60)
@@ -19,32 +21,27 @@ size = Vector2(40, 160)
 script = ExtResource(2)
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+	repeat_size = Vector2(40000, 0)
 
 [node name="Sky" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.2, 0.2)
+	motion_mirroring = Vector2(4000, 0)
 
-[node name="SkyRect" type="ColorRect" parent="ParallaxBackground/Sky"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -2500.0
-offset_top = -1200.0
-offset_right = 2500.0
-offset_bottom = 1200.0
-color = Color(0.6, 0.75, 0.95, 1)
+[node name="SkySprite" type="Sprite2D" parent="ParallaxBackground/Sky"]
+texture = ExtResource(3)
+centered = false
+position = Vector2(-2000, -800)
+scale = Vector2(4, 4)
 
 [node name="Mountains" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.4, 0.4)
+	motion_mirroring = Vector2(4000, 0)
 
-[node name="MountainsRect" type="ColorRect" parent="ParallaxBackground/Mountains"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -2500.0
-offset_top = -1200.0
-offset_right = 2500.0
-offset_bottom = 1200.0
-color = Color(0.42, 0.52, 0.62, 1)
+[node name="MountainsSprite" type="Sprite2D" parent="ParallaxBackground/Mountains"]
+texture = ExtResource(4)
+centered = false
+position = Vector2(-2000, -800)
+scale = Vector2(4, 4)
 
 [node name="Terrain" type="StaticBody2D" parent="."]
 

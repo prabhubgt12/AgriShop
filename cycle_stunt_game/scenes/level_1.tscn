@@ -12,7 +12,7 @@ size = Vector2(40,160)
 script = ExtResource("2")
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
-repeat_size = Vector2(4000, 0)
+repeat_size = Vector2(40000, 0)
 
 [node name="Sky" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.2,0.2)

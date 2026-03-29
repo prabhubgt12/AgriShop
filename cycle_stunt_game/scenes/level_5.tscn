@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" path="res://scenes/bike.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://lv21s4wj84sl" path="res://assets/sky.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://ch8qfdpp55a6i" path="res://assets/mountains.png" id="4"]
 
 [sub_resource type="RectangleShape2D" id=1]
 size = Vector2(5000, 60)
@@ -19,42 +21,37 @@ size = Vector2(40, 160)
 script = ExtResource(2)
 
 [node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+	repeat_size = Vector2(40000, 0)
 
 [node name="Sky" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.2, 0.2)
+	motion_mirroring = Vector2(4000, 0)
 
-[node name="SkyRect" type="ColorRect" parent="ParallaxBackground/Sky"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -2500.0
-offset_top = -1200.0
-offset_right = 2500.0
-offset_bottom = 1200.0
-color = Color(0.58, 0.76, 0.96, 1)
+[node name="SkySprite" type="Sprite2D" parent="ParallaxBackground/Sky"]
+texture = ExtResource(3)
+centered = false
+position = Vector2(-2000, -800)
+scale = Vector2(4, 4)
 
 [node name="Mountains" type="ParallaxLayer" parent="ParallaxBackground"]
 motion_scale = Vector2(0.4, 0.4)
+	motion_mirroring = Vector2(4000, 0)
 
-[node name="MountainsRect" type="ColorRect" parent="ParallaxBackground/Mountains"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -2500.0
-offset_top = -1200.0
-offset_right = 2500.0
-offset_bottom = 1200.0
-color = Color(0.4, 0.5, 0.6, 1)
+[node name="MountainsSprite" type="Sprite2D" parent="ParallaxBackground/Mountains"]
+texture = ExtResource(4)
+centered = false
+position = Vector2(-2000, -800)
+scale = Vector2(4, 4)
 
 [node name="Terrain" type="StaticBody2D" parent="."]
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Terrain"]
-polygon = PackedVector2Array(-700, 900, -700, 520, -200, 520, 100, 500, 300, 470, 420, 445, 520, 430, 750, 475, 980, 410, 1250, 560, 1400, 300, 1600, 650, 1800, 560, 2200, 560, 2400, 200, 2600, 600, 3000, 500, 3200, 300, 3400, 700, 3600, 460, 4200, 300, 4800, 200, 5400, 340, 5600, 500, 5800, 300, 6000, 450, 6600, 260, 7200, 150, 7800, 80, 8200, 400, 8400, 140, 9000, 100, 9300, 300, 9600, 60, 9900, 250, 10200, 20, 10600, -200, 11000, 200, 11400, -60, 12000, -100, 12600, -140, 13200, -180, 13500, 200, 13800, -140, 14200, 220, 15000, -60, 15600, -20, 16200, 20, 16800, 60, 17400, 100, 17800, 300, 18200, 50, 19000, 260, 21000, 500, 23000, 650, 26000, 700, 30000, 760, 35000, 760, 35000, 900, -700, 900)
+polygon = PackedVector2Array(-700, 900, -700, 520, -200, 520, 100, 500, 300, 470, 420, 445, 520, 430, 750, 475, 980, 410, 1250, 560, 1350, 480, 1450, 400, 1550, 520, 1650, 600, 1800, 560, 2200, 560, 2400, 400, 2600, 550, 2800, 500, 3000, 500, 3200, 420, 3400, 520, 3600, 460, 4000, 350, 4400, 280, 4800, 240, 5200, 320, 5600, 450, 6000, 400, 6400, 300, 6800, 220, 7200, 180, 7600, 140, 8000, 200, 8400, 140, 8800, 180, 9200, 260, 9600, 180, 10000, 120, 10400, 80, 10800, 60, 11200, 40, 11600, 20, 12000, 0, 12400, -40, 12800, -60, 13200, -80, 13600, 0, 14000, 100, 14400, 0, 14800, -40, 15200, 20, 15600, 60, 16000, 100, 16400, 140, 16800, 180, 17200, 220, 17600, 260, 18000, 300, 18400, 260, 18800, 220, 19200, 260, 19600, 300, 20000, 340, 21000, 420, 23000, 520, 25000, 600, 27000, 650, 30000, 720, 35000, 760, 35000, 900, -700, 900)
 
 [node name="GroundLine" type="Line2D" parent="Terrain"]
 width = 40.0
 default_color = Color(0.35, 0.25, 0.15, 1)
-points = PackedVector2Array(-700, 520, -200, 520, 100, 500, 300, 470, 420, 445, 520, 430, 750, 475, 980, 410, 1250, 560, 1400, 300, 1600, 650, 1800, 560, 2200, 560, 2400, 200, 2600, 600, 3000, 500, 3200, 300, 3400, 700, 3600, 460, 4200, 300, 4800, 200, 5400, 340, 5600, 500, 5800, 300, 6000, 450, 6600, 260, 7200, 150, 7800, 80, 8200, 400, 8400, 140, 9000, 100, 9300, 300, 9600, 60, 9900, 250, 10200, 20, 10600, -200, 11000, 200, 11400, -60, 12000, -100, 12600, -140, 13200, -180, 13500, 200, 13800, -140, 14200, 220, 15000, -60, 15600, -20, 16200, 20, 16800, 60, 17400, 100, 17800, 300, 18200, 50, 19000, 260, 21000, 500, 23000, 650, 26000, 700, 30000, 760, 35000, 760)
+points = PackedVector2Array(-700, 520, -200, 520, 100, 500, 300, 470, 420, 445, 520, 430, 750, 475, 980, 410, 1250, 560, 1350, 480, 1450, 400, 1550, 520, 1650, 600, 1800, 560, 2200, 560, 2400, 400, 2600, 550, 2800, 500, 3000, 500, 3200, 420, 3400, 520, 3600, 460, 4000, 350, 4400, 280, 4800, 240, 5200, 320, 5600, 450, 6000, 400, 6400, 300, 6800, 220, 7200, 180, 7600, 140, 8000, 200, 8400, 140, 8800, 180, 9200, 260, 9600, 180, 10000, 120, 10400, 80, 10800, 60, 11200, 40, 11600, 20, 12000, 0, 12400, -40, 12800, -60, 13200, -80, 13600, 0, 14000, 100, 14400, 0, 14800, -40, 15200, 20, 15600, 60, 16000, 100, 16400, 140, 16800, 180, 17200, 220, 17600, 260, 18000, 300, 18400, 260, 18800, 220, 19200, 260, 19600, 300, 20000, 340, 21000, 420, 23000, 520, 25000, 600, 27000, 650, 30000, 720, 35000, 760)
 
 [node name="Finish" type="Area2D" parent="."]
 position = Vector2(35500, 750)
