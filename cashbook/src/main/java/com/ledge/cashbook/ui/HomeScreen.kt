@@ -91,7 +91,7 @@ fun HomeScreen(
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -99,153 +99,164 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Cash Book
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { onOpenCashBook() },
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(Icons.Default.Book, contentDescription = null)
-                        Spacer(Modifier.height(8.dp))
-                        Text(text = stringResource(R.string.title_cash_book))
-                    }
-                    // Categories
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                if (!hasRemoveAds) {
-                                    val act = (ctx as? android.app.Activity)
-                                    if (act != null) {
-                                        InterstitialAds.showIfAvailable(act) { onOpenCategories() }
-                                    } else onOpenCategories()
-                                } else onOpenCategories()
-                            },
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(Icons.Default.List, contentDescription = null)
-                        Spacer(Modifier.height(8.dp))
-                        Text(text = stringResource(R.string.title_categories))
-                    }
-                    // Settings
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                if (!hasRemoveAds) {
-                                    val act = (ctx as? android.app.Activity)
-                                    if (act != null) {
-                                        InterstitialAds.showIfAvailable(act) { onOpenSettings() }
-                                    } else onOpenSettings()
-                                } else onOpenSettings()
-                            },
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(Icons.Default.Settings, contentDescription = null)
-                        Spacer(Modifier.height(8.dp))
-                        Text(text = stringResource(R.string.settings_title))
-                    }
-                }
-            }
-
-            TodayTotalsCard(
-                credit = todayCredit,
-                debit = todayDebit
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = stringResource(R.string.recent_transactions),
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                        }
-                    }
-
-                    if (recent.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.no_recent_transactions),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        val state = rememberLazyListState()
-                        LazyColumn(
-                            state = state,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 280.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            items(recent, key = { it.id }) { t ->
-                                RecentTxnRowItem(t)
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Remove-ads banner card just below tiles (gate on price so it doesn't flash before billing resolves)
-            if (!hasRemoveAds && price != null) {
+            item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = stringResource(R.string.remove_ads_card_text, (price ?: "—")),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Button(onClick = {
-                            val act = (ctx as? android.app.Activity)
-                            if (act != null) scope.launch { monetVm.purchaseRemoveAds(act) }
-                        }) { Text(text = stringResource(R.string.remove_ads)) }
+                        // Cash Book
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onOpenCashBook() },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.Book, contentDescription = null)
+                            Spacer(Modifier.height(8.dp))
+                            Text(text = stringResource(R.string.title_cash_book))
+                        }
+                        // Categories
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    if (!hasRemoveAds) {
+                                        val act = (ctx as? android.app.Activity)
+                                        if (act != null) {
+                                            InterstitialAds.showIfAvailable(act) { onOpenCategories() }
+                                        } else onOpenCategories()
+                                    } else onOpenCategories()
+                                },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.List, contentDescription = null)
+                            Spacer(Modifier.height(8.dp))
+                            Text(text = stringResource(R.string.title_categories))
+                        }
+                        // Settings
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    if (!hasRemoveAds) {
+                                        val act = (ctx as? android.app.Activity)
+                                        if (act != null) {
+                                            InterstitialAds.showIfAvailable(act) { onOpenSettings() }
+                                        } else onOpenSettings()
+                                    } else onOpenSettings()
+                                },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.Settings, contentDescription = null)
+                            Spacer(Modifier.height(8.dp))
+                            Text(text = stringResource(R.string.settings_title))
+                        }
                     }
                 }
-                // Native ad only when ad is ready
-                if (nativeLoaded) {
+            }
+
+            // Remove-ads banner card just below tiles
+            if (!hasRemoveAds && price != null) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.remove_ads_card_text, (price ?: "—")),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Button(onClick = {
+                                val act = (ctx as? android.app.Activity)
+                                if (act != null) scope.launch { monetVm.purchaseRemoveAds(act) }
+                            }) { Text(text = stringResource(R.string.remove_ads)) }
+                        }
+                    }
+                }
+            }
+
+            item {
+                TodayTotalsCard(
+                    credit = todayCredit,
+                    debit = todayDebit
+                )
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.recent_transactions),
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
+                        }
+
+                        if (recent.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.no_recent_transactions),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            val state = rememberLazyListState()
+                            LazyColumn(
+                                state = state,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 260.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                items(recent, key = { it.id }) { t ->
+                                    RecentTxnRowItem(t)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Native ad at the very end (after recent transactions)
+            if (!hasRemoveAds) {
+                item {
                     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
                             text = stringResource(R.string.ad_label),
@@ -257,12 +268,6 @@ fun HomeScreen(
                             onLoadState = { loaded -> nativeLoaded = loaded }
                         )
                     }
-                } else {
-                    // Start loading and avoid rendering the card until ready
-                    NativeAdvancedAd(
-                        modifier = Modifier, // off-screen container not needed; AndroidView still needs a parent
-                        onLoadState = { loaded -> nativeLoaded = loaded }
-                    )
                 }
             }
         }
