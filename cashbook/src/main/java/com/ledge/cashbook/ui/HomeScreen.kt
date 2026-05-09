@@ -54,6 +54,13 @@ fun HomeScreen(
     val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = adsVm.hasRemoveAds.value)
     val ctx = LocalContext.current
     val monetVm: MonetizationViewModel = hiltViewModel()
+    val themeVm: com.ledge.cashbook.ui.theme.ThemeViewModel = hiltViewModel()
+    val mode by themeVm.themeMode.collectAsState()
+    val dark = when (mode) {
+        com.ledge.cashbook.ui.theme.ThemeViewModel.MODE_DARK -> true
+        com.ledge.cashbook.ui.theme.ThemeViewModel.MODE_LIGHT -> false
+        else -> androidx.compose.foundation.isSystemInDarkTheme()
+    }
     val price by monetVm.removeAdsPrice.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
     var nativeLoaded by remember { mutableStateOf(false) }
@@ -279,7 +286,13 @@ private fun TodayTotalsCard(
     credit: Double,
     debit: Double
 ) {
-    val dark = androidx.compose.foundation.isSystemInDarkTheme()
+    val themeVm: com.ledge.cashbook.ui.theme.ThemeViewModel = hiltViewModel()
+    val mode by themeVm.themeMode.collectAsState()
+    val dark = when (mode) {
+        com.ledge.cashbook.ui.theme.ThemeViewModel.MODE_DARK -> true
+        com.ledge.cashbook.ui.theme.ThemeViewModel.MODE_LIGHT -> false
+        else -> androidx.compose.foundation.isSystemInDarkTheme()
+    }
     val creditColor = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)
     val debitColor = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)
     val net = credit - debit
@@ -335,7 +348,13 @@ private fun TodayTotalsCard(
 
 @Composable
 private fun RecentTxnRowItem(t: RecentTxnRow) {
-    val dark = androidx.compose.foundation.isSystemInDarkTheme()
+    val themeVm: com.ledge.cashbook.ui.theme.ThemeViewModel = hiltViewModel()
+    val mode by themeVm.themeMode.collectAsState()
+    val dark = when (mode) {
+        com.ledge.cashbook.ui.theme.ThemeViewModel.MODE_DARK -> true
+        com.ledge.cashbook.ui.theme.ThemeViewModel.MODE_LIGHT -> false
+        else -> androidx.compose.foundation.isSystemInDarkTheme()
+    }
     val arrow = if (t.isCredit) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward
     val amountColor = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C))
     val arrowColor = amountColor
