@@ -7,6 +7,11 @@
     <string name="title_cash_book">காசுப் புத்தகம்</string>
     <string name="settings_title">அமைப்புகள்</string>
     <string name="title_categories">வகைகள்</string>
+    <string name="recent_transactions">சமீபத்திய பரிவர்த்தனைகள்</string>
+    <string name="no_recent_transactions">இன்னும் எந்த சமீபத்திய பரிவர்த்தனையும் இல்லை</string>
+    <string name="home_today">இன்று</string>
+    <string name="home_total_credit">மொத்த வரவு</string>
+    <string name="home_total_debit">மொத்த செலவு</string>
 
     <!-- Accounts -->
     <string name="add_account">கணக்கைச் சேர்</string>

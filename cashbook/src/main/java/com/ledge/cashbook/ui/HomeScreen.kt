@@ -3,11 +3,14 @@ package com.ledge.cashbook.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
@@ -29,6 +32,15 @@ import kotlinx.coroutines.launch
 import com.ledge.cashbook.billing.MonetizationViewModel
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.text.style.TextOverflow
+import com.ledge.cashbook.data.local.dao.RecentTxnRow
+import com.ledge.cashbook.util.Currency
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,12 +50,16 @@ fun HomeScreen(
     onOpenCategories: () -> Unit,
 ) {
     val adsVm: AdsViewModel = hiltViewModel()
+    val homeVm: HomeViewModel = hiltViewModel()
     val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = adsVm.hasRemoveAds.value)
     val ctx = LocalContext.current
     val monetVm: MonetizationViewModel = hiltViewModel()
     val price by monetVm.removeAdsPrice.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
     var nativeLoaded by remember { mutableStateOf(false) }
+    val recent by homeVm.recentTxns.collectAsState()
+    val todayCredit by homeVm.todayCredit.collectAsState()
+    val todayDebit by homeVm.todayDebit.collectAsState()
 
     // Preload interstitial when screen shows (only if ads are enabled)
     LaunchedEffect(hasRemoveAds) {
@@ -144,6 +160,66 @@ fun HomeScreen(
                     }
                 }
             }
+
+            TodayTotalsCard(
+                credit = todayCredit,
+                debit = todayDebit
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = stringResource(R.string.recent_transactions),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+                    }
+
+                    if (recent.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.no_recent_transactions),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        val state = rememberLazyListState()
+                        LazyColumn(
+                            state = state,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 280.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            items(recent, key = { it.id }) { t ->
+                                RecentTxnRowItem(t)
+                            }
+                        }
+                    }
+                }
+            }
+
             // Remove-ads banner card just below tiles (gate on price so it doesn't flash before billing resolves)
             if (!hasRemoveAds && price != null) {
                 Card(
@@ -189,6 +265,134 @@ fun HomeScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun TodayTotalsCard(
+    credit: Double,
+    debit: Double
+) {
+    val dark = androidx.compose.foundation.isSystemInDarkTheme()
+    val creditColor = if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)
+    val debitColor = if (dark) Color(0xFFE57373) else Color(0xFFB71C1C)
+    val net = credit - debit
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = stringResource(R.string.home_today),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = Currency.inr(kotlin.math.abs(net)),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (net >= 0) creditColor else debitColor
+                    )
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(stringResource(R.string.home_total_credit), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(Currency.inr(credit), style = MaterialTheme.typography.labelLarge, color = creditColor)
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(stringResource(R.string.home_total_debit), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(Currency.inr(debit), style = MaterialTheme.typography.labelLarge, color = debitColor)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecentTxnRowItem(t: RecentTxnRow) {
+    val dark = androidx.compose.foundation.isSystemInDarkTheme()
+    val arrow = if (t.isCredit) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward
+    val amountColor = if (t.isCredit) (if (dark) Color(0xFF81C784) else Color(0xFF2E7D32)) else (if (dark) Color(0xFFE57373) else Color(0xFFB71C1C))
+    val arrowColor = amountColor
+    val fmt = remember { SimpleDateFormat("dd MMM", Locale.getDefault()) }
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = arrow,
+                contentDescription = null,
+                tint = arrowColor,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = fmt.format(Date(t.date)),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = t.accountName,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                val secondLine = when {
+                    !t.note.isNullOrBlank() && !t.category.isNullOrBlank() -> "${t.note} • ${t.category}"
+                    !t.note.isNullOrBlank() -> t.note
+                    !t.category.isNullOrBlank() -> t.category
+                    else -> null
+                }
+                if (secondLine != null) {
+                    Text(
+                        text = secondLine,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = Currency.inr(t.amount),
+                style = MaterialTheme.typography.titleSmall,
+                color = amountColor
+            )
         }
     }
 }

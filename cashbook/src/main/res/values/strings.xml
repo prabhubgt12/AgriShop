@@ -7,6 +7,11 @@
     <string name="title_cash_book">Cash Book</string>
     <string name="settings_title">Settings</string>
     <string name="title_categories">Categories</string>
+    <string name="recent_transactions">Recent transactions</string>
+    <string name="no_recent_transactions">No recent transactions yet</string>
+    <string name="home_today">Today</string>
+    <string name="home_total_credit">Total credit</string>
+    <string name="home_total_debit">Total debit</string>
 
     <!-- Accounts -->
     <string name="add_account">Add Account</string>

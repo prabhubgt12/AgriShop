@@ -7,6 +7,11 @@
     <string name="title_cash_book">క్యాష్ బుక్</string>
     <string name="settings_title">సెట్టింగ్‌లు</string>
     <string name="title_categories">వర్గాలు</string>
+    <string name="recent_transactions">ఇటీవలి లావాదేవీలు</string>
+    <string name="no_recent_transactions">ఇంకా ఇటీవలి లావాదేవీలు లేవు</string>
+    <string name="home_today">ఈ రోజు</string>
+    <string name="home_total_credit">మొత్తం జమ</string>
+    <string name="home_total_debit">మొత్తం డెబిట్</string>
 
     <!-- Accounts -->
     <string name="add_account">ఖాతాను జోడించండి</string>

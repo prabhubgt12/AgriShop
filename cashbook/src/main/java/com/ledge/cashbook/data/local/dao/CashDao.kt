@@ -6,6 +6,17 @@ import com.ledge.cashbook.data.local.entities.CashTxn
 import com.ledge.cashbook.data.local.entities.RecurringTxn
 import kotlinx.coroutines.flow.Flow
 
+data class RecentTxnRow(
+    val id: Int,
+    val accountId: Int,
+    val accountName: String,
+    val date: Long,
+    val amount: Double,
+    val isCredit: Boolean,
+    val note: String?,
+    val category: String?
+)
+
 @Dao
 interface CashDao {
     // Accounts
@@ -27,6 +38,17 @@ interface CashDao {
     // Transactions
     @Query("SELECT * FROM cash_txns WHERE accountId = :accountId ORDER BY date ASC, id ASC")
     fun txns(accountId: Int): Flow<List<CashTxn>>
+
+    @Query(
+        """
+        SELECT t.id, t.accountId, a.name AS accountName, t.date, t.amount, t.isCredit, t.note, t.category
+        FROM cash_txns t
+        INNER JOIN cash_accounts a ON a.id = t.accountId
+        ORDER BY t.date DESC, t.id DESC
+        LIMIT :limit
+        """
+    )
+    fun recentTxns(limit: Int): Flow<List<RecentTxnRow>>
 
     @Insert
     suspend fun insertTxn(txn: CashTxn): Long
@@ -55,6 +77,16 @@ interface CashDao {
 
     @Query("SELECT IFNULL(SUM(CASE WHEN isCredit THEN 0 ELSE amount END), 0) FROM cash_txns")
     fun totalDebit(): Flow<Double>
+
+    @Query(
+        "SELECT IFNULL(SUM(CASE WHEN isCredit THEN amount ELSE 0 END), 0) FROM cash_txns WHERE date >= :from AND date < :to"
+    )
+    fun todayCredit(from: Long, to: Long): Flow<Double>
+
+    @Query(
+        "SELECT IFNULL(SUM(CASE WHEN isCredit THEN 0 ELSE amount END), 0) FROM cash_txns WHERE date >= :from AND date < :to"
+    )
+    fun todayDebit(from: Long, to: Long): Flow<Double>
 
     @Query("SELECT COUNT(*) FROM (SELECT accountId, SUM(CASE WHEN isCredit THEN amount ELSE -amount END) AS bal FROM cash_txns GROUP BY accountId HAVING bal < 0) AS d")
     fun dueAccountsCount(): Flow<Int>

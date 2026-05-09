@@ -26,6 +26,11 @@
     <string name="title_cash_book">कैश बुक</string>
     <string name="settings_title">सेटिंग्स</string>
     <string name="title_categories">श्रेणियाँ</string>
+    <string name="recent_transactions">हाल के लेन-देन</string>
+    <string name="no_recent_transactions">अभी कोई हाल का लेन-देन नहीं</string>
+    <string name="home_today">आज</string>
+    <string name="home_total_credit">कुल जमा</string>
+    <string name="home_total_debit">कुल निकासी</string>
 
     <!-- Accounts -->
     <string name="add_account">खाता जोड़ें</string>

@@ -3,6 +3,7 @@ package com.ledge.cashbook.data.repo
 import androidx.room.withTransaction
 import com.ledge.cashbook.data.local.AppDatabase
 import com.ledge.cashbook.data.local.dao.CashDao
+import com.ledge.cashbook.data.local.dao.RecentTxnRow
 import com.ledge.cashbook.data.local.entities.CashAccount
 import com.ledge.cashbook.data.local.entities.CashTxn
 import com.ledge.cashbook.data.local.entities.RecurringTxn
@@ -22,6 +23,8 @@ class CashRepository(
     }
 
     fun txns(accountId: Int): Flow<List<CashTxn>> = dao.txns(accountId)
+
+    fun recentTxns(limit: Int): Flow<List<RecentTxnRow>> = dao.recentTxns(limit)
 
     suspend fun addTxn(
         accountId: Int,
@@ -106,6 +109,8 @@ class CashRepository(
     // Aggregates across all accounts
     fun totalCredit(): Flow<Double> = dao.totalCredit()
     fun totalDebit(): Flow<Double> = dao.totalDebit()
+    fun todayCredit(from: Long, to: Long): Flow<Double> = dao.todayCredit(from, to)
+    fun todayDebit(from: Long, to: Long): Flow<Double> = dao.todayDebit(from, to)
     fun dueAccountsCount(): Flow<Int> = dao.dueAccountsCount()
 
     // --- Recurring generation on app open ---

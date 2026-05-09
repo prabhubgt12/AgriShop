@@ -17,6 +17,11 @@
     <string name="title_cash_book">ಕ್ಯಾಶ್ ಬುಕ್</string>
     <string name="settings_title">ಸೆಟ್ಟಿಂಗ್ಸ್</string>
     <string name="title_categories">ವರ್ಗಗಳು</string>
+    <string name="recent_transactions">ಇತ್ತೀಚಿನ ವಹಿವಾಟುಗಳು</string>
+    <string name="no_recent_transactions">ಇನ್ನೂ ಯಾವುದೇ ಇತ್ತೀಚಿನ ವಹಿವಾಟುಗಳಿಲ್ಲ</string>
+    <string name="home_today">ಇಂದು</string>
+    <string name="home_total_credit">ಒಟ್ಟು ಜಮಾ</string>
+    <string name="home_total_debit">ಒಟ್ಟು ಖರ್ಚು</string>
 
     <!-- Accounts -->
     <string name="add_account">ಖಾತೆ ಸೇರಿಸಿ</string>
