@@ -36,6 +36,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
 import com.ledge.cashbook.data.local.dao.RecentTxnRow
 import com.ledge.cashbook.util.Currency
 import java.text.SimpleDateFormat
@@ -327,6 +328,7 @@ private fun TodayTotalsCard(
                     Text(
                         text = Currency.inr(kotlin.math.abs(net)),
                         style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
                         color = if (net >= 0) creditColor else debitColor
                     )
                 }
@@ -384,12 +386,14 @@ private fun RecentTxnRowItem(t: RecentTxnRow) {
                     Text(
                         text = fmt.format(Date(t.date)),
                         style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = t.accountName,
                         style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -404,7 +408,7 @@ private fun RecentTxnRowItem(t: RecentTxnRow) {
                     Text(
                         text = secondLine,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.70f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
