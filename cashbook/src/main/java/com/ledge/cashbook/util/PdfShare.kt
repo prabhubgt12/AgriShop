@@ -36,7 +36,7 @@ object PdfShare {
         var page = doc.startPage(PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, pageNumber).create())
         var canvas: Canvas = page.canvas
 
-        val title = Paint().apply { textSize = 18f; isFakeBoldText = true }
+        val title = Paint().apply { textSize = 18f; isFakeBoldText = true; color = 0xFF6750A4.toInt() }
         val header = Paint().apply { textSize = 12f; isFakeBoldText = true }
         val text = Paint().apply { textSize = 12f }
         val rule = Paint().apply { strokeWidth = 1f }
