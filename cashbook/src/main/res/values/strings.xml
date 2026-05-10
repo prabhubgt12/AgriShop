@@ -48,6 +48,14 @@
     <string name="col_balance">Balance</string>
 
     <string name="ok">OK</string>
+
+    <!-- Business Profile -->
+    <string name="business_profile">Business Profile</string>
+    <string name="business_name_label">Business Name</string>
+    <string name="pick_logo">Pick Logo</string>
+    <string name="change_logo">Change Logo</string>
+    <string name="logo_preview">Logo Preview</string>
+    <string name="settings_saved">Settings saved</string>
     <string name="total_credit">Total Credit</string>
     <string name="total_debit">Total Debit</string>
     <string name="due_accounts">Due Accounts</string>

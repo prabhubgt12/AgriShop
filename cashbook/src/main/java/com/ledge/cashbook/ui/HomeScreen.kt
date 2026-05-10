@@ -42,6 +42,7 @@ import com.ledge.cashbook.util.Currency
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +53,7 @@ fun HomeScreen(
 ) {
     val adsVm: AdsViewModel = hiltViewModel()
     val homeVm: HomeViewModel = hiltViewModel()
+    val businessProfileVM: BusinessProfileViewModel = hiltViewModel()
     val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = adsVm.hasRemoveAds.value)
     val ctx = LocalContext.current
     val monetVm: MonetizationViewModel = hiltViewModel()
@@ -68,6 +70,7 @@ fun HomeScreen(
     val recent by homeVm.recentTxns.collectAsState()
     val todayCredit by homeVm.todayCredit.collectAsState()
     val todayDebit by homeVm.todayDebit.collectAsState()
+    val businessProfile by businessProfileVM.profile.collectAsState()
 
     // Preload interstitial when screen shows (only if ads are enabled)
     LaunchedEffect(hasRemoveAds) {
@@ -82,7 +85,23 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.title_dashboard)) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (businessProfile.logoUri.isNotBlank()) {
+                            AsyncImage(
+                                model = businessProfile.logoUri,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(
+                            text = businessProfile.name,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent,
                     titleContentColor = Color.White,

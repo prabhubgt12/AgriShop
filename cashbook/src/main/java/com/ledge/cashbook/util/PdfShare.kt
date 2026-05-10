@@ -2,6 +2,7 @@ package com.ledge.cashbook.util
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
@@ -26,7 +27,9 @@ object PdfShare {
         accountName: String,
         txns: List<CashTxn>,
         startMillis: Long? = null,
-        endMillis: Long? = null
+        endMillis: Long? = null,
+        businessName: String = context.getString(R.string.title_cash_book),
+        logoBitmap: Bitmap? = null
     ) {
         val doc = PdfDocument()
         var pageNumber = 1
@@ -50,8 +53,18 @@ object PdfShare {
         fun ensureSpace(rowHeight: Float) { if (y + rowHeight > PAGE_HEIGHT - MARGIN) newPage() }
         fun lineL(t: String, p: Paint = text, gap: Float = 18f) { canvas.drawText(t, MARGIN.toFloat(), y, p); y += gap }
 
-        // Header
-        lineL(context.getString(R.string.title_cash_book), title, 24f)
+        // Header - Draw logo and business name on same line
+        if (logoBitmap != null) {
+            val logoSize = 36f
+            val logoX = MARGIN.toFloat()
+            val logoY = y
+            canvas.drawBitmap(logoBitmap, null, android.graphics.RectF(logoX, logoY, logoX + logoSize, logoY + logoSize), null)
+            // Draw business name to the right of logo
+            canvas.drawText(businessName, logoX + logoSize + 8f, y + logoSize * 0.7f, title)
+            y += logoSize + 12f
+        } else {
+            lineL(businessName, title, 24f)
+        }
         lineL(context.getString(R.string.label_customer_with_value, accountName), header)
         lineL(context.getString(R.string.label_date_with_value, SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())), text)
         // Optional date range (localized From / To on one line)

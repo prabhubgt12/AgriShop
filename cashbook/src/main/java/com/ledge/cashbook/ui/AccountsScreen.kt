@@ -48,6 +48,9 @@ import androidx.compose.foundation.layout.Box
 import com.ledge.cashbook.util.PdfShare
 import com.ledge.cashbook.util.ExcelShare
 import androidx.compose.ui.unit.IntOffset
+import android.net.Uri
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -75,6 +78,8 @@ fun AccountsScreen(
     val settingsVM: SettingsViewModel = hiltViewModel()
     val showCategory by settingsVM.showCategory.collectAsState(initial = false)
     val showSummary by settingsVM.showSummary.collectAsState(initial = false)
+    val businessProfileVM: BusinessProfileViewModel = hiltViewModel()
+    val businessProfile by businessProfileVM.profile.collectAsState()
     val totalCredit by vm.totalCredit.collectAsState()
     val totalDebit by vm.totalDebit.collectAsState()
     val dueCount by vm.dueAccountsCount.collectAsState()
@@ -99,6 +104,19 @@ fun AccountsScreen(
         ThemeViewModel.MODE_DARK -> true
         ThemeViewModel.MODE_LIGHT -> false
         else -> isSystemInDarkTheme()
+    }
+
+    fun loadBusinessLogoBitmap(): Bitmap? {
+        val uriStr = businessProfile.logoUri
+        if (uriStr.isBlank()) return null
+        return try {
+            val uri = Uri.parse(uriStr)
+            ctx.contentResolver.openInputStream(uri)?.use { input ->
+                BitmapFactory.decodeStream(input)
+            }
+        } catch (_: Exception) {
+            null
+        }
     }
 
     Scaffold(
@@ -388,14 +406,14 @@ fun AccountsScreen(
                                         text = { Text(stringResource(R.string.export_to_pdf)) },
                                         onClick = {
                                             menuOpen = false
-                                            PdfShare.exportAccount(ctx, acc.name, txns)
+                                            PdfShare.exportAccount(ctx, acc.name, txns, businessName = businessProfile.name, logoBitmap = loadBusinessLogoBitmap())
                                         }
                                     )
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.export_to_excel)) },
                                         onClick = {
                                             menuOpen = false
-                                            ExcelShare.exportAccountXlsx(ctx, acc.name, txns, showCategory = showCategory)
+                                            ExcelShare.exportAccountXlsx(ctx, acc.name, txns, showCategory = showCategory, businessName = businessProfile.name)
                                         }
                                     )
                                     DropdownMenuItem(

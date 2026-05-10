@@ -74,6 +74,7 @@ import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.foundation.clickable
 import android.net.Uri
 import android.graphics.BitmapFactory
+import android.graphics.Bitmap
 import java.io.File
 import java.io.FileOutputStream
 import androidx.compose.ui.layout.ContentScale
@@ -129,6 +130,21 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     val txns by vm.txns.collectAsState()
     val balance by vm.balance.collectAsState()
     val ctx = LocalContext.current
+    val businessProfileVM: BusinessProfileViewModel = hiltViewModel()
+    val businessProfile by businessProfileVM.profile.collectAsState()
+
+    fun loadBusinessLogoBitmap(): Bitmap? {
+        val uriStr = businessProfile.logoUri
+        if (uriStr.isBlank()) return null
+        return try {
+            val uri = Uri.parse(uriStr)
+            ctx.contentResolver.openInputStream(uri)?.use { input ->
+                BitmapFactory.decodeStream(input)
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     // Function to format date header nicely
     @Composable
@@ -937,7 +953,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     onClick = {
                                     filterMenuOpen = false
                                     val list = if (isFiltered) filteredTxns else txns
-                                    PdfShare.exportAccount(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd)
+                                    PdfShare.exportAccount(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd, businessName = businessProfile.name, logoBitmap = loadBusinessLogoBitmap())
                                 })
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.export_to_excel)) },
@@ -945,7 +961,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     onClick = {
                                     filterMenuOpen = false
                                     val list = if (isFiltered) filteredTxns else txns
-                                    ExcelShare.exportAccountXlsx(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd, showCategory = showCategory)
+                                    ExcelShare.exportAccountXlsx(ctxMenu, name, list, startMillis = filterStart, endMillis = filterEnd, showCategory = showCategory, businessName = businessProfile.name)
                                 })
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.category_split)) },
@@ -1079,7 +1095,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                 modifier = Modifier.weight(1f)
                             )
                             // Export filtered list to PDF/Excel (second row)
-                            IconButton(onClick = { PdfShare.exportAccount(ctxBar, name, filteredTxns, startMillis = filterStart, endMillis = filterEnd) }) {
+                            IconButton(onClick = { PdfShare.exportAccount(ctxBar, name, filteredTxns, startMillis = filterStart, endMillis = filterEnd, businessName = businessProfile.name, logoBitmap = loadBusinessLogoBitmap()) }) {
                                 Icon(
                                     imageVector = Icons.Filled.PictureAsPdf,
                                     contentDescription = stringResource(R.string.export_to_pdf),
@@ -1087,7 +1103,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
-                            IconButton(onClick = { ExcelShare.exportAccountXlsx(ctxBar, name, filteredTxns, startMillis = filterStart, endMillis = filterEnd, showCategory = showCategory) }) {
+                            IconButton(onClick = { ExcelShare.exportAccountXlsx(ctxBar, name, filteredTxns, startMillis = filterStart, endMillis = filterEnd, showCategory = showCategory, businessName = businessProfile.name) }) {
                                 Icon(
                                     imageVector = Icons.Filled.TableView,
                                     contentDescription = stringResource(R.string.export_to_excel),

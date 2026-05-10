@@ -46,10 +46,13 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import com.ledge.cashbook.billing.MonetizationViewModel
+import coil.compose.AsyncImage
+import com.ledge.cashbook.data.local.entities.BusinessProfile
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +79,35 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
     val autoBackupEnabled by settingsVM.autoBackupEnabled.collectAsState(initial = false)
     val groupByDate by settingsVM.groupByDate.collectAsState(initial = false)
     val showNewestFirst by settingsVM.showNewestFirst.collectAsState(initial = false)
+
+    // Business profile settings
+    val businessProfileVM: BusinessProfileViewModel = hiltViewModel()
+    val businessProfile by businessProfileVM.profile.collectAsState()
+    var businessName by remember(businessProfile) { mutableStateOf(businessProfile.name) }
+    var logoUri by remember(businessProfile) { mutableStateOf(businessProfile.logoUri) }
+
+    // Logo picker launcher
+    val pickLogo = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) { /* ignore if not grantable */ }
+            logoUri = uri.toString()
+            businessProfileVM.save(BusinessProfile(id = 1, name = businessName, logoUri = logoUri))
+        }
+    }
+
+    // Auto-save business name (debounced) similar to other settings behavior
+    LaunchedEffect(businessName) {
+        delay(400)
+        val trimmed = businessName.trim()
+        if (trimmed.isNotEmpty() && trimmed != businessProfile.name) {
+            businessProfileVM.save(BusinessProfile(id = 1, name = trimmed, logoUri = logoUri))
+        }
+    }
 
     // Removed legacy CSV categories field and persistence
 
@@ -196,6 +228,34 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                 }
             }
             item { HorizontalDivider() }
+
+            // Business Profile
+            item { Text(stringResource(R.string.business_profile), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = businessName,
+                        onValueChange = { businessName = it },
+                        label = { Text(stringResource(R.string.business_name_label)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Button(onClick = { pickLogo.launch(arrayOf("image/*")) }) {
+                            Text(if (logoUri.isBlank()) stringResource(R.string.pick_logo) else stringResource(R.string.change_logo))
+                        }
+                        if (logoUri.isNotBlank()) {
+                            AsyncImage(
+                                model = logoUri,
+                                contentDescription = stringResource(R.string.logo_preview),
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            item { HorizontalDivider() }
+
             // Theme
             item { Text(stringResource(R.string.theme_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             item {

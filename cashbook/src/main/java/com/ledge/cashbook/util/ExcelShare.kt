@@ -23,7 +23,8 @@ object ExcelShare {
         txns: List<CashTxn>,
         startMillis: Long? = null,
         endMillis: Long? = null,
-        showCategory: Boolean = false
+        showCategory: Boolean = false,
+        businessName: String = context.getString(R.string.title_cash_book)
     ) {
         val safeName = accountName.replace("[^A-Za-z0-9_]".toRegex(), "_")
         val outFile = File(context.cacheDir, "cashbook_${safeName}_${System.currentTimeMillis()}.xlsx")
@@ -36,7 +37,7 @@ object ExcelShare {
             fun writeNum(r: Int, c: Int, value: Double) { sheet.value(r, c, value) }
 
             // Header info block (to be boxed & bold)
-            write(row++, 0, context.getString(R.string.title_cash_book))
+            write(row++, 0, businessName)
             write(row++, 0, context.getString(R.string.label_customer_with_value, accountName))
             write(row++, 0, context.getString(R.string.label_date_with_value, SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())))
             val headerStartRow = 0

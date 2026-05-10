@@ -3,6 +3,7 @@ package com.ledge.cashbook.di
 import android.content.Context
 import androidx.room.Room
 import com.ledge.cashbook.data.local.AppDatabase
+import com.ledge.cashbook.data.local.dao.BusinessProfileDao
 import com.ledge.cashbook.data.local.dao.CashDao
 import com.ledge.cashbook.data.local.dao.CategoryDao
 import com.ledge.cashbook.data.local.dao.CategoryKeywordDao
@@ -28,6 +29,9 @@ object DatabaseModule {
 
     @Provides
     fun provideDao(db: AppDatabase): CashDao = db.cashDao()
+
+    @Provides
+    fun provideBusinessProfileDao(db: AppDatabase): BusinessProfileDao = db.businessProfileDao()
 
     @Provides
     fun provideCategoryDao(db: AppDatabase): CategoryDao = db.categoryDao()
