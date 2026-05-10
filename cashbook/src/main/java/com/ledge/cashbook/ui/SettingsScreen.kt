@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Delete
 import android.content.Intent
 import android.util.Log
 import android.os.SystemClock
@@ -250,6 +251,17 @@ fun SettingsScreen(onBack: () -> Unit, themeViewModel: ThemeViewModel = hiltView
                                 contentDescription = stringResource(R.string.logo_preview),
                                 modifier = Modifier.size(40.dp)
                             )
+                            IconButton(
+                                onClick = {
+                                    logoUri = ""
+                                    businessProfileVM.save(BusinessProfile(id = 1, name = businessName, logoUri = ""))
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = stringResource(R.string.delete_logo)
+                                )
+                            }
                         }
                     }
                 }

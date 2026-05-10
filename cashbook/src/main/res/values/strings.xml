@@ -55,6 +55,7 @@
     <string name="pick_logo">Pick Logo</string>
     <string name="change_logo">Change Logo</string>
     <string name="logo_preview">Logo Preview</string>
+    <string name="delete_logo">Delete Logo</string>
     <string name="settings_saved">Settings saved</string>
     <string name="total_credit">Total Credit</string>
     <string name="total_debit">Total Debit</string>
