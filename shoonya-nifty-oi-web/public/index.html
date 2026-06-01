@@ -26,9 +26,15 @@
 
     <div class="grid">
       <div class="card">
-        <div class="cardTitle">Login (SMS OTP)</div>
+        <div class="cardTitle">Login (OAuth — API)</div>
+        <p id="oauthHint" class="confidence" style="margin: 0 0 8px 0;">
+          API-only: use api.shoonya.com (not trade.shoonya.com). Authorize → copy <code>code=</code> → paste below.
+        </p>
         <div class="loginRow">
-          <input id="otpInput" class="otpInput" placeholder="Enter OTP" inputmode="numeric" />
+          <button id="oauthOpenBtn" class="secondary" type="button">Open API login</button>
+        </div>
+        <div class="loginRow" style="margin-top: 8px;">
+          <input id="authCodeInput" class="otpInput" placeholder="Paste auth code (code=...)" />
           <button id="loginBtn" class="secondary">Login</button>
         </div>
         <div id="loginStatus" class="loginStatus">Not logged in</div>

@@ -1,0 +1,84 @@
+{
+  "live": {
+    "enabled": true,
+    "current": {
+      "id": "live_1773307333118",
+      "status": "EXITING",
+      "mode": "NORMAL",
+      "direction": "BEAR",
+      "strike": 23550,
+      "optType": "PE",
+      "tsym": "NIFTY17MAR26P23550",
+      "exchange": "NFO",
+      "breakoutLevel": 23657.2,
+      "breakoutSource": "snapshot_prev_5m",
+      "qty": 65,
+      "entryTs": 1773307333118,
+      "entryOrderNo": "26031200645281",
+      "entryPrice": 214.25,
+      "peakPrice": 215.45,
+      "slPrice": 160.6875,
+      "exitReason": "FALSE_BREAKOUT",
+      "exitTs": 1773308134405,
+      "exitPrice": 192.45,
+      "pnl": -1417.0000000000007,
+      "exitOrderNo": "26031200679639"
+    },
+    "history": [
+      {
+        "id": "live_1773294532816",
+        "status": "CLOSED",
+        "mode": "NORMAL",
+        "direction": "BEAR",
+        "strike": 23650,
+        "optType": "PE",
+        "tsym": "NIFTY17MAR26P23650",
+        "exchange": "NFO",
+        "breakoutLevel": 23737.95,
+        "breakoutSource": "snapshot_prev_5m",
+        "qty": 65,
+        "entryTs": 1773294532816,
+        "entryOrderNo": "26031200270841",
+        "entryPrice": 240.95,
+        "peakPrice": 253.7,
+        "slPrice": 168.665,
+        "exitReason": "FALSE_BREAKOUT",
+        "exitTs": 1773297077149,
+        "exitPrice": 209.65,
+        "pnl": -2034.4999999999989,
+        "exitOrderNo": "26031200334935"
+      }
+    ],
+    "lastDecision": {
+      "ok": false,
+      "reasons": [
+        "Live trade already open"
+      ]
+    },
+    "lastExitTs": 1773298073569,
+    "lastClosed": {
+      "id": "live_1773294532816",
+      "status": "CLOSED",
+      "mode": "NORMAL",
+      "direction": "BEAR",
+      "strike": 23650,
+      "optType": "PE",
+      "tsym": "NIFTY17MAR26P23650",
+      "exchange": "NFO",
+      "breakoutLevel": 23737.95,
+      "breakoutSource": "snapshot_prev_5m",
+      "qty": 65,
+      "entryTs": 1773294532816,
+      "entryOrderNo": "26031200270841",
+      "entryPrice": 240.95,
+      "peakPrice": 253.7,
+      "slPrice": 168.665,
+      "exitReason": "FALSE_BREAKOUT",
+      "exitTs": 1773297077149,
+      "exitPrice": 209.65,
+      "pnl": -2034.4999999999989,
+      "exitOrderNo": "26031200334935"
+    }
+  },
+  "savedAt": 1773327524670
+}

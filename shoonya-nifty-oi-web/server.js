@@ -33,6 +33,7 @@ const TPS_POLL_MS = parseInt(process.env.TPS_POLL_MS || '60000', 10);
 const TPS_SHIFT_DAYS = parseInt(process.env.TPS_SHIFT_DAYS || '0', 10);
  
 const LIVE_STATE_PATH = path.join(__dirname, '.data', 'liveState.json');
+const OAUTH_SESSION_PATH = path.join(__dirname, '.data', 'oauthSession.json');
 
 let hasResyncedOnStart = false;
  
@@ -54,10 +55,11 @@ const state = {
   pollTimer: null,
   auth: {
     userid: process.env.SHOONYA_USERID,
-    password: process.env.SHOONYA_PASSWORD,
-    vendor_code: process.env.SHOONYA_VENDOR_CODE,
-    api_secret: process.env.SHOONYA_API_SECRET,
-    imei: process.env.SHOONYA_IMEI,
+    oauth_url: process.env.SHOONYA_OAUTH_URL || 'https://api.shoonya.com/OAuthlogin',
+    client_id: process.env.SHOONYA_CLIENT_ID,
+    secret_code: process.env.SHOONYA_SECRET_CODE,
+    access_token: process.env.SHOONYA_ACCESS_TOKEN,
+    account_id: process.env.SHOONYA_ACCOUNT_ID,
   },
 };
  
@@ -233,35 +235,75 @@ function ensureClient() {
   if (state.client) return;
   state.client = createShoonyaClient({});
 }
- 
-async function loginWithOtp(otp) {
+
+function loadOAuthSession() {
+  return safeReadJson(OAUTH_SESSION_PATH);
+}
+
+function applyOAuthSession({ access_token, userid, account_id }) {
+  if (!access_token || !userid) return false;
   ensureClient();
-  const params = {
-    userid: state.auth.userid,
-    password: state.auth.password,
-    twoFA: otp,
-    vendor_code: state.auth.vendor_code,
-    api_secret: state.auth.api_secret,
-    imei: state.auth.imei,
-  };
- 
-  const missing = Object.entries(params)
-    .filter(([k, v]) => !v && k !== 'twoFA')
-    .map(([k]) => k);
-  if (missing.length) {
-    throw new Error(`Missing env vars for login: ${missing.join(', ')}`);
-  }
-  if (!otp) {
-    throw new Error('OTP is required (Shoonya factor2)');
-  }
- 
-  const res = await state.client.login(params);
-  if (!res || res.stat !== 'Ok') {
-    state.loggedIn = false;
-    throw new Error(`Shoonya login failed: ${JSON.stringify(res)}`);
-  }
- 
+  const aid = account_id || userid;
+  state.client.injectOAuthHeader(access_token, userid, aid);
+  state.client.__access_token = access_token;
+  state.client.__username = userid;
+  state.client.__accountid = aid;
+  state.auth.access_token = access_token;
+  state.auth.account_id = aid;
   state.loggedIn = true;
+  return true;
+}
+
+async function tryAutoLoginFromEnvOrSession() {
+  const session = loadOAuthSession();
+  const access_token = session?.access_token || state.auth.access_token;
+  const userid = session?.userid || state.auth.userid;
+  const account_id = session?.account_id || state.auth.account_id || userid;
+  return applyOAuthSession({ access_token, userid, account_id });
+}
+
+async function loginWithOAuth(authCode) {
+  const code = (authCode || '').trim();
+  if (!code) {
+    throw new Error('OAuth auth code is required (from redirect URL after login)');
+  }
+
+  const { client_id, secret_code, userid, oauth_url } = state.auth;
+  const missing = [];
+  if (!client_id) missing.push('SHOONYA_CLIENT_ID');
+  if (!secret_code) missing.push('SHOONYA_SECRET_CODE');
+  if (!userid) missing.push('SHOONYA_USERID');
+  if (missing.length) {
+    throw new Error(`Missing env vars for OAuth: ${missing.join(', ')}`);
+  }
+
+  ensureClient();
+  const result = await state.client.getAccessToken(code, secret_code, client_id, userid);
+  const accessToken = result[0];
+  const userId = result[1];
+  const refreshToken = result[2];
+  const accountId = result[3];
+
+  if (!accessToken) {
+    state.loggedIn = false;
+    throw new Error('OAuth token exchange failed: no access_token in response');
+  }
+
+  safeWriteJson(OAUTH_SESSION_PATH, {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    userid: userId,
+    account_id: accountId,
+    oauth_url,
+    client_id,
+    savedAt: new Date().toISOString(),
+  });
+
+  applyOAuthSession({
+    access_token: accessToken,
+    userid: userId,
+    account_id: accountId,
+  });
 }
 
 function istEpochSeconds(d) {
@@ -474,7 +516,76 @@ function stopPolling() {
 }
  
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, loggedIn: state.loggedIn, polling: state.polling, lastError: state.lastError });
+  res.json({
+    ok: true,
+    loggedIn: state.loggedIn,
+    authMode: 'oauth',
+    polling: state.polling,
+    lastError: state.lastError,
+    hasStoredSession: Boolean(loadOAuthSession()?.access_token),
+  });
+});
+
+function buildOAuthLoginUrl() {
+  const customAuthorize = (process.env.SHOONYA_OAUTH_AUTHORIZE_URL || '').trim();
+  if (customAuthorize) {
+    return customAuthorize.replace(/\{client_id\}/gi, encodeURIComponent(state.auth.client_id || ''));
+  }
+
+  const base = (state.auth.oauth_url || 'https://api.shoonya.com/OAuthlogin').replace(/\/$/, '');
+  const clientId = state.auth.client_id;
+  const userid = state.auth.userid;
+
+  // Trade portal — NOT for API-only users (blocked with "Access Restricted for API Only Users")
+  const useTradeLogin =
+    process.env.SHOONYA_OAUTH_USE_TRADE_LOGIN === 'true' ||
+    (base.includes('trade.shoonya.com') && process.env.SHOONYA_OAUTH_USE_TRADE_LOGIN !== 'false');
+
+  if (useTradeLogin) {
+    if (!clientId) {
+      throw new Error('Set SHOONYA_CLIENT_ID (API Key Client ID from Shoonya API settings).');
+    }
+    if (!userid) {
+      throw new Error('Set SHOONYA_USERID (used as route_to on trade login).');
+    }
+    const loginBase =
+      base.includes('investor-entry-level') ?
+        base :
+        'https://trade.shoonya.com/OAuthlogin/investor-entry-level/login';
+    return `${loginBase}?api_key=${encodeURIComponent(clientId)}&route_to=${encodeURIComponent(userid)}`;
+  }
+
+  // https://api.shoonya.com/OAuthlogin — SPA; no query params required to open
+  if (process.env.SHOONYA_OAUTH_APPEND_CLIENT_ID === 'true' && clientId) {
+    ensureClient();
+    return state.client.getOAuthURL(base, clientId, { clientParam: 'client_id' });
+  }
+
+  return base;
+}
+
+app.get('/api/oauth/url', (_req, res) => {
+  try {
+    ensureClient();
+    const url = buildOAuthLoginUrl();
+    const useTrade =
+      process.env.SHOONYA_OAUTH_USE_TRADE_LOGIN === 'true' ||
+      ((state.auth.oauth_url || '').includes('trade.shoonya.com') &&
+        process.env.SHOONYA_OAUTH_USE_TRADE_LOGIN !== 'false');
+    res.json({
+      ok: true,
+      url,
+      mode: useTrade ? 'trade' : 'api',
+      apiOnlyNote: useTrade
+        ? null
+        : 'API-only account: do not use trade.shoonya.com. Use api.shoonya.com OAuth + Authorize link from API documentation.',
+      hint: useTrade
+        ? 'Log in with User ID, password, and TOTP. After success, copy code= from the browser address bar.'
+        : 'Open api.shoonya.com → log in → API / Authorize (per API docs) → copy code= from redirect URL. Whitelist your IP in API Key settings.',
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
+  }
 });
  
 app.post('/api/live/resync', async (_req, res) => {
@@ -488,9 +599,12 @@ app.post('/api/live/resync', async (_req, res) => {
  
 app.post('/api/login', async (req, res) => {
   try {
-    const otp = req.body && typeof req.body.otp === 'string' ? req.body.otp.trim() : '';
-    await loginWithOtp(otp);
-    res.json({ ok: true });
+    const authCode =
+      (req.body && typeof req.body.authCode === 'string' && req.body.authCode.trim()) ||
+      (req.body && typeof req.body.otp === 'string' && req.body.otp.trim()) ||
+      '';
+    await loginWithOAuth(authCode);
+    res.json({ ok: true, loggedIn: state.loggedIn });
   } catch (e) {
     res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
   }
@@ -881,7 +995,7 @@ app.get('/api/snapshot', (_req, res) => {
   res.set('Expires', '0');
 
   if (!state.loggedIn) {
-    res.status(401).json({ ok: false, error: 'Not logged in. POST /api/login with factor2 code.' });
+    res.status(401).json({ ok: false, error: 'Not logged in. Complete OAuth login via POST /api/login with authCode.' });
     return;
   }
 
@@ -909,9 +1023,13 @@ app.get('/api/trades/report', (req, res) => {
   res.json({ ok: true, trades: filtered });
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Shoonya NIFTY OI web app running at http://localhost:${port}`);
-  console.log('Create a .env from .env.example, then POST /api/start (UI does this automatically).');
+  console.log('Create a .env from .env.example (OAuth fields), then login via UI or set SHOONYA_ACCESS_TOKEN.');
+  const auto = await tryAutoLoginFromEnvOrSession();
+  if (auto) {
+    console.log('OAuth session restored from .env or .data/oauthSession.json');
+  }
   console.log('Registered routes:');
   app._router.stack.forEach((r) => {
     if (r.route && r.route.path) {

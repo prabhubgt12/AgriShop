@@ -2,7 +2,8 @@ const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 
-const otpInput = document.getElementById('otpInput');
+const authCodeInput = document.getElementById('authCodeInput');
+const oauthOpenBtn = document.getElementById('oauthOpenBtn');
 const loginBtn = document.getElementById('loginBtn');
 const loginStatus = document.getElementById('loginStatus');
 
@@ -122,14 +123,26 @@ async function postStop() {
   if (!data.ok) throw new Error(data.error || 'Failed to stop');
 }
 
-async function postLogin(otp) {
+async function postLogin(authCode) {
   const res = await fetch('/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ otp }),
+    body: JSON.stringify({ authCode }),
   });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Login failed');
+}
+
+async function fetchOAuthUrl() {
+  const res = await fetch('/api/oauth/url');
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Could not get OAuth URL');
+  const hintEl = document.getElementById('oauthHint');
+  if (hintEl) {
+    const parts = [data.apiOnlyNote, data.hint].filter(Boolean);
+    if (parts.length) hintEl.textContent = parts.join(' ');
+  }
+  return data.url;
 }
 
 async function fetchHealth() {
@@ -453,7 +466,7 @@ async function refresh() {
   setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);
 
   if (!health.loggedIn) {
-    elError.textContent = 'Not logged in. Enter factor2 code and click Login.';
+    elError.textContent = 'Not logged in. Open login page, paste auth code, and click Login.';
     return;
   }
 
@@ -620,11 +633,37 @@ directionSel?.addEventListener('change', async () => {
   }
 });
 
+oauthOpenBtn.addEventListener('click', async () => {
+  try {
+    const url = await fetchOAuthUrl();
+    window.open(url, '_blank', 'noopener');
+    setLoginStatus('Complete login in the new tab, then paste code here', null);
+    elError.textContent = '';
+  } catch (e) {
+    setLoginStatus('Could not open login', 'bad');
+    elError.textContent = e && e.message ? e.message : String(e);
+  }
+});
+
+function parseAuthCodeInput(raw) {
+  const s = (raw || '').trim();
+  if (!s) return '';
+  try {
+    if (s.includes('code=')) {
+      const u = s.includes('://') ? new URL(s) : new URL(`https://x?${s.replace(/^\?/, '')}`);
+      return u.searchParams.get('code') || s;
+    }
+  } catch (_) {
+    /* use raw */
+  }
+  return s;
+}
+
 loginBtn.addEventListener('click', async () => {
   try {
-    const otp = (otpInput.value || '').trim();
-    await postLogin(otp);
-    otpInput.value = '';
+    const authCode = parseAuthCodeInput(authCodeInput.value);
+    await postLogin(authCode);
+    authCodeInput.value = '';
     const health = await fetchHealth();
     if (health.loggedIn) {
       setLoginStatus('Login successful', 'ok');
@@ -644,7 +683,7 @@ startBtn.addEventListener('click', async () => {
     const health = await fetchHealth();
     setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);
     if (!health.loggedIn) {
-      throw new Error('Not logged in. Enter OTP and click Login first.');
+      throw new Error('Not logged in. Complete OAuth login first.');
     }
     await postStart();
     await refresh();
