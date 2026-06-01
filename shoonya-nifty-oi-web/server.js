@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, '.env') });
  
 const { createShoonyaClient } = require('./src/shoonyaClient');
+const { fetchAuthCodeViaBrowser, isAutoLoginConfigured } = require('./src/shoonyaAutoAuth');
 const { buildNiftyChainSnapshot } = require('./src/optionChain');
 const { computeSuggestion } = require('./src/signalEngine');
 const {
@@ -36,6 +37,7 @@ const LIVE_STATE_PATH = path.join(__dirname, '.data', 'liveState.json');
 const OAUTH_SESSION_PATH = path.join(__dirname, '.data', 'oauthSession.json');
 
 let hasResyncedOnStart = false;
+let autoLoginInProgress = false;
  
 const state = {
   client: null,
@@ -55,7 +57,6 @@ const state = {
   pollTimer: null,
   auth: {
     userid: process.env.SHOONYA_USERID,
-    oauth_url: process.env.SHOONYA_OAUTH_URL || 'https://api.shoonya.com/OAuthlogin',
     client_id: process.env.SHOONYA_CLIENT_ID,
     secret_code: process.env.SHOONYA_SECRET_CODE,
     access_token: process.env.SHOONYA_ACCESS_TOKEN,
@@ -262,13 +263,30 @@ async function tryAutoLoginFromEnvOrSession() {
   return applyOAuthSession({ access_token, userid, account_id });
 }
 
+function clearOAuthSession() {
+  stopPolling();
+  state.loggedIn = false;
+  state.auth.access_token = undefined;
+  state.auth.account_id = undefined;
+  if (state.client) {
+    state.client.__access_token = undefined;
+    state.client.__username = undefined;
+    state.client.__accountid = undefined;
+  }
+  try {
+    if (fs.existsSync(OAUTH_SESSION_PATH)) fs.unlinkSync(OAUTH_SESSION_PATH);
+  } catch (_e) {
+    /* ignore */
+  }
+}
+
 async function loginWithOAuth(authCode) {
   const code = (authCode || '').trim();
   if (!code) {
     throw new Error('OAuth auth code is required (from redirect URL after login)');
   }
 
-  const { client_id, secret_code, userid, oauth_url } = state.auth;
+  const { client_id, secret_code, userid } = state.auth;
   const missing = [];
   if (!client_id) missing.push('SHOONYA_CLIENT_ID');
   if (!secret_code) missing.push('SHOONYA_SECRET_CODE');
@@ -294,7 +312,6 @@ async function loginWithOAuth(authCode) {
     refresh_token: refreshToken,
     userid: userId,
     account_id: accountId,
-    oauth_url,
     client_id,
     savedAt: new Date().toISOString(),
   });
@@ -404,7 +421,7 @@ async function maybeUpdateTps5m(api, token) {
 }
  
 async function updateOnce() {
-  if (!state.loggedIn) throw new Error('Not logged in. Call /api/login with OTP.');
+  if (!state.loggedIn) throw new Error('Not logged in. Click Login in the dashboard.');
  
   const snapshot = await buildNiftyChainSnapshot(state.client, {
     strikeStep: parseInt(process.env.STRIKE_STEP || '50', 10),
@@ -486,7 +503,7 @@ async function updateOnce() {
  
 async function startPolling() {
   if (state.polling) return;
-  if (!state.loggedIn) throw new Error('Not logged in. Call /api/login with OTP first.');
+  if (!state.loggedIn) throw new Error('Not logged in. Click Login in the dashboard first.');
   state.polling = true;
  
   let updateInFlight = false;
@@ -523,71 +540,20 @@ app.get('/api/health', (_req, res) => {
     polling: state.polling,
     lastError: state.lastError,
     hasStoredSession: Boolean(loadOAuthSession()?.access_token),
+    autoLoginAvailable: isAutoLoginConfigured(),
+    autoLoginBusy: autoLoginInProgress,
   });
 });
 
-function buildOAuthLoginUrl() {
-  const customAuthorize = (process.env.SHOONYA_OAUTH_AUTHORIZE_URL || '').trim();
-  if (customAuthorize) {
-    return customAuthorize.replace(/\{client_id\}/gi, encodeURIComponent(state.auth.client_id || ''));
-  }
-
-  const base = (state.auth.oauth_url || 'https://api.shoonya.com/OAuthlogin').replace(/\/$/, '');
-  const clientId = state.auth.client_id;
-  const userid = state.auth.userid;
-
-  // Trade portal — NOT for API-only users (blocked with "Access Restricted for API Only Users")
-  const useTradeLogin =
-    process.env.SHOONYA_OAUTH_USE_TRADE_LOGIN === 'true' ||
-    (base.includes('trade.shoonya.com') && process.env.SHOONYA_OAUTH_USE_TRADE_LOGIN !== 'false');
-
-  if (useTradeLogin) {
-    if (!clientId) {
-      throw new Error('Set SHOONYA_CLIENT_ID (API Key Client ID from Shoonya API settings).');
-    }
-    if (!userid) {
-      throw new Error('Set SHOONYA_USERID (used as route_to on trade login).');
-    }
-    const loginBase =
-      base.includes('investor-entry-level') ?
-        base :
-        'https://trade.shoonya.com/OAuthlogin/investor-entry-level/login';
-    return `${loginBase}?api_key=${encodeURIComponent(clientId)}&route_to=${encodeURIComponent(userid)}`;
-  }
-
-  // https://api.shoonya.com/OAuthlogin — SPA; no query params required to open
-  if (process.env.SHOONYA_OAUTH_APPEND_CLIENT_ID === 'true' && clientId) {
-    ensureClient();
-    return state.client.getOAuthURL(base, clientId, { clientParam: 'client_id' });
-  }
-
-  return base;
-}
-
-app.get('/api/oauth/url', (_req, res) => {
-  try {
-    ensureClient();
-    const url = buildOAuthLoginUrl();
-    const useTrade =
-      process.env.SHOONYA_OAUTH_USE_TRADE_LOGIN === 'true' ||
-      ((state.auth.oauth_url || '').includes('trade.shoonya.com') &&
-        process.env.SHOONYA_OAUTH_USE_TRADE_LOGIN !== 'false');
-    res.json({
-      ok: true,
-      url,
-      mode: useTrade ? 'trade' : 'api',
-      apiOnlyNote: useTrade
-        ? null
-        : 'API-only account: do not use trade.shoonya.com. Use api.shoonya.com OAuth + Authorize link from API documentation.',
-      hint: useTrade
-        ? 'Log in with User ID, password, and TOTP. After success, copy code= from the browser address bar.'
-        : 'Open api.shoonya.com → log in → API / Authorize (per API docs) → copy code= from redirect URL. Whitelist your IP in API Key settings.',
-    });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
-  }
+app.post('/api/logout', (_req, res) => {
+  clearOAuthSession();
+  res.json({
+    ok: true,
+    loggedIn: false,
+    message: 'Session cleared (.data/oauthSession.json deleted). Restart server if SHOONYA_ACCESS_TOKEN is set in .env.',
+  });
 });
- 
+
 app.post('/api/live/resync', async (_req, res) => {
   const ok = await tryResyncFromShoonya();
   if (!ok) {
@@ -600,13 +566,54 @@ app.post('/api/live/resync', async (_req, res) => {
 app.post('/api/login', async (req, res) => {
   try {
     const authCode =
-      (req.body && typeof req.body.authCode === 'string' && req.body.authCode.trim()) ||
-      (req.body && typeof req.body.otp === 'string' && req.body.otp.trim()) ||
-      '';
+      (req.body && typeof req.body.authCode === 'string' && req.body.authCode.trim()) || '';
+    if (!authCode) {
+      res.status(400).json({ ok: false, error: 'authCode is required (paste from GetAuthcode or redirect URL).' });
+      return;
+    }
     await loginWithOAuth(authCode);
-    res.json({ ok: true, loggedIn: state.loggedIn });
+    res.json({
+      ok: true,
+      loggedIn: state.loggedIn,
+      message: 'Login completed. Session saved to .data/oauthSession.json',
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
+  }
+});
+
+app.post('/api/login/auto', async (_req, res) => {
+  if (autoLoginInProgress) {
+    res.status(409).json({ ok: false, error: 'Auto login already running. Wait for it to finish.' });
+    return;
+  }
+  if (!isAutoLoginConfigured()) {
+    res.status(400).json({
+      ok: false,
+      error:
+        'Set SHOONYA_USERID, SHOONYA_CLIENT_ID, SHOONYA_PASSWORD, and SHOONYA_TOTP_SECRET in .env.',
+    });
+    return;
+  }
+
+  autoLoginInProgress = true;
+  try {
+    const authCode = await fetchAuthCodeViaBrowser({
+      clientId: state.auth.client_id,
+      userId: state.auth.userid,
+      password: process.env.SHOONYA_PASSWORD,
+      totpSecret: process.env.SHOONYA_TOTP_SECRET,
+    });
+    await loginWithOAuth(authCode);
+    res.json({
+      ok: true,
+      loggedIn: state.loggedIn,
+      message: 'Auto login completed. Session saved to .data/oauthSession.json',
+    });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
+  } finally {
+    autoLoginInProgress = false;
   }
 });
 
@@ -995,7 +1002,7 @@ app.get('/api/snapshot', (_req, res) => {
   res.set('Expires', '0');
 
   if (!state.loggedIn) {
-    res.status(401).json({ ok: false, error: 'Not logged in. Complete OAuth login via POST /api/login with authCode.' });
+    res.status(401).json({ ok: false, error: 'Not logged in. Click Login in the dashboard.' });
     return;
   }
 

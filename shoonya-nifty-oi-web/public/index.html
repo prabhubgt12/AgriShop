@@ -26,16 +26,20 @@
 
     <div class="grid">
       <div class="card">
-        <div class="cardTitle">Login (OAuth — API)</div>
+        <div class="cardTitle">Login</div>
         <p id="oauthHint" class="confidence" style="margin: 0 0 8px 0;">
-          API-only: use api.shoonya.com (not trade.shoonya.com). Authorize → copy <code>code=</code> → paste below.
+          <strong>Auto login</strong> needs password + TOTP in <code>.env</code>.
+          Or paste an auth <code>code</code> from Python GetAuthcode below.
         </p>
         <div class="loginRow">
-          <button id="oauthOpenBtn" class="secondary" type="button">Open API login</button>
+          <button id="autoLoginBtn" class="secondary" type="button">Auto login (TOTP)</button>
         </div>
         <div class="loginRow" style="margin-top: 8px;">
           <input id="authCodeInput" class="otpInput" placeholder="Paste auth code (code=...)" />
-          <button id="loginBtn" class="secondary">Login</button>
+          <button id="loginWithCodeBtn" class="secondary">Login with code</button>
+        </div>
+        <div class="loginRow" style="margin-top: 8px;">
+          <button id="logoutBtn" class="secondary" type="button">Logout / clear session</button>
         </div>
         <div id="loginStatus" class="loginStatus">Not logged in</div>
         <div class="kv" style="margin-top: 10px;">

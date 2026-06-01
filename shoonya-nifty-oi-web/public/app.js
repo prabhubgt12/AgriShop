@@ -3,8 +3,9 @@ const stopBtn = document.getElementById('stopBtn');
 const refreshBtn = document.getElementById('refreshBtn');
 
 const authCodeInput = document.getElementById('authCodeInput');
-const oauthOpenBtn = document.getElementById('oauthOpenBtn');
-const loginBtn = document.getElementById('loginBtn');
+const autoLoginBtn = document.getElementById('autoLoginBtn');
+const loginWithCodeBtn = document.getElementById('loginWithCodeBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 const loginStatus = document.getElementById('loginStatus');
 
 const elSuggestion = document.getElementById('suggestion');
@@ -123,7 +124,7 @@ async function postStop() {
   if (!data.ok) throw new Error(data.error || 'Failed to stop');
 }
 
-async function postLogin(authCode) {
+async function postLoginWithCode(authCode) {
   const res = await fetch('/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -131,18 +132,35 @@ async function postLogin(authCode) {
   });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Login failed');
+  return data;
 }
 
-async function fetchOAuthUrl() {
-  const res = await fetch('/api/oauth/url');
+async function postAutoLogin() {
+  const res = await fetch('/api/login/auto', { method: 'POST' });
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error || 'Could not get OAuth URL');
-  const hintEl = document.getElementById('oauthHint');
-  if (hintEl) {
-    const parts = [data.apiOnlyNote, data.hint].filter(Boolean);
-    if (parts.length) hintEl.textContent = parts.join(' ');
+  if (!data.ok) throw new Error(data.error || 'Auto login failed');
+  return data;
+}
+
+async function postLogout() {
+  const res = await fetch('/api/logout', { method: 'POST' });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Logout failed');
+  return data;
+}
+
+function parseAuthCodeInput(raw) {
+  const s = (raw || '').trim();
+  if (!s) return '';
+  try {
+    if (s.includes('code=')) {
+      const u = s.includes('://') ? new URL(s) : new URL(`https://x?${s.replace(/^\?/, '')}`);
+      return u.searchParams.get('code') || s;
+    }
+  } catch (_) {
+    /* use raw */
   }
-  return data.url;
+  return s;
 }
 
 async function fetchHealth() {
@@ -466,7 +484,7 @@ async function refresh() {
   setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);
 
   if (!health.loggedIn) {
-    elError.textContent = 'Not logged in. Open login page, paste auth code, and click Login.';
+    elError.textContent = 'Not logged in. Click Login (requires .env credentials).';
     return;
   }
 
@@ -633,48 +651,68 @@ directionSel?.addEventListener('change', async () => {
   }
 });
 
-oauthOpenBtn.addEventListener('click', async () => {
+autoLoginBtn.addEventListener('click', async () => {
   try {
-    const url = await fetchOAuthUrl();
-    window.open(url, '_blank', 'noopener');
-    setLoginStatus('Complete login in the new tab, then paste code here', null);
+    autoLoginBtn.disabled = true;
+    setLoginStatus('Auto login running…', null);
     elError.textContent = '';
-  } catch (e) {
-    setLoginStatus('Could not open login', 'bad');
-    elError.textContent = e && e.message ? e.message : String(e);
-  }
-});
-
-function parseAuthCodeInput(raw) {
-  const s = (raw || '').trim();
-  if (!s) return '';
-  try {
-    if (s.includes('code=')) {
-      const u = s.includes('://') ? new URL(s) : new URL(`https://x?${s.replace(/^\?/, '')}`);
-      return u.searchParams.get('code') || s;
-    }
-  } catch (_) {
-    /* use raw */
-  }
-  return s;
-}
-
-loginBtn.addEventListener('click', async () => {
-  try {
-    const authCode = parseAuthCodeInput(authCodeInput.value);
-    await postLogin(authCode);
-    authCodeInput.value = '';
+    await postAutoLogin();
     const health = await fetchHealth();
     if (health.loggedIn) {
-      setLoginStatus('Login successful', 'ok');
-      document.getElementById('api-testing-section').style.display = 'block';
+      setLoginStatus('Logged in', 'ok');
+      const apiSection = document.getElementById('api-testing-section');
+      if (apiSection) apiSection.style.display = 'block';
     } else {
       setLoginStatus('Login failed', 'bad');
     }
-    elError.textContent = '';
   } catch (e) {
     setLoginStatus('Login failed', 'bad');
     elError.textContent = e && e.message ? e.message : String(e);
+  } finally {
+    autoLoginBtn.disabled = false;
+  }
+});
+
+logoutBtn?.addEventListener('click', async () => {
+  try {
+    logoutBtn.disabled = true;
+    elError.textContent = '';
+    await postLogout();
+    setLoginStatus('Not logged in (session cleared)', null);
+    const apiSection = document.getElementById('api-testing-section');
+    if (apiSection) apiSection.style.display = 'none';
+    await refresh();
+  } catch (e) {
+    elError.textContent = e && e.message ? e.message : String(e);
+  } finally {
+    logoutBtn.disabled = false;
+  }
+});
+
+loginWithCodeBtn.addEventListener('click', async () => {
+  try {
+    const authCode = parseAuthCodeInput(authCodeInput.value);
+    if (!authCode) {
+      throw new Error('Paste the auth code from GetAuthcode or the redirect URL.');
+    }
+    loginWithCodeBtn.disabled = true;
+    setLoginStatus('Exchanging auth code…', null);
+    elError.textContent = '';
+    await postLoginWithCode(authCode);
+    authCodeInput.value = '';
+    const health = await fetchHealth();
+    if (health.loggedIn) {
+      setLoginStatus('Logged in', 'ok');
+      const apiSection = document.getElementById('api-testing-section');
+      if (apiSection) apiSection.style.display = 'block';
+    } else {
+      setLoginStatus('Login failed', 'bad');
+    }
+  } catch (e) {
+    setLoginStatus('Login failed', 'bad');
+    elError.textContent = e && e.message ? e.message : String(e);
+  } finally {
+    loginWithCodeBtn.disabled = false;
   }
 });
 
@@ -683,7 +721,7 @@ startBtn.addEventListener('click', async () => {
     const health = await fetchHealth();
     setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);
     if (!health.loggedIn) {
-      throw new Error('Not logged in. Complete OAuth login first.');
+      throw new Error('Not logged in. Click Login first.');
     }
     await postStart();
     await refresh();
@@ -821,6 +859,13 @@ function formatDateTime(d) {
   try {
     const health = await fetchHealth();
     setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);
+    if (autoLoginBtn) {
+      autoLoginBtn.disabled = !health.autoLoginAvailable || health.autoLoginBusy;
+      if (!health.autoLoginAvailable) {
+        autoLoginBtn.title =
+          'Add SHOONYA_PASSWORD and SHOONYA_TOTP_SECRET to .env (see docs/API_ONLY_LOGIN.md)';
+      }
+    }
   } catch (_) {
   }
 
