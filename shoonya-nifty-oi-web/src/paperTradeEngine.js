@@ -1,3 +1,6 @@
+const { getFalseBreakoutBufferPoints } = require('./tradeConfig');
+const { sanitizeOptionLtp } = require('./orderPricing');
+
 function isNum(x) {
   return typeof x === 'number' && !Number.isNaN(x);
 }
@@ -91,6 +94,10 @@ function selectInstrument(snapshot, mode, direction) {
 function pctChange(now, then) {
   if (!isNum(now) || !isNum(then) || then <= 0) return null;
   return (now - then) / then;
+}
+
+function safeLegLtp(leg, underlyingLtp) {
+  return sanitizeOptionLtp(leg?.ltp, { underlyingLtp });
 }
 
 function fmtNum(x, digits = 2) {
@@ -216,8 +223,14 @@ function shouldEnter(history, mode, state) {
     const cePast = (past2 && isNum(atmStrike)) ? findLeg(past2, atmStrike, 'CE') : null;
     const pePast = (past2 && isNum(atmStrike)) ? findLeg(past2, atmStrike, 'PE') : null;
 
-    const ceChg = pctChange(ceNow?.ltp, cePast?.ltp);
-    const peChg = pctChange(peNow?.ltp, pePast?.ltp);
+    const underPast2 = past2?.underlying?.ltp;
+    const ceNowLtp = safeLegLtp(ceNow, underNow);
+    const cePastLtp = safeLegLtp(cePast, underPast2);
+    const peNowLtp = safeLegLtp(peNow, underNow);
+    const pePastLtp = safeLegLtp(pePast, underPast2);
+
+    const ceChg = pctChange(ceNowLtp, cePastLtp);
+    const peChg = pctChange(peNowLtp, pePastLtp);
 
     const ceCond = ceChg !== null && ceChg >= 0.12;
     const peCond = peChg !== null && peChg >= 0.12;
@@ -225,9 +238,9 @@ function shouldEnter(history, mode, state) {
     console.log(`Conditions: breaksHigh=${breaksHigh} (${underNow} > ${extremeHigh5}), breaksLow=${breaksLow} (${underNow} < ${extremeLow5}), ceCond=${ceCond} (${ceChg} >= 0.12), peCond=${peCond} (${peChg} >= 0.12)`);
 
     reasons.push(`Breaks 5m high: ${passFailSpan(breaksHigh)} (LTP ${fmtNum(underNow, 2)} vs high ${fmtNum(extremeHigh5, 2)})`);
-    reasons.push(`ATM CE >=12% (2m): ${passFailSpan(ceCond)} (${fmtPct(ceChg, 1)} | now ${fmtNum(ceNow?.ltp, 2)} vs 2m ${fmtNum(cePast?.ltp, 2)})`);
+    reasons.push(`ATM CE >=12% (2m): ${passFailSpan(ceCond)} (${fmtPct(ceChg, 1)} | now ${fmtNum(ceNowLtp, 2)} vs 2m ${fmtNum(cePastLtp, 2)})`);
     reasons.push(`Breaks 5m low: ${passFailSpan(breaksLow)} (LTP ${fmtNum(underNow, 2)} vs low ${fmtNum(extremeLow5, 2)})`);
-    reasons.push(`ATM PE >=12% (2m): ${passFailSpan(peCond)} (${fmtPct(peChg, 1)} | now ${fmtNum(peNow?.ltp, 2)} vs 2m ${fmtNum(pePast?.ltp, 2)})`);
+    reasons.push(`ATM PE >=12% (2m): ${passFailSpan(peCond)} (${fmtPct(peChg, 1)} | now ${fmtNum(peNowLtp, 2)} vs 2m ${fmtNum(pePastLtp, 2)})`);
 
     if (breaksHigh && ceCond) {
       const direction = 'BULL';
@@ -262,8 +275,8 @@ function shouldEnter(history, mode, state) {
   const legNow = findLeg(latest, inst.strike, inst.type);
   const legPast = pastSnap ? findLeg(pastSnap, inst.strike, inst.type) : null;
 
-  const ltpNow = legNow?.ltp;
-  const ltpPast = legPast?.ltp;
+  const ltpNow = safeLegLtp(legNow, latest?.underlying?.ltp);
+  const ltpPast = safeLegLtp(legPast, pastSnap?.underlying?.ltp);
   const chg = pctChange(ltpNow, ltpPast);
 
   reasons.push(`Mode: ${mode}`);
@@ -281,7 +294,10 @@ function shouldEnter(history, mode, state) {
     // BIG_RALLY entry: allow entry when selected 2-step OTM option doubles in 10 minutes.
     const past10 = pickSnapshotAtOrBefore(history, nowTs - 10 * 60_000);
     const legPast10 = past10 ? findLeg(past10, inst.strike, inst.type) : null;
-    const chg10 = pctChange(legNow?.ltp, legPast10?.ltp);
+    const chg10 = pctChange(
+      safeLegLtp(legNow, latest?.underlying?.ltp),
+      safeLegLtp(legPast10, past10?.underlying?.ltp),
+    );
     if (chg10 === null) return { ok: false, reasons: [...reasons, 'Not enough data for 10-min change'] };
     if (chg10 >= 1.0) return { ok: true, direction, inst, reasons: [...reasons, `10m change ${(chg10 * 100).toFixed(1)}% >= 100%`] };
     return { ok: false, reasons: [...reasons, `10m change ${(chg10 * 100).toFixed(1)}% < 100%`] };
@@ -373,11 +389,12 @@ function maybeExit(trade, mode, currentLtp, underlyingLtp, exitCfg) {
   }
 
   // False breakout exit for NORMAL
-  if (trade.mode === 'NORMAL' && isNum(trade.breakoutLevel)) {
-    if (trade.optType === 'CE' && underlyingLtp < trade.breakoutLevel - 7) {
+  if (trade.mode === 'NORMAL' && isNum(trade.breakoutLevel) && isNum(underlyingLtp)) {
+    const buffer = getFalseBreakoutBufferPoints();
+    if (trade.optType === 'CE' && underlyingLtp < trade.breakoutLevel - buffer) {
       return { reason: 'FALSE_BREAKOUT' };
     }
-    if (trade.optType === 'PE' && underlyingLtp > trade.breakoutLevel + 7) {
+    if (trade.optType === 'PE' && underlyingLtp > trade.breakoutLevel + buffer) {
       return { reason: 'FALSE_BREAKOUT' };
     }
   }

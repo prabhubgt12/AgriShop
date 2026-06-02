@@ -1,0 +1,16 @@
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# OAuth session, trades, live state
+.data/
+
+# Dependencies
+node_modules/
+
+# Downloaded symbol caches
+.cache/
+
+# Local SDK credentials override (if you copy from cred.js template)
+shoonya-sdk/cred.js

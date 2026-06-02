@@ -71,7 +71,7 @@ Exits use trailing SL or target profit.
 ## Force Entry/Exit
 - Manual entry/exit via UI.
 - Bypasses strategy checks.
-- For LIVE: places market orders, confirms fill via tradebook.
+- For LIVE: places limit orders with slippage vs LTP (API cannot use MKT), confirms fill via orderbook/tradebook.
 
 ## Persistence and Limits
 - Max 3 trades/day.

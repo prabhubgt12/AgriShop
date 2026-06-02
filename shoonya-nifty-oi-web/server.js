@@ -7,6 +7,8 @@ dotenv.config({ path: path.join(__dirname, '.env') });
  
 const { createShoonyaClient } = require('./src/shoonyaClient');
 const { fetchAuthCodeViaBrowser, isAutoLoginConfigured } = require('./src/shoonyaAutoAuth');
+const { applyApiOrderPricing, resolveOrderLtp, formatPlaceOrderError } = require('./src/orderPricing');
+const { normalizeNorenList, confirmOrderFill } = require('./src/norenApi');
 const { buildNiftyChainSnapshot } = require('./src/optionChain');
 const { computeSuggestion } = require('./src/signalEngine');
 const {
@@ -21,7 +23,7 @@ const {
   normalizeProductType,
 } = require('./src/paperTradeEngine');
  
-const { stepLiveTrade, createLiveTradeState } = require('./src/liveTradeEngine');
+const { stepLiveTrade, createLiveTradeState, reconcileLiveTradeWithBroker } = require('./src/liveTradeEngine');
  
 const app = express();
 app.use(express.json());
@@ -126,7 +128,8 @@ function getWeekStart(dateStr) {
 function tryRestoreLiveState() {
   const data = safeReadJson(LIVE_STATE_PATH);
   if (!data || !data.live) return false;
-  if (!data.live.current || (data.live.current.status !== 'OPEN' && data.live.current.status !== 'EXITING')) return false;
+  const st = data.live.current?.status;
+  if (!st || !['OPEN', 'EXITING', 'ENTRY_PENDING'].includes(st)) return false;
   state.live = { ...createLiveTradeState(), ...data.live };
   return true;
 }
@@ -137,10 +140,10 @@ async function tryResyncFromShoonya() {
   try {
     console.log("=== RESYNC START ===");
 
-    const positions = await state.client.get_positions();
-    const trades = await state.client.get_tradebook();
+    const positions = normalizeNorenList(await state.client.get_positions());
+    const trades = normalizeNorenList(await state.client.get_tradebook());
 
-    if (!Array.isArray(positions) || positions.length === 0) {
+    if (positions.length === 0) {
       console.log("Resync: no positions found.");
       return false;
     }
@@ -467,7 +470,12 @@ async function updateOnce() {
 
   // LIVE execution (safe gated by env + UI)
   const liveEnabled = String(process.env.ENABLE_LIVE_TRADING || '').toLowerCase() === 'true';
-  if (liveEnabled && state.paper && state.paper.tradeMode === 'LIVE') {
+  if (liveEnabled && state.paper && state.paper.tradeMode === 'LIVE' && state.loggedIn && state.client) {
+    if (state.live?.current) {
+      state.live = await reconcileLiveTradeWithBroker(state.client, state.live, state.paper);
+      if (!state.live.current) persistLiveState();
+    }
+
     const cooldownMs = parseInt(process.env.TRADE_COOLDOWN_MS || '30000', 10);
     let entryDecision;
     if (state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
@@ -493,7 +501,7 @@ async function updateOnce() {
       entryDecision,
     });
 
-    if (state.live && state.live.current && (state.live.current.status === 'OPEN' || state.live.current.status === 'EXITING')) {
+    if (state.live?.current) {
       persistLiveState();
     }
   }
@@ -551,6 +559,24 @@ app.post('/api/logout', (_req, res) => {
     ok: true,
     loggedIn: false,
     message: 'Session cleared (.data/oauthSession.json deleted). Restart server if SHOONYA_ACCESS_TOKEN is set in .env.',
+  });
+});
+
+app.post('/api/live/clear-current', (_req, res) => {
+  const prev = state.live?.current;
+  state.live.current = null;
+  state.live.lastDecision = {
+    ts: Date.now(),
+    action: 'CLEARED',
+    reasons: ['Manual clear of local LIVE state (broker unchanged)'],
+  };
+  persistLiveState();
+  res.json({
+    ok: true,
+    cleared: Boolean(prev),
+    previousStatus: prev?.status || null,
+    live: state.live,
+    paper: state.paper,
   });
 });
 
@@ -750,10 +776,6 @@ app.post('/api/paper/force-enter', (_req, res) => {
   if (state.paper.tradeMode === 'LIVE') {
     (async () => {
       try {
-        if (state.live && state.live.current && state.live.current.status === 'OPEN') {
-          res.status(400).json({ ok: false, error: 'LIVE trade already OPEN. Force Exit it before forcing a new entry.', paper: state.paper, live: state.live });
-          return;
-        }
         const liveEnabled = String(process.env.ENABLE_LIVE_TRADING || '').toLowerCase() === 'true';
         if (!liveEnabled) {
           res.status(400).json({ ok: false, error: 'LIVE trading is disabled. Set ENABLE_LIVE_TRADING=true in .env to allow it.', paper: state.paper });
@@ -765,6 +787,22 @@ app.post('/api/paper/force-enter', (_req, res) => {
         }
         if (!state.client || typeof state.client.place_order !== 'function') {
           res.status(400).json({ ok: false, error: 'Shoonya client.place_order not available.', paper: state.paper });
+          return;
+        }
+
+        state.live = await reconcileLiveTradeWithBroker(state.client, state.live, state.paper);
+        if (!state.live.current) persistLiveState();
+
+        if (
+          state.live?.current &&
+          ['OPEN', 'ENTRY_PENDING', 'EXITING'].includes(state.live.current.status)
+        ) {
+          res.status(400).json({
+            ok: false,
+            error: `LIVE trade already active (${state.live.current.status}). Exit or wait for fill first.`,
+            paper: state.paper,
+            live: state.live,
+          });
           return;
         }
 
@@ -795,44 +833,67 @@ app.post('/api/paper/force-enter', (_req, res) => {
         const quantity = Number.isFinite(qty) ? qty : 1;
         const productType = typeof state.paper.productType === 'string' ? state.paper.productType : 'M';
 
-        const resp = await state.client.place_order({
-          buy_or_sell: 'B',
-          product_type: productType,
-          exchange: 'NFO',
-          tradingsymbol,
-          quantity,
-          discloseqty: 0,
-          price_type: 'MKT',
-          price: 0,
-          trigger_price: 0,
-          retention: 'DAY',
-          remarks: `forced_${effectiveMode}`,
-        });
+        const entryOrderLtp = resolveOrderLtp(latest, { tsym: tradingsymbol, strike: inst.strike, optType: inst.type }, latest.underlying?.ltp);
+        if (entryOrderLtp == null) {
+          res.status(400).json({ ok: false, error: 'Valid option LTP missing for entry order.', paper: state.paper });
+          return;
+        }
+
+        let orderPayload;
+        try {
+          orderPayload = applyApiOrderPricing({
+            buy_or_sell: 'B',
+            product_type: productType,
+            exchange: 'NFO',
+            tradingsymbol,
+            quantity,
+            discloseqty: 0,
+            price_type: 'MKT',
+            price: 0,
+            trigger_price: 0,
+            retention: 'DAY',
+            remarks: `forced_${effectiveMode}`,
+            ltp: entryOrderLtp,
+            underlyingLtp: latest.underlying?.ltp,
+          });
+        } catch (pricingErr) {
+          res.status(400).json({
+            ok: false,
+            error: pricingErr && pricingErr.message ? pricingErr.message : String(pricingErr),
+            paper: state.paper,
+          });
+          return;
+        }
+
+        const resp = await state.client.place_order(orderPayload);
 
         if (!resp || resp.stat !== 'Ok') {
-          res.status(500).json({ ok: false, error: `LIVE entry order failed: ${JSON.stringify(resp || 'Unknown error')}`, paper: state.paper });
+          res.status(500).json({
+            ok: false,
+            error: `LIVE entry order failed: ${formatPlaceOrderError(resp)}`,
+            paper: state.paper,
+          });
           return;
         }
 
         const orderno = resp.norenordno || resp.orderno || resp.order_no || null;
 
-        // Confirm order fill
+        let fillCheck = { filled: false, state: 'unknown', message: '' };
         if (orderno) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds for potential fill
           try {
-            const trades = await state.client.get_tradebook();
-            const entryTrades = trades.filter(t => t.norenordno === orderno);
-            if (!trades || !Array.isArray(trades) || entryTrades.length === 0) {
-              res.status(500).json({ ok: false, error: 'Order placed but not filled yet. Check Shoonya app for status.', paper: state.paper });
-              return;
-            }
+            fillCheck = await confirmOrderFill(state.client, orderno, { waitMs: 2000 });
           } catch (e) {
-            res.status(500).json({ ok: false, error: 'Failed to confirm order fill: ' + (e && e.message ? e.message : String(e)), paper: state.paper });
-            return;
+            fillCheck = { filled: false, state: 'pending', message: e?.message || String(e) };
           }
         }
 
-        const entryPrice = typeof leg?.ltp === 'number' ? leg.ltp : null;
+        if (fillCheck.state === 'rejected') {
+          res.status(500).json({ ok: false, error: fillCheck.message, paper: state.paper, order: resp });
+          return;
+        }
+
+        const entryPrice =
+          fillCheck.entryPrice ?? (typeof leg?.ltp === 'number' ? leg.ltp : null);
         const slPrice = (() => {
           if (typeof entryPrice !== 'number' || entryPrice <= 0) return null;
           if (effectiveMode === 'EXPIRY') return entryPrice * 0.75;
@@ -840,9 +901,10 @@ app.post('/api/paper/force-enter', (_req, res) => {
           if (effectiveMode === 'BIG_RALLY') return entryPrice * 0.60;
           return entryPrice * 0.70;
         })();
+        const tradeStatus = fillCheck.filled ? 'OPEN' : 'ENTRY_PENDING';
         const opened = {
           id: `live_forced_${Date.now()}`,
-          status: 'OPEN',
+          status: tradeStatus,
           mode: effectiveMode,
           strike: inst.strike,
           optType: inst.type,
@@ -851,9 +913,9 @@ app.post('/api/paper/force-enter', (_req, res) => {
           qty: quantity,
           entryTs: Date.now(),
           entryOrderNo: orderno,
-          entryPrice,
-          peakPrice: entryPrice,
-          slPrice,
+          entryPrice: fillCheck.filled ? entryPrice : null,
+          peakPrice: fillCheck.filled ? entryPrice : null,
+          slPrice: fillCheck.filled ? slPrice : null,
           exitTs: null,
           exitPrice: null,
           exitReason: null,
@@ -862,10 +924,22 @@ app.post('/api/paper/force-enter', (_req, res) => {
         };
 
         state.live.current = opened;
-        state.live.history = [...(state.live.history || []), opened].slice(-50);
-        state.live.lastDecision = { ts: Date.now(), action: 'FORCED_ENTRY', reasons: ['FORCED_ENTRY'] };
+        if (fillCheck.filled) {
+          state.live.history = [...(state.live.history || []), opened].slice(-50);
+        }
+        state.live.lastDecision = {
+          ts: Date.now(),
+          action: fillCheck.filled ? 'FORCED_ENTRY' : 'ENTRY_PENDING',
+          reasons: [fillCheck.filled ? 'FORCED_ENTRY' : fillCheck.message || 'Waiting for fill'],
+        };
         persistLiveState();
-        res.json({ ok: true, paper: state.paper, live: state.live, order: resp });
+        res.json({
+          ok: true,
+          paper: state.paper,
+          live: state.live,
+          order: resp,
+          warning: fillCheck.filled ? undefined : fillCheck.message,
+        });
       } catch (e) {
         res.status(500).json({
           ok: false,
@@ -899,28 +973,66 @@ app.post('/api/paper/force-exit', (_req, res) => {
           res.status(400).json({ ok: false, error: 'Shoonya client.place_order not available.', paper: state.paper });
           return;
         }
+
         if (!state.live.current || state.live.current.status !== 'OPEN') {
           res.status(400).json({ ok: false, error: 'No open LIVE trade to exit.', paper: state.paper, live: state.live });
           return;
         }
 
         const t = state.live.current;
-        const resp = await state.client.place_order({
-          buy_or_sell: 'S',
-          product_type: state.paper.productType || 'M',
-          exchange: t.exchange || 'NFO',
-          tradingsymbol: t.tsym,
-          quantity: t.qty,
-          discloseqty: 0,
-          price_type: 'MKT',
-          price: 0,
-          trigger_price: 0,
-          retention: 'DAY',
-          remarks: 'forced_exit',
+        const latestExit = Array.isArray(state.snapshotHistory)
+          ? state.snapshotHistory[state.snapshotHistory.length - 1]
+          : null;
+        const exitLtp = resolveOrderLtp(latestExit, t, latestExit?.underlying?.ltp, {
+          allowEntryFallback: true,
         });
+        if (exitLtp == null) {
+          res.status(400).json({
+            ok: false,
+            error: 'Valid option LTP missing for exit order (refusing spot/index-scale price).',
+            paper: state.paper,
+            live: state.live,
+          });
+          return;
+        }
+
+        let exitPayload;
+        try {
+          exitPayload = applyApiOrderPricing({
+            buy_or_sell: 'S',
+            product_type: state.paper.productType || 'M',
+            exchange: t.exchange || 'NFO',
+            tradingsymbol: t.tsym,
+            quantity: t.qty,
+            discloseqty: 0,
+            price_type: 'MKT',
+            price: 0,
+            trigger_price: 0,
+            retention: 'DAY',
+            remarks: 'forced_exit',
+            ltp: exitLtp,
+            entryPrice: t.entryPrice,
+            underlyingLtp: latestExit?.underlying?.ltp,
+          });
+        } catch (pricingErr) {
+          res.status(400).json({
+            ok: false,
+            error: pricingErr?.message || String(pricingErr),
+            paper: state.paper,
+            live: state.live,
+          });
+          return;
+        }
+
+        const resp = await state.client.place_order(exitPayload);
 
         if (!resp || resp.stat !== 'Ok') {
-          res.status(500).json({ ok: false, error: `LIVE exit order failed: ${JSON.stringify(resp || 'Unknown error')}`, paper: state.paper, live: state.live });
+          res.status(500).json({
+            ok: false,
+            error: `LIVE exit order failed: ${formatPlaceOrderError(resp)}`,
+            paper: state.paper,
+            live: state.live,
+          });
           return;
         }
 

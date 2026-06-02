@@ -33,6 +33,7 @@ const modeBigBtn = document.getElementById('modeBigBtn');
 const forceEnterBtn = document.getElementById('forceEnterBtn');
 const forceExitBtn = document.getElementById('forceExitBtn');
 const liveResyncBtn = document.getElementById('liveResyncBtn');
+const liveClearBtn = document.getElementById('liveClearBtn');
 
 const exitStyleSel = document.getElementById('exitStyleSel');
 const targetPctRange = document.getElementById('targetPctRange');
@@ -174,6 +175,30 @@ function setLoginStatus(text, kind) {
   if (kind) loginStatus.classList.add(kind);
 }
 
+function findLeg(snapshot, strike, optType) {
+  const row = (snapshot?.rows || []).find((r) => r && r.strike === strike);
+  if (!row) return null;
+  return optType === 'CE' ? row.ce : row.pe;
+}
+
+function sanitizeTradeLtp(ltp, trade, snapshot) {
+  const n = Number(ltp);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  if (n > 3000) return null;
+
+  const under = Number(snapshot?.underlying?.ltp);
+  if (Number.isFinite(under) && under > 5000 && Math.abs(n - under) < 250) return null;
+
+  const entry = Number(trade?.entryPrice);
+  if (Number.isFinite(entry) && entry > 0) {
+    if (n > Math.max(500, entry * 15)) return null;
+  } else if (n > 800) {
+    return null;
+  }
+
+  return n;
+}
+
 function fmtNum(x) {
   if (x === null || x === undefined) return '-';
   const n = Number(x);
@@ -187,6 +212,24 @@ function fmtSigned(x) {
   if (Number.isNaN(n)) return String(x);
   const s = n >= 0 ? '+' : '';
   return s + n.toLocaleString('en-IN');
+}
+
+function formatExitReason(reason) {
+  if (!reason) return '';
+  const labels = {
+    FALSE_BREAKOUT: 'False breakout (NIFTY moved back through breakout level)',
+    SL_HIT: 'Stop loss hit',
+    TRAIL_FROM_PEAK: 'Trail from peak (gave back profit)',
+    EXIT_FILLED: 'Exit order filled',
+    FORCED_EXIT: 'Manual force exit',
+    RECONCILED_NO_POSITION: 'Closed — no open position at broker',
+  };
+  if (labels[reason]) return labels[reason];
+  if (String(reason).startsWith('TARGET_HIT_')) {
+    const pct = String(reason).replace('TARGET_HIT_', '');
+    return `Target profit hit (${pct}%)`;
+  }
+  return String(reason).replace(/_/g, ' ');
 }
 
 function fmtTime(ts) {
@@ -242,10 +285,6 @@ function setRiskControls(paper) {
   if (maxTradesInput) maxTradesInput.value = String(maxNorm);
   if (tradesTodayLabel) tradesTodayLabel.textContent = `${todayNorm}/${maxNorm}`;
 
-  const isLive = tm === 'LIVE';
-  if (forceEnterBtn) forceEnterBtn.disabled = false;
-  if (forceExitBtn) forceExitBtn.disabled = false;
-
   const qty = typeof paper?.orderQty === 'number' ? paper.orderQty : Number(paper?.orderQty);
   const qtyNorm = Number.isFinite(qty) ? qty : 1;
   const qm = typeof paper?.qtyMode === 'string' ? paper.qtyMode.toUpperCase() : 'QTY';
@@ -288,6 +327,13 @@ async function postLiveResync() {
   return data;
 }
 
+async function postLiveClearCurrent() {
+  const res = await fetch('/api/live/clear-current', { method: 'POST' });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Clear LIVE state failed');
+  return data;
+}
+
 async function postExitConfig(exitStyle, targetPct) {
   const res = await fetch('/api/paper/exit-config', {
     method: 'POST',
@@ -297,6 +343,11 @@ async function postExitConfig(exitStyle, targetPct) {
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'Failed to set exit config');
   return data.paper;
+}
+
+function isLiveActiveTrade(live) {
+  const s = live?.current?.status;
+  return s === 'OPEN' || s === 'ENTRY_PENDING' || s === 'EXITING';
 }
 
 function setExitControls(paper) {
@@ -311,7 +362,10 @@ function setExitControls(paper) {
 }
 
 function render(snapshot, lastError, paper, live) {
-  elError.textContent = lastError || '';
+  if (lastError) elError.textContent = lastError;
+
+  const engineDec =
+    paper?.tradeMode === 'LIVE' ? live?.lastDecision : paper?.lastDecision;
 
   const sug = snapshot?.suggestion;
   elSuggestion.textContent = sug?.action || '-';
@@ -331,27 +385,38 @@ function render(snapshot, lastError, paper, live) {
 
     if (paper.tradeMode === 'LIVE') {
       const liveOpen = !!(live && live.current && live.current.status === 'OPEN');
-      if (forceEnterBtn) forceEnterBtn.disabled = liveOpen;
+      const liveActive = isLiveActiveTrade(live);
+      if (forceEnterBtn) forceEnterBtn.disabled = liveActive;
       if (forceExitBtn) forceExitBtn.disabled = !liveOpen;
     }
 
     const t = paper.tradeMode === 'LIVE'
-  ? (live?.current || live?.lastClosed)
-  : paper.currentTrade;
-    if (t && t.status === 'OPEN') {
-      const ltp = paper.tradeMode === 'LIVE'
-        ? (findLeg(snapshot, t.strike, t.optType)?.ltp)
-        : (findLeg(snapshot, t.strike, t.optType)?.ltp);
-      const pnl = (typeof ltp === 'number' && typeof t.entryPrice === 'number') ? (ltp - t.entryPrice) * (t.qty || 1) : null;
+      ? (live?.current || live?.lastClosed)
+      : paper.currentTrade;
 
-      elTradeInstrument.textContent = `${t.strike} ${t.optType}`;
-      elTradeEntry.textContent = fmtNum(t.entryPrice);
+    const isOpenLike =
+      t && (t.status === 'OPEN' || t.status === 'ENTRY_PENDING' || t.status === 'EXITING');
+
+    if (isOpenLike) {
+      const rawLtp = findLeg(snapshot, t.strike, t.optType)?.ltp;
+      const ltp = sanitizeTradeLtp(rawLtp, t, snapshot);
+      const pnl =
+        typeof ltp === 'number' && typeof t.entryPrice === 'number'
+          ? (ltp - t.entryPrice) * (t.qty || 1)
+          : null;
+
+      elTradeInstrument.textContent = `${t.strike} ${t.optType} (${t.status})`;
+      elTradeEntry.textContent =
+        t.entryPrice == null
+          ? (t.status === 'ENTRY_PENDING' ? 'pending…' : 'awaiting fill…')
+          : fmtNum(t.entryPrice);
       if (elTradeLtp) elTradeLtp.textContent = fmtNum(ltp);
       elTradePeak.textContent = fmtNum(t.peakPrice);
       elTradeSl.textContent = fmtNum(t.slPrice);
       if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = fmtNum(t.breakoutLevel);
       if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = t.breakoutSource || '-';
-      elTradePnl.textContent = pnl === null ? '-' : fmtSigned(Math.round(pnl));
+      elTradePnl.textContent =
+        t.status === 'ENTRY_PENDING' ? '-' : pnl === null ? '-' : fmtSigned(Math.round(pnl));
       elTradeUpdated.textContent = fmtTime(snapshot?.ts);
 
       elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');
@@ -359,12 +424,26 @@ function render(snapshot, lastError, paper, live) {
       else if (typeof pnl === 'number' && pnl < 0) elTradePnl.classList.add('pnlNeg');
       else elTradePnl.classList.add('pnlZero');
 
+      const orderNo = t.entryOrderNo || t.exitOrderNo || '-';
       elTradeNote.innerHTML = '';
-      if (paper.tradeMode === 'LIVE' && live && live.current) {
-        elTradeNote.innerHTML = `<div><b>LIVE Order</b>: ${live.current.entryOrderNo || '-'}</div>`;
+      if (paper.tradeMode === 'LIVE') {
+        elTradeNote.innerHTML = `<div><b>LIVE</b> order: ${orderNo}</div>`;
+        if (t.status === 'ENTRY_PENDING') {
+          elTradeNote.innerHTML += `<div style="margin-top:6px;">Waiting for entry fill (limit order). Poll will update when complete.</div>`;
+        }
+        if (t.status === 'EXITING') {
+          elTradeNote.innerHTML += `<div style="margin-top:6px;">Exit in progress${t.exitReason ? `: ${formatExitReason(t.exitReason)}` : ''}</div>`;
+        }
       }
-      if (paper.tradeMode === 'LIVE' && live && live.lastDecision) {
-        elTradeNote.innerHTML += `<div style="margin-top:6px;"><b>LIVE</b>: ${live.lastDecision.action || '-'}</div>`;
+      if (paper.tradeMode === 'LIVE' && live?.lastDecision) {
+        const eng = live.lastDecision.action || '-';
+        elTradeNote.innerHTML += `<div style="margin-top:6px;"><b>Engine action</b>: ${eng}${eng === 'HOLD' ? ' (monitoring; trade status is ' + t.status + ')' : ''}</div>`;
+      }
+      if (paper.tradeMode === 'LIVE' && t.status === 'OPEN' && t.entryPrice == null) {
+        elTradeNote.innerHTML += `<div style="margin-top:6px;">Entry price will appear after the next poll reads your broker fill.</div>`;
+      }
+      if (rawLtp != null && ltp == null) {
+        elTradeNote.innerHTML += `<div style="margin-top:6px;color:#888;font-size:0.9em;">Ignored one invalid LTP tick while calculating P/L.</div>`;
       }
     } else if (t && t.status === 'CLOSED') {
       elTradeInstrument.textContent = `${t.strike} ${t.optType}`;
@@ -382,7 +461,17 @@ function render(snapshot, lastError, paper, live) {
       else if (typeof t.pnl === 'number' && t.pnl < 0) elTradePnl.classList.add('pnlNeg');
       else elTradePnl.classList.add('pnlZero');
 
-      elTradeNote.innerHTML = t.exitReason ? `<div><b>Exit</b>: ${t.exitReason}</div>` : '';
+      if (t.exitReason) {
+        elTradeNote.innerHTML = `<div><b>Exit reason</b>: ${formatExitReason(t.exitReason)}</div>`;
+        if (paper.tradeMode === 'LIVE' && live?.lastDecision?.reasons?.length > 1) {
+          const reconcile = live.lastDecision.reasons.find((r) => r.startsWith('RECONCILED'));
+          if (reconcile && reconcile !== t.exitReason) {
+            elTradeNote.innerHTML += `<div style="margin-top:4px;color:#888;font-size:0.9em;">${formatExitReason(reconcile)}</div>`;
+          }
+        }
+      } else {
+        elTradeNote.innerHTML = '';
+      }
       if (paper.tradeMode === 'LIVE' && live && live.current) {
         elTradeNote.innerHTML += `<div style="margin-top:6px;"><b>LIVE Order</b>: ${live.current.entryOrderNo || '-'}</div>`;
       }
@@ -398,13 +487,12 @@ function render(snapshot, lastError, paper, live) {
       elTradeUpdated.textContent = '-';
       elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');
 
-      const dec = paper.lastDecision;
-      const decText = dec && dec.reasons && dec.reasons.length
-        ? `<div><b>Last Decision</b>: ${dec.action || '-'} (${dec.mode || '-'})</div>`
-          + dec.reasons.map(r => `<div>${String(r || '')}</div>`).join('')
-        : '';
       elTradeNote.innerHTML = `No trade yet`;
-      if (paper.tradeMode === 'LIVE' && live && live.lastDecision) {
+      if (engineDec?.reasons?.length) {
+        elTradeNote.innerHTML +=
+          `<div style="margin-top:6px;"><b>Last Decision</b>: ${engineDec.action || '-'} (${engineDec.mode || '-'})</div>` +
+          engineDec.reasons.map((r) => `<div>${String(r || '')}</div>`).join('');
+      } else if (paper.tradeMode === 'LIVE' && live?.lastDecision) {
         elTradeNote.innerHTML += `<div style="margin-top:6px;"><b>LIVE</b>: ${live.lastDecision.action || '-'}</div>`;
       }
     }
@@ -426,10 +514,7 @@ function render(snapshot, lastError, paper, live) {
   }
 
   if (elConditionStatus) {
-    const dec = paper?.tradeMode === 'LIVE'
-      ? live?.lastDecision
-      : paper?.lastDecision;
-    const arr = Array.isArray(dec?.reasons) ? dec.reasons : [];
+    const arr = Array.isArray(engineDec?.reasons) ? engineDec.reasons : [];
     elConditionStatus.innerHTML = arr.length
       ? arr.map((r) => `<div>${String(r || '')}</div>`).join('')
       : '<div>-</div>';
@@ -459,13 +544,14 @@ function render(snapshot, lastError, paper, live) {
   if (elPeItmDOiSum) elPeItmDOiSum.textContent = itm && itm.peItmDOiSum !== null ? fmtSigned(itm.peItmDOiSum) : '-';
   if (elCePeDOiRatio) elCePeDOiRatio.textContent = itm && itm.ceDOiOverPeDOi !== null ? itm.ceDOiOverPeDOi.toFixed(2) : '-';
 
-  tableBody.innerHTML = '';
-  const rows = snapshot?.rows || [];
-  for (const row of rows) {
-    const tr = document.createElement('tr');
-    if (row.strike === snapshot.atmStrike) tr.classList.add('highlight');
+  if (tableBody) {
+    tableBody.innerHTML = '';
+    const rows = snapshot?.rows || [];
+    for (const row of rows) {
+      const tr = document.createElement('tr');
+      if (row.strike === snapshot.atmStrike) tr.classList.add('highlight');
 
-    tr.innerHTML = `
+      tr.innerHTML = `
       <td>${fmtNum(row.strike)}</td>
       <td>${fmtNum(row.ce?.ltp)}</td>
       <td>${fmtNum(row.ce?.oi)}</td>
@@ -475,31 +561,39 @@ function render(snapshot, lastError, paper, live) {
       <td>${fmtNum(row.pe?.ltp)}</td>
     `;
 
-    tableBody.appendChild(tr);
+      tableBody.appendChild(tr);
+    }
   }
 }
 
 async function refresh() {
-  const health = await fetchHealth();
-  setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);
+  try {
+    const health = await fetchHealth();
+    setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);
 
-  if (!health.loggedIn) {
-    elError.textContent = 'Not logged in. Click Login (requires .env credentials).';
-    return;
-  }
+    if (!health.loggedIn) {
+      elError.textContent = 'Not logged in. Click Login (requires .env credentials).';
+      return;
+    }
 
-  if (!health.polling) {
-    elError.textContent = 'Polling is stopped. Click Start to begin updates.';
-    return;
-  }
+    const res = await fetch('/api/snapshot');
+    const data = await res.json();
+    if (!data.ok) {
+      elError.textContent = data.error || 'No snapshot';
+      return;
+    }
 
-  const res = await fetch('/api/snapshot');
-  const data = await res.json();
-  if (!data.ok) {
-    elError.textContent = data.error || 'No snapshot';
-    return;
+    if (!health.polling) {
+      elError.textContent = 'Polling is stopped. Click Start to refresh chain and trade LTP.';
+    } else if (!data.lastError) {
+      elError.textContent = '';
+    }
+
+    render(data.snapshot, data.lastError, data.paper, data.live);
+  } catch (e) {
+    console.error('refresh failed:', e);
+    elError.textContent = e && e.message ? e.message : String(e);
   }
-  render(data.snapshot, data.lastError, data.paper, data.live);
 }
 
 modeAutoBtn?.addEventListener('click', async () => { try { await postPaperMode('AUTO'); await refresh(); } catch (e) { elError.textContent = e && e.message ? e.message : String(e); } });
@@ -511,7 +605,14 @@ forceEnterBtn?.addEventListener('click', async () => {
   try {
     elError.textContent = '';
     const out = await postForceEnter();
-    elError.textContent = out && out.order ? `LIVE entry order placed: ${(out.order.norenordno || out.order.orderno || out.order.order_no || '-')}` : 'Force entry placed.';
+    const ord = out?.order?.norenordno || out?.order?.orderno || out?.order?.order_no || '-';
+    if (out?.warning) {
+      elError.textContent = `Order ${ord} placed. ${out.warning}`;
+    } else if (out?.order) {
+      elError.textContent = `LIVE entry order placed: ${ord}`;
+    } else {
+      elError.textContent = 'Force entry placed.';
+    }
     await refresh();
   } catch (e) {
     elError.textContent = e && e.message ? e.message : String(e);
@@ -533,6 +634,19 @@ liveResyncBtn?.addEventListener('click', async () => {
     elError.textContent = '';
     await postLiveResync();
     elError.textContent = 'LIVE trade resynced from saved state.';
+    await refresh();
+  } catch (e) {
+    elError.textContent = e && e.message ? e.message : String(e);
+  }
+});
+
+liveClearBtn?.addEventListener('click', async () => {
+  try {
+    elError.textContent = '';
+    const data = await postLiveClearCurrent();
+    elError.textContent = data.cleared
+      ? `Cleared stuck LIVE state (was ${data.previousStatus || 'unknown'}).`
+      : 'No local LIVE trade was set.';
     await refresh();
   } catch (e) {
     elError.textContent = e && e.message ? e.message : String(e);
@@ -870,5 +984,7 @@ function formatDateTime(d) {
   }
 
   await refresh();
-  setInterval(refresh, 5000);
+  setInterval(() => {
+    refresh().catch((e) => console.error('poll refresh:', e));
+  }, 5000);
 })();
