@@ -24,18 +24,16 @@ function formatPrice(price, tick) {
 /** Reject NIFTY spot or other bad values masquerading as option LTP. */
 function sanitizeOptionLtp(ltp, { entryPrice, underlyingLtp } = {}) {
   const n = parseNum(ltp);
-  if (!n || n <= 0) return null;
-
-  if (n > 3000) return null;
-
-  if (isNum(underlyingLtp) && underlyingLtp > 5000 && Math.abs(n - underlyingLtp) < 250) {
+    if (!isNum(n) || n <= 0) {
     return null;
   }
 
-  const entry = parseNum(entryPrice);
-  if (isNum(entry) && entry > 0) {
-    if (n > Math.max(500, entry * 15)) return null;
-  } else if (n > 800) {
+  // Detect underlying quote accidentally returned as option quote
+  if (
+    isNum(underlyingLtp) &&
+    underlyingLtp > 5000 &&
+    Math.abs(n - underlyingLtp) < 250
+  ) {
     return null;
   }
 

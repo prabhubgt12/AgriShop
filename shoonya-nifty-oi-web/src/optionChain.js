@@ -96,7 +96,21 @@ async function getVwap(api, exch, token) {
 
 async function getQuote(api, exch, token) {
   const q = await api.get_quotes(exch, token);
-  if (!q || q.stat !== 'Ok') return null;
+
+  if (!q || q.stat !== 'Ok') {
+    return null;
+  }
+
+  const returnedToken =
+    q.token ||
+    q.tk ||
+    q.tokenno ||
+    null;
+
+  if (String(returnedToken) !== String(token)) {
+    return null;
+  }
+
   return q;
 }
 

@@ -399,7 +399,7 @@ function render(snapshot, lastError, paper, live) {
 
     if (isOpenLike) {
       const rawLtp = findLeg(snapshot, t.strike, t.optType)?.ltp;
-      const ltp = sanitizeTradeLtp(rawLtp, t, snapshot);
+      const ltp = rawLtp //sanitizeTradeLtp(rawLtp, t, snapshot);
       const pnl =
         typeof ltp === 'number' && typeof t.entryPrice === 'number'
           ? (ltp - t.entryPrice) * (t.qty || 1)
