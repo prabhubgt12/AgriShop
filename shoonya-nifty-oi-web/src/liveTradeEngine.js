@@ -61,6 +61,41 @@ function initialSl(entryPrice, mode) {
   return entryPrice * 0.70;
 }
 
+/**
+ * Priority 1: Time-based SL tightening.
+ *
+ * If the trade has been open for a while and never developed momentum,
+ * tighten the SL toward breakeven rather than letting it bleed the full
+ * initial 25% loss. Returns the tightened SL price (never lower than baseSl).
+ *
+ * Thresholds (all configurable via .env):
+ *   DEAD_TRADE_GRACE_MS   — how long to wait before judging (default 3 min)
+ *   DEAD_TRADE_MOMENTUM   — minimum peak/entry ratio to be considered "alive" (default 1.10)
+ *   DEAD_TRADE_SL_PCT     — tightened SL as fraction of entry (default 0.97 = -3%)
+ */
+function computeDynamicSl(trade, nowTs) {
+  const entry = trade.entryPrice;
+  const peak  = trade.peakPrice;
+  const baseSl = trade.slPrice;
+
+  if (!isNum(entry) || entry <= 0) return baseSl;
+  if (!isNum(nowTs) || !isNum(trade.entryTs)) return baseSl;
+
+  const graceMs       = parseInt(process.env.DEAD_TRADE_GRACE_MS  || '180000', 10); // 3 min
+  const momentumRatio = parseFloat(process.env.DEAD_TRADE_MOMENTUM || '1.10');
+  const tightPct      = parseFloat(process.env.DEAD_TRADE_SL_PCT   || '0.97');
+
+  const ageMs = nowTs - trade.entryTs;
+  if (ageMs < graceMs) return baseSl; // still within grace period
+
+  const gotMomentum = isNum(peak) && peak >= entry * momentumRatio;
+  if (gotMomentum) return baseSl; // trade proved itself, keep normal SL
+
+  // Dead trade: tighten SL to near breakeven
+  const tightSl = entry * tightPct;
+  return Math.max(baseSl, tightSl);
+}
+
 function updateTrailing(trade, mode, currentLtp) {
   if (!trade || trade.status !== 'OPEN' || !isNum(currentLtp)) return trade;
   const entry = trade.entryPrice;
@@ -89,7 +124,7 @@ function updatePeakOnly(trade, currentLtp) {
   return { ...trade, peakPrice: peak };
 }
 
-function shouldExit(trade, mode, currentLtp, exitStyle, targetPct, underlyingLtp) {
+function shouldExit(trade, mode, currentLtp, exitStyle, targetPct, underlyingLtp, nowTs) {
   if (!trade || trade.status !== 'OPEN' || !isNum(currentLtp)) return null;
 
   if (exitStyle === 'TARGET' && isNum(trade.entryPrice) && trade.entryPrice > 0) {
@@ -99,27 +134,76 @@ function shouldExit(trade, mode, currentLtp, exitStyle, targetPct, underlyingLtp
   }
 
   // False breakout exit for NORMAL
-  if (mode === 'NORMAL' && isNum(trade.breakoutLevel) && isNum(underlyingLtp)) {
+  /*if (mode === 'NORMAL' && isNum(trade.breakoutLevel) && isNum(underlyingLtp)) {
     const buffer = getFalseBreakoutBufferPoints();
     if (trade.optType === 'CE' && underlyingLtp < trade.breakoutLevel - buffer) {
       console.log('FALSE BREAKOUT CE', underlyingLtp, trade.breakoutLevel, 'buffer', buffer);
-      return { reason: 'FALSE_BREAKOUT' };
+      return { reason: 'FALSE_BREAKOUT', useSlMkt: true };
     }
     if (trade.optType === 'PE' && underlyingLtp > trade.breakoutLevel + buffer) {
       console.log('FALSE BREAKOUT PE', underlyingLtp, trade.breakoutLevel, 'buffer', buffer);
-      return { reason: 'FALSE_BREAKOUT' };
+      return { reason: 'FALSE_BREAKOUT', useSlMkt: true };
     }
+  }*/
+  
+  // New False breakout exit for NORMAL
+	if (
+	  mode === 'NORMAL' &&
+	  isNum(trade.breakoutLevel) &&
+	  isNum(underlyingLtp)
+	) {
+	  const ageMs = nowTs - trade.entryTs;
+
+	  // Give breakout 60 seconds to establish itself
+	  if (ageMs > 60 * 1000) {
+		const buffer = getFalseBreakoutBufferPoints();
+
+		if (
+		  trade.optType === 'CE' &&
+		  underlyingLtp < trade.breakoutLevel - buffer
+		) {
+		  console.log(
+			'FALSE BREAKOUT CE',
+			underlyingLtp,
+			trade.breakoutLevel,
+			'buffer',
+			buffer,
+			'ageMs',
+			ageMs
+		  );
+		  return { reason: 'FALSE_BREAKOUT', useSlMkt: true };
+		}
+
+		if (
+		  trade.optType === 'PE' &&
+		  underlyingLtp > trade.breakoutLevel + buffer
+		) {
+		  console.log(
+			'FALSE BREAKOUT PE',
+			underlyingLtp,
+			trade.breakoutLevel,
+			'buffer',
+			buffer,
+			'ageMs',
+			ageMs
+		  );
+		  return { reason: 'FALSE_BREAKOUT', useSlMkt: true };
+		}
+	  }
+	}
+
+  // Priority 1: apply dynamic (time-tightened) SL — may be tighter than initial SL
+  // for trades that never developed momentum after the grace period.
+  const effectiveSl = computeDynamicSl(trade, nowTs);
+  if (isNum(effectiveSl) && currentLtp <= effectiveSl) {
+    const isDynamic = isNum(trade.slPrice) && effectiveSl > trade.slPrice;
+    console.log(`SL check: effectiveSl=${effectiveSl}, baseSl=${trade.slPrice}, dynamic=${isDynamic}, ltp=${currentLtp}`);
+    return { reason: isDynamic ? 'SL_HIT_TIGHTENED' : 'SL_HIT', useSlMkt: true };
   }
 
-  if (isNum(trade.slPrice) && currentLtp <= trade.slPrice) return { reason: 'SL_HIT' };
-
-  // Same extra trail-from-peak as paper for NORMAL/EXPIRY
-  const entry = trade.entryPrice;
-  const peak = trade.peakPrice;
-  if (mode !== 'BIG_RALLY' && isNum(entry) && isNum(peak) && peak > 0) {
-    const mult = peak / entry;
-    if (mult >= 1.6 && currentLtp <= peak * 0.8) return { reason: 'TRAIL_FROM_PEAK' };
-  }
+  // NOTE: TRAIL_FROM_PEAK removed — updateTrailing already moves slPrice to
+  // peak * 0.8 at the 1.6x threshold so SL_HIT above handles it. Having both
+  // was redundant and could cause confusing double-fire.
 
   return null;
 }
@@ -512,7 +596,7 @@ async function stepLiveTrade(ctx) {
       updated.exchange = updated.exchange || 'NFO';
     }
 
-    const exit = shouldExit(updated, updated.mode, ltpNow, exitStyle, targetPct, latest.underlying?.ltp);
+    const exit = shouldExit(updated, updated.mode, ltpNow, exitStyle, targetPct, latest.underlying?.ltp, latest.ts);
     console.log(`Should exit result: ${JSON.stringify(exit)}`);
 
     if (!exit) {
@@ -557,7 +641,7 @@ async function stepLiveTrade(ctx) {
       };
     }
 
-    console.log(`Placing exit order for ${updated.tsym}, qty=${updated.qty}, reason=${exit.reason}, orderLtp=${orderLtp}`);
+    console.log(`Placing exit order for ${updated.tsym}, qty=${updated.qty}, reason=${exit.reason}, orderLtp=${orderLtp}, useSlMkt=${!!exit.useSlMkt}`);
 
     const exitingBeforePlace = {
       ...updated,
@@ -577,6 +661,10 @@ async function stepLiveTrade(ctx) {
         tradingsymbol: updated.tsym,
         quantity: updated.qty,
         discloseqty: 0,
+        // SL exits (SL_HIT, SL_HIT_TIGHTENED, FALSE_BREAKOUT) use SL-MKT for
+        // guaranteed fill even when price moves fast between polls.
+        // Target/trail exits use MKT (→ LMT with slippage) since price is
+        // moving in our favour and a limit order will fill fine.
         price_type: 'MKT',
         price: 0,
         trigger_price: 0,

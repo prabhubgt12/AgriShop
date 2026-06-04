@@ -570,7 +570,7 @@ function createPaperTradeState() {
     directionOverride: 'AUTO',
     selectedMode: 'AUTO',
     effectiveMode: 'NORMAL',
-    exitStyle: 'TRAILING',
+    exitStyle: 'TARGET',
     targetPct: 30,
     maxTradesPerDay: 3,
     tradesDate: null,

@@ -1,5 +1,13 @@
 /**
- * Shoonya API rejects MKT (ALGO_CHK). Convert to LMT with slippage vs LTP.
+ * Shoonya API rejects plain MKT orders (ALGO_CHK rejection).
+ *
+ * Two order types are used depending on exit reason:
+ *   MKT  → converted to LMT with slippage (for target/trail exits where price
+ *           is moving in our favour and a limit will fill fine)
+ *   SL-MKT → trigger-based market order accepted by Shoonya for SL exits.
+ *           Once the trigger price is touched the exchange converts it to a
+ *           market order — guaranteed fill regardless of how fast price moves.
+ *           Required fields: price=0, trigger_price set just below current ltp.
  */
 
 function parseNum(x) {
@@ -105,10 +113,60 @@ function apiLimitFromLtp(buyOrSell, ltp) {
   return { price_type: 'LMT', price };
 }
 
-/** Map MKT → LMT using order.ltp; pass price_type: 'MKT' at call sites for clarity. */
+/**
+ * Build a SL-MKT sell order.
+ * price must be 0. trigger_price set just below current ltp so it activates
+ * immediately if the market is already at or below the SL level.
+ * Once triggered the exchange converts it to a market order — guaranteed fill.
+ */
+function applySlMktPricing(order) {
+  const cleaned = sanitizeOptionLtp(order.ltp, {
+    entryPrice: order.entryPrice,
+    underlyingLtp: order.underlyingLtp,
+  });
+
+  if (!isNum(cleaned)) {
+    throw new Error(
+      `Valid option LTP required for SL-MKT order (refused ${order.ltp ?? 'missing'}).`,
+    );
+  }
+
+  const tick = parseNum(process.env.SHOONYA_NFO_TICK_SIZE) ?? 0.05;
+
+  // Trigger slightly below current ltp so the order activates immediately
+  // when the market is already at or through the SL level.
+  const triggerPct = parseNum(process.env.SHOONYA_SL_TRIGGER_PCT) ?? 0.5;
+  const rawTrigger = cleaned * (1 - triggerPct / 100);
+  const triggerPrice = formatPrice(roundToTick(rawTrigger, tick, 'down'), tick);
+
+  console.log(`SL-MKT pricing: ltp=${cleaned}, triggerPrice=${triggerPrice} (${triggerPct}% below)`);
+
+  const next = {
+    ...order,
+    price_type: 'SL-MKT',
+    price: 0,
+    trigger_price: triggerPrice,
+  };
+  delete next.ltp;
+  delete next.entryPrice;
+  delete next.underlyingLtp;
+  return next;
+}
+
+/**
+ * Route order pricing based on price_type:
+ *   SL-MKT → applySlMktPricing  (SL exits — guaranteed fill)
+ *   MKT    → LMT with slippage  (target/trail exits — limit is fine)
+ *   others → pass through as-is (already a LMT/SL-LMT from caller)
+ */
 function applyApiOrderPricing(order) {
   const pt = order.price_type || 'MKT';
-  if (pt !== 'MKT' && pt !== 'SL-MKT') {
+
+  // SL-MKT: trigger-based market order for SL exits
+  if (pt === 'SL-MKT') return applySlMktPricing(order);
+
+  // LMT, SL-LMT or any other explicit type — pass through unchanged
+  if (pt !== 'MKT') {
     const next = { ...order };
     delete next.ltp;
     delete next.entryPrice;
@@ -116,6 +174,7 @@ function applyApiOrderPricing(order) {
     return next;
   }
 
+  // MKT → convert to LMT with slippage
   const cleaned = sanitizeOptionLtp(order.ltp, {
     entryPrice: order.entryPrice,
     underlyingLtp: order.underlyingLtp,
