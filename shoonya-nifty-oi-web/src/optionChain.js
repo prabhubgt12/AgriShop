@@ -291,14 +291,40 @@ async function buildNiftyChainSnapshot(api, opts, prevSnapshot) {
     const ceLeg = legs.find((l) => l.strike === strike && l.type === 'CE') || null;
     const peLeg = legs.find((l) => l.strike === strike && l.type === 'PE') || null;
 
-    const ceRaw = ceLeg ? quoteMap.get(ceLeg.token) : null;
+    /*const ceRaw = ceLeg ? quoteMap.get(ceLeg.token) : null;
     const peRaw = peLeg ? quoteMap.get(peLeg.token) : null;
 
     const ceNow = ceRaw ? extractQuoteFields(ceRaw) : null;
     const peNow = peRaw ? extractQuoteFields(peRaw) : null;
 
     const cePrev = ceLeg ? prevMap.get(ceLeg.token) : null;
-    const pePrev = peLeg ? prevMap.get(peLeg.token) : null;
+    const pePrev = peLeg ? prevMap.get(peLeg.token) : null;*/
+	
+	const ceRaw = ceLeg ? quoteMap.get(ceLeg.token) : null;
+	const peRaw = peLeg ? quoteMap.get(peLeg.token) : null;
+
+	const cePrev = ceLeg ? prevMap.get(ceLeg.token) : null;
+	const pePrev = peLeg ? prevMap.get(peLeg.token) : null;
+
+	const ceNow = ceRaw
+	  ? extractQuoteFields(ceRaw)
+	  : cePrev
+		? {
+			ltp: cePrev.ltp,
+			oi: cePrev.oi,
+			vol: cePrev.vol,
+		  }
+		: null;
+
+	const peNow = peRaw
+	  ? extractQuoteFields(peRaw)
+	  : pePrev
+		? {
+			ltp: pePrev.ltp,
+			oi: pePrev.oi,
+			vol: pePrev.vol,
+		  }
+		: null;
 
     const ceDelta = computeDelta(ceNow, cePrev);
     const peDelta = computeDelta(peNow, pePrev);
