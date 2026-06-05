@@ -108,6 +108,14 @@ async function getQuote(api, exch, token) {
     null;
 
   if (String(returnedToken) !== String(token)) {
+	 console.log(
+      'TOKEN_MISMATCH',
+      'requested=', token,
+      'returned=', returnedToken,
+      'tsym=', q?.tsym,
+      'lp=', q?.lp,
+      'exch=', exch
+    );
     return null;
   }
 

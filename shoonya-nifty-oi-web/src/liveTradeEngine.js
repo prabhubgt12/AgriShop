@@ -106,13 +106,29 @@ function updateTrailing(trade, mode, currentLtp) {
   const mult = currentLtp / entry;
 
   if (mode === 'BIG_RALLY') {
-    if (mult >= 2) sl = Math.max(sl, entry);
-    if (mult >= 3) sl = Math.max(sl, peak * 0.5);
-    if (mult >= 5) sl = Math.max(sl, peak * 0.6);
-    if (mult >= 10) sl = Math.max(sl, peak * 0.7);
+    // Wide gaps — violent moves need room to breathe.
+    // Earlier breakeven at 1.5× vs old 2× to protect against sharp reversals.
+    if (mult >= 1.5) sl = Math.max(sl, entry);            // breakeven lock (earlier than before)
+    if (mult >= 2)   sl = Math.max(sl, entry);            // keep existing step
+    if (mult >= 3)   sl = Math.max(sl, peak * 0.5);       // 50% gap
+    if (mult >= 5)   sl = Math.max(sl, peak * 0.6);       // 40% gap
+    if (mult >= 10)  sl = Math.max(sl, peak * 0.7);       // 30% gap
+  } else if (mode === 'EXPIRY') {
+    // 0DTE ATM options — faster breakeven needed due to theta decay.
+    // Trail tightens progressively as profit grows (opposite of old paper logic).
+    if (mult >= 1.20) sl = Math.max(sl, entry);           // breakeven at 20% (earlier than NORMAL)
+    if (mult >= 1.35) sl = Math.max(sl, peak * 0.88);     // 12% gap
+    if (mult >= 1.60) sl = Math.max(sl, peak * 0.90);     // tighten to 10% gap
+    if (mult >= 2.00) sl = Math.max(sl, peak * 0.92);     // tighten to 8% gap
   } else {
-    if (mult >= 1.3) sl = Math.max(sl, entry);
-    if (mult >= 1.6) sl = Math.max(sl, peak * 0.8);
+    // NORMAL — progressive trailing that tightens as profit grows.
+    // Each step uses peak (not currentLtp) so SL only moves up, never down.
+    if (mult >= 1.3) sl = Math.max(sl, entry);            // breakeven lock
+    if (mult >= 1.4) sl = Math.max(sl, peak * 0.83);      // protect ~11% if peak=140
+    if (mult >= 1.5) sl = Math.max(sl, peak * 0.85);      // protect ~17% if peak=150
+    if (mult >= 1.8) sl = Math.max(sl, peak * 0.88);      // protect ~36% if peak=180
+    if (mult >= 2.5) sl = Math.max(sl, peak * 0.90);      // protect ~125% if peak=250
+    if (mult >= 4.0) sl = Math.max(sl, peak * 0.92);      // protect ~268% if peak=400
   }
 
   return { ...trade, peakPrice: peak, slPrice: sl };
@@ -144,9 +160,8 @@ function shouldExit(trade, mode, currentLtp, exitStyle, targetPct, underlyingLtp
       console.log('FALSE BREAKOUT PE', underlyingLtp, trade.breakoutLevel, 'buffer', buffer);
       return { reason: 'FALSE_BREAKOUT', useSlMkt: true };
     }
-  }*/
-  
-  // New False breakout exit for NORMAL
+  }
+   // New False breakout exit for NORMAL
 	if (
 	  mode === 'NORMAL' &&
 	  isNum(trade.breakoutLevel) &&
@@ -191,7 +206,8 @@ function shouldExit(trade, mode, currentLtp, exitStyle, targetPct, underlyingLtp
 		}
 	  }
 	}
-
+  */
+// New False breakout exit for NORMAL
   // Priority 1: apply dynamic (time-tightened) SL — may be tighter than initial SL
   // for trades that never developed momentum after the grace period.
   const effectiveSl = computeDynamicSl(trade, nowTs);

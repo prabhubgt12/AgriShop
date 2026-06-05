@@ -765,7 +765,7 @@ app.post('/api/paper/exit-config', (req, res) => {
 
   const targetPctRaw = req.body ? req.body.targetPct : undefined;
   const targetPctNum = typeof targetPctRaw === 'number' ? targetPctRaw : Number(targetPctRaw);
-  const targetPct = Number.isFinite(targetPctNum) ? Math.max(20, Math.min(100, Math.round(targetPctNum))) : state.paper.targetPct;
+  const targetPct = Number.isFinite(targetPctNum) ? Math.max(5, Math.min(100, Math.round(targetPctNum))) : state.paper.targetPct;
 
   state.paper.exitStyle = exitStyle;
   state.paper.targetPct = targetPct;
@@ -1105,6 +1105,31 @@ app.get('/api/debug/call', async (req, res) => {
     res.json({ ok: true, reply });
   } catch (e) {
     res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
+  }
+});
+
+app.get('/api/debug/quote/:token', async (req, res) => {
+  try {
+    if (!state.loggedIn) {
+      return res.status(401).json({
+        ok: false,
+        error: 'Not logged in'
+      });
+    }
+
+    const token = req.params.token;
+    const q = await state.client.get_quotes('NFO', token);
+
+    res.json({
+      ok: true,
+      requestedToken: token,
+      response: q
+    });
+  } catch (e) {
+    res.status(500).json({
+      ok: false,
+      error: e && e.message ? e.message : String(e)
+    });
   }
 });
 
