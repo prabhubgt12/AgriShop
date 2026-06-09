@@ -49,6 +49,9 @@ const lotsInput = document.getElementById('lotsInput');
 const qtyPerLotInput = document.getElementById('qtyPerLotInput');
 const productTypeInput = document.getElementById('productTypeInput');
 const armLiveBtn = document.getElementById('armLiveBtn');
+const amountInput = document.getElementById('amountInput');
+const calcLotsBtn = document.getElementById('calcLotsBtn');
+const amountHint = document.getElementById('amountHint');
 
 const directionSel = document.getElementById('directionSel');
 
@@ -755,6 +758,61 @@ armLiveBtn?.addEventListener('click', async () => {
     elError.textContent = e && e.message ? e.message : String(e);
   }
 });
+
+// ── Amount → Lots calculator (client-side only) ──────────────────────────────
+// Uses the ATM option LTP from the chain table to estimate lots.
+// Formula: lots = floor(amount / (ltp * qtyPerLot)), minimum 1.
+function calcLotsFromAmount() {
+  const amount = Number(amountInput?.value);
+  if (!amount || amount <= 0) {
+    if (amountHint) amountHint.textContent = '-';
+    return;
+  }
+
+  // Read ATM LTP from the highlighted row in the chain table (CE or PE, lower of two)
+  let ltp = null;
+  const highlightRow = document.querySelector('#chainTable tbody tr.highlight');
+  if (highlightRow) {
+    const cells = highlightRow.querySelectorAll('td');
+    const ceLtp = parseFloat((cells[1]?.textContent || '').replace(/,/g, ''));
+    const peLtp = parseFloat((cells[6]?.textContent || '').replace(/,/g, ''));
+    const valid = [ceLtp, peLtp].filter(x => Number.isFinite(x) && x > 0);
+    if (valid.length) ltp = Math.min(...valid);
+  }
+
+  if (!ltp || ltp <= 0) {
+    if (amountHint) amountHint.textContent = 'No LTP yet';
+    return;
+  }
+
+  const qpl = qtyPerLotInput ? Math.max(1, Number(qtyPerLotInput.value) || 65) : 65;
+  const MAX_QTY = 1800; // Shoonya single-order limit
+  const maxLots = Math.floor(MAX_QTY / qpl); // e.g. 27 for qpl=65 -> 1755 qty
+  const rawLots = Math.max(1, Math.floor(amount / (ltp * qpl)));
+  const capped = rawLots > maxLots;
+  const lots = capped ? maxLots : rawLots;
+  const approxCost = lots * ltp * qpl;
+
+  const cappedNote = capped ? ` ⚠ capped at ${maxLots} lots (max ${lots * qpl} qty)` : '';
+  if (amountHint) amountHint.textContent = `~${lots} lot${lots > 1 ? 's' : ''} (₹${Math.round(approxCost).toLocaleString('en-IN')})${cappedNote}`;
+
+  // Auto-fill lots and units qty fields
+  if (lotsInput) lotsInput.value = String(lots);
+  if (orderQtyInput) orderQtyInput.value = String(lots * qpl);
+}
+
+amountInput?.addEventListener('input', calcLotsFromAmount);
+
+calcLotsBtn?.addEventListener('click', async () => {
+  try {
+    calcLotsFromAmount();
+    await postOrderConfig(collectOrderConfigPayload());
+    await refresh();
+  } catch (e) {
+    elError.textContent = e && e.message ? e.message : String(e);
+  }
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 directionSel?.addEventListener('change', async () => {
   try {

@@ -105,6 +105,12 @@
           <input id="qtyPerLotInput" type="number" min="1" max="5000" step="1" class="secondary" style="flex: 1;" />
         </div>
         <div class="loginRow" style="margin-top: 10px; align-items: center;">
+          <div class="k" style="min-width: 70px;">Amount ₹</div>
+          <input id="amountInput" type="number" min="0" step="1000" placeholder="e.g. 10000" class="secondary" style="flex: 2;" />
+          <button id="calcLotsBtn" class="secondary" style="flex: 1; margin-left: 6px;">Calc Lots</button>
+          <div id="amountHint" class="v" style="min-width: 80px; text-align: right; font-size: 0.85em; color: #aaa;">-</div>
+        </div>
+        <div class="loginRow" style="margin-top: 10px; align-items: center;">
           <div class="k" style="min-width: 70px;">Dir</div>
           <select id="directionSel" class="secondary" style="flex: 1;">
             <option value="AUTO">AUTO</option>
