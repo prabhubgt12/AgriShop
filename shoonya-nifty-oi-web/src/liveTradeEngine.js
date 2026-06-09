@@ -53,12 +53,22 @@ function repairCorruptedPeak(trade, underlyingLtp) {
   };
 }
 
-function initialSl(entryPrice, mode) {
+/*function initialSl(entryPrice, mode) {
   if (!isNum(entryPrice) || entryPrice <= 0) return null;
   if (mode === 'EXPIRY') return entryPrice * 0.75;
   if (mode === 'NORMAL') return entryPrice * 0.75;
   if (mode === 'BIG_RALLY') return entryPrice * 0.60;
   return entryPrice * 0.70;
+}*/
+
+function initialSl(entryPrice, mode) {
+  if (!isNum(entryPrice) || entryPrice <= 0) return null;
+  const pct = {
+    EXPIRY:    parseFloat(process.env.SL_PCT_EXPIRY    || '0.60'),  // 40% loss
+    NORMAL:    parseFloat(process.env.SL_PCT_NORMAL    || '0.75'),  // 25% loss
+    BIG_RALLY: parseFloat(process.env.SL_PCT_BIG_RALLY || '0.60'),  // 40% loss
+  }[mode] ?? parseFloat(process.env.SL_PCT_DEFAULT || '0.70');
+  return entryPrice * pct;
 }
 
 /**
@@ -207,13 +217,16 @@ function shouldExit(trade, mode, currentLtp, exitStyle, targetPct, underlyingLtp
 	  }
 	}
   */
-// New False breakout exit for NORMAL
-  // Priority 1: apply dynamic (time-tightened) SL — may be tighter than initial SL
-  // for trades that never developed momentum after the grace period.
-  const effectiveSl = computeDynamicSl(trade, nowTs);
+  // Dynamic (time-tightened) SL — NORMAL mode only.
+  // EXPIRY: options recover fast (tightened SL fired prematurely in practice).
+  // BIG_RALLY: expects 2x-10x moves; -3% tightened SL fires on normal fluctuation.
+  // Both modes rely on initial SL + updateTrailing only.
+  const effectiveSl = (mode === 'NORMAL')
+    ? computeDynamicSl(trade, nowTs)
+    : trade.slPrice;
   if (isNum(effectiveSl) && currentLtp <= effectiveSl) {
-    const isDynamic = isNum(trade.slPrice) && effectiveSl > trade.slPrice;
-    console.log(`SL check: effectiveSl=${effectiveSl}, baseSl=${trade.slPrice}, dynamic=${isDynamic}, ltp=${currentLtp}`);
+    const isDynamic = mode === 'NORMAL' && isNum(trade.slPrice) && effectiveSl > trade.slPrice;
+    console.log(`SL check: mode=${mode}, effectiveSl=${effectiveSl}, baseSl=${trade.slPrice}, dynamic=${isDynamic}, ltp=${currentLtp}`);
     return { reason: isDynamic ? 'SL_HIT_TIGHTENED' : 'SL_HIT', useSlMkt: true };
   }
 

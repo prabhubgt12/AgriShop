@@ -182,7 +182,10 @@ function shouldEnter(history, mode, state) {
   if (!isNum(nowTs)) return { ok: false, reasons: ['Snapshot timestamp missing'] };
 
   // Percent-change based checks from the chat notes.
-  const lookbackMs = mode === 'EXPIRY' ? 5 * 60_000 : 5 * 60_000;
+  //const lookbackMs = mode === 'EXPIRY' ? 5 * 60_000 : 5 * 60_000;
+  const lookbackMs = mode === 'EXPIRY'
+  ? parseInt(process.env.ENTRY_LOOKBACK_EXPIRY_SEC  || '120', 10) * 1000  // default 2 min
+  : parseInt(process.env.ENTRY_LOOKBACK_BIG_RALLY_SEC || '600', 10) * 1000; // default 10 min (BIG_RALLY already uses past10 separately)
   const pastSnap = pickSnapshotAtOrBefore(history, nowTs - lookbackMs);
 
   const { direction, reasons: dirReasons } = computeDirectionSignal(history, mode, state);
@@ -284,10 +287,10 @@ function shouldEnter(history, mode, state) {
 
   // Entry thresholds from notes
   if (mode === 'EXPIRY') {
-    // Require ~30% move in 5 min
+    const threshold = parseFloat(process.env.ENTRY_CHG_EXPIRY || '0.20'); // default 20%
     if (chg === null) return { ok: false, reasons: [...reasons, 'Not enough data for 5-min price change'] };
-    if (chg >= 0.3) return { ok: true, direction, inst, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% >= 30%`] };
-    return { ok: false, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% < 30%`] };
+    if (chg >= threshold) return { ok: true, direction, inst, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% >= ${(threshold * 100).toFixed(0)}%`] };
+    return { ok: false, reasons: [...reasons, `5m change ${(chg * 100).toFixed(1)}% < ${(threshold * 100).toFixed(0)}%`] };
   }
 
   if (mode === 'BIG_RALLY') {
@@ -419,10 +422,12 @@ function maybeExit(trade, mode, currentLtp, underlyingLtp, exitCfg) {
 
 function initialSl(entryPrice, mode) {
   if (!isNum(entryPrice) || entryPrice <= 0) return null;
-  if (mode === 'EXPIRY') return entryPrice * 0.75; // ~25%
-  if (mode === 'NORMAL') return entryPrice * 0.75; // ~25%
-  if (mode === 'BIG_RALLY') return entryPrice * 0.60; // looser
-  return entryPrice * 0.70;
+  const pct = {
+    EXPIRY:    parseFloat(process.env.SL_PCT_EXPIRY    || '0.60'), // 40% loss
+    NORMAL:    parseFloat(process.env.SL_PCT_NORMAL    || '0.75'), // 25% loss
+    BIG_RALLY: parseFloat(process.env.SL_PCT_BIG_RALLY || '0.60'), // 40% loss
+  }[mode] ?? parseFloat(process.env.SL_PCT_DEFAULT || '0.70');
+  return entryPrice * pct;
 }
 
 function stepPaperTrade(state, snapshotHistory, selectedMode) {
