@@ -719,6 +719,7 @@ app.post('/api/paper/order-config', (req, res) => {
   state.paper.qtyPerLot = qtyPerLot;
   state.paper.orderQty = effectiveQty;
   state.paper.productType = normalizeProductType(productRaw);
+  state.paper.amount = Number(body.amount) || 0;
   res.json({ ok: true, paper: state.paper });
 });
 
