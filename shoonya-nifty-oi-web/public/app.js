@@ -1,6 +1,8 @@
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
 const refreshBtn = document.getElementById('refreshBtn');
+const elTradeQty = document.getElementById('tradeQty');
+const elTradeCapital = document.getElementById('tradeCapital');
 
 const authCodeInput = document.getElementById('authCodeInput');
 const autoLoginBtn = document.getElementById('autoLoginBtn');
@@ -409,6 +411,19 @@ function render(snapshot, lastError, paper, live) {
           ? (ltp - t.entryPrice) * (t.qty || 1)
           : null;
 
+	  const qty = Number(t.qty || 0);
+	  const capital = Number(t.entryPrice || 0) * qty;
+
+	  if (elTradeQty) {
+	    elTradeQty.textContent = qty > 0
+		  ? qty.toLocaleString('en-IN')
+		  : '-';
+	  }
+	  if (elTradeCapital) {
+		elTradeCapital.textContent = capital > 0
+		  ? `₹${Math.round(capital).toLocaleString('en-IN')}`
+		  : '-';
+	  }
       elTradeInstrument.textContent = `${t.strike} ${t.optType} (${t.status})`;
       elTradeEntry.textContent =
         t.entryPrice == null
@@ -464,7 +479,20 @@ function render(snapshot, lastError, paper, live) {
       if (typeof t.pnl === 'number' && t.pnl > 0) elTradePnl.classList.add('pnlPos');
       else if (typeof t.pnl === 'number' && t.pnl < 0) elTradePnl.classList.add('pnlNeg');
       else elTradePnl.classList.add('pnlZero');
+	  const qty = Number(t.qty || 0);
+	  const capital = Number(t.entryPrice || 0) * qty;
 
+		if (elTradeQty) {
+		  elTradeQty.textContent = qty > 0
+			? qty.toLocaleString('en-IN')
+			: '-';
+		}
+
+		if (elTradeCapital) {
+		  elTradeCapital.textContent = capital > 0
+			? `₹${Math.round(capital).toLocaleString('en-IN')}`
+			: '-';
+		}
       if (t.exitReason) {
         elTradeNote.innerHTML = `<div><b>Exit reason</b>: ${formatExitReason(t.exitReason)}</div>`;
         if (paper.tradeMode === 'LIVE' && live?.lastDecision?.reasons?.length > 1) {
@@ -512,6 +540,8 @@ function render(snapshot, lastError, paper, live) {
     if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = '-';
     if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = '-';
     elTradePnl.textContent = '-';
+	if (elTradeQty) elTradeQty.textContent = '-';
+	if (elTradeCapital) elTradeCapital.textContent = '-';
     elTradeUpdated.textContent = '-';
     elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');
     elTradeNote.innerHTML = '';
@@ -778,7 +808,7 @@ function calcLotsFromAmount() {
     const ceLtp = parseFloat((cells[1]?.textContent || '').replace(/,/g, ''));
     const peLtp = parseFloat((cells[6]?.textContent || '').replace(/,/g, ''));
     const valid = [ceLtp, peLtp].filter(x => Number.isFinite(x) && x > 0);
-    if (valid.length) ltp = Math.min(...valid);
+    if (valid.length) ltp = Math.max(...valid);
   }
 
   if (!ltp || ltp <= 0) {
