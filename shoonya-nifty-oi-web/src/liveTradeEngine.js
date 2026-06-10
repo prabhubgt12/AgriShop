@@ -783,8 +783,16 @@ async function stepLiveTrade(ctx) {
   }
 
   const buyOrSell = 'B';
-  const qty = typeof paper.orderQty === 'number' ? paper.orderQty : Number(paper.orderQty);
-  const quantity = Number.isFinite(qty) ? qty : 1;
+  let quantity;
+  const amount = Number(paper.amount);
+  if (amount > 0) {
+    const lotSize = Number(paper.qtyPerLot) || 65;
+    const lots = Math.max(1, Math.floor(amount / (entryLtp * lotSize)));
+    quantity = lots * lotSize;
+  } else {
+    const qty = typeof paper.orderQty === 'number' ? paper.orderQty : Number(paper.orderQty);
+    quantity = Number.isFinite(qty) ? qty : 1;
+  }
   const productType = typeof paper.productType === 'string' ? paper.productType : 'M';
 
   let entryPayload;

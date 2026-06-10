@@ -550,7 +550,15 @@ function stepPaperTrade(state, snapshotHistory, selectedMode) {
         ? latest?.candle5m?.high ?? latest?.underlying?.ltp
         : latest?.candle5m?.low ?? latest?.underlying?.ltp),
     breakoutSource: entryCheck?.breakoutSource || '5M_CANDLE',
-    qty: normalizeOrderQty(state.orderQty),
+    qty: (() => {
+      const amount = Number(state.amount);
+      if (amount > 0) {
+        const lotSize = Number(state.qtyPerLot) || 65;
+        const lots = Math.max(1, Math.floor(amount / (entryPrice * lotSize)));
+        return lots * lotSize;
+      }
+      return normalizeOrderQty(state.orderQty);
+    })(),
     entryPrice,
     entryTs: latest.ts,
     peakPrice: entryPrice,
@@ -584,6 +592,7 @@ function createPaperTradeState() {
     lots: 1,
     qtyPerLot: 65,
     orderQty: 1,
+    amount: 0,
     directionOverride: 'AUTO',
     selectedMode: 'AUTO',
     effectiveMode: 'NORMAL',
