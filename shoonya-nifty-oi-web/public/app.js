@@ -225,6 +225,7 @@ function formatExitReason(reason) {
     TRAIL_FROM_PEAK: 'Trail from peak (gave back profit)',
     EXIT_FILLED: 'Exit order filled',
     FORCED_EXIT: 'Manual force exit',
+    FORCE_EXIT_EOD: 'Auto exit — outside trading hours',
     RECONCILED_NO_POSITION: 'Closed — no open position at broker',
   };
   if (labels[reason]) return labels[reason];
