@@ -4,7 +4,7 @@ const {
   optionLtpFromSnapshot,
   resolveOrderLtp,
 } = require('./orderPricing');
-const { getFalseBreakoutBufferPoints } = require('./tradeConfig');
+const { getFalseBreakoutBufferPoints, getTimeRestriction } = require('./tradeConfig');
 const { normalizeNorenList, matchOrderNo, orderStatusUpper, confirmOrderFill } = require('./norenApi');
 
 function isNum(x) {
@@ -152,6 +152,10 @@ function updatePeakOnly(trade, currentLtp) {
 
 function shouldExit(trade, mode, currentLtp, exitStyle, targetPct, underlyingLtp, nowTs) {
   if (!trade || trade.status !== 'OPEN' || !isNum(currentLtp)) return null;
+
+  // Force exit if outside allowed trading hours (configurable, default off)
+  const { forceExit } = getTimeRestriction(nowTs);
+  if (forceExit) return { reason: 'FORCE_EXIT_EOD', useSlMkt: true };
 
   if (exitStyle === 'TARGET' && isNum(trade.entryPrice) && trade.entryPrice > 0) {
     const targetPrice = trade.entryPrice * (1 + targetPct / 100);

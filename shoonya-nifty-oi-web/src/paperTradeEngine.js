@@ -1,4 +1,4 @@
-const { getFalseBreakoutBufferPoints } = require('./tradeConfig');
+const { getFalseBreakoutBufferPoints, getTimeRestriction } = require('./tradeConfig');
 const { sanitizeOptionLtp } = require('./orderPricing');
 
 function isNum(x) {
@@ -180,6 +180,14 @@ function shouldEnter(history, mode, state) {
   const latest = history[history.length - 1];
   const nowTs = latest?.ts;
   if (!isNum(nowTs)) return { ok: false, reasons: ['Snapshot timestamp missing'] };
+
+  // Time-based entry restriction — all modes, all days
+  const { blockEntry, istMins } = getTimeRestriction(nowTs);
+  if (blockEntry) {
+    const hh = String(Math.floor(istMins / 60)).padStart(2, '0');
+    const mm = String(istMins % 60).padStart(2, '0');
+    return { ok: false, reasons: [`No entries outside market hours (IST ${hh}:${mm}) — allowed ${process.env.TRADE_ENTRY_START_HHMM || '0930'}–${process.env.TRADE_ENTRY_END_HHMM || '1500'}`] };
+  }
 
   // Percent-change based checks from the chat notes.
   //const lookbackMs = mode === 'EXPIRY' ? 5 * 60_000 : 5 * 60_000;
@@ -379,8 +387,12 @@ function updatePeakOnly(trade, currentLtp) {
   return { ...trade, peakPrice: peak };
 }
 
-function maybeExit(trade, mode, currentLtp, underlyingLtp, exitCfg) {
+function maybeExit(trade, mode, currentLtp, underlyingLtp, exitCfg, nowTs) {
   if (!trade || trade.status !== 'OPEN' || !isNum(currentLtp)) return null;
+
+  // Force exit if outside allowed trading hours (configurable, default off)
+  const { forceExit } = getTimeRestriction(nowTs);
+  if (forceExit) return { reason: 'FORCE_EXIT_EOD' };
 
   const exitStyle = normalizeExitStyle(exitCfg?.exitStyle || 'TRAILING');
   const targetPct = normalizeTargetPct(exitCfg?.targetPct);
@@ -461,7 +473,7 @@ function stepPaperTrade(state, snapshotHistory, selectedMode) {
     const updated = exitStyle === 'TRAILING'
       ? updateTrailing(currentTrade, mode, ltpNow)
       : updatePeakOnly(currentTrade, ltpNow);
-    const exit = maybeExit(updated, mode, ltpNow, latest.underlying?.ltp, { exitStyle: state.exitStyle, targetPct: state.targetPct });
+    const exit = maybeExit(updated, mode, ltpNow, latest.underlying?.ltp, { exitStyle: state.exitStyle, targetPct: state.targetPct }, latest.ts);
 
     if (exit) {
       const exitPrice = isNum(ltpNow) ? ltpNow : updated.entryPrice;
