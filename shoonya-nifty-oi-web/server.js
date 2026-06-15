@@ -443,11 +443,11 @@ async function updateOnce() {
     state.snapshotHistory = state.snapshotHistory.slice(-maxKeep);
   }
  
-  snapshot.suggestion = computeSuggestion(state.snapshotHistory, {
-    windowMs: Math.max(1, windowSeconds) * 1000,
-    widthStrikes: 4,
-    minScore: 2,
-  });
+ snapshot.suggestion = computeSuggestion(state.snapshotHistory, {
+  windowMs: Math.max(1, windowSeconds) * 1000,
+  widthStrikes: 4,
+  minScore: parseFloat(process.env.SUGGESTION_MIN_SCORE || '4'),
+});
 
   // Update TPS 5m candle cache (once per minute) and attach last completed candle HL to snapshot
   const underToken = snapshot && snapshot.underlying ? snapshot.underlying.token : null;
