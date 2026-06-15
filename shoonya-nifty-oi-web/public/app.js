@@ -12,6 +12,26 @@ const loginStatus = document.getElementById('loginStatus');
 
 const elSuggestion = document.getElementById('suggestion');
 const elConfidence = document.getElementById('confidence');
+
+// ── Suggestion stability buffer ───────────────────────────────────────────────
+// Only update displayed suggestion after CONFIRM consecutive polls agree.
+// Prevents BUY_CE → NEUTRAL → BUY_PE flicker on every 2s poll.
+const _sugBuf = { values: [], lastStable: '-', lastStableConfidence: 0 };
+const SUGGEST_CONFIRM_POLLS = 3; // 3 polls × 2s = 6s hold
+function getStableSuggestion(action, confidence) {
+  const val = action || 'NO_TRADE';
+  _sugBuf.values.push({ val, confidence: confidence || 0 });
+  if (_sugBuf.values.length > SUGGEST_CONFIRM_POLLS)
+    _sugBuf.values.shift();
+  const full = _sugBuf.values.length === SUGGEST_CONFIRM_POLLS;
+  const allSame = full && _sugBuf.values.every(v => v.val === _sugBuf.values[0].val);
+  if (allSame) {
+    _sugBuf.lastStable = _sugBuf.values[0].val;
+    _sugBuf.lastStableConfidence = _sugBuf.values[0].confidence;
+  }
+  return { action: _sugBuf.lastStable, confidence: _sugBuf.lastStableConfidence };
+}
+// ─────────────────────────────────────────────────────────────────────────────
 const elSnapshotMeta = document.getElementById('snapshotMeta');
 const elTradeMode = document.getElementById('tradeMode');
 const elTradeInstrument = document.getElementById('tradeInstrument');
@@ -374,8 +394,10 @@ function render(snapshot, lastError, paper, live) {
     paper?.tradeMode === 'LIVE' ? live?.lastDecision : paper?.lastDecision;
 
   const sug = snapshot?.suggestion;
-  elSuggestion.textContent = sug?.action || '-';
-  elConfidence.textContent = sug ? `Confidence: ${fmtNum(sug.confidence)}` : '-';
+  const stableSug = getStableSuggestion(sug?.action, sug?.confidence);
+  const dOiLabel = sug && !sug.dOiActive ? ' (static OI)' : '';
+  elSuggestion.textContent = (stableSug.action || '-') + dOiLabel;
+  elConfidence.textContent = sug ? `Confidence: ${fmtNum(stableSug.confidence)}` : '-';
   if (sug && sug.window) {
     elSnapshotMeta.textContent = `Updated: ${fmtTime(snapshot?.ts)} • Window: ${fmtNum(sug.window.count)} snaps (${fmtTime(sug.window.fromTs)} - ${fmtTime(sug.window.toTs)})`;
   } else {
@@ -516,6 +538,8 @@ function render(snapshot, lastError, paper, live) {
       if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = '-';
       if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = '-';
       elTradePnl.textContent = '-';
+	  elTradeQty.textContent = '-';
+	  elTradeCapital.textContent = '-';
       elTradeUpdated.textContent = '-';
       elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');
 
@@ -540,6 +564,8 @@ function render(snapshot, lastError, paper, live) {
     if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = '-';
     if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = '-';
     elTradePnl.textContent = '-';
+	elTradeQty.textContent = '-';
+	elTradeCapital.textContent = '-';
 	if (elTradeQty) elTradeQty.textContent = '-';
 	if (elTradeCapital) elTradeCapital.textContent = '-';
     elTradeUpdated.textContent = '-';
@@ -1075,5 +1101,5 @@ function formatDateTime(d) {
   await refresh();
   setInterval(() => {
     refresh().catch((e) => console.error('poll refresh:', e));
-  }, 5000);
+  }, 2000);
 })();
