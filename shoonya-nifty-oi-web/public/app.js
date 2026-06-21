@@ -108,7 +108,8 @@ function collectOrderConfigPayload() {
   const lots = lotsInput ? Number(lotsInput.value) : 1;
   const qtyPerLot = qtyPerLotInput ? Number(qtyPerLotInput.value) : 50;
   const productType = productTypeInput ? productTypeInput.value : 'M';
-  return { qtyMode, orderQty, lots, qtyPerLot, productType };
+  const amount = amountInput ? Number(amountInput.value) || 0 : 0;
+  return { qtyMode, orderQty, lots, qtyPerLot, productType, amount };
 }
 
 async function postDirection(direction) {
@@ -538,8 +539,8 @@ function render(snapshot, lastError, paper, live) {
       if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = '-';
       if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = '-';
       elTradePnl.textContent = '-';
-	  elTradeQty.textContent = '-';
-	  elTradeCapital.textContent = '-';
+      if (elTradeQty) elTradeQty.textContent = '-';
+      if (elTradeCapital) elTradeCapital.textContent = '-';
       elTradeUpdated.textContent = '-';
       elTradePnl.classList.remove('pnlPos', 'pnlNeg', 'pnlZero');
 
@@ -560,12 +561,12 @@ function render(snapshot, lastError, paper, live) {
     elTradeEntry.textContent = '-';
     if (elTradeLtp) elTradeLtp.textContent = '-';
     elTradePeak.textContent = '-';
+    if (elTradeQty) elTradeQty.textContent = '-';
+    if (elTradeCapital) elTradeCapital.textContent = '-';
     elTradeSl.textContent = '-';
     if (elTradeBreakoutLevel) elTradeBreakoutLevel.textContent = '-';
     if (elTradeBreakoutSource) elTradeBreakoutSource.textContent = '-';
     elTradePnl.textContent = '-';
-	elTradeQty.textContent = '-';
-	elTradeCapital.textContent = '-';
 	if (elTradeQty) elTradeQty.textContent = '-';
 	if (elTradeCapital) elTradeCapital.textContent = '-';
     elTradeUpdated.textContent = '-';

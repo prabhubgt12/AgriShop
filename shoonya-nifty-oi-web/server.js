@@ -426,10 +426,29 @@ async function maybeUpdateTps5m(api, token) {
 async function updateOnce() {
   if (!state.loggedIn) throw new Error('Not logged in. Click Login in the dashboard.');
  
+  // Pick a snapshot from ~DOI_DELTA_WINDOW_SEC ago (default 30s) for ΔOI/ΔLTP/ΔVol calc.
+  // OI updates slower than the poll interval, so a longer-window delta is more meaningful
+  // than comparing against the immediately-previous (2s) snapshot.
+  const doiDeltaWindowMs = parseInt(process.env.DOI_DELTA_WINDOW_SEC || '30', 10) * 1000;
+  let deltaSnapshot = null;
+  if (Array.isArray(state.snapshotHistory) && state.snapshotHistory.length > 0) {
+    const nowTs = Date.now();
+    const cutoff = nowTs - doiDeltaWindowMs;
+    for (let i = state.snapshotHistory.length - 1; i >= 0; i -= 1) {
+      const s = state.snapshotHistory[i];
+      if (s && typeof s.ts === 'number' && s.ts <= cutoff) {
+        deltaSnapshot = s;
+        break;
+      }
+    }
+    // If no snapshot is old enough yet, fall back to the oldest available
+    if (!deltaSnapshot) deltaSnapshot = state.snapshotHistory[0];
+  }
+
   const snapshot = await buildNiftyChainSnapshot(state.client, {
     strikeStep: parseInt(process.env.STRIKE_STEP || '50', 10),
     strikesEachSide: parseInt(process.env.STRIKES_EACH_SIDE || '8', 10),
-  }, state.lastSnapshot);
+  }, state.lastSnapshot, deltaSnapshot);
  
   // Maintain history for window-based suggestion
   state.snapshotHistory.push(snapshot);
@@ -766,7 +785,7 @@ app.post('/api/paper/exit-config', (req, res) => {
 
   const targetPctRaw = req.body ? req.body.targetPct : undefined;
   const targetPctNum = typeof targetPctRaw === 'number' ? targetPctRaw : Number(targetPctRaw);
-  const targetPct = Number.isFinite(targetPctNum) ? Math.max(5, Math.min(100, Math.round(targetPctNum))) : state.paper.targetPct;
+  const targetPct = Number.isFinite(targetPctNum) ? Math.max(2, Math.min(100, Math.round(targetPctNum))) : state.paper.targetPct;
 
   state.paper.exitStyle = exitStyle;
   state.paper.targetPct = targetPct;
@@ -830,15 +849,25 @@ app.post('/api/paper/force-enter', (_req, res) => {
           return;
         }
 
-        const qty = typeof state.paper.orderQty === 'number' ? state.paper.orderQty : Number(state.paper.orderQty);
-        const quantity = Number.isFinite(qty) ? qty : 1;
-        const productType = typeof state.paper.productType === 'string' ? state.paper.productType : 'M';
-
         const entryOrderLtp = resolveOrderLtp(latest, { tsym: tradingsymbol, strike: inst.strike, optType: inst.type }, latest.underlying?.ltp);
         if (entryOrderLtp == null) {
           res.status(400).json({ ok: false, error: 'Valid option LTP missing for entry order.', paper: state.paper });
           return;
         }
+
+        // Recalculate qty from amount using actual entry LTP (same as auto-entry in liveTradeEngine).
+        // Avoids stale client-calculated qty from a different LTP at the time amount was entered.
+        let quantity;
+        const amount = Number(state.paper.amount);
+        if (amount > 0) {
+          const lotSize = Number(state.paper.qtyPerLot) || 65;
+          const lots = Math.max(1, Math.floor(amount / (entryOrderLtp * lotSize)));
+          quantity = lots * lotSize;
+        } else {
+          const qty = typeof state.paper.orderQty === 'number' ? state.paper.orderQty : Number(state.paper.orderQty);
+          quantity = Number.isFinite(qty) ? qty : 1;
+        }
+        const productType = typeof state.paper.productType === 'string' ? state.paper.productType : 'M';
 
         let orderPayload;
         try {

@@ -32,7 +32,7 @@ function normalizeExitStyle(v) {
 function normalizeTargetPct(v) {
   const n = typeof v === 'number' ? v : Number(v);
   if (!Number.isFinite(n)) return 30;
-  return clamp(Math.round(n), 20, 100);
+  return clamp(Math.round(n), 2, 100);
 }
 
 function dayKeyFromTs(ts) {
@@ -205,8 +205,7 @@ function shouldEnter(history, mode, state) {
 
     if (!isNum(underNow)) return { ok: false, reasons: [...reasons, 'Underlying LTP missing'] };
 
-    // Prefer snapshot-derived previous 5m candle (aligned + frozen) to avoid TPS delay.
-    // Backup to TPS candle if snapshot history is insufficient.
+    // Previous 5m candle high/low for breakout level
     const prevCandle = getPrev5mCandleFromSnapshots(history, nowTs);
     let extremeHigh5 = null;
     let extremeLow5 = null;
@@ -224,57 +223,62 @@ function shouldEnter(history, mode, state) {
 
     reasons.push(`5m high/low source: ${extremeSource || '-'}`);
 
-    const breaksHigh = underNow > extremeHigh5;
-    const breaksLow = underNow < extremeLow5;
+    const ceThreshold = parseFloat(process.env.ENTRY_CHG_NORMAL || '0.10'); // default 10%
+    const signalWindowMs = parseInt(process.env.ENTRY_SIGNAL_WINDOW_SEC || '60', 10) * 1000; // default 60s
 
+    // Current poll — did breakout / momentum happen right now?
+    const breaksHigh = isNum(extremeHigh5) && underNow > extremeHigh5;
+    const breaksLow  = isNum(extremeLow5)  && underNow < extremeLow5;
+
+    // CE/PE change vs 2-min ago (for momentum check)
     const past2 = pickSnapshotAtOrBefore(history, nowTs - 2 * 60_000);
-
-    const ceNow = isNum(atmStrike) ? findLeg(latest, atmStrike, 'CE') : null;
-    const peNow = isNum(atmStrike) ? findLeg(latest, atmStrike, 'PE') : null;
+    const underPast2 = past2?.underlying?.ltp;
+    const ceNow  = isNum(atmStrike) ? findLeg(latest, atmStrike, 'CE') : null;
+    const peNow  = isNum(atmStrike) ? findLeg(latest, atmStrike, 'PE') : null;
     const cePast = (past2 && isNum(atmStrike)) ? findLeg(past2, atmStrike, 'CE') : null;
     const pePast = (past2 && isNum(atmStrike)) ? findLeg(past2, atmStrike, 'PE') : null;
-
-    const underPast2 = past2?.underlying?.ltp;
-    const ceNowLtp = safeLegLtp(ceNow, underNow);
+    const ceNowLtp  = safeLegLtp(ceNow,  underNow);
     const cePastLtp = safeLegLtp(cePast, underPast2);
-    const peNowLtp = safeLegLtp(peNow, underNow);
+    const peNowLtp  = safeLegLtp(peNow,  underNow);
     const pePastLtp = safeLegLtp(pePast, underPast2);
-
     const ceChg = pctChange(ceNowLtp, cePastLtp);
     const peChg = pctChange(peNowLtp, pePastLtp);
+    const ceMomentum = ceChg !== null && ceChg >= ceThreshold;
+    const peMomentum = peChg !== null && peChg >= ceThreshold;
 
-    const ceCond = ceChg !== null && ceChg >= 0.12;
-    const peCond = peChg !== null && peChg >= 0.12;
+    // Update signal timestamps on state whenever conditions are seen
+    if (breaksHigh) state.lastBullBreakoutTs = nowTs;
+    if (breaksLow)  state.lastBearBreakoutTs = nowTs;
+    if (ceMomentum) state.lastBullMomentumTs = nowTs;
+    if (peMomentum) state.lastBearMomentumTs = nowTs;
 
-    console.log(`Conditions: breaksHigh=${breaksHigh} (${underNow} > ${extremeHigh5}), breaksLow=${breaksLow} (${underNow} < ${extremeLow5}), ceCond=${ceCond} (${ceChg} >= 0.12), peCond=${peCond} (${peChg} >= 0.12)`);
+    // Check if both breakout AND momentum were seen within the signal window
+    const recentBullBreakout  = isNum(state.lastBullBreakoutTs)  && (nowTs - state.lastBullBreakoutTs)  <= signalWindowMs;
+    const recentBearBreakout  = isNum(state.lastBearBreakoutTs)  && (nowTs - state.lastBearBreakoutTs)  <= signalWindowMs;
+    const recentBullMomentum  = isNum(state.lastBullMomentumTs)  && (nowTs - state.lastBullMomentumTs)  <= signalWindowMs;
+    const recentBearMomentum  = isNum(state.lastBearMomentumTs)  && (nowTs - state.lastBearMomentumTs)  <= signalWindowMs;
 
-    reasons.push(`Breaks 5m high: ${passFailSpan(breaksHigh)} (LTP ${fmtNum(underNow, 2)} vs high ${fmtNum(extremeHigh5, 2)})`);
-    reasons.push(`ATM CE >=12% (2m): ${passFailSpan(ceCond)} (${fmtPct(ceChg, 1)} | now ${fmtNum(ceNowLtp, 2)} vs 2m ${fmtNum(cePastLtp, 2)})`);
-    reasons.push(`Breaks 5m low: ${passFailSpan(breaksLow)} (LTP ${fmtNum(underNow, 2)} vs low ${fmtNum(extremeLow5, 2)})`);
-    reasons.push(`ATM PE >=12% (2m): ${passFailSpan(peCond)} (${fmtPct(peChg, 1)} | now ${fmtNum(peNowLtp, 2)} vs 2m ${fmtNum(pePastLtp, 2)})`);
+    console.log(`NORMAL entry: breaksHigh=${breaksHigh}(${underNow}>${extremeHigh5}) breaksLow=${breaksLow}(${underNow}<${extremeLow5}) ceMom=${ceMomentum}(${fmtPct(ceChg,1)}) peMom=${peMomentum}(${fmtPct(peChg,1)}) recentBullBreak=${recentBullBreakout} recentBullMom=${recentBullMomentum} recentBearBreak=${recentBearBreakout} recentBearMom=${recentBearMomentum}`);
 
-    if (breaksHigh && ceCond) {
+    reasons.push(`5m high breakout (now/recent): ${passFailSpan(breaksHigh)}/${passFailSpan(recentBullBreakout)} (${fmtNum(underNow, 2)} vs ${fmtNum(extremeHigh5, 2)})`);
+    reasons.push(`ATM CE >=${(ceThreshold*100).toFixed(0)}% (2m, now/recent): ${passFailSpan(ceMomentum)}/${passFailSpan(recentBullMomentum)} (${fmtPct(ceChg, 1)} | now ${fmtNum(ceNowLtp, 2)} vs 2m ${fmtNum(cePastLtp, 2)})`);
+    reasons.push(`5m low breakout (now/recent): ${passFailSpan(breaksLow)}/${passFailSpan(recentBearBreakout)} (${fmtNum(underNow, 2)} vs ${fmtNum(extremeLow5, 2)})`);
+    reasons.push(`ATM PE >=${(ceThreshold*100).toFixed(0)}% (2m, now/recent): ${passFailSpan(peMomentum)}/${passFailSpan(recentBearMomentum)} (${fmtPct(peChg, 1)} | now ${fmtNum(peNowLtp, 2)} vs 2m ${fmtNum(pePastLtp, 2)})`);
+
+    if (recentBullBreakout && recentBullMomentum) {
       const direction = 'BULL';
       const inst = selectInstrument(latest, mode, direction);
-      return {
-        ok: true,
-        direction,
-        inst,
-        breakoutLevel: extremeHigh5,
-        breakoutSource: extremeSource,
-        reasons,
-      };
-    } else if (breaksLow && peCond) {
+      // Reset timestamps to prevent re-entry on same signal
+      state.lastBullBreakoutTs = null;
+      state.lastBullMomentumTs = null;
+      return { ok: true, direction, inst, breakoutLevel: extremeHigh5, breakoutSource: extremeSource, reasons };
+    } else if (recentBearBreakout && recentBearMomentum) {
       const direction = 'BEAR';
       const inst = selectInstrument(latest, mode, direction);
-      return {
-        ok: true,
-        direction,
-        inst,
-        breakoutLevel: extremeLow5,
-        breakoutSource: extremeSource,
-        reasons,
-      };
+      // Reset timestamps to prevent re-entry on same signal
+      state.lastBearBreakoutTs = null;
+      state.lastBearMomentumTs = null;
+      return { ok: true, direction, inst, breakoutLevel: extremeLow5, breakoutSource: extremeSource, reasons };
     } else {
       return { ok: false, reasons: [...reasons, 'Conditions not met'] };
     }
@@ -597,7 +601,7 @@ function createPaperTradeState() {
     selectedMode: 'AUTO',
     effectiveMode: 'NORMAL',
     exitStyle: 'TARGET',
-    targetPct: 30,
+    targetPct: 10,
     maxTradesPerDay: 3,
     tradesDate: null,
     tradesToday: 0,
@@ -605,6 +609,11 @@ function createPaperTradeState() {
     currentTrade: null,
     tradeHistory: [],
     lastDecision: null,
+    // NORMAL mode entry signal timestamps
+    lastBullBreakoutTs: null,
+    lastBearBreakoutTs: null,
+    lastBullMomentumTs: null,
+    lastBearMomentumTs: null,
   };
 }
 

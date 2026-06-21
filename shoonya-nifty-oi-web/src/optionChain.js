@@ -233,7 +233,7 @@ function computeItmOiStats(rows, underlyingLtp, eachSide = 5) {
   } else {
     const oiDiff = peItmOiSum - ceItmOiSum;
     const oiAbsMax = Math.max(Math.abs(peItmOiSum), Math.abs(ceItmOiSum));
-    const oiThreshold = Math.max(100000, oiAbsMax * 0.15);
+    const oiThreshold = Math.max(100000, oiAbsMax * 0.30);
     if (Number.isFinite(oiDiff) && Math.abs(oiDiff) >= oiThreshold) {
       signal = oiDiff > 0 ? 'BULLISH' : 'BEARISH';
     }
@@ -253,7 +253,7 @@ function computeItmOiStats(rows, underlyingLtp, eachSide = 5) {
   };
 }
 
-async function buildNiftyChainSnapshot(api, opts, prevSnapshot) {
+async function buildNiftyChainSnapshot(api, opts, prevSnapshot, deltaSnapshot) {
   const strikeStep = opts.strikeStep;
   const strikesEachSide = opts.strikesEachSide;
 
@@ -292,6 +292,19 @@ async function buildNiftyChainSnapshot(api, opts, prevSnapshot) {
     for (const row of prevSnapshot.rows) {
       if (row.ce && row.ce.token) prevMap.set(row.ce.token, row.ce);
       if (row.pe && row.pe.token) prevMap.set(row.pe.token, row.pe);
+    }
+  }
+
+  // deltaMap: snapshot from ~N seconds ago (default 30s), used for ΔOI/ΔLTP/ΔVol.
+  // Falls back to prevMap (immediate previous poll) if no older snapshot is available
+  // — OI typically updates slower than the poll interval, so a longer-window delta
+  // is more meaningful than a 2-second delta which is mostly 0.
+  const deltaMap = new Map();
+  const deltaSource = (deltaSnapshot && Array.isArray(deltaSnapshot.rows)) ? deltaSnapshot : prevSnapshot;
+  if (deltaSource && Array.isArray(deltaSource.rows)) {
+    for (const row of deltaSource.rows) {
+      if (row.ce && row.ce.token) deltaMap.set(row.ce.token, row.ce);
+      if (row.pe && row.pe.token) deltaMap.set(row.pe.token, row.pe);
     }
   }
 
@@ -334,8 +347,11 @@ async function buildNiftyChainSnapshot(api, opts, prevSnapshot) {
 		  }
 		: null;
 
-    const ceDelta = computeDelta(ceNow, cePrev);
-    const peDelta = computeDelta(peNow, pePrev);
+    const ceDeltaPrev = ceLeg ? deltaMap.get(ceLeg.token) : null;
+    const peDeltaPrev = peLeg ? deltaMap.get(peLeg.token) : null;
+
+    const ceDelta = computeDelta(ceNow, ceDeltaPrev);
+    const peDelta = computeDelta(peNow, peDeltaPrev);
 
     const ce = ceLeg && ceNow ? { ...ceNow, ...ceDelta, token: ceLeg.token, tsym: ceLeg.tsym } : null;
     const pe = peLeg && peNow ? { ...peNow, ...peDelta, token: peLeg.token, tsym: peLeg.tsym } : null;

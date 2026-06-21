@@ -23,7 +23,7 @@ function normalizeExitStyle(v) {
 function normalizeTargetPct(v) {
   const n = typeof v === 'number' ? v : Number(v);
   if (!Number.isFinite(n)) return 30;
-  return clamp(Math.round(n), 20, 100);
+  return clamp(Math.round(n), 2, 100);
 }
 
 function findLeg(snapshot, strike, optType) {
