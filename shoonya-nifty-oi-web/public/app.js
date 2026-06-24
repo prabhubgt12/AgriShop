@@ -1019,73 +1019,137 @@ document.getElementById('generate-report').addEventListener('click', async () =>
   }
 });
 
+// ── Generic API Tester ───────────────────────────────────────────────────────
 {
+  // Preset params for each method — helps remember common param shapes
+  const API_PRESETS = {
+    get_quotes: { exchange: 'NSE', token: '26000' },
+    searchscrip: { exchange: 'NSE', stext: 'India VIX' },
+    get_time_price_series: { exchange: 'NSE', token: '26000', starttime: '', endtime: '', interval: '5' },
+    get_security_info: { exchange: 'NSE', token: '26000' },
+    get_option_chain: { exchange: 'NFO', tradingsymbol: 'NIFTY', strikeprice: '24000', count: '5' },
+    get_positions: {},
+    get_holdings: {},
+    get_order_book: {},
+    get_trade_book: {},
+    get_limits: {},
+    get_pending_gtt_orders: {},
+  };
+
+  const API_HINTS = {
+    get_quotes: 'exchange: NSE/NFO/BSE, token: numeric token',
+    searchscrip: 'exchange: NSE/NFO, stext: partial name e.g. "India VIX"',
+    get_time_price_series: 'starttime/endtime: "YYYY-MM-DD HH:MM:SS" IST or epoch seconds',
+    get_security_info: 'exchange + token for full scrip details',
+    get_option_chain: 'tradingsymbol: NIFTY/BANKNIFTY, strikeprice, count: number of strikes each side',
+    get_positions: 'No params needed',
+    get_holdings: 'No params needed',
+    get_order_book: 'No params needed',
+    get_trade_book: 'No params needed',
+    get_limits: 'No params needed',
+  };
+
+  const methodSel = document.getElementById('api-method-sel');
+  const methodCustom = document.getElementById('api-method-custom');
+  const paramsEl = document.getElementById('api-params');
+  const responseEl = document.getElementById('api-response');
+  const statusEl = document.getElementById('api-status');
+  const hintEl = document.getElementById('api-preset-hints');
   const testBtn = document.getElementById('test-api-btn');
-  if (testBtn) {
-    testBtn.addEventListener('click', async () => {
-      const api = 'get_time_price_series';
-      const paramsEl = document.getElementById('api-params');
-      if (!paramsEl) return;
+  const clearBtn = document.getElementById('api-clear-btn');
+  const copyBtn = document.getElementById('api-copy-btn');
 
-      let params = paramsEl.value;
-      try {
-        const obj = JSON.parse(params);
-        const toIstEpochSecondsStr = (s) => {
-          if (typeof s !== 'string') return null;
-          const t = s.trim();
-          if (!t) return null;
-          if (/^\d+$/.test(t)) return t;
-          if (!t.includes(' ')) return null;
-          const ms = new Date(t.replace(' ', 'T') + '+05:30').getTime();
-          if (!Number.isFinite(ms)) return null;
-          return String(Math.floor(ms / 1000));
-        };
-
-        const st = toIstEpochSecondsStr(obj.starttime);
-        const et = toIstEpochSecondsStr(obj.endtime);
-        if (st) obj.starttime = st;
-        if (et) obj.endtime = et;
-        params = JSON.stringify(obj);
-      } catch (_e) {
-      }
-
-      try {
-        const res = await fetch(`/api/debug/call?api=${encodeURIComponent(api)}&params=${encodeURIComponent(params)}`);
-        const data = await res.json();
-        const responseEl = document.getElementById('api-response');
-        if (responseEl) responseEl.textContent = JSON.stringify(data, null, 2);
-      } catch (e) {
-        const responseEl = document.getElementById('api-response');
-        if (responseEl) responseEl.textContent = 'Error: ' + e.message;
-      }
-    });
+  function getMethod() {
+    const sel = methodSel ? methodSel.value : 'get_time_price_series';
+    if (sel === 'custom') return (methodCustom ? methodCustom.value.trim() : '') || '';
+    return sel;
   }
-}
 
-function formatDateTime(d) {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mi = String(d.getMinutes()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  function setPreset(method) {
+    if (!paramsEl) return;
+    const preset = API_PRESETS[method];
+    if (preset) {
+      // Fill in live timestamps for TPS
+      if (method === 'get_time_price_series') {
+        const now = new Date();
+        const fmt = d => {
+          const p = n => String(n).padStart(2,'0');
+          return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:00`;
+        };
+        preset.starttime = fmt(new Date(now.getTime() - 15 * 60000));
+        preset.endtime = fmt(now);
+      }
+      paramsEl.value = JSON.stringify(preset, null, 2);
+    } else {
+      paramsEl.value = '{}';
+    }
+    if (hintEl) hintEl.textContent = API_HINTS[method] ? '💡 ' + API_HINTS[method] : '';
+  }
+
+  methodSel?.addEventListener('change', () => {
+    const sel = methodSel.value;
+    if (methodCustom) methodCustom.style.display = sel === 'custom' ? 'block' : 'none';
+    if (sel !== 'custom') setPreset(sel);
+    if (responseEl) responseEl.textContent = '';
+    if (statusEl) statusEl.textContent = '';
+  });
+
+  // Init with default preset
+  setPreset(methodSel ? methodSel.value : 'get_time_price_series');
+
+  testBtn?.addEventListener('click', async () => {
+    const method = getMethod();
+    if (!method) { if (statusEl) statusEl.textContent = 'Enter a method name'; return; }
+    if (statusEl) statusEl.textContent = 'Calling...';
+    if (responseEl) responseEl.textContent = '';
+
+    let params = paramsEl ? paramsEl.value.trim() : '{}';
+
+    // Auto-convert IST datetime strings to epoch seconds for TPS
+    try {
+      const obj = JSON.parse(params || '{}');
+      const toEpochSec = (s) => {
+        if (typeof s !== 'string') return null;
+        const t = s.trim();
+        if (!t) return null;
+        if (/^\d+$/.test(t)) return t;
+        if (!t.includes(' ')) return null;
+        const ms = new Date(t.replace(' ', 'T') + '+05:30').getTime();
+        if (!Number.isFinite(ms)) return null;
+        return String(Math.floor(ms / 1000));
+      };
+      if (obj.starttime) { const v = toEpochSec(obj.starttime); if (v) obj.starttime = v; }
+      if (obj.endtime)   { const v = toEpochSec(obj.endtime);   if (v) obj.endtime   = v; }
+      params = JSON.stringify(obj);
+    } catch (_e) {}
+
+    try {
+      const res = await fetch(`/api/debug/call?api=${encodeURIComponent(method)}&params=${encodeURIComponent(params)}`);
+      const data = await res.json();
+      if (responseEl) responseEl.textContent = JSON.stringify(data, null, 2);
+      if (statusEl) statusEl.textContent = data.ok ? '✅ OK' : '❌ Error';
+    } catch (e) {
+      if (responseEl) responseEl.textContent = 'Fetch error: ' + e.message;
+      if (statusEl) statusEl.textContent = '❌ Failed';
+    }
+  });
+
+  clearBtn?.addEventListener('click', () => {
+    if (responseEl) responseEl.textContent = '';
+    if (statusEl) statusEl.textContent = '';
+    setPreset(getMethod());
+  });
+
+  copyBtn?.addEventListener('click', () => {
+    const text = responseEl ? responseEl.textContent : '';
+    if (text) navigator.clipboard.writeText(text).then(() => {
+      if (statusEl) { statusEl.textContent = 'Copied!'; setTimeout(() => statusEl.textContent = '', 1500); }
+    });
+  });
 }
+// ─────────────────────────────────────────────────────────────────────────────
 
 (async () => {
-  const now = new Date();
-  const start = new Date(now.getTime() - 15 * 60 * 1000); // 15 min ago
-  const end = now;
-  const paramsEl = document.getElementById('api-params');
-  if (paramsEl) {
-    try {
-      const obj = JSON.parse(paramsEl.value);
-      obj.starttime = formatDateTime(start);
-      obj.endtime = formatDateTime(end);
-      obj.interval = "5";
-      paramsEl.value = JSON.stringify(obj, null, 2);
-    } catch (_) {}
-  }
-
   try {
     const health = await fetchHealth();
     setLoginStatus(health.loggedIn ? 'Logged in' : 'Not logged in', health.loggedIn ? 'ok' : null);

@@ -203,23 +203,42 @@
   </div>
 
   <div class="card" id="api-testing-section">
-    <h3>API Testing (get_time_price_series)</h3>
-    <div>
-      <label>Token:</label>
-      <input type="text" id="api-token" value="26000">
+    <h3>API Tester</h3>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+      <label style="min-width:60px;">Method</label>
+      <select id="api-method-sel" class="secondary" style="flex:2; min-width:200px;">
+        <option value="get_quotes">get_quotes</option>
+        <option value="searchscrip">searchscrip</option>
+        <option value="get_time_price_series" selected>get_time_price_series</option>
+        <option value="get_security_info">get_security_info</option>
+        <option value="get_option_chain">get_option_chain</option>
+        <option value="get_positions">get_positions</option>
+        <option value="get_holdings">get_holdings</option>
+        <option value="get_order_book">get_order_book</option>
+        <option value="get_trade_book">get_trade_book</option>
+        <option value="get_limits">get_limits</option>
+        <option value="get_pending_gtt_orders">get_pending_gtt_orders</option>
+        <option value="custom">— custom method name —</option>
+      </select>
+      <input id="api-method-custom" type="text" placeholder="method name" class="secondary"
+        style="flex:1; min-width:140px; display:none;" />
     </div>
-    <div>
-      <label>Parameters (JSON):</label>
-      <textarea id="api-params" rows="5">{
-  "exchange": "NSE",
-  "token": "26000",
-  "starttime": "2026-02-22 09:15:00",
-  "endtime": "2026-02-22 15:30:00",
-  "interval": "1"
-}</textarea>
+    <div style="margin-bottom:8px;">
+      <label>Params (JSON)</label>
+      <textarea id="api-params" rows="6" style="width:100%; box-sizing:border-box; font-family:monospace; font-size:0.85em;">{}</textarea>
     </div>
-    <button id="test-api-btn">Call API</button>
-    <div id="api-response" style="margin-top: 10px; white-space: pre-wrap;"></div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button id="test-api-btn">Call API</button>
+      <button id="api-clear-btn" class="secondary">Clear</button>
+      <button id="api-copy-btn" class="secondary">Copy Response</button>
+      <span id="api-status" style="font-size:0.85em; color:#aaa;"></span>
+    </div>
+    <div style="margin-top:8px;">
+      <div id="api-preset-hints" style="font-size:0.8em; color:#888; margin-bottom:4px;"></div>
+      <pre id="api-response" style="margin-top:6px; white-space:pre-wrap; word-break:break-all;
+        max-height:400px; overflow-y:auto; background:#1a1a1a; padding:8px;
+        border-radius:4px; font-size:0.8em;"></pre>
+    </div>
   </div>
 
   <script src="/app.js"></script>
