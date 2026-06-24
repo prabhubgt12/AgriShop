@@ -133,12 +133,14 @@ function updateTrailing(trade, mode, currentLtp) {
   } else {
     // NORMAL — progressive trailing that tightens as profit grows.
     // Each step uses peak (not currentLtp) so SL only moves up, never down.
-    if (mult >= 1.3) sl = Math.max(sl, entry);            // breakeven lock
-    if (mult >= 1.4) sl = Math.max(sl, peak * 0.83);      // protect ~11% if peak=140
-    if (mult >= 1.5) sl = Math.max(sl, peak * 0.85);      // protect ~17% if peak=150
-    if (mult >= 1.8) sl = Math.max(sl, peak * 0.88);      // protect ~36% if peak=180
-    if (mult >= 2.5) sl = Math.max(sl, peak * 0.90);      // protect ~125% if peak=250
-    if (mult >= 4.0) sl = Math.max(sl, peak * 0.92);      // protect ~268% if peak=400
+    if (mult >= 1.15) sl = Math.max(sl, entry * 0.90);  // +15% → SL to -10% (limits max loss)
+    if (mult >= 1.20) sl = Math.max(sl, entry * 0.95);  // +20% → SL to -5%
+    if (mult >= 1.3)  sl = Math.max(sl, entry);          // +30% → breakeven lock
+    if (mult >= 1.4)  sl = Math.max(sl, peak * 0.83);   // protect ~11% if peak=140
+    if (mult >= 1.5)  sl = Math.max(sl, peak * 0.85);   // protect ~17% if peak=150
+    if (mult >= 1.8)  sl = Math.max(sl, peak * 0.88);   // protect ~36% if peak=180
+    if (mult >= 2.5)  sl = Math.max(sl, peak * 0.90);   // protect ~125% if peak=250
+    if (mult >= 4.0)  sl = Math.max(sl, peak * 0.92);   // protect ~268% if peak=400
   }
 
   return { ...trade, peakPrice: peak, slPrice: sl };

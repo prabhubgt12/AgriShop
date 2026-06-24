@@ -68,21 +68,27 @@ function selectInstrument(snapshot, mode, direction) {
   if (!isNum(atm)) return null;
 
   if (mode === 'BIG_RALLY') {
-    const offset = parseInt(process.env.STRIKE_OFFSET_BIG_RALLY || '2', 10);
-    if (direction === 'BEAR') return { strike: atm - offset * step, type: 'PE' };
-    return { strike: atm + offset * step, type: 'CE' };
+    // 2-step OTM option based on direction
+    if (direction === 'BEAR') {
+      const strike = atm - 2 * step;
+      return { strike, type: 'PE' };
+    }
+    const strike = atm + 2 * step;
+    return { strike, type: 'CE' };
   }
 
   if (mode === 'NORMAL') {
-    const offset = parseInt(process.env.STRIKE_OFFSET_NORMAL || '1', 10);
-    if (direction === 'BEAR') return { strike: atm - offset * step, type: 'PE' };
-    return { strike: atm + offset * step, type: 'CE' };
+    // 1-step OTM option based on direction
+    if (direction === 'BEAR') {
+      const strike = atm - 1 * step;
+      return { strike, type: 'PE' };
+    }
+    const strike = atm + 1 * step;
+    return { strike, type: 'CE' };
   }
 
-  // EXPIRY: ATM by default, configurable offset
-  const offset = parseInt(process.env.STRIKE_OFFSET_EXPIRY || '0', 10);
-  if (direction === 'BEAR') return { strike: atm - offset * step, type: 'PE' };
-  return { strike: atm + offset * step, type: 'CE' };
+  // EXPIRY: trade ATM in the direction
+  return { strike: atm, type: direction === 'BULL' ? 'CE' : 'PE' };
 }
 
 function pctChange(now, then) {
@@ -362,8 +368,10 @@ function updateTrailing(trade, mode, currentLtp) {
     if (mult >= 5) sl = Math.max(sl, peak * 0.6);
     if (mult >= 10) sl = Math.max(sl, peak * 0.7);
   } else if (mode === 'NORMAL') {
-    if (mult >= 1.3) sl = Math.max(sl, entry);
-    if (mult >= 1.6) sl = Math.max(sl, peak * 0.88);
+    if (mult >= 1.15) sl = Math.max(sl, entry * 0.90);  // +15% → SL to -10% (limits max loss)
+    if (mult >= 1.20) sl = Math.max(sl, entry * 0.95);  // +20% → SL to -5%
+    if (mult >= 1.3)  sl = Math.max(sl, entry);          // +30% → breakeven
+    if (mult >= 1.6)  sl = Math.max(sl, peak * 0.88);   // +60% → trail from peak
   } else if (mode === 'EXPIRY') {
     if (mult >= 1.20) {
       sl = Math.max(sl, entry);
