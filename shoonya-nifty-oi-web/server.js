@@ -1118,23 +1118,55 @@ app.get('/api/debug/search', async (req, res) => {
 app.get('/api/debug/call', async (req, res) => {
   try {
     if (!state.loggedIn) {
-      res.status(401).json({ ok: false, error: 'Not logged in' });
-      return;
+      return res.status(401).json({
+        ok: false,
+        error: 'Not logged in'
+      });
     }
+
     const api = req.query.api || req.body.api;
     const paramsStr = req.query.params || req.body.params;
     const params = paramsStr ? JSON.parse(paramsStr) : {};
+
     if (!state.client || typeof state.client[api] !== 'function') {
-      res.status(400).json({ ok: false, error: 'Invalid API name or client not available' });
-      return;
+      return res.status(400).json({
+        ok: false,
+        error: 'Invalid API name or client not available'
+      });
     }
-    params.uid = state.auth.userid;
-    // Note: get_time_price_series works with original parameter names in automated code
-    // Keep debug/call generic; caller controls exact params shape.
-    const reply = await state.client[api](params);
-    res.json({ ok: true, reply });
+
+    console.log('[DEBUG API]', api, params);
+
+    let reply;
+
+    // Special handling for common Shoonya APIs
+    if (api === 'searchscrip') {
+      reply = await state.client.searchscrip(
+        params.exchange || params.exch,
+        params.stext
+      );
+    } else if (api === 'get_quotes') {
+      reply = await state.client.get_quotes(
+        params.exchange || params.exch,
+        params.token
+      );
+    } else {
+      // Generic fallback
+      reply = await state.client[api](params);
+    }
+
+    res.json({
+      ok: true,
+      reply
+    });
+
   } catch (e) {
-    res.status(500).json({ ok: false, error: e && e.message ? e.message : String(e) });
+    console.error(e);
+
+    res.status(500).json({
+      ok: false,
+      error: e?.message || String(e)
+    });
   }
 });
 
