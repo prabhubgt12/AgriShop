@@ -68,27 +68,21 @@ function selectInstrument(snapshot, mode, direction) {
   if (!isNum(atm)) return null;
 
   if (mode === 'BIG_RALLY') {
-    // 2-step OTM option based on direction
-    if (direction === 'BEAR') {
-      const strike = atm - 2 * step;
-      return { strike, type: 'PE' };
-    }
-    const strike = atm + 2 * step;
-    return { strike, type: 'CE' };
+    const offset = parseInt(process.env.STRIKE_OFFSET_BIG_RALLY || '2', 10);
+    if (direction === 'BEAR') return { strike: atm - offset * step, type: 'PE' };
+    return { strike: atm + offset * step, type: 'CE' };
   }
 
   if (mode === 'NORMAL') {
-    // 1-step OTM option based on direction
-    if (direction === 'BEAR') {
-      const strike = atm - 1 * step;
-      return { strike, type: 'PE' };
-    }
-    const strike = atm + 1 * step;
-    return { strike, type: 'CE' };
+    const offset = parseInt(process.env.STRIKE_OFFSET_NORMAL || '1', 10);
+    if (direction === 'BEAR') return { strike: atm - offset * step, type: 'PE' };
+    return { strike: atm + offset * step, type: 'CE' };
   }
 
-  // EXPIRY: trade ATM in the direction
-  return { strike: atm, type: direction === 'BULL' ? 'CE' : 'PE' };
+  // EXPIRY: ATM by default, configurable offset
+  const offset = parseInt(process.env.STRIKE_OFFSET_EXPIRY || '0', 10);
+  if (direction === 'BEAR') return { strike: atm - offset * step, type: 'PE' };
+  return { strike: atm + offset * step, type: 'CE' };
 }
 
 function pctChange(now, then) {
