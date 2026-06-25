@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.ledge.cashbook.util.Currency
 import com.ledge.cashbook.data.local.entities.CashTxn
 import com.ledge.cashbook.data.local.entities.CashAccount
+import com.ledge.cashbook.data.api.ProductInfo
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.material.icons.Icons
@@ -39,6 +40,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.TableView
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
@@ -173,6 +175,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     var addAttachmentUri by remember { mutableStateOf<String?>(null) }
     var addCategory by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showBarcodeScanner by remember { mutableStateOf(false) }
     var confirmDeleteTxn by remember { mutableStateOf<CashTxn?>(null) }
     // Long-press actions and edit states
     var actionTxn by remember { mutableStateOf<CashTxn?>(null) }
@@ -1714,7 +1717,12 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     OutlinedTextField(
                         value = note,
                         onValueChange = { note = it },
-                        label = { Text(stringResource(R.string.particular)) }
+                        label = { Text(stringResource(R.string.particular)) },
+                        trailingIcon = {
+                            IconButton(onClick = { showBarcodeScanner = true }) {
+                                Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan Barcode")
+                            }
+                        }
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -1801,6 +1809,25 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                 dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) } }
             ) {
                 DatePicker(state = state)
+            }
+        }
+
+        if (showBarcodeScanner) {
+            Dialog(onDismissRequest = { showBarcodeScanner = false }) {
+                BarcodeScannerScreen(
+                    onProductDetected = { product ->
+                        note = product.name
+                        if (product.price != null) {
+                            amount = product.price.toString()
+                        }
+                        if (product.category.isNotBlank() && showCategory) {
+                            addCategory = product.category
+                            userSetAddCategory = true
+                        }
+                        showBarcodeScanner = false
+                    },
+                    onBack = { showBarcodeScanner = false }
+                )
             }
         }
     }

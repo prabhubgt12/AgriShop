@@ -7,6 +7,7 @@ import com.ledge.cashbook.data.local.dao.BusinessProfileDao
 import com.ledge.cashbook.data.local.dao.CashDao
 import com.ledge.cashbook.data.local.dao.CategoryDao
 import com.ledge.cashbook.data.local.dao.CategoryKeywordDao
+import com.ledge.cashbook.data.local.dao.ProductBarcodeDao
 import com.ledge.cashbook.data.repo.CashRepository
 import com.ledge.cashbook.data.repo.CategoryRepository
 import dagger.Module
@@ -32,6 +33,9 @@ object DatabaseModule {
 
     @Provides
     fun provideBusinessProfileDao(db: AppDatabase): BusinessProfileDao = db.businessProfileDao()
+
+    @Provides
+    fun provideProductBarcodeDao(db: AppDatabase): ProductBarcodeDao = db.productBarcodeDao()
 
     @Provides
     fun provideCategoryDao(db: AppDatabase): CategoryDao = db.categoryDao()

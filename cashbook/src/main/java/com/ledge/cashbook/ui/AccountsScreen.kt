@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -97,6 +98,8 @@ fun AccountsScreen(
     var selectedQuickTemplate by remember { mutableStateOf<String?>(null) }
     var quickAddAmount by remember { mutableStateOf("") }
     var quickAddMenuFor by remember { mutableStateOf<Int?>(null) }
+    var showBarcodeScanner by remember { mutableStateOf(false) }
+    var scanAccountId by remember { mutableStateOf<Int?>(null) }
 
     // Use same theme logic as MainActivity
     val mode by themeViewModel.themeMode.collectAsState()
@@ -269,6 +272,32 @@ fun AccountsScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             Spacer(Modifier.width(8.dp))
+                            // Scan barcode button
+                            IconButton(
+                                onClick = {
+                                    scanAccountId = acc.id
+                                    showBarcodeScanner = true
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Filled.QrCodeScanner,
+                                        contentDescription = "Scan Barcode",
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.width(4.dp))
                             // Quick Add button
                             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
                                 IconButton(
@@ -1033,6 +1062,47 @@ fun AccountsScreen(
                 }) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = { TextButton(onClick = { confirmDeleteFor = null }) { Text(stringResource(R.string.cancel)) } }
+        )
+    }
+
+    // Barcode scanner dialog - directly adds transaction on scan
+    if (showBarcodeScanner && scanAccountId != null) {
+        AlertDialog(
+            onDismissRequest = { showBarcodeScanner = false },
+            title = { Text("Scan Barcode") },
+            text = {
+                BarcodeScannerScreen(
+                    onProductDetected = { product ->
+                        val amount = product.price
+                        if (amount != null) {
+                            vm.addTxn(
+                                accountId = scanAccountId!!,
+                                date = System.currentTimeMillis(),
+                                amount = amount,
+                                isCredit = false,
+                                note = product.name,
+                                attachmentUri = null,
+                                category = if (showCategory && product.category.isNotBlank()) product.category else null,
+                                makeRecurring = false
+                            )
+                            Toast.makeText(ctx, ctx.getString(R.string.transaction_added_success), Toast.LENGTH_SHORT).show()
+                        }
+                        showBarcodeScanner = false
+                        scanAccountId = null
+                    },
+                    onBack = { 
+                        showBarcodeScanner = false
+                        scanAccountId = null
+                    }
+                )
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { 
+                    showBarcodeScanner = false
+                    scanAccountId = null
+                }) { Text(stringResource(R.string.cancel)) }
+            }
         )
     }
 }
