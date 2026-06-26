@@ -1,6 +1,7 @@
 package com.ledge.cashbook.ui
 
 import android.app.DatePickerDialog
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -109,7 +110,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = false, vm: AccountDetailViewModel = hiltViewModel(), themeViewModel: ThemeViewModel = hiltViewModel()) {
+fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = false, prefillNote: String = "", prefillAmount: String = "", vm: AccountDetailViewModel = hiltViewModel(), themeViewModel: ThemeViewModel = hiltViewModel()) {
     LaunchedEffect(accountId) {
         vm.load(accountId)
         // Generate any overdue recurring transactions when viewing this account
@@ -167,8 +168,8 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
 
     var showAdd by remember { mutableStateOf(false) }
     var isCredit by remember { mutableStateOf(true) }
-    var amount by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
+    var amount by remember(prefillAmount) { mutableStateOf(prefillAmount) }
+    var note by remember(prefillNote) { mutableStateOf(prefillNote) }
     var dateMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     var addAttachmentUri by remember { mutableStateOf<String?>(null) }
     var addCategory by remember { mutableStateOf("") }
@@ -464,8 +465,21 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
         credit - debit
     }
 
+    LaunchedEffect(prefillNote, prefillAmount) {
+        // Update state when pre-fill values change
+        if (prefillNote.isNotEmpty()) {
+            note = prefillNote
+        }
+        if (prefillAmount.isNotEmpty()) {
+            amount = prefillAmount
+            isCredit = false // Set as debit/expense for voice input
+        }
+    }
+    
     LaunchedEffect(openAdd) {
-        if (openAdd) showAdd = true
+        if (openAdd) {
+            showAdd = true
+        }
     }
 
     val categories = remember(dbCategories) { dbCategories.map { it.name }.distinct() }
@@ -1586,11 +1600,16 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
         }
     }
 
-    // Reset add dialog inputs whenever the dialog is opened
+    // Reset add dialog inputs whenever the dialog is opened (but preserve pre-fill values)
     LaunchedEffect(showAdd) {
         if (showAdd) {
-            amount = ""
-            note = ""
+            // Only reset if not pre-filled from voice input
+            if (prefillAmount.isEmpty()) {
+                amount = ""
+            }
+            if (prefillNote.isEmpty()) {
+                note = ""
+            }
             dateMillis = System.currentTimeMillis()
             addAttachmentUri = null
             addCategory = ""

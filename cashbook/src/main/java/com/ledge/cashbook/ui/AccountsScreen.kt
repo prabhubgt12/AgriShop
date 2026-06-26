@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -63,12 +64,29 @@ import android.graphics.Paint
 import com.google.android.gms.ads.AdSize
 import android.widget.Toast
 import com.ledge.cashbook.ui.theme.ThemeViewModel
+import com.ledge.cashbook.util.VoiceInputHelper
+import com.ledge.cashbook.util.VoiceInputParser
+import androidx.compose.material.icons.filled.Mic
+import kotlinx.coroutines.launch
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.ui.draw.scale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountsScreen(
     onOpenAccount: (Int) -> Unit,
-    onAddToBook: (Int) -> Unit = {}
+    onAddToBook: (Int) -> Unit = {},
+    onVoiceAdd: (Int, String, String) -> Unit = { _, _, _ -> }
     , vm: AccountsViewModel = hiltViewModel()
     , themeViewModel: ThemeViewModel = hiltViewModel()
 ) {
@@ -97,6 +115,41 @@ fun AccountsScreen(
     var selectedQuickTemplate by remember { mutableStateOf<String?>(null) }
     var quickAddAmount by remember { mutableStateOf("") }
     var quickAddMenuFor by remember { mutableStateOf<Int?>(null) }
+    var voiceInputFor by remember { mutableStateOf<Int?>(null) }
+    var isListening by remember { mutableStateOf(false) }
+    var showListeningDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val voiceHelper = remember { VoiceInputHelper(ctx) }
+    
+    // Permission launcher for RECORD_AUDIO
+    val audioPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Permission granted, show listening dialog then start voice recognition
+            voiceInputFor?.let { accountId ->
+                showListeningDialog = true
+                coroutineScope.launch {
+                    isListening = true
+                    val result = voiceHelper.startVoiceRecognition()
+                    isListening = false
+                    showListeningDialog = false
+                    if (result != null) {
+                        val (item, amount) = VoiceInputParser.parse(result)
+                        if (amount != null && amount > 0) {
+                            onVoiceAdd(accountId, item.ifBlank { result }, amount.toString())
+                        } else {
+                            Toast.makeText(ctx, "Could not detect amount. Please try again.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    voiceInputFor = null
+                }
+            }
+        } else {
+            Toast.makeText(ctx, "Microphone permission is required for voice input", Toast.LENGTH_LONG).show()
+            voiceInputFor = null
+        }
+    }
 
     // Use same theme logic as MainActivity
     val mode by themeViewModel.themeMode.collectAsState()
@@ -269,6 +322,66 @@ fun AccountsScreen(
                                 modifier = Modifier.weight(1f)
                             )
                             Spacer(Modifier.width(8.dp))
+                            // Voice input button
+                            IconButton(
+                                onClick = {
+                                    // Check permission first
+                                    when {
+                                        ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED -> {
+                                            // Permission already granted, show listening dialog then start voice recognition
+                                            voiceInputFor = acc.id
+                                            showListeningDialog = true
+                                            coroutineScope.launch {
+                                                isListening = true
+                                                val result = voiceHelper.startVoiceRecognition()
+                                                isListening = false
+                                                showListeningDialog = false
+                                                if (result != null) {
+                                                    val (item, amount) = VoiceInputParser.parse(result)
+                                                    if (amount != null && amount > 0) {
+                                                        onVoiceAdd(acc.id, item.ifBlank { result }, amount.toString())
+                                                    } else {
+                                                        Toast.makeText(ctx, "Could not detect amount. Please try again.", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                } else {
+                                                    Toast.makeText(ctx, "No speech detected", Toast.LENGTH_SHORT).show()
+                                                }
+                                                voiceInputFor = null
+                                            }
+                                        }
+                                        else -> {
+                                            // Request permission
+                                            voiceInputFor = acc.id
+                                            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .background(
+                                            if (isListening && voiceInputFor == acc.id)
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                            else
+                                                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Mic,
+                                        contentDescription = "Voice Input",
+                                        modifier = Modifier.size(16.dp),
+                                        tint = if (isListening && voiceInputFor == acc.id)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.width(4.dp))
                             // Quick Add button
                             Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
                                 IconButton(
@@ -885,6 +998,84 @@ fun AccountsScreen(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+            }
+        )
+    }
+
+    // Voice input listening dialog
+    if (showListeningDialog) {
+        val infiniteTransition = rememberInfiniteTransition(label = "mic_pulse")
+        val scale by infiniteTransition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "scale"
+        )
+        
+        AlertDialog(
+            onDismissRequest = {
+                showListeningDialog = false
+                isListening = false
+                voiceInputFor = null
+            },
+            title = { 
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        Icons.Filled.Mic,
+                        contentDescription = "Listening",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .scale(scale),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text("Listening...")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showListeningDialog = false
+                    isListening = false
+                    voiceInputFor = null
+                }) { Text("Cancel") }
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        "Say the item and amount",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                "Examples:",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text("• Milk 55", style = MaterialTheme.typography.bodyMedium)
+                            Text("• 55 Milk", style = MaterialTheme.typography.bodyMedium)
+                            Text("• Bread 25", style = MaterialTheme.typography.bodyMedium)
+                            Text("• Vegetables 150", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
             }
         )
     }
