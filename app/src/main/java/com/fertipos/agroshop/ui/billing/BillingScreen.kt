@@ -264,7 +264,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
                     // Product selector
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                         ProductPicker(
                             products = state.value.products,
                             label = stringResource(R.string.product_required),

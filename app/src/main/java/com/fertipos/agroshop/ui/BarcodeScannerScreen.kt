@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -78,6 +80,8 @@ fun BarcodeScannerScreen(
     var isScanning by remember { mutableStateOf(true) }
     var showNotFoundMessage by remember { mutableStateOf(false) }
     var lastScannedBarcode by remember { mutableStateOf<String?>(null) }
+    var flashEnabled by remember { mutableStateOf(false) }
+    var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
 
     // Animation for scanning laser line
     val infiniteTransition = rememberInfiniteTransition(label = "scan")
@@ -140,12 +144,13 @@ fun BarcodeScannerScreen(
 
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
+                val camera = cameraProvider.bindToLifecycle(
                     lifecycleOwner,
                     cameraSelector,
                     preview,
                     imageAnalyzer
                 )
+                cameraControl = camera.cameraControl
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -169,124 +174,149 @@ fun BarcodeScannerScreen(
         ) {
             Card(
                 modifier = Modifier
-                    .width(300.dp)
-                    .height(400.dp),
+                    .width(320.dp)
+                    .height(450.dp),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Compact top bar
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Scan Barcode", style = MaterialTheme.typography.titleSmall)
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(20.dp))
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Compact top bar
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Scan Barcode", style = MaterialTheme.typography.titleSmall, color = Color.White)
+                            IconButton(onClick = onBack, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(24.dp), tint = Color.White)
+                            }
                         }
-                    }
-                    
-                    // Camera preview
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        if (hasCameraPermission) {
-                            AndroidView(
-                                factory = { ctx ->
-                                    PreviewView(ctx).also { previewView = it }
-                                },
-                                modifier = Modifier.fillMaxSize()
-                            )
+                        
+                        // Camera preview
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            if (hasCameraPermission) {
+                                AndroidView(
+                                    factory = { ctx ->
+                                        PreviewView(ctx).also { previewView = it }
+                                    },
+                                    modifier = Modifier.fillMaxSize()
+                                )
 
-                            // Compact scanning overlay
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                val scanBoxSize = 220.dp
+                                // Compact scanning overlay
                                 Box(
                                     modifier = Modifier
-                                        .size(scanBoxSize)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .border(
-                                            width = 2.dp,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
+                                        .fillMaxSize()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Canvas(
-                                        modifier = Modifier.fillMaxSize()
+                                    val scanBoxSize = 220.dp
+                                    Box(
+                                        modifier = Modifier
+                                            .size(scanBoxSize)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .border(
+                                                width = 2.dp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
                                     ) {
-                                        val lineY = size.height * laserOffset
-                                        drawLine(
-                                            color = Color(0xFF00FF00),
-                                            start = Offset(0f, lineY),
-                                            end = Offset(size.width, lineY),
-                                            strokeWidth = 2f
-                                        )
-                                    }
-                                }
-                            }
-
-                            if (showNotFoundMessage) {
-                                AlertDialog(
-                                    onDismissRequest = {
-                                        showNotFoundMessage = false
-                                        isScanning = true
-                                    },
-                                    title = { Text("Product not found") },
-                                    text = {
-                                        Text("This barcode is not in our database. Please add the product manually.")
-                                    },
-                                    confirmButton = {
-                                        TextButton(onClick = {
-                                            showNotFoundMessage = false
-                                            onBack()
-                                        }) {
-                                            Text("OK")
+                                        Canvas(
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            val lineY = size.height * laserOffset
+                                            drawLine(
+                                                color = Color(0xFF00FF00),
+                                                start = Offset(0f, lineY),
+                                                end = Offset(size.width, lineY),
+                                                strokeWidth = 2f
+                                            )
                                         }
                                     }
-                                )
-                            }
-                        } else {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        text = "Camera permission required",
-                                        style = MaterialTheme.typography.bodySmall
+                                }
+
+                                if (showNotFoundMessage) {
+                                    AlertDialog(
+                                        onDismissRequest = {
+                                            showNotFoundMessage = false
+                                            isScanning = true
+                                        },
+                                        title = { Text("Product not found") },
+                                        text = {
+                                            Text("This barcode is not in our database. Please add the product manually.")
+                                        },
+                                        confirmButton = {
+                                            TextButton(onClick = {
+                                                showNotFoundMessage = false
+                                                onBack()
+                                            }) {
+                                                Text("OK")
+                                            }
+                                        }
                                     )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Button(onClick = {
-                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                    }, modifier = Modifier.height(32.dp)) {
-                                        Text("Grant", style = MaterialTheme.typography.bodySmall)
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            text = "Camera permission required",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Button(onClick = {
+                                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                        }, modifier = Modifier.height(32.dp)) {
+                                            Text("Grant", style = MaterialTheme.typography.bodySmall)
+                                        }
                                     }
                                 }
                             }
                         }
+                        
+                        // Compact hint
+                        Surface(
+                            color = Color.Black.copy(alpha = 0.7f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Point camera at barcode",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White,
+                                modifier = Modifier.padding(8.dp, 4.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                     
-                    // Compact hint
-                    Surface(
-                        color = Color.Black.copy(alpha = 0.7f),
-                        modifier = Modifier.fillMaxWidth()
+                    // Flash toggle as floating button
+                    IconButton(
+                        onClick = {
+                            flashEnabled = !flashEnabled
+                            cameraControl?.enableTorch(flashEnabled)
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                            .size(48.dp)
+                            .background(
+                                Color.Black.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(24.dp)
+                            )
                     ) {
-                        Text(
-                            text = "Point camera at barcode",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White,
-                            modifier = Modifier.padding(8.dp, 4.dp),
-                            textAlign = TextAlign.Center
+                        Icon(
+                            if (flashEnabled) Icons.Default.FlashOff else Icons.Default.FlashOn,
+                            contentDescription = "Toggle Flash",
+                            modifier = Modifier.size(28.dp),
+                            tint = if (flashEnabled) Color.Yellow else Color.White
                         )
                     }
                 }
@@ -301,6 +331,17 @@ fun BarcodeScannerScreen(
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.Default.Close, contentDescription = "Close")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            flashEnabled = !flashEnabled
+                            cameraControl?.enableTorch(flashEnabled)
+                        }) {
+                            Icon(
+                                if (flashEnabled) Icons.Default.FlashOff else Icons.Default.FlashOn,
+                                contentDescription = "Toggle Flash"
+                            )
                         }
                     }
                 )
