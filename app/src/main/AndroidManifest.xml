@@ -12,7 +12,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AgroShop"
-        android:localeConfig="@xml/locales_config">
+        android:localeConfig="@xml/locales_config"
+        android:extractNativeLibs="false">
         <!-- AdMob App ID for Google Mobile Ads SDK (Production) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
