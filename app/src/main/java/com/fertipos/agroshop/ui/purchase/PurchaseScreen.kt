@@ -45,6 +45,7 @@ import com.fertipos.agroshop.ui.screens.AppNavViewModel
 import java.util.Locale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
@@ -58,8 +59,12 @@ import com.fertipos.agroshop.ui.customer.CustomerViewModel
 import com.fertipos.agroshop.ui.common.AddProductDialog
 import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
 import com.fertipos.agroshop.ui.product.ProductViewModel
+import com.fertipos.agroshop.ui.BarcodeScannerScreen
+import com.fertipos.agroshop.data.api.ProductInfo
 import kotlinx.coroutines.launch
 import com.fertipos.agroshop.ui.common.PartyForm
+import android.content.Context
+import android.widget.Toast
 
 @Composable
 fun PurchaseScreen(navVm: AppNavViewModel) {
@@ -85,6 +90,8 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
     var newSuppAddress by remember { mutableStateOf("") }
     // Add Product dialog state
     var showAddProduct by remember { mutableStateOf(false) }
+    var showBarcodeScanner by remember { mutableStateOf(false) }
+    var scannedProduct by remember { mutableStateOf<ProductInfo?>(null) }
     val scope = rememberCoroutineScope()
 
     // Observe pending edit request from navigation and load once
@@ -117,9 +124,9 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         navVm.navigateTo(target)
     }
 
-    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
     LaunchedEffect(state.error) {
         val err = state.error
         if (err != null) {
@@ -211,18 +218,23 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                    ProductPicker(
-                        products = state.products,
-                        label = stringResource(R.string.product_label),
-                        modifier = Modifier.fillMaxWidth(),
-                        initialQuery = selectedProduct?.name ?: "",
-                        onPicked = { p ->
-                            selectedProduct = p
-                            priceText = p.purchasePrice.toStringAsFixed(2)
-                        },
-                        addNewLabel = stringResource(R.string.add),
-                        onAddNew = { showAddProduct = true }
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        ProductPicker(
+                            products = state.products,
+                            label = stringResource(R.string.product_label),
+                            modifier = Modifier.weight(1f),
+                            initialQuery = selectedProduct?.name ?: "",
+                            onPicked = { p ->
+                                selectedProduct = p
+                                priceText = p.purchasePrice.toStringAsFixed(2)
+                            },
+                            addNewLabel = stringResource(R.string.add),
+                            onAddNew = { showAddProduct = true }
+                        )
+                        IconButton(onClick = { showBarcodeScanner = true }) {
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan Barcode")
+                        }
+                    }
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
@@ -366,9 +378,9 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         AddProductDialog(
             typeOptions = typeOptions,
             unitOptions = unitOptions,
-            onConfirm = { n, t, u, sp, pp, st, g ->
+            onConfirm = { n, t, u, sp, pp, st, g, barcode ->
                 scope.launch {
-                    val id = prodVm.addAndReturnId(n, t, u, sp, pp, st, g)
+                    val id = prodVm.addAndReturnId(n, t, u, sp, pp, st, g, barcode)
                     if (id > 0) pendingSelectProductId = id
                 }
                 // prefill with purchase price
@@ -412,10 +424,41 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
         )
     }
 
+    // Barcode scanner overlay
+    if (showBarcodeScanner) {
+        BarcodeScannerScreen(
+            onProductDetected = { product ->
+                // Find product by ID and auto-add with qty 1
+                product.productId?.let { pid ->
+                    state.products.firstOrNull { it.id == pid }?.let { p ->
+                        // Check if product already exists in items
+                        val existingItem = state.items.firstOrNull { it.product.id == p.id }
+                        if (existingItem != null) {
+                            // Increase qty by 1
+                            val newQty = existingItem.quantity + 1.0
+                            vm.updateItem(p.id, quantity = newQty, unitPrice = existingItem.unitPrice, gstPercent = existingItem.gstPercent)
+                            Toast.makeText(context, "${p.name} quantity increased to ${newQty}", Toast.LENGTH_SHORT).show()
+                        } else {
+                            // Add new item with qty 1
+                            vm.addItem(p, 1.0)
+                            vm.updateItem(p.id, quantity = 1.0, unitPrice = p.purchasePrice, gstPercent = p.gstPercent)
+                            Toast.makeText(context, "${p.name} added (qty: 1)", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                // Close scanner after detection
+                showBarcodeScanner = false
+            },
+            onBack = { showBarcodeScanner = false },
+            lookupProduct = true,
+            isOverlay = true
+        )
+    }
+
 }
 
-    @Composable
-    private fun PurchaseItemCard(
+@Composable
+private fun PurchaseItemCard(
         item: PurchaseViewModel.DraftItem,
         onRemove: () -> Unit
     ) {

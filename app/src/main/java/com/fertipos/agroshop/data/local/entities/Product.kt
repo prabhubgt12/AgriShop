@@ -13,6 +13,7 @@ data class Product(
     val purchasePrice: Double,
     val stockQuantity: Double = 0.0,
     val gstPercent: Double = 0.0,
+    val barcode: String = "", // Barcode for scanning
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

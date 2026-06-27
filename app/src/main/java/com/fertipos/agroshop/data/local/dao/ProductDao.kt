@@ -28,4 +28,10 @@ interface ProductDao {
 
     @Query("UPDATE products SET stockQuantity = stockQuantity + :delta WHERE id = :productId")
     suspend fun adjustStock(productId: Int, delta: Double)
+
+    @Query("SELECT * FROM products WHERE barcode = :barcode LIMIT 1")
+    fun getByBarcode(barcode: String): Flow<Product?>
+
+    @Query("SELECT * FROM products WHERE barcode = :barcode LIMIT 1")
+    suspend fun getByBarcodeSync(barcode: String): Product?
 }

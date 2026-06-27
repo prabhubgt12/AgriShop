@@ -10,6 +10,7 @@ import android.print.PrintAttributes
 import android.print.PrintDocumentAdapter
 import android.print.PrintDocumentInfo
 import android.print.PrintManager
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -73,6 +74,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.QrCodeScanner
 import com.fertipos.agroshop.ui.common.CustomerPicker
 import com.fertipos.agroshop.ui.common.ProductPicker
 import com.fertipos.agroshop.ui.common.DateField
@@ -86,6 +88,8 @@ import com.fertipos.agroshop.ui.common.PartyForm
 import com.fertipos.agroshop.ui.common.AddProductDialog
 import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
 import com.fertipos.agroshop.ui.product.ProductViewModel
+import com.fertipos.agroshop.ui.BarcodeScannerScreen
+import com.fertipos.agroshop.data.api.ProductInfo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,6 +143,8 @@ private fun NewBillContent(navVm: AppNavViewModel) {
     var newCustAddress by remember { mutableStateOf("") }
     // Add Product dialog state
     var showAddProduct by remember { mutableStateOf(false) }
+    var showBarcodeScanner by remember { mutableStateOf(false) }
+    var scannedProduct by remember { mutableStateOf<ProductInfo?>(null) }
     val scope = rememberCoroutineScope()
 
     // Auto-select newly added product when the list updates
@@ -257,18 +263,23 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             ) {
                 Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
                     // Product selector
-                    ProductPicker(
-                        products = state.value.products,
-                        label = stringResource(R.string.product_required),
-                        modifier = Modifier.fillMaxWidth(),
-                        initialQuery = selectedProduct?.name ?: "",
-                        onPicked = { p ->
-                            selectedProduct = p
-                            priceText = p.sellingPrice.toString()
-                        },
-                        addNewLabel = stringResource(R.string.add),
-                        onAddNew = { showAddProduct = true }
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        ProductPicker(
+                            products = state.value.products,
+                            label = stringResource(R.string.product_required),
+                            modifier = Modifier.weight(1f),
+                            initialQuery = selectedProduct?.name ?: "",
+                            onPicked = { p ->
+                                selectedProduct = p
+                                priceText = p.sellingPrice.toString()
+                            },
+                            addNewLabel = stringResource(R.string.add),
+                            onAddNew = { showAddProduct = true }
+                        )
+                        IconButton(onClick = { showBarcodeScanner = true }) {
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan Barcode")
+                        }
+                    }
                     Spacer(Modifier.height(8.dp))
                     // Qty and Price row
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -421,10 +432,13 @@ private fun NewBillContent(navVm: AppNavViewModel) {
         AddProductDialog(
             typeOptions = typeOptions,
             unitOptions = unitOptions,
-            onConfirm = { n, t, u, sp, pp, st, g ->
+            initialName = scannedProduct?.name ?: "",
+            initialPrice = scannedProduct?.price?.toString() ?: "",
+            initialBarcode = "",
+            onConfirm = { n, t, u, sp, pp, st, g, barcode ->
                 // insert and capture new id
                 scope.launch {
-                    val id = prodVm.addAndReturnId(n, t, u, sp, pp, st, g)
+                    val id = prodVm.addAndReturnId(n, t, u, sp, pp, st, g, barcode)
                     if (id > 0) pendingSelectProductId = id
                 }
                 priceText = sp.toString()
@@ -433,6 +447,16 @@ private fun NewBillContent(navVm: AppNavViewModel) {
             onDismiss = { showAddProduct = false }
         )
     }
+
+    // Barcode scanner dialog
+    BarcodeScannerDialog(
+        show = showBarcodeScanner,
+        products = state.value.products,
+        items = state.value.items,
+        vm = vm,
+        context = context,
+        onDismiss = { showBarcodeScanner = false }
+    )
 
     // Auto-open print dialog once invoice is saved (observe at the composable root)
     val successId = state.value.successInvoiceId
@@ -621,6 +645,46 @@ private fun triggerPrint(context: Context, jobName: String, lines: List<String>)
         }
     }
     printManager.print(jobName, adapter, PrintAttributes.Builder().build())
+}
+
+// Add barcode scanner dialog at the end of NewBillContent
+@Composable
+private fun BarcodeScannerDialog(
+    show: Boolean,
+    products: List<Product>,
+    items: List<BillingViewModel.DraftItem>,
+    vm: BillingViewModel,
+    context: Context,
+    onDismiss: () -> Unit
+) {
+    if (show) {
+        BarcodeScannerScreen(
+            onProductDetected = { product ->
+                // Find product by ID and auto-add with qty 1
+                product.productId?.let { pid ->
+                    products.firstOrNull { it.id == pid }?.let { p ->
+                        // Check if product already exists in items
+                        val existingItem = items.firstOrNull { it.product.id == p.id }
+                        if (existingItem != null) {
+                            // Increase qty by 1
+                            val newQty = existingItem.quantity + 1.0
+                            vm.updateItem(p.id, quantity = newQty, unitPrice = existingItem.unitPrice, gstPercent = existingItem.gstPercent)
+                            Toast.makeText(context, "${p.name} quantity increased to ${newQty}", Toast.LENGTH_SHORT).show()
+                        } else {
+                            // Add new item with qty 1
+                            vm.addItem(p, 1.0)
+                            vm.updateItem(p.id, quantity = 1.0, unitPrice = p.sellingPrice, gstPercent = p.gstPercent)
+                            Toast.makeText(context, "${p.name} added (qty: 1)", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                // Close scanner after detection
+                onDismiss()
+            },
+            onBack = onDismiss,
+            isOverlay = true
+        )
+    }
 }
 
 // Unwrap a Context to an Activity if possible

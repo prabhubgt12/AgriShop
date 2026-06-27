@@ -59,6 +59,7 @@ import com.fertipos.agroshop.data.local.entities.Product
 import com.fertipos.agroshop.ui.common.UnitPicker
 import com.fertipos.agroshop.ui.common.TypePicker
 import com.fertipos.agroshop.ui.settings.CompanyProfileViewModel
+import com.fertipos.agroshop.ui.BarcodeScannerScreen
 import androidx.compose.material.icons.outlined.MoreVert
 import java.text.NumberFormat
 import java.util.Locale
@@ -70,6 +71,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -101,81 +103,112 @@ fun ProductScreen() {
     }
     val lowThreshold = profileState.value.lowStockThreshold
 
+    // Barcode scanner state
+    var showBarcodeScanner by remember { mutableStateOf(false) }
+    var scannedBarcode by remember { mutableStateOf("") }
+    var showAdd by remember { mutableStateOf(false) }
+
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 8.dp, vertical = 8.dp)) {
-            SnackbarHost(hostState = snackbarHostState)
-            // Header with Add button
-            var showAdd by remember { mutableStateOf(false) }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = stringResource(R.string.products_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Button(onClick = { showAdd = true }) { Text(stringResource(R.string.add)) }
-            }
-            Spacer(Modifier.height(8.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(8.dp))
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(horizontal = 8.dp, vertical = 8.dp)) {
+                SnackbarHost(hostState = snackbarHostState)
+                // Header with Add and Scan buttons
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = stringResource(R.string.products_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        IconButton(onClick = { showBarcodeScanner = true }) {
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan Barcode")
+                        }
+                        Button(onClick = { showAdd = true }) { Text(stringResource(R.string.add)) }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(Modifier.height(8.dp))
 
-            // Search bar (compact)
-            var searchQuery by remember { mutableStateOf("") }
-            CompactSearchBar(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = stringResource(R.string.search_by_product),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(8.dp))
+                // Search bar (compact)
+                var searchQuery by remember { mutableStateOf("") }
+                CompactSearchBar(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = stringResource(R.string.search_by_product),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
 
-            // Compute filtered list outside LazyColumn (Composable scope)
-            val filtered = remember(state.value.products, searchQuery) {
-                if (searchQuery.isBlank()) state.value.products else state.value.products.filter { it.name.contains(searchQuery, ignoreCase = true) }
-            }
+                // Compute filtered list outside LazyColumn (Composable scope)
+                val filtered = remember(state.value.products, searchQuery) {
+                    if (searchQuery.isBlank()) state.value.products else state.value.products.filter { it.name.contains(searchQuery, ignoreCase = true) }
+                }
 
-            // List area
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 8.dp)
-            ) {
-                items(filtered, key = { it.id }) { p ->
-                    ProductRow(
-                        p = p,
+                // List area
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 8.dp)
+                ) {
+                    items(filtered, key = { it.id }) { p ->
+                        ProductRow(
+                            p = p,
+                            typeOptions = typeOptions,
+                            unitOptions = unitOptions,
+                            onUpdate = { prod, n, t, u, sp, pp, st, g, barcode -> vm.update(prod, n, t, u, sp, pp, st, g, barcode) },
+                            onDelete = { vm.delete(p) },
+                            onAdjustStock = { delta -> vm.adjustStock(p.id, delta) },
+                            onHistory = {
+                                navVm.requestPurchaseHistoryForProduct(p.id)
+                                navVm.navigateTo(8)
+                            },
+                            lowStockThreshold = lowThreshold
+                        )
+                    }
+                }
+
+                if (showAdd) {
+                    AddProductDialog(
                         typeOptions = typeOptions,
                         unitOptions = unitOptions,
-                        onUpdate = { prod, n, t, u, sp, pp, st, g -> vm.update(prod, n, t, u, sp, pp, st, g) },
-                        onDelete = { vm.delete(p) },
-                        onAdjustStock = { delta -> vm.adjustStock(p.id, delta) },
-                        onHistory = {
-                            navVm.requestPurchaseHistoryForProduct(p.id)
-                            navVm.navigateTo(8)
+                        onConfirm = { n, t, u, sp, pp, st, g, barcode ->
+                            vm.add(n, t, u, sp, pp, st, g, barcode)
+                            showAdd = false
+                            scannedBarcode = ""
                         },
-                        lowStockThreshold = lowThreshold
+                        onDismiss = { showAdd = false },
+                        barcode = scannedBarcode,
+                        onBarcodeChange = { scannedBarcode = it }
                     )
+                }
+                // Error handling
+                val err = state.value.error
+                LaunchedEffect(err) {
+                    if (err != null) {
+                        val msg = when (err) {
+                            "ERR_PRODUCT_REFERENCED" -> context.getString(R.string.err_product_referenced)
+                            "ERR_DUPLICATE_BARCODE" -> context.getString(R.string.err_duplicate_barcode)
+                            else -> err
+                        }
+                        snackbarHostState.showSnackbar(msg)
+                        vm.clearError()
+                    }
                 }
             }
 
-            if (showAdd) {
-                AddProductDialog(
-                    typeOptions = typeOptions,
-                    unitOptions = unitOptions,
-                    onConfirm = { n, t, u, sp, pp, st, g ->
-                        vm.add(n, t, u, sp, pp, st, g)
-                        showAdd = false
+            // Barcode scanner overlay
+            if (showBarcodeScanner) {
+                BarcodeScannerScreen(
+                    onBarcodeDetected = { barcode ->
+                        scannedBarcode = barcode
+                        showBarcodeScanner = false
+                        showAdd = true
                     },
-                    onDismiss = { showAdd = false }
+                    onBack = { 
+                        showBarcodeScanner = false
+                    },
+                    lookupProduct = false,
+                    isOverlay = true
                 )
-            }
-            // Error handling
-            val err = state.value.error
-            LaunchedEffect(err) {
-                if (err != null) {
-                    val msg = when (err) {
-                        "ERR_PRODUCT_REFERENCED" -> context.getString(R.string.err_product_referenced)
-                        else -> err
-                    }
-                    snackbarHostState.showSnackbar(msg)
-                    vm.clearError()
-                }
             }
         }
     }
@@ -186,7 +219,7 @@ private fun ProductRow(
     p: Product,
     typeOptions: List<String>,
     unitOptions: List<String>,
-    onUpdate: (Product, String, String, String, Double, Double, Double, Double) -> Unit,
+    onUpdate: (Product, String, String, String, Double, Double, Double, Double, String) -> Unit,
     onDelete: () -> Unit,
     onAdjustStock: (Double) -> Unit,
     onHistory: () -> Unit,
@@ -287,10 +320,10 @@ private fun ProductRow(
         }
     }
     if (showEdit) {
-        EditProductDialog(initial = p, typeOptions = typeOptions, unitOptions = unitOptions, onConfirm = { n, t, u, sp, pp, st, g ->
-            onUpdate(p, n, t, u, sp, pp, st, g)
+        EditProductDialog(initial = p, typeOptions = typeOptions, unitOptions = unitOptions, onConfirm = { n, t, u, sp, pp, st, g, barcode ->
+            onUpdate(p, n, t, u, sp, pp, st, g, barcode)
             showEdit = false
-        }, onDismiss = { showEdit = false })
+        }, onDismiss = { showEdit = false }, barcode = p.barcode, onBarcodeChange = {})
     }
     if (confirmDelete) {
         AlertDialog(
@@ -312,8 +345,10 @@ private fun EditProductDialog(
     initial: Product,
     typeOptions: List<String>,
     unitOptions: List<String>,
-    onConfirm: (String, String, String, Double, Double, Double, Double) -> Unit,
-    onDismiss: () -> Unit
+    onConfirm: (String, String, String, Double, Double, Double, Double, String) -> Unit,
+    onDismiss: () -> Unit,
+    barcode: String,
+    onBarcodeChange: (String) -> Unit
 ) {
     var name by remember { mutableStateOf(initial.name) }
     var type by remember { mutableStateOf(initial.type) }
@@ -333,6 +368,15 @@ private fun EditProductDialog(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.name_required)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(6.dp))
+
+                // 1.5) Barcode (full width)
+                OutlinedTextField(
+                    value = barcode,
+                    onValueChange = onBarcodeChange,
+                    label = { Text("Barcode (optional)") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(6.dp))
@@ -416,7 +460,7 @@ private fun EditProductDialog(
                 val pp = purchasePrice.toDoubleOrNull() ?: 0.0
                 val st = stock.toDoubleOrNull() ?: 0.0
                 val g = gst.toDoubleOrNull() ?: 0.0
-                onConfirm(name, type, unit, sp, pp, st, g)
+                onConfirm(name, type, unit, sp, pp, st, g, barcode)
             }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
@@ -467,8 +511,10 @@ private fun CompactSearchBar(
 private fun AddProductDialog(
     typeOptions: List<String>,
     unitOptions: List<String>,
-    onConfirm: (String, String, String, Double, Double, Double, Double) -> Unit,
-    onDismiss: () -> Unit
+    onConfirm: (String, String, String, Double, Double, Double, Double, String) -> Unit,
+    onDismiss: () -> Unit,
+    barcode: String,
+    onBarcodeChange: (String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var type by remember(typeOptions) { mutableStateOf(typeOptions.firstOrNull() ?: "Fertilizer") }
@@ -488,6 +534,15 @@ private fun AddProductDialog(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.name_required)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(6.dp))
+
+                // 1.5) Barcode (full width)
+                OutlinedTextField(
+                    value = barcode,
+                    onValueChange = onBarcodeChange,
+                    label = { Text("Barcode (optional)") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(6.dp))
@@ -571,7 +626,7 @@ private fun AddProductDialog(
                 val pp = purchasePrice.toDoubleOrNull() ?: 0.0
                 val st = stock.toDoubleOrNull() ?: 0.0
                 val g = gst.toDoubleOrNull() ?: 0.0
-                onConfirm(name, type, unit, sp, pp, st, g)
+                onConfirm(name, type, unit, sp, pp, st, g, barcode)
             }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }

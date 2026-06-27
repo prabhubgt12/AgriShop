@@ -354,4 +354,5 @@
     <string name="err_customer_referenced">Cannot delete customer. It is referenced by existing bills or purchases.</string>
     <string name="supplier_locked_info">Supplier flag is locked because this customer is referenced in bills or purchases.</string>
     <string name="err_product_referenced">Cannot delete product. It is referenced by existing bills or purchases.</string>
+    <string name="err_duplicate_barcode">A product with this barcode already exists. Please use a different barcode.</string>
 </resources>

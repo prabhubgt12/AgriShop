@@ -25,16 +25,20 @@ import com.fertipos.agroshop.R
 fun AddProductDialog(
     typeOptions: List<String>,
     unitOptions: List<String>,
-    onConfirm: (String, String, String, Double, Double, Double, Double) -> Unit,
+    initialName: String = "",
+    initialPrice: String = "",
+    initialBarcode: String = "",
+    onConfirm: (String, String, String, Double, Double, Double, Double, String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var name = remember { mutableStateOf("") }
+    var name = remember { mutableStateOf(initialName) }
     var type = remember(typeOptions) { mutableStateOf(typeOptions.firstOrNull() ?: "Fertilizer") }
     var unit = remember(unitOptions) { mutableStateOf(unitOptions.firstOrNull() ?: "Pcs") }
     var stock = remember { mutableStateOf("0") }
     var gst = remember { mutableStateOf("") }
-    var purchasePrice = remember { mutableStateOf("0") }
-    var sellingPrice = remember { mutableStateOf("0") }
+    var purchasePrice = remember { mutableStateOf(initialPrice.ifEmpty { "0" }) }
+    var sellingPrice = remember { mutableStateOf(initialPrice.ifEmpty { "0" }) }
+    var barcode = remember { mutableStateOf(initialBarcode) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -46,6 +50,15 @@ fun AddProductDialog(
                     value = name.value,
                     onValueChange = { name.value = it },
                     label = { Text(stringResource(R.string.name_required)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(6.dp))
+
+                // 1.5) Barcode (full width)
+                OutlinedTextField(
+                    value = barcode.value,
+                    onValueChange = { barcode.value = it },
+                    label = { Text("Barcode (optional)") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(6.dp))
@@ -129,7 +142,7 @@ fun AddProductDialog(
                 val pp = purchasePrice.value.toDoubleOrNull() ?: 0.0
                 val st = stock.value.toDoubleOrNull() ?: 0.0
                 val g = gst.value.toDoubleOrNull() ?: 0.0
-                onConfirm(name.value, type.value, unit.value, sp, pp, st, g)
+                onConfirm(name.value, type.value, unit.value, sp, pp, st, g, barcode.value)
             }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }

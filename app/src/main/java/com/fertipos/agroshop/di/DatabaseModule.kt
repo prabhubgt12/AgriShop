@@ -118,6 +118,21 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_13_14 = object : Migration(13, 14) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // No-op: previously added product_barcodes table, now we'll use barcode field in products
+        }
+    }
+
+    private val MIGRATION_14_15 = object : Migration(14, 15) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // Add barcode column to products table
+            database.execSQL("ALTER TABLE products ADD COLUMN barcode TEXT NOT NULL DEFAULT ''")
+            // Drop product_barcodes table if it exists
+            database.execSQL("DROP TABLE IF EXISTS product_barcodes")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
@@ -126,7 +141,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "agroshop.db"
         )
-            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
             .build()
 
     @Provides

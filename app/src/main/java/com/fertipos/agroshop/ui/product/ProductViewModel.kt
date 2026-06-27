@@ -36,10 +36,19 @@ class ProductViewModel @Inject constructor(
         sellingPrice: Double,
         purchasePrice: Double,
         stockQuantity: Double,
-        gstPercent: Double
+        gstPercent: Double,
+        barcode: String
     ) {
         if (name.isBlank() || unit.isBlank()) return
         viewModelScope.launch {
+            // Check for duplicate barcode
+            if (barcode.isNotBlank()) {
+                val existing = dao.getByBarcodeSync(barcode.trim())
+                if (existing != null) {
+                    _error.value = "ERR_DUPLICATE_BARCODE"
+                    return@launch
+                }
+            }
             dao.insert(
                 Product(
                     name = name.trim(),
@@ -48,7 +57,8 @@ class ProductViewModel @Inject constructor(
                     sellingPrice = sellingPrice,
                     purchasePrice = purchasePrice,
                     stockQuantity = stockQuantity,
-                    gstPercent = gstPercent
+                    gstPercent = gstPercent,
+                    barcode = barcode.trim()
                 )
             )
         }
@@ -61,7 +71,8 @@ class ProductViewModel @Inject constructor(
         sellingPrice: Double,
         purchasePrice: Double,
         stockQuantity: Double,
-        gstPercent: Double
+        gstPercent: Double,
+        barcode: String
     ): Int {
         if (name.isBlank() || unit.isBlank()) return 0
         val id = dao.insert(
@@ -72,7 +83,8 @@ class ProductViewModel @Inject constructor(
                 sellingPrice = sellingPrice,
                 purchasePrice = purchasePrice,
                 stockQuantity = stockQuantity,
-                gstPercent = gstPercent
+                gstPercent = gstPercent,
+                barcode = barcode.trim()
             )
         )
         return id.toInt()
@@ -86,10 +98,19 @@ class ProductViewModel @Inject constructor(
         sellingPrice: Double,
         purchasePrice: Double,
         stockQuantity: Double,
-        gstPercent: Double
+        gstPercent: Double,
+        barcode: String
     ) {
         if (name.isBlank() || unit.isBlank()) return
         viewModelScope.launch {
+            // Check for duplicate barcode (excluding current product)
+            if (barcode.isNotBlank()) {
+                val existing = dao.getByBarcodeSync(barcode.trim())
+                if (existing != null && existing.id != product.id) {
+                    _error.value = "ERR_DUPLICATE_BARCODE"
+                    return@launch
+                }
+            }
             dao.update(
                 product.copy(
                     name = name.trim(),
@@ -99,6 +120,7 @@ class ProductViewModel @Inject constructor(
                     purchasePrice = purchasePrice,
                     stockQuantity = stockQuantity,
                     gstPercent = gstPercent,
+                    barcode = barcode.trim(),
                     updatedAt = System.currentTimeMillis()
                 )
             )
