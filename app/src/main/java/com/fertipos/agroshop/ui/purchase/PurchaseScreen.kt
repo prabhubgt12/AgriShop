@@ -46,6 +46,7 @@ import java.util.Locale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Edit
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.res.stringResource
 import com.fertipos.agroshop.R
@@ -282,7 +283,7 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
                     }
                     Spacer(Modifier.height(10.dp))
                     state.items.forEach { it ->
-                        PurchaseItemCard(item = it, onRemove = { vm.removeItem(it.product.id) })
+                        PurchaseItemCard(item = it, onRemove = { vm.removeItem(it.product.id) }, onUpdate = { newQty, newPrice -> vm.updateItem(it.product.id, quantity = newQty, unitPrice = newPrice, gstPercent = it.gstPercent) })
                     }
                 }
             }
@@ -460,25 +461,76 @@ fun PurchaseScreen(navVm: AppNavViewModel) {
 @Composable
 private fun PurchaseItemCard(
         item: PurchaseViewModel.DraftItem,
-        onRemove: () -> Unit
+        onRemove: () -> Unit,
+        onUpdate: (Double, Double) -> Unit
     ) {
-        val lineBase = item.quantity * item.unitPrice
-        val gstAmt = lineBase * (item.gstPercent / 100.0)
-        val lineTotal = lineBase + gstAmt
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-        ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(text = item.product.name, style = MaterialTheme.typography.titleSmall)
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete)) }
+    var isEditing by remember { mutableStateOf(false) }
+    var editQty by remember { mutableStateOf(item.quantity.toString()) }
+    var editPrice by remember { mutableStateOf(item.unitPrice.toString()) }
+    
+    val lineBase = item.quantity * item.unitPrice
+    val gstAmt = lineBase * (item.gstPercent / 100.0)
+    val lineTotal = lineBase + gstAmt
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(text = item.product.name, style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.weight(1f))
+                IconButton(onClick = { 
+                    isEditing = true
+                    editQty = item.quantity.toString()
+                    editPrice = item.unitPrice.toString()
+                }) { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
+                IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete)) }
+            }
+            Spacer(Modifier.height(4.dp))
+            if (isEditing) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = editQty,
+                        onValueChange = { raw ->
+                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                            editQty = final
+                        },
+                        label = { Text(stringResource(R.string.qty_label)) },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = editPrice,
+                        onValueChange = { raw ->
+                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                            editPrice = final
+                        },
+                        label = { Text(stringResource(R.string.price_label)) },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
                 }
                 Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = {
+                        val newQty = editQty.toDoubleOrNull() ?: item.quantity
+                        val newPrice = editPrice.toDoubleOrNull() ?: item.unitPrice
+                        onUpdate(newQty, newPrice)
+                        isEditing = false
+                    }, modifier = Modifier.weight(1f)) {
+                        Text("Save")
+                    }
+                    Button(onClick = { isEditing = false }, modifier = Modifier.weight(1f)) {
+                        Text("Cancel")
+                    }
+                }
+            } else {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Text(text = stringResource(R.string.qty_label) + ": " + item.quantity.toStringAsFixed(2) + " " + item.product.unit)
                     Spacer(Modifier.weight(1f))
@@ -498,5 +550,6 @@ private fun PurchaseItemCard(
             }
         }
     }
+}
 
     private fun Double.toStringAsFixed(digits: Int): String = String.format(Locale.getDefault(), "%.${digits}f", this)

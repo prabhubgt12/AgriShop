@@ -74,6 +74,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.QrCodeScanner
 import com.fertipos.agroshop.ui.common.CustomerPicker
 import com.fertipos.agroshop.ui.common.ProductPicker
@@ -333,7 +334,7 @@ private fun NewBillContent(navVm: AppNavViewModel) {
                     Text(text = stringResource(R.string.items_title), style = MaterialTheme.typography.titleSmall)
                     Spacer(Modifier.height(6.dp))
                     state.value.items.forEach { item ->
-                        DraftItemRow(item = item, format = currencyFormat, onRemove = { vm.removeItem(item.product.id) })
+                        DraftItemRow(item = item, format = currencyFormat, onRemove = { vm.removeItem(item.product.id) }, onUpdate = { newQty, newPrice -> vm.updateItem(item.product.id, quantity = newQty, unitPrice = newPrice, gstPercent = item.gstPercent) })
                     }
                 }
             }
@@ -549,11 +550,17 @@ private fun NewBillContent(navVm: AppNavViewModel) {
 private fun DraftItemRow(
     item: BillingViewModel.DraftItem,
     format: (Double) -> String,
-    onRemove: () -> Unit
+    onRemove: () -> Unit,
+    onUpdate: (Double, Double) -> Unit
 ) {
+    var isEditing by remember { mutableStateOf(false) }
+    var editQty by remember { mutableStateOf(item.quantity.toString()) }
+    var editPrice by remember { mutableStateOf(item.unitPrice.toString()) }
+    
     val lineBase = item.quantity * item.unitPrice
     val gstAmt = lineBase * (item.gstPercent / 100.0)
     val lineTotal = lineBase + gstAmt
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -565,24 +572,70 @@ private fun DraftItemRow(
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(text = item.product.name)
                 Spacer(Modifier.weight(1f))
+                IconButton(onClick = { 
+                    isEditing = true
+                    editQty = item.quantity.toString()
+                    editPrice = item.unitPrice.toString()
+                }) { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
                 IconButton(onClick = onRemove) { Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete)) }
             }
             Spacer(Modifier.height(4.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = stringResource(R.string.qty_label) + ": ${item.quantity}")
-                Spacer(Modifier.weight(1f))
-                Text(text = stringResource(R.string.price_label) + ": ${format(item.unitPrice)}")
-            }
-            Spacer(Modifier.height(2.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = stringResource(R.string.gst_percent_colon, String.format(java.util.Locale.getDefault(), "%.1f", item.gstPercent)))
-                Spacer(Modifier.weight(1f))
-                Text(text = stringResource(R.string.gst_amt_colon, format(gstAmt)))
-            }
-            Spacer(Modifier.height(2.dp))
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Spacer(Modifier.weight(1f))
-                Text(text = stringResource(R.string.total_with_amount, format(lineTotal)))
+            if (isEditing) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = editQty,
+                        onValueChange = { raw ->
+                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                            editQty = final
+                        },
+                        label = { Text(stringResource(R.string.qty_label)) },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = editPrice,
+                        onValueChange = { raw ->
+                            val filtered = raw.filter { ch -> ch.isDigit() || ch == '.' }
+                            val final = if (filtered.count { it == '.' } > 1) filtered.replaceFirst(".", "") else filtered
+                            editPrice = final
+                        },
+                        label = { Text(stringResource(R.string.price_label)) },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = {
+                        val newQty = editQty.toDoubleOrNull() ?: item.quantity
+                        val newPrice = editPrice.toDoubleOrNull() ?: item.unitPrice
+                        onUpdate(newQty, newPrice)
+                        isEditing = false
+                    }, modifier = Modifier.weight(1f)) {
+                        Text("Save")
+                    }
+                    Button(onClick = { isEditing = false }, modifier = Modifier.weight(1f)) {
+                        Text("Cancel")
+                    }
+                }
+            } else {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = stringResource(R.string.qty_label) + ": ${item.quantity}")
+                    Spacer(Modifier.weight(1f))
+                    Text(text = stringResource(R.string.price_label) + ": ${format(item.unitPrice)}")
+                }
+                Spacer(Modifier.height(2.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = stringResource(R.string.gst_percent_colon, String.format(java.util.Locale.getDefault(), "%.1f", item.gstPercent)))
+                    Spacer(Modifier.weight(1f))
+                    Text(text = stringResource(R.string.gst_amt_colon, format(gstAmt)))
+                }
+                Spacer(Modifier.height(2.dp))
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(Modifier.weight(1f))
+                    Text(text = stringResource(R.string.total_with_amount, format(lineTotal)))
+                }
             }
         }
     }
