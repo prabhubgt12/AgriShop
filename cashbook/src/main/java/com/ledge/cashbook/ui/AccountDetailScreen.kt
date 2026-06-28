@@ -268,6 +268,8 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     // Ads state
     val adsVm: AdsViewModel = hiltViewModel()
     val hasRemoveAds by adsVm.hasRemoveAds.collectAsState(initial = false)
+    // Temporary flag to test remove ads behavior - set to true to simulate hasRemoveAds
+    val forceRemoveAds = true
     var bannerLoaded by remember { mutableStateOf(false) }
     // Expense overview chart state
     var showExpenseChart by remember { mutableStateOf(false) }
@@ -329,7 +331,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                     Text("Failed to load image.")
                 }
             // Extra space below summary so it's fully visible above the banner
-            if (!hasRemoveAds) {
+            if (!hasRemoveAds && !showAdd && !forceRemoveAds) {
                 Spacer(Modifier.height(84.dp))
             }
             }
@@ -1498,7 +1500,7 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         thickness = 0.6.dp
                     )
             // Sticky totals footer (outside list)
-            val showBanner = !hasRemoveAds && !showAdd
+            val showBanner = !hasRemoveAds && !showAdd && !forceRemoveAds
             val bannerHeightDp = remember(showBanner, bannerLoaded) {
                 if (!showBanner) 0f else {
                     val dm = ctx.resources.displayMetrics
