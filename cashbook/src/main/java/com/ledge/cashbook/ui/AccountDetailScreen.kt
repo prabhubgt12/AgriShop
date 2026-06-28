@@ -67,6 +67,7 @@ import java.util.Date
 import com.ledge.cashbook.util.PdfShare
 import com.ledge.cashbook.util.ExcelShare
 import com.ledge.cashbook.ads.BannerAd
+import com.ledge.cashbook.ads.TransactionInterstitialAds
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.google.android.gms.ads.AdSize
@@ -111,13 +112,20 @@ import androidx.compose.foundation.isSystemInDarkTheme
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = false, prefillNote: String = "", prefillAmount: String = "", vm: AccountDetailViewModel = hiltViewModel(), themeViewModel: ThemeViewModel = hiltViewModel()) {
+    val ctx = LocalContext.current
+
     LaunchedEffect(accountId) {
         vm.load(accountId)
         // Generate any overdue recurring transactions when viewing this account
         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             vm.generateRecurringTransactions()
         }
+        // Preload interstitial ad
+        TransactionInterstitialAds.preload(ctx)
     }
+
+    // Track expenses added in current session for interstitial ad
+    var expensesAddedInSession by remember { mutableStateOf(0) }
 
     // Use same theme logic as MainActivity
     val mode by themeViewModel.themeMode.collectAsState()
@@ -130,7 +138,6 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
     val name by vm.accountName.collectAsState()
     val txns by vm.txns.collectAsState()
     val balance by vm.balance.collectAsState()
-    val ctx = LocalContext.current
     val businessProfileVM: BusinessProfileViewModel = hiltViewModel()
     val businessProfile by businessProfileVM.profile.collectAsState()
 
@@ -1690,6 +1697,14 @@ fun AccountDetailScreen(accountId: Int, onBack: () -> Unit, openAdd: Boolean = f
                         addAttachmentUri = null
                         addCategory = ""
                         addRecurring = false
+                        // Increment session expense counter and show interstitial after 2nd expense
+                        expensesAddedInSession++
+                        if (expensesAddedInSession >= 2 && !hasRemoveAds) {
+                            val activity = ctx as? android.app.Activity
+                            activity?.let {
+                                TransactionInterstitialAds.showIfAvailable(it)
+                            }
+                        }
                     }
                 ) { Text(stringResource(R.string.save)) }
             },
