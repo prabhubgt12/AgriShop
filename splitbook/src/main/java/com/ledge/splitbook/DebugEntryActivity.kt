@@ -12,7 +12,7 @@ class DebugEntryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         val tv = TextView(this).apply {
-            text = "Simple Split (Debug Entry)"
+            text = "Split Book (Debug Entry)"
             textSize = 20f
             gravity = Gravity.CENTER
         }

@@ -36,7 +36,7 @@ object DriveClient {
                 AndroidHttp.newCompatibleTransport(),
                 GsonFactory.getDefaultInstance(),
                 credential
-            ).setApplicationName("Simple Split").build()
+            ).setApplicationName("Split Book").build()
             true
         } catch (e: Exception) {
             lastErrorMessage = e.localizedMessage ?: e.toString()
@@ -62,7 +62,7 @@ object DriveClient {
             AndroidHttp.newCompatibleTransport(),
             GsonFactory.getDefaultInstance(),
             credential
-        ).setApplicationName("Simple Split").build()
+        ).setApplicationName("Split Book").build()
         true
     } catch (e: Exception) { lastErrorMessage = e.localizedMessage ?: e.toString(); false }
 

@@ -37,7 +37,7 @@
     <string name="enter_category_name_label">Enter category name</string>
 
     <!-- Groups -->
-    <string name="groups_title">Simple Split</string>
+    <string name="groups_title">Split Book</string>
     <string name="menu_manage_category">Manage Category</string>
     <string name="menu_settings">Settings</string>
     <string name="menu_remove_ads">Remove Ads</string>

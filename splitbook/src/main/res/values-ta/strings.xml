@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Simple Split</string>
+    <string name="app_name">Split Book</string>
     <string name="unlock_to_continue">தொடர தாளைத் திறக்கவும்</string>
 
     <!-- Settings -->

@@ -45,7 +45,7 @@ object ShareExport {
     ): String {
         val byId = members.associateBy { it.id }
         val sb = StringBuilder()
-        sb.appendLine("Simple Split — " + groupName)
+        sb.appendLine("Split Book — " + groupName)
         sb.appendLine()
         // 1) Transactions list
         sb.appendLine(context.getString(com.ledge.splitbook.R.string.share_transactions))
@@ -182,7 +182,7 @@ object ShareExport {
             }
         }
         // Title
-        drawTitle("Simple Split — " + groupName)
+        drawTitle("Split Book — " + groupName)
         // Transactions table
         val txHeaders = listOf(
             context.getString(com.ledge.splitbook.R.string.pdf_header_date),
@@ -216,7 +216,7 @@ object ShareExport {
         canvas.drawText(formatAmount(total, currency), right - 120f, totalTop, totalText)
         y += rowH + 10f
         // Members table
-        ensureSpace(24f, 24f) { drawTitle("Simple Split — " + groupName) }
+        ensureSpace(24f, 24f) { drawTitle("Split Book — " + groupName) }
         val msHeaders = listOf(
             context.getString(com.ledge.splitbook.R.string.pdf_header_member),
             context.getString(com.ledge.splitbook.R.string.pdf_header_paid),
@@ -394,13 +394,13 @@ object ShareExport {
         currency: String
     ): Uri {
         val df = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
-        val fileName = "simple_split_${groupName}_${LocalDateTime.now().format(df)}.xlsx"
+        val fileName = "split_book_${groupName}_${LocalDateTime.now().format(df)}.xlsx"
         val dir = File(context.cacheDir, "exports")
         if (!dir.exists()) dir.mkdirs()
         val file = File(dir, fileName)
 
         FileOutputStream(file).use { fos ->
-            val wb = Workbook(fos, "Simple Split", "1.0")
+            val wb = Workbook(fos, "Split Book", "1.0")
             // Transactions sheet (FastExcel uses 0-based row/col indices)
             val tx = wb.newWorksheet(context.getString(com.ledge.splitbook.R.string.excel_sheet_transactions))
             tx.value(0, 0, context.getString(com.ledge.splitbook.R.string.pdf_header_date))

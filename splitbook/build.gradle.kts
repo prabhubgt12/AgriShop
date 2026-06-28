@@ -18,8 +18,8 @@ android {
         applicationId = "com.ledge.splitbook"
         minSdk = 24
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.1.8"
+        versionCode = 10
+        versionName = "0.1.10"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -153,7 +153,7 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Note: Ads not used in Simple Split; exclude GMA to avoid MobileAdsInitProvider crash without app ID
+    // Note: Ads not used in Split Book; exclude GMA to avoid MobileAdsInitProvider crash without app ID
 
     // WorkManager (backups/exports scheduling later)
     implementation("androidx.work:work-runtime-ktx:2.9.0")

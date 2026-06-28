@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(text = "Simple Split (Compose Minimal UI)")
+                            Text(text = "Split Book (Compose Minimal UI)")
                         }
                     }
                 }
@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
             return
         } else if (BuildConfig.SHOW_MINIMAL_UI) {
             Log.d("SplitBook", "SHOW_MINIMAL_UI enabled -> rendering native minimal layout")
-            val tv = android.widget.TextView(this).apply { text = "Simple Split (Native Minimal UI)"; textSize = 20f; gravity = android.view.Gravity.CENTER }
+            val tv = android.widget.TextView(this).apply { text = "Split Book (Native Minimal UI)"; textSize = 20f; gravity = android.view.Gravity.CENTER }
             val lp = android.widget.LinearLayout(this).apply {
                 orientation = android.widget.LinearLayout.VERTICAL
                 gravity = android.view.Gravity.CENTER
@@ -145,7 +145,7 @@ private fun MinimalDebugScreen() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "Simple Split (Debug Minimal UI)")
+                Text(text = "Split Book (Debug Minimal UI)")
             }
         }
     }

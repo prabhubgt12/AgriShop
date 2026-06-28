@@ -111,7 +111,7 @@ fun SettleDetailsScreen(
             amount = t.amount,
             onDismiss = { upiDialog = null },
             onOpen = { vpa, payee ->
-                val intent = Intent(Intent.ACTION_VIEW, buildUpiUri(vpa, payee, t.amount, "Simple Split settlement"))
+                val intent = Intent(Intent.ACTION_VIEW, buildUpiUri(vpa, payee, t.amount, "Split Book settlement"))
                 context.startActivity(intent)
                 upiDialog = null
             }

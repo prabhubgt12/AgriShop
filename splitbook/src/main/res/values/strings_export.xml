@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Share/Export titles and headers -->
-    <string name="app_title_with_group">Simple Split — %1$s</string>
+    <string name="app_title_with_group">Split Book — %1$s</string>
     <string name="share_transactions">Transactions:</string>
     <string name="share_transactions_header">Date | Paid By | Category | Description | Amount</string>
     <string name="share_total">Total:</string>

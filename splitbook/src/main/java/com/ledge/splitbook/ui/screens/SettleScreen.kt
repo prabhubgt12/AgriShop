@@ -757,7 +757,7 @@ fun SettleScreen(
             confirmButton = {
                 TextButton(onClick = {
                     val t = upiDialog ?: return@TextButton
-                    val uri = buildUpiUri(vpa.text, payeeName.text, t.amount, "Simple Split settlement")
+                    val uri = buildUpiUri(vpa.text, payeeName.text, t.amount, "Split Book settlement")
                     val intent = Intent(Intent.ACTION_VIEW, uri)
                     context.startActivity(intent)
                     upiDialog = null
