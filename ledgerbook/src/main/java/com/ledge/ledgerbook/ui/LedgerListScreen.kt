@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Percent
 import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -66,6 +67,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -708,7 +710,8 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                                 onShare = { PdfShareUtils.shareEntry(context, item, includePromo = !hasRemoveAds) },
                                 showName = false,
                                 showTypeChip = false,
-                                includePromo = !hasRemoveAds
+                                includePromo = !hasRemoveAds,
+                                viewModel = vm
                             )
                         }
                     }
@@ -742,6 +745,7 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         },
                         onDelete = { confirmDeleteId.value = item.id },
                         onShare = { PdfShareUtils.shareEntry(context, item, includePromo = !hasRemoveAds) },
+                        viewModel = vm,
                         showName = true,
                         showTypeChip = true,
                         includePromo = !hasRemoveAds
@@ -1282,6 +1286,11 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     val paymentsEntryId by vm.paymentsEntryId.collectAsState()
     if (paymentsEntryId != null) {
         val payments by vm.paymentsForViewing.collectAsState()
+        // Check if the entry is settled
+        val state by vm.state.collectAsState()
+        val entry = remember(state.items, paymentsEntryId) { state.items.firstOrNull { it.id == paymentsEntryId } }
+        val isEntrySettled = entry?.outstanding ?: 0.0 <= 0.0
+        
         Dialog(onDismissRequest = { vm.closePayments() }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Surface(modifier = Modifier.fillMaxSize()) {
                 Column(Modifier.fillMaxSize()) {
@@ -1300,33 +1309,50 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         )
                         Spacer(Modifier.width(64.dp))
                     }
-                    // Tabs: 0 = Add Payment, 1 = Payment History
-                    val pagerState = rememberPagerState(initialPage = paymentsTab.value, pageCount = { 2 })
+                    // Tabs: 0 = Add Payment, 1 = Payment History (only show Add Payment if not settled)
+                    val pageCount = if (isEntrySettled) 1 else 2
+                    val pagerState = rememberPagerState(initialPage = if (isEntrySettled) 0 else paymentsTab.value, pageCount = { pageCount })
                     val scope = rememberCoroutineScope()
+                    
+                    // For settled loans, always show payment history (tab 0)
+                    LaunchedEffect(paymentsEntryId, isEntrySettled) {
+                        if (isEntrySettled && paymentsTab.value == 0) {
+                            paymentsTab.value = 1
+                        }
+                    }
+                    
                     LaunchedEffect(paymentsTab.value) {
                         if (pagerState.currentPage != paymentsTab.value) pagerState.scrollToPage(paymentsTab.value)
                     }
                     LaunchedEffect(pagerState) {
                         snapshotFlow { pagerState.currentPage }.collect { page -> paymentsTab.value = page }
                     }
-                    TabRow(selectedTabIndex = paymentsTab.value, modifier = Modifier.height(44.dp)) {
-                        Tab(
-                            selected = paymentsTab.value == 0,
-                            onClick = { paymentsTab.value = 0; scope.launch { pagerState.animateScrollToPage(0) } },
-                            modifier = Modifier.height(44.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .padding(horizontal = 16.dp),
-                                contentAlignment = Alignment.Center
+                    TabRow(selectedTabIndex = if (isEntrySettled) 0 else paymentsTab.value, modifier = Modifier.height(44.dp)) {
+                        if (!isEntrySettled) {
+                            Tab(
+                                selected = paymentsTab.value == 0,
+                                onClick = { paymentsTab.value = 0; scope.launch { pagerState.animateScrollToPage(0) } },
+                                modifier = Modifier.height(44.dp)
                             ) {
-                                Text(stringResource(R.string.add_payment))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(stringResource(R.string.add_payment))
+                                }
                             }
                         }
                         Tab(
-                            selected = paymentsTab.value == 1,
-                            onClick = { paymentsTab.value = 1; scope.launch { pagerState.animateScrollToPage(1) } },
+                            selected = if (isEntrySettled) true else paymentsTab.value == 1,
+                            onClick = { 
+                                if (isEntrySettled) {
+                                    // Do nothing, already on history tab
+                                } else {
+                                    paymentsTab.value = 1; scope.launch { pagerState.animateScrollToPage(1) } 
+                                }
+                            },
                             modifier = Modifier.height(44.dp)
                         ) {
                             Box(
@@ -1363,430 +1389,489 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                         )
                     }
                     HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-                        if (page == 0) {
-                            // Add Payment tab content (with summary and remaining preview)
-                            val entryId = paymentsEntryId
-                            if (entryId != null) {
-                                LaunchedEffect(entryId, partialDateMillis.value, partialAmount.value, partialFullPayment.value) {
-                                    val (accrued, _, outstanding) = vm.computeAt(entryId, partialDateMillis.value)
-                                    previewInterest.value = accrued
-                                    baseOutstanding.value = outstanding
-                                    if (partialFullPayment.value) {
-                                        partialAmount.value = CurrencyFormatter.formatNumericUpTo2(outstanding)
+                        if (isEntrySettled) {
+                            // For settled loans, only show Payment History on page 0
+                            if (page == 0) {
+                                // Payment history page
+                                if (payments.isEmpty()) {
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text(stringResource(R.string.no_payments_yet))
                                     }
-                                }
-                                LaunchedEffect(partialAmount.value, baseOutstanding.value, partialFullPayment.value) {
-                                    val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
-                                    previewOutstanding.value = if (partialFullPayment.value) 0.0 else (baseOutstanding.value - amt).coerceAtLeast(0.0)
-                                }
-
-                                val ctx = LocalContext.current
-                                val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-                                    if (uri != null) {
-                                        try {
-                                            ctx.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
-                                                val size = afd.length
-                                                if (size in 1..1_000_000) {
-                                                    val dir = File(ctx.filesDir, "attachments").apply { mkdirs() }
-                                                    val ext = "jpg"
-                                                    val outFile = File(dir, "att_${System.currentTimeMillis()}.$ext")
-                                                    ctx.contentResolver.openInputStream(uri)?.use { input ->
-                                                        FileOutputStream(outFile).use { output -> input.copyTo(output) }
+                                } else {
+                                    val sdf = remember { SimpleDateFormat("dd/MM/yyyy") }
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize().padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        items(payments) { p ->
+                                            val (metaPrincipal, metaFromDate) = remember(p.note) {
+                                                var mp: Double? = null
+                                                var md: Long? = null
+                                                p.note?.split('|')?.forEach { token ->
+                                                    when {
+                                                        token.startsWith("meta:prevPrincipal=") -> mp = token.substringAfter("meta:prevPrincipal=").toDoubleOrNull()
+                                                        token.startsWith("prevFromDate=") -> md = token.substringAfter("prevFromDate=").toLongOrNull()
                                                     }
-                                                    val fileUri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", outFile)
-                                                    partialAttachmentUri.value = fileUri
-                                                } else if (size <= 0) {
-                                                    val dir = File(ctx.filesDir, "attachments").apply { mkdirs() }
-                                                    val outFile = File(dir, "att_${System.currentTimeMillis()}")
-                                                    ctx.contentResolver.openInputStream(uri)?.use { input ->
-                                                        FileOutputStream(outFile).use { output -> input.copyTo(output) }
+                                                }
+                                                mp to md
+                                            }
+                                            var interestAtDate by remember(p.id) { mutableStateOf(0.0) }
+                                            var outstandingAtDate by remember(p.id) { mutableStateOf(0.0) }
+                                            LaunchedEffect(paymentsEntryId, p.id) {
+                                                val id = paymentsEntryId
+                                                if (id != null) {
+                                                    val triple = if (metaPrincipal != null && metaFromDate != null) {
+                                                        vm.computeAtFromSnapshot(id, p.date, metaPrincipal, metaFromDate)
+                                                    } else {
+                                                        vm.computeAt(id, p.date)
                                                     }
-                                                    val fileUri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", outFile)
-                                                    partialAttachmentUri.value = fileUri
-                                                } else {
-                                                    android.widget.Toast.makeText(ctx, ctx.getString(R.string.image_too_large), android.widget.Toast.LENGTH_SHORT).show()
+                                                    interestAtDate = triple.first
+                                                    outstandingAtDate = triple.third
                                                 }
                                             }
-                                        } catch (_: Exception) {
-                                            partialAttachmentUri.value = null
-                                        }
-                                    }
-                                }
-
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .imePadding()
-                                        .navigationBarsPadding(),
-                                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 96.dp)
-                                ) {
-                                    item {
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                            shape = RoundedCornerShape(12.dp),
-                                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                                        ) {
-                                            Column(
-                                                Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(12.dp),
-                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            val principalAtDate = metaPrincipal ?: entry?.principal ?: 0.0
+                                            val fromDateAt = metaFromDate ?: entry?.fromDateMillis
+                                            val totalAtDate = principalAtDate + interestAtDate
+                                            val remainingAfter = outstandingAtDate.coerceAtLeast(0.0)
+                                            val userNote = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
+                                            Card(
+                                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                                                shape = RoundedCornerShape(12.dp)
                                             ) {
-                                    // Entry summary
-                                    val entry = remember(state.items, entryId) { state.items.firstOrNull { it.id == entryId } }
-                                    if (entry != null) {
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(stringResource(R.string.user_label) + ": ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(entry.name) }
-                                            },
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(stringResource(R.string.label_principal_generic) + ": ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.formatInr(entry.principal)) }
-                                            },
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(stringResource(R.string.from_date) + ": ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(SimpleDateFormat("dd/MM/yyyy").format(Date(entry.fromDateMillis))) }
-                                            },
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                    // Date picker
-                                    val showPicker = remember { mutableStateOf(false) }
-                                    OutlinedTextField(
-                                        value = SimpleDateFormat("dd/MM/yyyy").format(Date(partialDateMillis.value)),
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        label = { Text(stringResource(R.string.payment_date), style = MaterialTheme.typography.bodySmall) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        trailingIcon = {
-                            IconButton(onClick = { showPicker.value = true }) {
-                                Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.pick))
-                            }
-                        }
-                                    )
-                                    if (showPicker.value) {
-                                        val entryFrom = state.items.firstOrNull { it.id == entryId }?.fromDateMillis ?: 0L
-                                        val today = System.currentTimeMillis()
-                                        val dpState = rememberDatePickerState(
-                                            initialSelectedDateMillis = partialDateMillis.value,
-                                            selectableDates = object : SelectableDates {
-                                                override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis in entryFrom..today
-                                            }
-                                        )
-                                        DatePickerDialog(
-                                            onDismissRequest = { showPicker.value = false },
-                                            confirmButton = {
-                                                TextButton(onClick = {
-                                                    val sel = dpState.selectedDateMillis ?: partialDateMillis.value
-                                                    val clamped = sel.coerceIn(entryFrom, today)
-                                                    partialDateMillis.value = clamped
-                                                    showPicker.value = false
-                                                }) { Text(stringResource(R.string.ok)) }
-                                            },
-                                            dismissButton = { TextButton(onClick = { showPicker.value = false }) { Text(stringResource(R.string.cancel)) } }
-                                        ) { DatePicker(state = dpState) }
-                                    }
-                                    // Summary under payment date (based on selected payment date)
-                                    if (!editingLatestPayment.value) {
-                                        val e = state.items.firstOrNull { it.id == entryId }
-                                        val fromMillis = e?.fromDateMillis ?: 0L
-                                        val durDaysAt = (((partialDateMillis.value - fromMillis).coerceAtLeast(0)) / 86_400_000L)
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(stringResource(R.string.duration) + ": ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("${durDaysAt} days") }
-                                            },
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(stringResource(R.string.interest_till_date) + ": ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.formatInr(previewInterest.value)) }
-                                            },
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                        val totalAt = (e?.principal ?: 0.0) + previewInterest.value
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(stringResource(R.string.total_amount) + ": ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.formatInr(totalAt)) }
-                                            },
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Checkbox(checked = partialFullPayment.value, onCheckedChange = { partialFullPayment.value = it })
-                                        Text(text = stringResource(R.string.full_payment), style = MaterialTheme.typography.bodySmall)
-                                    }
-                                    OutlinedTextField(
-                                        value = partialAmount.value,
-                                        onValueChange = { input ->
-                                            if (!partialFullPayment.value) {
-                                                partialAmount.value = input.filter { ch -> ch.isDigit() || ch == '.' }
-                                            }
-                                        },
-                                        label = { Text(stringResource(R.string.payment_amount), style = MaterialTheme.typography.bodySmall) },
-                                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                                        ),
-                                        modifier = Modifier.fillMaxWidth(),
-                                        enabled = !partialFullPayment.value
-                                    )
-                                    // Amount in words
-                                    val partialDouble = partialAmount.value.toDoubleOrNull()
-                                    if (partialDouble != null) {
-                                        val ctx2 = LocalContext.current
-                                        val lang = runCatching { ctx2.resources.configuration.locales[0]?.language ?: "en" }.getOrElse { "en" }
-                                        val words = NumberToWords.inIndianSystem(partialDouble, lang)
-                                        if (words.isNotBlank()) {
-                                            Text(words, style = MaterialTheme.typography.labelSmall)
-                                        }
-                                    }
-                                    if (!editingLatestPayment.value) {
-                                        // Interest is already displayed under Payment Date
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(stringResource(R.string.remaining_after_payment) + ": ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.formatInr(previewOutstanding.value)) }
-                                            },
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                    OutlinedTextField(
-                                        value = partialNote.value,
-                                        onValueChange = { partialNote.value = it },
-                                        label = { Text(stringResource(R.string.notes_optional), style = MaterialTheme.typography.bodySmall) },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        TextButton(onClick = { imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text(stringResource(R.string.attach)) }
-                                        Spacer(Modifier.width(8.dp))
-                                        partialAttachmentUri.value?.let { att ->
-                                            val painter = rememberAsyncImagePainter(att)
-                                            Image(painter = painter, contentDescription = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)), contentScale = ContentScale.Crop)
-                                            Spacer(Modifier.width(8.dp))
-                                            TextButton(onClick = { partialAttachmentUri.value = null }) { Text(stringResource(R.string.delete)) }
-                                        }
-                                    }
-                                    Spacer(Modifier.height(8.dp))
-                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                        TextButton(onClick = { vm.closePayments() }) { Text(stringResource(R.string.cancel)) }
-                                        Spacer(Modifier.width(8.dp))
-                                        Button(onClick = {
-                                            val id = entryId
-                                            val amt = (partialAmount.value.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0)
-                                            val attStr = partialAttachmentUri.value?.toString()
-                                            val noteStr = partialNote.value.ifBlank { null }
-                                            val today = System.currentTimeMillis()
-                                            if (id != null) {
-                                                val entry = state.items.firstOrNull { it.id == id }
-                                                val from = entry?.fromDateMillis ?: 0L
-                                                if (partialDateMillis.value > today || partialDateMillis.value < from) {
-                                                    android.widget.Toast.makeText(context, context.getString(R.string.pick), android.widget.Toast.LENGTH_SHORT).show(); return@Button
+                                                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                                        Text(
+                                                            CurrencyFormatter.format(principalAtDate + interestAtDate - remainingAfter),
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                        Text(sdf.format(Date(p.date)), style = MaterialTheme.typography.labelSmall)
+                                                    }
+                                                    HorizontalDivider()
+                                                    if (fromDateAt != null) {
+                                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                            Text(stringResource(R.string.from_date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                            Text(sdf.format(Date(fromDateAt)), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                        }
+                                                        val (durYears, durMonths, durDays) = LedgerInterest.durationBetween(fromDateAt, p.date)
+                                                        val durStr = buildString {
+                                                            if (durYears > 0) append("${durYears}y ")
+                                                            if (durMonths > 0) append("${durMonths}m ")
+                                                            append("${durDays}d")
+                                                        }
+                                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                            Text(stringResource(R.string.duration), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                            Text(durStr, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                        }
+                                                    }
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                        Text(stringResource(R.string.label_principal_generic), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        Text(CurrencyFormatter.format(principalAtDate), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                    }
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                        Text(stringResource(R.string.interest_till_date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        Text(CurrencyFormatter.format(interestAtDate), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                    }
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                        Text(stringResource(R.string.total_amount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        Text(CurrencyFormatter.format(totalAtDate), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                    }
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                        Text(stringResource(R.string.remaining_after_payment), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        Text(CurrencyFormatter.format(remainingAfter), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = if (remainingAfter > 0) Color(0xFFE57373) else Color(0xFF4CAF50))
+                                                    }
+                                                    if (userNote.isNotBlank()) {
+                                                        Text(userNote, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                    }
                                                 }
-                                                // Amount must be > 0 for non-full payments
-                                                if (!partialFullPayment.value && amt <= 0.0) {
-                                                    android.widget.Toast.makeText(context, context.getString(R.string.enter_valid_number), android.widget.Toast.LENGTH_SHORT).show(); return@Button
-                                                }
-                                                val maxAllowed = if (editingLatestPayment.value) baseOutstanding.value + originalEditAmount.value else baseOutstanding.value
-                                                if (!partialFullPayment.value && amt > maxAllowed + 1e-6) {
-                                                    android.widget.Toast.makeText(context, context.getString(R.string.enter_valid_number), android.widget.Toast.LENGTH_SHORT).show(); return@Button
-                                                }
-                                                if (editingLatestPayment.value) {
-                                                    vm.editLatestPayment(id, amt, partialDateMillis.value, noteStr, attStr) { vm.openPayments(id) }
-                                                } else {
-                                                    val finalAmt = if (partialFullPayment.value) baseOutstanding.value else amt
-                                                    vm.applyPartialWithMeta(id, finalAmt, partialDateMillis.value, noteStr, attStr)
-                                                }
-                                            }
-                                            // After apply, show feedback and close
-                                            editingLatestPayment.value = false
-                                            successMessage.value = "Payment updated successfully"
-                                        }) { Text(stringResource(R.string.apply_action)) }
-                                    }
                                             }
                                         }
                                     }
                                 }
                             }
                         } else {
-                            // Payment history page
-                            if (payments.isEmpty()) {
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    Text(stringResource(R.string.no_payments_yet))
+                            // For non-settled loans, show both tabs
+                            if (page == 0) {
+                                // Add Payment tab content (with summary and remaining preview)
+                                val entryId = paymentsEntryId
+                                if (entryId != null) {
+                                    LaunchedEffect(entryId, partialDateMillis.value, partialAmount.value, partialFullPayment.value) {
+                                        val (accrued, _, outstanding) = vm.computeAt(entryId, partialDateMillis.value)
+                                        previewInterest.value = accrued
+                                        baseOutstanding.value = outstanding
+                                        if (partialFullPayment.value) {
+                                            partialAmount.value = CurrencyFormatter.formatNumericUpTo2(outstanding)
+                                        }
+                                    }
+                                    LaunchedEffect(partialAmount.value, baseOutstanding.value, partialFullPayment.value) {
+                                        val amt = partialAmount.value.toDoubleOrNull() ?: 0.0
+                                        previewOutstanding.value = if (partialFullPayment.value) 0.0 else (baseOutstanding.value - amt).coerceAtLeast(0.0)
+                                    }
+
+                                    val ctx = LocalContext.current
+                                    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                                        if (uri != null) {
+                                            try {
+                                                ctx.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+                                                    val size = afd.length
+                                                    if (size in 1..1_000_000) {
+                                                        val dir = File(ctx.filesDir, "attachments").apply { mkdirs() }
+                                                        val ext = "jpg"
+                                                        val outFile = File(dir, "att_${System.currentTimeMillis()}.$ext")
+                                                        ctx.contentResolver.openInputStream(uri)?.use { input ->
+                                                            FileOutputStream(outFile).use { output -> input.copyTo(output) }
+                                                        }
+                                                        val fileUri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", outFile)
+                                                        partialAttachmentUri.value = fileUri
+                                                    } else if (size <= 0) {
+                                                        val dir = File(ctx.filesDir, "attachments").apply { mkdirs() }
+                                                        val outFile = File(dir, "att_${System.currentTimeMillis()}")
+                                                        ctx.contentResolver.openInputStream(uri)?.use { input ->
+                                                            FileOutputStream(outFile).use { output -> input.copyTo(output) }
+                                                        }
+                                                        val fileUri = FileProvider.getUriForFile(ctx, ctx.packageName + ".fileprovider", outFile)
+                                                        partialAttachmentUri.value = fileUri
+                                                    } else {
+                                                        android.widget.Toast.makeText(ctx, ctx.getString(R.string.image_too_large), android.widget.Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            } catch (_: Exception) {
+                                                partialAttachmentUri.value = null
+                                            }
+                                        }
+                                    }
+
+                                    LazyColumn(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .imePadding()
+                                            .navigationBarsPadding(),
+                                        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 96.dp)
+                                    ) {
+                                        item {
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                                shape = RoundedCornerShape(12.dp),
+                                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                            ) {
+                                                Column(
+                                                    Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(12.dp),
+                                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    // Entry summary
+                                                    val entry = remember(state.items, entryId) { state.items.firstOrNull { it.id == entryId } }
+                                                    if (entry != null) {
+                                                        Text(
+                                                            buildAnnotatedString {
+                                                                append(stringResource(R.string.user_label) + ": ")
+                                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(entry.name) }
+                                                            },
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                        Text(
+                                                            buildAnnotatedString {
+                                                                append(stringResource(R.string.label_principal_generic) + ": ")
+                                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.formatInr(entry.principal)) }
+                                                            },
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                        Text(
+                                                            buildAnnotatedString {
+                                                                append(stringResource(R.string.from_date) + ": ")
+                                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(SimpleDateFormat("dd/MM/yyyy").format(Date(entry.fromDateMillis))) }
+                                                            },
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                    }
+                                                    // Date picker
+                                                    val showPicker = remember { mutableStateOf(false) }
+                                                    OutlinedTextField(
+                                                        value = SimpleDateFormat("dd/MM/yyyy").format(Date(partialDateMillis.value)),
+                                                        onValueChange = {},
+                                                        readOnly = true,
+                                                        label = { Text(stringResource(R.string.payment_date), style = MaterialTheme.typography.bodySmall) },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        trailingIcon = {
+                                                            IconButton(onClick = { showPicker.value = true }) {
+                                                                Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.pick))
+                                                            }
+                                                        }
+                                                    )
+                                                    if (showPicker.value) {
+                                                        val entryFrom = state.items.firstOrNull { it.id == entryId }?.fromDateMillis ?: 0L
+                                                        val today = System.currentTimeMillis()
+                                                        val dpState = rememberDatePickerState(
+                                                            initialSelectedDateMillis = partialDateMillis.value,
+                                                            selectableDates = object : SelectableDates {
+                                                                override fun isSelectableDate(utcTimeMillis: Long): Boolean = utcTimeMillis in entryFrom..today
+                                                            }
+                                                        )
+                                                        DatePickerDialog(
+                                                            onDismissRequest = { showPicker.value = false },
+                                                            confirmButton = {
+                                                                TextButton(onClick = {
+                                                                    val sel = dpState.selectedDateMillis ?: partialDateMillis.value
+                                                                    val clamped = sel.coerceIn(entryFrom, today)
+                                                                    partialDateMillis.value = clamped
+                                                                    showPicker.value = false
+                                                                }) { Text(stringResource(R.string.ok)) }
+                                                            },
+                                                            dismissButton = { TextButton(onClick = { showPicker.value = false }) { Text(stringResource(R.string.cancel)) } }
+                                                        ) { DatePicker(state = dpState) }
+                                                    }
+                                                    // Summary under payment date (based on selected payment date)
+                                                    if (!editingLatestPayment.value) {
+                                                        val e = state.items.firstOrNull { it.id == entryId }
+                                                        val fromMillis = e?.fromDateMillis ?: 0L
+                                                        val durDaysAt = (((partialDateMillis.value - fromMillis).coerceAtLeast(0)) / 86_400_000L)
+                                                        Text(
+                                                            buildAnnotatedString {
+                                                                append(stringResource(R.string.duration) + ": ")
+                                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("${durDaysAt} days") }
+                                                            },
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                        Text(
+                                                            buildAnnotatedString {
+                                                                append(stringResource(R.string.interest_till_date) + ": ")
+                                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.formatInr(previewInterest.value)) }
+                                                            },
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                        val totalAt = (e?.principal ?: 0.0) + previewInterest.value
+                                                        Text(
+                                                            buildAnnotatedString {
+                                                                append(stringResource(R.string.total_amount) + ": ")
+                                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.formatInr(totalAt)) }
+                                                            },
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                    }
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Checkbox(checked = partialFullPayment.value, onCheckedChange = { partialFullPayment.value = it })
+                                                        Text(text = stringResource(R.string.full_payment), style = MaterialTheme.typography.bodySmall)
+                                                    }
+                                                    OutlinedTextField(
+                                                        value = partialAmount.value,
+                                                        onValueChange = { input ->
+                                                            if (!partialFullPayment.value) {
+                                                                partialAmount.value = input.filter { ch -> ch.isDigit() || ch == '.' }
+                                                            }
+                                                        },
+                                                        label = { Text(stringResource(R.string.payment_amount), style = MaterialTheme.typography.bodySmall) },
+                                                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                                                        ),
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        enabled = !partialFullPayment.value
+                                                    )
+                                                    // Amount in words
+                                                    val partialDouble = partialAmount.value.toDoubleOrNull()
+                                                    if (partialDouble != null) {
+                                                        val ctx2 = LocalContext.current
+                                                        val lang = runCatching { ctx2.resources.configuration.locales[0]?.language ?: "en" }.getOrElse { "en" }
+                                                        val words = NumberToWords.inIndianSystem(partialDouble, lang)
+                                                        if (words.isNotBlank()) {
+                                                            Text(words, style = MaterialTheme.typography.labelSmall)
+                                                        }
+                                                    }
+                                                    if (!editingLatestPayment.value) {
+                                                        // Interest is already displayed under Payment Date
+                                                        Text(
+                                                            buildAnnotatedString {
+                                                                append(stringResource(R.string.remaining_after_payment) + ": ")
+                                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.formatInr(previewOutstanding.value)) }
+                                                            },
+                                                            style = MaterialTheme.typography.bodySmall
+                                                        )
+                                                    }
+                                                    OutlinedTextField(
+                                                        value = partialNote.value,
+                                                        onValueChange = { partialNote.value = it },
+                                                        label = { Text(stringResource(R.string.notes_optional), style = MaterialTheme.typography.bodySmall) },
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    )
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        TextButton(onClick = { imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text(stringResource(R.string.attach)) }
+                                                        Spacer(Modifier.width(8.dp))
+                                                        partialAttachmentUri.value?.let { att ->
+                                                            val painter = rememberAsyncImagePainter(att)
+                                                            Image(painter = painter, contentDescription = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(6.dp)), contentScale = ContentScale.Crop)
+                                                            Spacer(Modifier.width(8.dp))
+                                                            TextButton(onClick = { partialAttachmentUri.value = null }) { Text(stringResource(R.string.delete)) }
+                                                        }
+                                                    }
+                                                    Spacer(Modifier.height(8.dp))
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                                        TextButton(onClick = { vm.closePayments() }) { Text(stringResource(R.string.cancel)) }
+                                                        Spacer(Modifier.width(8.dp))
+                                                        Button(onClick = {
+                                                            val id = entryId
+                                                            val amt = (partialAmount.value.toDoubleOrNull() ?: 0.0).coerceAtLeast(0.0)
+                                                            val attStr = partialAttachmentUri.value?.toString()
+                                                            val noteStr = partialNote.value.ifBlank { null }
+                                                            val today = System.currentTimeMillis()
+                                                            if (id != null) {
+                                                                val entry = state.items.firstOrNull { it.id == id }
+                                                                val from = entry?.fromDateMillis ?: 0L
+                                                                if (partialDateMillis.value > today || partialDateMillis.value < from) {
+                                                                    android.widget.Toast.makeText(context, context.getString(R.string.pick), android.widget.Toast.LENGTH_SHORT).show(); return@Button
+                                                                }
+                                                                // Amount must be > 0 for non-full payments
+                                                                if (!partialFullPayment.value && amt <= 0.0) {
+                                                                    android.widget.Toast.makeText(context, context.getString(R.string.enter_valid_number), android.widget.Toast.LENGTH_SHORT).show(); return@Button
+                                                                }
+                                                                val maxAllowed = if (editingLatestPayment.value) baseOutstanding.value + originalEditAmount.value else baseOutstanding.value
+                                                                if (!partialFullPayment.value && amt > maxAllowed + 1e-6) {
+                                                                    android.widget.Toast.makeText(context, context.getString(R.string.enter_valid_number), android.widget.Toast.LENGTH_SHORT).show(); return@Button
+                                                                }
+                                                                if (editingLatestPayment.value) {
+                                                                    vm.editLatestPayment(id, amt, partialDateMillis.value, noteStr, attStr) { vm.openPayments(id) }
+                                                                } else {
+                                                                    val finalAmt = if (partialFullPayment.value) baseOutstanding.value else amt
+                                                                    vm.applyPartialWithMeta(id, finalAmt, partialDateMillis.value, noteStr, attStr)
+                                                                }
+                                                            }
+                                                            // After apply, show feedback and close
+                                                            editingLatestPayment.value = false
+                                                            successMessage.value = "Payment updated successfully"
+                                                        }) { Text(stringResource(R.string.apply_action)) }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             } else {
-                                val sdf = remember { SimpleDateFormat("dd/MM/yyyy") }
-                                val entry = remember(state.items, paymentsEntryId) { state.items.firstOrNull { it.id == paymentsEntryId } }
-                                val lastPayment = remember(payments) {
-                                    payments.maxWithOrNull(compareBy<com.ledge.ledgerbook.data.local.entities.LedgerPayment>({ it.date }, { it.id }))
-                                }
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    items(payments) { p ->
-                                        val (metaPrincipal, metaFromDate) = remember(p.note) {
-                                            var mp: Double? = null
-                                            var md: Long? = null
-                                            p.note?.split('|')?.forEach { token ->
-                                                when {
-                                                    token.startsWith("meta:prevPrincipal=") -> mp = token.substringAfter("meta:prevPrincipal=").toDoubleOrNull()
-                                                    token.startsWith("prevFromDate=") -> md = token.substringAfter("prevFromDate=").toLongOrNull()
+                                // Payment history page (page 1 for non-settled loans)
+                                if (payments.isEmpty()) {
+                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text(stringResource(R.string.no_payments_yet))
+                                    }
+                                } else {
+                                    val sdf = remember { SimpleDateFormat("dd/MM/yyyy") }
+                                    val entry = remember(state.items, paymentsEntryId) { state.items.firstOrNull { it.id == paymentsEntryId } }
+                                    val lastPayment = remember(payments) {
+                                        payments.maxWithOrNull(compareBy<com.ledge.ledgerbook.data.local.entities.LedgerPayment>({ it.date }, { it.id }))
+                                    }
+                                    LazyColumn(
+                                        modifier = Modifier.fillMaxSize().padding(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        items(payments) { p ->
+                                            val (metaPrincipal, metaFromDate) = remember(p.note) {
+                                                var mp: Double? = null
+                                                var md: Long? = null
+                                                p.note?.split('|')?.forEach { token ->
+                                                    when {
+                                                        token.startsWith("meta:prevPrincipal=") -> mp = token.substringAfter("meta:prevPrincipal=").toDoubleOrNull()
+                                                        token.startsWith("prevFromDate=") -> md = token.substringAfter("prevFromDate=").toLongOrNull()
+                                                    }
+                                                }
+                                                mp to md
+                                            }
+                                            var interestAtDate by remember(p.id) { mutableStateOf(0.0) }
+                                            var outstandingAtDate by remember(p.id) { mutableStateOf(0.0) }
+                                            LaunchedEffect(paymentsEntryId, p.id) {
+                                                val id = paymentsEntryId
+                                                if (id != null) {
+                                                    val triple = if (metaPrincipal != null && metaFromDate != null) {
+                                                        vm.computeAtFromSnapshot(id, p.date, metaPrincipal, metaFromDate)
+                                                    } else {
+                                                        vm.computeAt(id, p.date)
+                                                    }
+                                                    interestAtDate = triple.first
+                                                    outstandingAtDate = triple.third
                                                 }
                                             }
-                                            mp to md
-                                        }
-                                        var interestAtDate by remember(p.id) { mutableStateOf(0.0) }
-                                        var outstandingAtDate by remember(p.id) { mutableStateOf(0.0) }
-                                        LaunchedEffect(paymentsEntryId, p.id) {
-                                            val id = paymentsEntryId
-                                            if (id != null) {
-                                                val triple = if (metaPrincipal != null && metaFromDate != null) {
-                                                    vm.computeAtFromSnapshot(id, p.date, metaPrincipal, metaFromDate)
-                                                } else {
-                                                    vm.computeAt(id, p.date)
-                                                }
-                                                interestAtDate = triple.first
-                                                outstandingAtDate = triple.third
-                                            }
-                                        }
-                                        val principalAtDate = metaPrincipal ?: entry?.principal ?: 0.0
-                                        val fromDateAt = metaFromDate ?: entry?.fromDateMillis
-                                        val totalAtDate = principalAtDate + interestAtDate
-                                        val remainingAfter = outstandingAtDate.coerceAtLeast(0.0)
-                                        val userNote = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
-                                        val attUri = p.note
-                                            ?.substringAfter("att:", "")
-                                            ?.let { if (it.isNotEmpty()) it.substringBefore('|') else null }
-                                            ?.let { runCatching { Uri.parse(it) }.getOrNull() }
-
-                                        Card(
-                                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                                            shape = RoundedCornerShape(12.dp)
-                                        ) {
-                                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                                    Text(
-                                                        CurrencyFormatter.format(principalAtDate + interestAtDate - remainingAfter),
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        fontWeight = FontWeight.SemiBold,
-                                                        modifier = Modifier.weight(1f)
-                                                    )
-                                                    Text(sdf.format(Date(p.date)), style = MaterialTheme.typography.labelSmall)
-                                                    if (lastPayment != null && p.id == lastPayment.id) {
-                                                        var menu by remember(p.id) { mutableStateOf(false) }
-                                                        Box { 
-                                                            IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, contentDescription = null) }
-                                                            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                                                                DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
-                                                                    menu = false
-                                                                    paymentsTab.value = 0
-                                                                    partialForId.value = null
-                                                                    partialAmount.value = CurrencyFormatter.formatNumericUpTo2(p.amount)
-                                                                    originalEditAmount.value = p.amount
-                                                                    partialDateMillis.value = p.date
-                                                                    partialNote.value = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
-                                                                    partialAttachmentUri.value = p.note?.substringAfter("att:")?.let { it.substringBefore('|') }?.let { Uri.parse(it) }
-                                                                    partialFullPayment.value = false
-                                                                    editingLatestPayment.value = true
-                                                                })
-                                                                DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = {
-                                                                    menu = false
-                                                                    val id = paymentsEntryId
-                                                                    if (id != null) vm.deleteLatestPayment(id) { vm.openPayments(id) }
-                                                                })
+                                            val principalAtDate = metaPrincipal ?: entry?.principal ?: 0.0
+                                            val fromDateAt = metaFromDate ?: entry?.fromDateMillis
+                                            val totalAtDate = principalAtDate + interestAtDate
+                                            val remainingAfter = outstandingAtDate.coerceAtLeast(0.0)
+                                            val userNote = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
+                                            val isLastPayment = lastPayment?.id == p.id
+                                            Card(
+                                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                                        Text(
+                                                            CurrencyFormatter.format(principalAtDate + interestAtDate - remainingAfter),
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                        Text(sdf.format(Date(p.date)), style = MaterialTheme.typography.labelSmall)
+                                                        // Edit/delete menu for latest payment only (disabled for settled loans)
+                                                        if (isLastPayment && !isEntrySettled) {
+                                                            var menu by remember(p.id) { mutableStateOf(false) }
+                                                            Box {
+                                                                IconButton(onClick = { menu = true }) { Icon(Icons.Default.MoreVert, contentDescription = null) }
+                                                                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                                                                    DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = {
+                                                                        menu = false
+                                                                        paymentsTab.value = 0
+                                                                        partialForId.value = null
+                                                                        editingLatestPayment.value = true
+                                                                        originalEditAmount.value = p.amount
+                                                                        partialAmount.value = CurrencyFormatter.formatNumericUpTo2(p.amount)
+                                                                        partialNote.value = ((p.note?.substringAfter("note:", "")) ?: "").substringBefore('|')
+                                                                        partialAttachmentUri.value = null
+                                                                        partialFullPayment.value = false
+                                                                        partialDateMillis.value = p.date
+                                                                    })
+                                                                    DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = {
+                                                                        menu = false
+                                                                        val id = paymentsEntryId
+                                                                        if (id != null) vm.deleteLatestPayment(id) { vm.openPayments(id) }
+                                                                    })
+                                                                }
                                                             }
                                                         }
                                                     }
-                                                }
-                                                Divider()
-                                                if (fromDateAt != null) {
-                                                    Text(
-                                                        buildAnnotatedString {
-                                                            append(stringResource(R.string.from_date) + ": ")
-                                                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(sdf.format(Date(fromDateAt))) }
-                                                        },
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                    val (durYears, durMonths, durDays) = LedgerInterest.durationBetween(fromDateAt, p.date)
-                                                    Text(
-                                                        buildAnnotatedString {
-                                                            append(stringResource(R.string.duration) + ": ")
-                                                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("${durYears}y ${durMonths}m ${durDays}d") }
-                                                        },
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                }
-                                                Text(
-                                                    buildAnnotatedString {
-                                                        append(stringResource(R.string.label_principal_generic) + ": ")
-                                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.format(principalAtDate)) }
-                                                    },
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                Text(
-                                                    buildAnnotatedString {
-                                                        append(stringResource(R.string.interest_till_date) + ": ")
-                                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.format(interestAtDate)) }
-                                                    },
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                Text(
-                                                    buildAnnotatedString {
-                                                        append(stringResource(R.string.total_amount) + ": ")
-                                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.format(totalAtDate)) }
-                                                    },
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                Text(
-                                                    buildAnnotatedString {
-                                                        append(stringResource(R.string.remaining_after_payment) + ": ")
-                                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(CurrencyFormatter.format(remainingAfter)) }
-                                                    },
-                                                    style = MaterialTheme.typography.bodySmall
-                                                )
-                                                if (userNote.isNotBlank()) {
-                                                    Text(
-                                                        buildAnnotatedString {
-                                                            append(stringResource(R.string.notes_optional) + ": ")
-                                                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(userNote) }
-                                                        },
-                                                        style = MaterialTheme.typography.bodySmall
-                                                    )
-                                                }
-                                                if (attUri != null) {
-                                                    val painter = rememberAsyncImagePainter(attUri)
-                                                    Spacer(Modifier.height(6.dp))
-                                                    Image(
-                                                        painter = painter,
-                                                        contentDescription = null,
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .height(140.dp)
-                                                            .clip(RoundedCornerShape(8.dp))
-                                                            .clickable {
-                                                                try {
-                                                                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                                                                        setDataAndType(attUri, "image/*")
-                                                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                                                    }
-                                                                    context.startActivity(intent)
-                                                                } catch (_: Exception) { }
-                                                            },
-                                                        contentScale = ContentScale.Crop
-                                                    )
+                                                    HorizontalDivider()
+                                                    if (fromDateAt != null) {
+                                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                            Text(stringResource(R.string.from_date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                            Text(sdf.format(Date(fromDateAt)), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                        }
+                                                        val (durYears, durMonths, durDays) = LedgerInterest.durationBetween(fromDateAt, p.date)
+                                                        val durStr = buildString {
+                                                            if (durYears > 0) append("${durYears}y ")
+                                                            if (durMonths > 0) append("${durMonths}m ")
+                                                            append("${durDays}d")
+                                                        }
+                                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                            Text(stringResource(R.string.duration), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                            Text(durStr, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                        }
+                                                    }
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                        Text(stringResource(R.string.label_principal_generic), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        Text(CurrencyFormatter.format(principalAtDate), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                    }
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                        Text(stringResource(R.string.interest_till_date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        Text(CurrencyFormatter.format(interestAtDate), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                    }
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                        Text(stringResource(R.string.total_amount), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        Text(CurrencyFormatter.format(totalAtDate), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+                                                    }
+                                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                        Text(stringResource(R.string.remaining_after_payment), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        Text(CurrencyFormatter.format(remainingAfter), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium, color = if (remainingAfter > 0) Color(0xFFE57373) else Color(0xFF4CAF50))
+                                                    }
+                                                    if (userNote.isNotBlank()) {
+                                                        Text(userNote, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                                    }
                                                 }
                                             }
                                         }
@@ -2039,10 +2124,45 @@ private fun LedgerRow(
     onShare: () -> Unit,
     showName: Boolean = false,
     showTypeChip: Boolean = true,
-    includePromo: Boolean = true
+    includePromo: Boolean = true,
+    viewModel: LedgerViewModel = hiltViewModel()
 ) {
     val ctx = LocalContext.current
     val openMenu = remember { mutableStateOf(false) }
+    
+    // Check if loan is settled
+    val isSettled = vm.outstanding <= 0.0
+    
+    // For settled loans, fetch historical values at last payment date
+    var settledPrincipal by remember { mutableStateOf<Double?>(null) }
+    var settledInterest by remember { mutableStateOf<Double?>(null) }
+    var settledDateMillis by remember { mutableStateOf<Long?>(null) }
+    var displayFromDate by remember { mutableStateOf(vm.fromDateMillis) }
+    
+    LaunchedEffect(vm.id, isSettled) {
+        if (isSettled) {
+            val lastPaymentDate = viewModel.getLastPaymentDate(vm.id)
+            val originalData = viewModel.getOriginalPrincipalAndDate(vm.id)
+            if (lastPaymentDate != null && originalData != null) {
+                settledDateMillis = lastPaymentDate
+                settledPrincipal = originalData.first
+                displayFromDate = originalData.second
+                val (accrued, _, _) = viewModel.computeHistoricalValues(vm.id, lastPaymentDate, originalData.first, originalData.second)
+                settledInterest = accrued
+            }
+        }
+    }
+    
+    // Use historical values for settled loans, current values otherwise
+    val displayPrincipal = settledPrincipal ?: vm.principal
+    val displayInterest = settledInterest ?: vm.accrued
+    val displayTotal = if (isSettled) {
+        val sp = settledPrincipal
+        val si = settledInterest
+        if (sp != null && si != null) sp + si else vm.total
+    } else {
+        vm.total
+    }
     
     // Determine if this is a lend or borrow entry
     val isLend = vm.type == "LEND"
@@ -2061,6 +2181,7 @@ private fun LedgerRow(
     val isOverdue = daysSinceEntry > overdueDays
     val isDueSoon = daysSinceEntry > (overdueDays - dueSoonWindow) && daysSinceEntry <= overdueDays
     val timeIconColor = when {
+        isSettled -> Color(0xFF4CAF50) // Green for settled
         isOverdue -> Color(0xFFE57373) // Better red for overdue
         isDueSoon -> Color(0xFFFF9800) // Orange for due soon
         else -> MaterialTheme.colorScheme.onSurfaceVariant // Default color
@@ -2180,8 +2301,10 @@ private fun LedgerRow(
                                 ctx.startActivity(Intent.createChooser(intent, ctx.getString(R.string.share_via)))
                             })
                             DropdownMenuItem(text = { Text(stringResource(R.string.payment_history)) }, onClick = { openMenu.value = false; onHistory() })
-                            DropdownMenuItem(text = { Text(stringResource(R.string.partial_payment)) }, onClick = { openMenu.value = false; onPartial() })
-                            DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = { openMenu.value = false; onEdit() })
+                            if (!isSettled) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.partial_payment)) }, onClick = { openMenu.value = false; onPartial() })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.edit)) }, onClick = { openMenu.value = false; onEdit() })
+                            }
                             DropdownMenuItem(text = { Text(stringResource(R.string.delete)) }, onClick = { openMenu.value = false; onDelete() })
                         }
                     }
@@ -2214,7 +2337,7 @@ private fun LedgerRow(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = CurrencyFormatter.formatNoDecimals(vm.total),
+                            text = CurrencyFormatter.formatNoDecimals(displayTotal),
                             style = MaterialTheme.typography.titleMedium,
                             color = totalColor,
                             fontWeight = FontWeight.Bold
@@ -2246,7 +2369,7 @@ private fun LedgerRow(
                                 )
                             }
                             Text(
-                                text = CurrencyFormatter.formatNoDecimals(vm.principal),
+                                text = CurrencyFormatter.formatNoDecimals(displayPrincipal),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color(0xFF2196F3)
                             )
@@ -2276,7 +2399,7 @@ private fun LedgerRow(
                                     )
                                 }
                                 Text(
-                                    text = CurrencyFormatter.formatNoDecimals(vm.accrued),
+                                    text = CurrencyFormatter.formatNoDecimals(displayInterest),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = interestColor
                                 )
@@ -2308,7 +2431,8 @@ private fun LedgerRow(
             Spacer(Modifier.height(4.dp))
             
             // Details grid with horizontal dividers
-            val (years, months, days) = LedgerInterest.durationBetween(vm.fromDateMillis, System.currentTimeMillis())
+            val durationToDate = if (isSettled) (settledDateMillis ?: System.currentTimeMillis()) else System.currentTimeMillis()
+            val (years, months, days) = LedgerInterest.durationBetween(displayFromDate, durationToDate)
             val totalTime = buildString {
                 val yr = stringResource(R.string.year_singular)
                 val mo = stringResource(R.string.month_singular)
@@ -2354,9 +2478,25 @@ private fun LedgerRow(
                     value = totalTime,
                     iconColor = timeIconColor
                 )
+                
+                // Settled date row (only for settled loans)
+                if (isSettled && settledDateMillis != null) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 2.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                        thickness = 0.5.dp
+                    )
+                    val sdf = remember { SimpleDateFormat("dd/MM/yyyy") }
+                    DetailRow(
+                        icon = Icons.Outlined.CheckCircle,
+                        label = stringResource(R.string.settled_on),
+                        value = sdf.format(Date(settledDateMillis!!)),
+                        iconColor = Color(0xFF4CAF50)
+                    )
+                }
             }
             }
         }
     }
-    }
+}
 }

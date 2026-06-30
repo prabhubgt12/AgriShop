@@ -138,10 +138,12 @@ class LedgerRepository(
         dao.insertPayment(LedgerPayment(entryId = entryId, amount = partialAmount, date = paymentDateMillis, note = metaNote))
 
         // 2) Roll the baseline so future accrual starts from payment date on the remaining amount
+        // Only update fromDate if this is not a full settlement (newPrincipal > 0)
+        val newFromDate = if (newPrincipal > 0) paymentDateMillis else entry.fromDate
         dao.updateEntry(
             entry.copy(
                 principal = newPrincipal,
-                fromDate = paymentDateMillis,
+                fromDate = newFromDate,
                 updatedAt = System.currentTimeMillis()
             )
         )

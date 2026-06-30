@@ -137,6 +137,31 @@ class LedgerViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) { repo.applyPartialWithMeta(entryId, amount, dateMillis, userNote, attachmentUri) }
     }
 
+    suspend fun getLastPaymentDate(entryId: Int): Long? {
+        val payments = repo.getPaymentsFor(entryId)
+        return payments.maxOfOrNull { it.date }
+    }
+
+    suspend fun getOriginalPrincipalAndDate(entryId: Int): Pair<Double, Long>? {
+        val payments = repo.getPaymentsFor(entryId)
+        if (payments.isEmpty()) return null
+        
+        // Look for the FIRST payment with metadata containing prevPrincipal (original principal)
+        for (payment in payments) {
+            val note = payment.note ?: continue
+            if (note.contains("meta:prevPrincipal=") && note.contains("prevFromDate=")) {
+                val prevPrincipal = note.substringAfter("meta:prevPrincipal=").substringBefore("|").toDoubleOrNull()
+                val prevFromDate = note.substringAfter("prevFromDate=").substringBefore("|").toLongOrNull()
+                if (prevPrincipal != null && prevFromDate != null) return prevPrincipal to prevFromDate
+            }
+        }
+        return null
+    }
+
+    suspend fun computeHistoricalValues(entryId: Int, atMillis: Long, prevPrincipal: Double, prevFromDate: Long): Triple<Double, Double, Double> {
+        return repo.computeAtFromSnapshot(entryId, atMillis, prevPrincipal, prevFromDate)
+    }
+
     fun deleteLatestPayment(entryId: Int, onDone: (() -> Unit)? = null) {
         viewModelScope.launch(Dispatchers.IO) {
             repo.deleteLatestPayment(entryId)
