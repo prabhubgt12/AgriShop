@@ -122,6 +122,10 @@
     <!-- Ledger summary labels -->
     <string name="interest_rate">வட்டி விகிதம்</string>
     <string name="from_date">தேதி முதல்</string>
+    <string name="settled_on">மூடப்பட்ட தேதி</string>
+    <string name="filter_all">அனைத்தும்</string>
+    <string name="filter_active">செயலில்</string>
+    <string name="filter_closed">மூடப்பட்டது</string>
     <string name="total_time">மொத்த நேரம்</string>
     <string name="total_amount">மொத்த தொகை</string>
     <string name="total_interest">மொத்த வட்டி</string>

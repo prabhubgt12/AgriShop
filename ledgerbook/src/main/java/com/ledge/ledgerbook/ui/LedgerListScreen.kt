@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
@@ -28,6 +29,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Payments
@@ -195,9 +197,19 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
     // Search state and filtered items
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var activeFilter by rememberSaveable { mutableStateOf("all") } // "all", "overdue", "dueSoon"
-    val filteredItems = remember(state.items, searchQuery, activeFilter, overdueDays, dueSoonWindow) {
+    // Status filter: "all", "active", "closed"
+    var statusFilter by rememberSaveable { mutableStateOf("active") }
+    
+    val filteredItems = remember(state.items, searchQuery, activeFilter, overdueDays, dueSoonWindow, statusFilter) {
         val baseFiltered = if (searchQuery.isBlank()) state.items
         else state.items.filter { it.name.contains(searchQuery, ignoreCase = true) }
+        
+        // Filter by status
+        val statusFiltered = when (statusFilter) {
+            "active" -> baseFiltered.filter { it.outstanding > 0.0 }
+            "closed" -> baseFiltered.filter { it.outstanding <= 0.0 }
+            else -> baseFiltered // "all"
+        }
         
         val msPerDay = 86_400_000L
         val now = System.currentTimeMillis()
@@ -206,12 +218,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
         val dueFrom = (od - win).coerceAtLeast(0)
         
         when (activeFilter) {
-            "overdue" -> baseFiltered.filter { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
-            "dueSoon" -> baseFiltered.filter {
+            "overdue" -> statusFiltered.filter { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
+            "dueSoon" -> statusFiltered.filter {
                 val d = (((now - it.fromDateMillis) / msPerDay).toInt())
                 d >= dueFrom && d < od
             }
-            else -> baseFiltered
+            else -> statusFiltered
         }
     }
     // Precompute groups in composable scope (cannot call remember inside LazyListScope)
@@ -276,10 +288,10 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                 val od = overdueDays.coerceAtLeast(1)
                 val win = dueSoonWindow.coerceAtLeast(1)
                 val dueFrom = (od - win).coerceAtLeast(0)
-                val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od }
+                val overdueCount = state.items.count { (((now - it.fromDateMillis) / msPerDay).toInt()) >= od && it.outstanding > 0 }
                 val dueSoonCount = state.items.count {
                     val d = (((now - it.fromDateMillis) / msPerDay).toInt())
-                    d in dueFrom until od
+                    d in dueFrom until od && it.outstanding > 0
                 }
 
                 Card(
@@ -498,7 +510,9 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     placeholder = stringResource(R.string.search_with_name),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    statusFilter = statusFilter,
+                    onStatusFilterChange = { statusFilter = it }
                 )
             }
 
@@ -540,10 +554,12 @@ fun LedgerListScreen(vm: LedgerViewModel = hiltViewModel(), themeViewModel: Them
                             var odC = 0
                             var dsC = 0
                             itemsForUser.forEach { item ->
-                                val d = daysSince(item)
-                                when {
-                                    d >= odThresh -> odC++
-                                    d in from until odThresh -> dsC++
+                                if (item.outstanding > 0) {
+                                    val d = daysSince(item)
+                                    when {
+                                        d >= odThresh -> odC++
+                                        d in from until odThresh -> dsC++
+                                    }
                                 }
                             }
                             odC to dsC
@@ -2008,11 +2024,14 @@ private fun CompactSearchBar(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    statusFilter: String = "active",
+    onStatusFilterChange: (String) -> Unit = {}
 ) {
     val shape = RoundedCornerShape(12.dp)
     val interaction = remember { MutableInteractionSource() }
     val focusRequester = remember { FocusRequester() }
+    
     Row(
         modifier = modifier
             .clip(shape)
@@ -2038,6 +2057,100 @@ private fun CompactSearchBar(
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
             )
+        }
+        Box {
+            var showFilterMenu by remember { mutableStateOf(false) }
+            val filterLabel = when (statusFilter) {
+                "all" -> stringResource(R.string.filter_all)
+                "active" -> stringResource(R.string.filter_active)
+                "closed" -> stringResource(R.string.filter_closed)
+                else -> stringResource(R.string.filter_active)
+            }
+            
+            Surface(
+                onClick = { showFilterMenu = true },
+                modifier = Modifier.height(32.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.FilterList,
+                        contentDescription = "Filter",
+                        modifier = Modifier.size(16.dp),
+                        tint = if (statusFilter == "active") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(filterLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            DropdownMenu(
+                expanded = showFilterMenu,
+                onDismissRequest = { showFilterMenu = false },
+                modifier = Modifier.width(140.dp)
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.filter_all), style = MaterialTheme.typography.bodySmall) },
+                    onClick = {
+                        showFilterMenu = false
+                        onStatusFilterChange("all")
+                    },
+                    leadingIcon = {
+                        Checkbox(
+                            checked = statusFilter == "all",
+                            onCheckedChange = null,
+                            modifier = Modifier.size(18.dp),
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                    },
+                    modifier = Modifier.height(36.dp)
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.filter_active), style = MaterialTheme.typography.bodySmall) },
+                    onClick = {
+                        showFilterMenu = false
+                        onStatusFilterChange("active")
+                    },
+                    leadingIcon = {
+                        Checkbox(
+                            checked = statusFilter == "active",
+                            onCheckedChange = null,
+                            modifier = Modifier.size(18.dp),
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                    },
+                    modifier = Modifier.height(36.dp)
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.filter_closed), style = MaterialTheme.typography.bodySmall) },
+                    onClick = {
+                        showFilterMenu = false
+                        onStatusFilterChange("closed")
+                    },
+                    leadingIcon = {
+                        Checkbox(
+                            checked = statusFilter == "closed",
+                            onCheckedChange = null,
+                            modifier = Modifier.size(18.dp),
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary,
+                                uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                    },
+                    modifier = Modifier.height(36.dp)
+                )
+            }
         }
     }
 }

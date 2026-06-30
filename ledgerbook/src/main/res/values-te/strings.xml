@@ -119,6 +119,10 @@
     <!-- Ledger summary labels -->
     <string name="interest_rate">వడ్డీ రేటు</string>
     <string name="from_date">తేదీ నుంచి</string>
+    <string name="settled_on">మూసిన తేదీ</string>
+    <string name="filter_all">అన్ని</string>
+    <string name="filter_active">యాంత్రిక</string>
+    <string name="filter_closed">మూసిన</string>
     <string name="total_time">మొత్తం సమయం</string>
     <string name="total_amount">మొత్తం మొత్తం</string>
     <string name="total_interest">మొత్తం వడ్డీ</string>

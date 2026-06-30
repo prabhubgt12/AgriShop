@@ -243,6 +243,10 @@
     <string name="delete">हटाएं</string>
     <string name="interest_rate">ब्याज दर</string>
     <string name="from_date">तिथि से</string>
+    <string name="settled_on">बंद दिनांक</string>
+    <string name="filter_all">सभी</string>
+    <string name="filter_active">सक्रिय</string>
+    <string name="filter_closed">बंद</string>
     <string name="total_time">कुल समय</string>
     <string name="total_amount">कुल राशि</string>
     <string name="total_interest">कुल ब्याज</string>

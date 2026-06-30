@@ -174,7 +174,10 @@
     <string name="delete">Delete</string>
     <string name="interest_rate">Interest Rate</string>
     <string name="from_date">From Date</string>
-    <string name="settled_on">Settled On</string>
+    <string name="settled_on">Closed On</string>
+    <string name="filter_all">All</string>
+    <string name="filter_active">Active</string>
+    <string name="filter_closed">Closed</string>
     <string name="total_time">Total Time</string>
     <string name="total_amount">Total Amount</string>
     <string name="total_interest">Total Interest</string>
