@@ -12,6 +12,7 @@ const loginStatus = document.getElementById('loginStatus');
 
 const elSuggestion = document.getElementById('suggestion');
 const elConfidence = document.getElementById('confidence');
+const elMarketSentimentSummary = document.getElementById('marketSentimentSummary');
 
 // ── Suggestion stability buffer ───────────────────────────────────────────────
 // Only update displayed suggestion after CONFIRM consecutive polls agree.
@@ -102,6 +103,40 @@ async function postStart() {
   if (!data.ok) throw new Error(data.error || 'Failed to start');
 }
 
+function sentimentBadge(type, text) {
+  let color = '#ffd54f'; // yellow
+
+  switch (type) {
+    case 'BULLISH':
+    case 'CALM':
+      color = '#00c853';
+      break;
+
+    case 'BEARISH':
+    case 'HIGH':
+      color = '#ff5252';
+      break;
+
+    case 'VOLATILE':
+      color = '#ff9800';
+      break;
+
+    case 'NORMAL':
+      color = '#42a5f5';
+      break;
+  }
+
+  return `
+    <span style="
+      display:inline-block;
+      margin-right:8px;
+      color:${color};
+      font-weight:600;
+    ">
+      ● ${text}
+    </span>
+  `;
+}
 function collectOrderConfigPayload() {
   const qtyMode = qtyModeSel ? qtyModeSel.value : 'QTY';
   const orderQty = orderQtyInput ? Number(orderQtyInput.value) : 1;
@@ -399,6 +434,38 @@ function render(snapshot, lastError, paper, live) {
   const dOiLabel = sug && !sug.dOiActive ? ' (static OI)' : '';
   elSuggestion.textContent = (stableSug.action || '-') + dOiLabel;
   elConfidence.textContent = sug ? `Confidence: ${fmtNum(stableSug.confidence)}` : '-';
+  const ms = snapshot?.marketSentiment;
+
+	if (elMarketSentimentSummary) {
+	  if (!ms) {
+		elMarketSentimentSummary.textContent = '-';
+	  } else {
+		elMarketSentimentSummary.innerHTML =
+		  sentimentBadge(
+			ms.vixSignal,
+			`VIX ${ms.vixSignal} (${Number(ms.vix).toFixed(2)})`
+		  ) +
+
+		  sentimentBadge(
+			ms.futureSignal,
+			`FUT ${ms.futureSignal}`
+		  ) +
+
+		  sentimentBadge(
+			ms.ceVwapSignal,
+			ms.ceVwapSignal === 'BULLISH'
+			  ? 'Calls Above VWAP'
+			  : 'Calls Below VWAP'
+		  ) +
+
+		  sentimentBadge(
+			ms.peVwapSignal,
+			ms.peVwapSignal === 'BULLISH'
+			  ? 'Puts Above VWAP'
+			  : 'Puts Below VWAP'
+		  );
+	  }
+	}
   if (sug && sug.window) {
     elSnapshotMeta.textContent = `Updated: ${fmtTime(snapshot?.ts)} • Window: ${fmtNum(sug.window.count)} snaps (${fmtTime(sug.window.fromTs)} - ${fmtTime(sug.window.toTs)})`;
   } else {
@@ -1168,3 +1235,5 @@ document.getElementById('generate-report').addEventListener('click', async () =>
     refresh().catch((e) => console.error('poll refresh:', e));
   }, 2000);
 })();
+
+// Market sentiment patch
