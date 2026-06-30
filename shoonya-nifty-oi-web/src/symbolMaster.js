@@ -172,8 +172,29 @@ async function loadNiftyOptionUniverse(expiryIso) {
   return { expiryDate, universe: filtered };
 }
 
+async function getCurrentNiftyFuture() {
+  const rows = await loadSymbolMaster('NFO');
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return rows
+    .filter(r =>
+      String(r.Symbol || '').toUpperCase() === 'NIFTY' &&
+      String(r.Instrument || '').toUpperCase() === 'FUTIDX'
+    )
+    .map(r => ({
+      token: String(r.Token),
+      tsym: String(r.TradingSymbol),
+      expiry: parseExpiryToDate(r.Expiry),
+    }))
+    .filter(x => x.expiry >= today)
+    .sort((a, b) => a.expiry - b.expiry)[0] || null;
+}
+
 module.exports = {
   loadSymbolMaster,
   getNiftyIndexToken,
   loadNiftyOptionUniverse,
+  getCurrentNiftyFuture,
 };

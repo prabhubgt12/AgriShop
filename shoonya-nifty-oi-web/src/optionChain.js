@@ -1,5 +1,5 @@
 const { nanoid } = require('nanoid');
-const { getNiftyIndexToken, loadNiftyOptionUniverse } = require('./symbolMaster');
+const { getNiftyIndexToken, loadNiftyOptionUniverse ,getCurrentNiftyFuture } = require('./symbolMaster');
 
 function roundToStep(x, step) {
   return Math.round(x / step) * step;
@@ -143,7 +143,9 @@ function extractQuoteFields(q) {
   const oi = safeNum(q.oi ?? q.OI);
   const vol = safeNum(q.v ?? q.vol ?? q.volume);
 
-  return { ltp, oi, vol };
+  const vwap = safeNum(q.ap);
+
+  return { ltp, oi, vol, vwap };
 }
 
 function computeDelta(now, prev) {
@@ -273,6 +275,10 @@ async function buildNiftyChainSnapshot(api, opts, prevSnapshot, deltaSnapshot) {
   // const vwap = await getVwap(api, 'NSE', indexToken);
   const vwap = null;
 
+  let vix=null,vixSignal=null,futureLtp=null,futureVwap=null,futureSignal=null;
+  try { const vixQuote=await getQuote(api,'NSE','26017'); vix=safeNum(vixQuote?.lp); if(vix!==null){vixSignal=vix<14?'CALM':vix<18?'NORMAL':vix<22?'VOLATILE':'HIGH';}} catch(_e){}
+  try { const futInfo=await getCurrentNiftyFuture(); const fut=futInfo?await getQuote(api,'NFO',futInfo.token):null; futureLtp=safeNum(fut?.lp); futureVwap=safeNum(fut?.ap); if(futureLtp!==null&&futureVwap!==null){futureSignal=futureLtp>futureVwap?'BULLISH':'BEARISH';}} catch(_e){}
+
   const atmStrike = roundToStep(underQuote.ltp, strikeStep);
   const strikes = buildStrikeList(atmStrike, strikeStep, strikesEachSide);
 
@@ -377,6 +383,9 @@ async function buildNiftyChainSnapshot(api, opts, prevSnapshot, deltaSnapshot) {
   }
 
   const itmOiStats = computeItmOiStats(rows, underQuote.ltp, 5);
+  const atmRow = rows.find(r=>r.strike===atmStrike);
+  const ceVwapSignal = atmRow?.ce?.vwap!=null ? (atmRow.ce.ltp>atmRow.ce.vwap?'BULLISH':'BEARISH') : null;
+  const peVwapSignal = atmRow?.pe?.vwap!=null ? (atmRow.pe.ltp>atmRow.pe.vwap?'BULLISH':'BEARISH') : null;
 
   return {
     id: nanoid(),
@@ -387,6 +396,7 @@ async function buildNiftyChainSnapshot(api, opts, prevSnapshot, deltaSnapshot) {
     levels: { supportStrike, resistanceStrike },
     itmOiStats,
     rows,
+    marketSentiment:{vix,vixSignal,futureLtp,futureVwap,futureSignal,ceVwapSignal,peVwapSignal},
   };
 }
 
